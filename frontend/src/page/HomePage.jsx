@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import "../assets/css/bootstrap.min.css";
 import "../assets/css/icons.min.css";
 import "../assets/css/app.min.css";
@@ -27,7 +27,7 @@ const HomePage = () => {
             total: {
               show: true,
               label: "Total Visits",
-              formatter: function (w) {
+              formatter: function () {
                 return "25.3k"; // Bạn có thể tính tổng từ series ở đây
               },
             },
