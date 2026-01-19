@@ -1,0 +1,39 @@
+.navbar-menu .menu-dropdown {
+    transition: all 0.35s ease-in-out !important;
+}
+
+.simplebar-content-wrapper {
+    scroll-behavior: smooth;
+}
+
+/* Khắc phục lỗi khựng khi thu hồi menu trong React */
+.navbar-menu .collapse {
+    display: block !important;
+    /* Luôn cho phép hiển thị để React-Bootstrap tính chiều cao */
+    height: auto;
+}
+
+/* Chỉ ẩn đi khi thực sự cần thiết qua lớp của React-Bootstrap */
+.collapse:not(.show) {
+    display: none !important;
+}
+
+/* Đảm bảo sidebar có hiệu ứng trượt (transition) */
+.app-menu {
+    transition: all 0.3s ease !important;
+}
+
+/* Đảm bảo nội dung chính tự động co giãn theo sidebar */
+.main-content {
+    transition: all 0.3s ease !important;
+}
+
+/* Ưu tiên hiển thị nút hamburger lên trên cùng để không bị che */
+#topnav-hamburger-icon {
+    z-index: 1005 !important;
+    position: relative;
+}
+
+.header-item i {
+    font-size: 20px;
+}
