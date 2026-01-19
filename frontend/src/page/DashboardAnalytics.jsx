@@ -5,7 +5,6 @@ const DashboardAnalytics = () => {
   return (
     <>
       <div>
-        {/* start page title */}
         <div className="row">
           <div className="col-12">
             <div className="page-title-box d-sm-flex align-items-center justify-content-between">
@@ -21,7 +20,6 @@ const DashboardAnalytics = () => {
             </div>
           </div>
         </div>
-        {/* end page title */}
         <div className="row">
           <div className="col-xxl-5">
             <div className="d-flex flex-column h-100">
@@ -660,7 +658,8 @@ const DashboardAnalytics = () => {
                     <p className="mb-0 mt-2 text-muted">
                       <span className="badge bg-success-subtle text-success mb-0">
                         {" "}
-                        <i className="ri-arrow-up-line align-middle" /> 15.72 %{" "}
+                        <i className="ri-arrow-up-line align-middle" /> 15.72
+                        %{" "}
                       </span>{" "}
                       vs. previous month
                     </p>

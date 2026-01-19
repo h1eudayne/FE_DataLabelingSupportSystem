@@ -7,11 +7,8 @@ import SimpleBar from "simplebar-react";
 import "simplebar-react/dist/simplebar.min.css";
 import Chart from "react-apexcharts";
 
-// Thay đổi dòng này ở đầu file
 import Collapse from "react-bootstrap/Collapse";
 const HomePage = () => {
-  // Dữ liệu tĩnh
-
   const chartOptions = {
     labels: ["Direct", "Social", "Email", "Other", "Referrals"],
     chart: {
@@ -28,7 +25,7 @@ const HomePage = () => {
               show: true,
               label: "Total Visits",
               formatter: function () {
-                return "25.3k"; // Bạn có thể tính tổng từ series ở đây
+                return "25.3k";
               },
             },
           },
@@ -56,7 +53,6 @@ const HomePage = () => {
     stroke: {
       show: false,
     },
-    // Mã màu chuẩn của giao diện Velzon/Dashboard hiện đại
     colors: ["#405189", "#0ab39c", "#f7b84b", "#f06548", "#299cdb"],
   };
 
@@ -83,14 +79,13 @@ const HomePage = () => {
       },
       stroke: {
         curve: "smooth",
-        width: [0, 2], // Cột không có viền, đường Line mảnh (2px)
+        width: [0, 2],
       },
-      // Chỉnh màu sắc tinh tế hơn (Blue & Teal Soft)
       colors: ["#405189", "rgba(10, 179, 156, 0.3)"],
       plotOptions: {
         bar: {
-          columnWidth: "35%", // Làm cột nhỏ lại (từ 100% xuống 35%)
-          borderRadius: 4, // Bo góc đầu cột cho mềm mại
+          columnWidth: "35%",
+          borderRadius: 4,
         },
       },
       fill: {
@@ -129,7 +124,7 @@ const HomePage = () => {
       },
       grid: {
         borderColor: "#f1f1f1",
-        strokeDashArray: 5, // Đường kẻ ngang dạng đứt đoạn nhìn sẽ sang hơn
+        strokeDashArray: 5,
         padding: { top: 0, right: 0, bottom: 0, left: 10 },
       },
       legend: {
@@ -141,16 +136,12 @@ const HomePage = () => {
     },
   };
 
-  // State
-
   useEffect(() => {
-    // Gán các thuộc tính quan trọng từ thẻ html của file index cũ
     document.documentElement.setAttribute("data-layout", "vertical");
     document.documentElement.setAttribute("data-sidebar", "dark");
     document.documentElement.setAttribute("data-topbar", "light");
     document.documentElement.setAttribute("data-sidebar-size", "lg");
 
-    // Nếu bạn muốn chắc chắn không bị lưu cache cũ từ layout.js
     sessionStorage.setItem("data-sidebar", "dark");
   }, []);
 
@@ -158,7 +149,6 @@ const HomePage = () => {
     <>
       {/* Begin page */}
       <div id="layout-wrapper">
-        {/* removeNotificationModal */}
         <div
           id="removeNotificationModal"
           className="modal fade zoomIn"
@@ -209,20 +199,10 @@ const HomePage = () => {
                 </div>
               </div>
             </div>
-            {/* /.modal-content */}
           </div>
-          {/* /.modal-dialog */}
         </div>
-        {/* /.modal */}
-        {/* ========== App Menu ========== */}
-        {/*  */}
 
-        {/* Left Sidebar End */}
-        {/* Vertical Overlay*/}
         <div className="vertical-overlay" />
-        {/* ============================================================== */}
-        {/* Start right Content here */}
-        {/* ============================================================== */}
         <div className="row">
           <div className="col">
             <div className="h-100">
@@ -458,14 +438,9 @@ const HomePage = () => {
                 </div>
                 {/* end col */}
               </div>
-              {/* end row*/}
-              {/* --- HÀNG BIỂU ĐỒ VÀ BẢNG SẢN PHẨM --- */}
               <div className="row">
-                {/* Cột Biểu đồ - Chiếm 8 phần */}
                 <div className="col-xl-8">
                   <div className="card card-height-100">
-                    {" "}
-                    {/* Thêm card-height-100 ở đây */}
                     <div className="card-header border-0 align-items-center d-flex">
                       <h4 className="card-title mb-0 flex-grow-1">
                         Sales Forecast
@@ -491,18 +466,15 @@ const HomePage = () => {
                           options={salesForecastData.options}
                           series={salesForecastData.series}
                           type="line"
-                          height={370} // Tăng nhẹ chiều cao để khớp với bên phải
+                          height={370}
                         />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Cột Sales by Locations - Chiếm 4 phần */}
                 <div className="col-xl-4">
                   <div className="card card-height-100">
-                    {" "}
-                    {/* Card này cũng có card-height-100 */}
                     <div className="card-header align-items-center d-flex">
                       <h4 className="card-title mb-0 flex-grow-1">
                         Sales by Locations
@@ -552,7 +524,6 @@ const HomePage = () => {
                         </div>
                       </div>
 
-                      {/* Danh sách quốc gia */}
                       <div className="mt-2">
                         {[
                           {
@@ -599,9 +570,7 @@ const HomePage = () => {
                   </div>
                 </div>
               </div>
-              {/* --- HẾT HÀNG BIỂU ĐỒ --- */}
               <div className="row">
-                {/* 1. BẢNG BEST SELLING PRODUCTS (BÊN TRÁI) */}
                 <div className="col-xl-6">
                   <div className="card card-height-100">
                     <div className="card-header align-items-center d-flex">
@@ -688,7 +657,6 @@ const HomePage = () => {
                   </div>
                 </div>
 
-                {/* 2. BẢNG TOP SELLERS (BÊN PHẢI) */}
                 <div className="col-xl-6">
                   <div className="card card-height-100">
                     <div className="card-header align-items-center d-flex">
@@ -782,7 +750,6 @@ const HomePage = () => {
               </div>
               {/* end row*/}
               <div className="row">
-                {/* 1. STORE VISITS BY SOURCE (Cột trái - 4 phần) */}
                 <div className="col-xl-4">
                   <div className="card card-height-100">
                     <div className="card-header align-items-center d-flex">
@@ -815,7 +782,6 @@ const HomePage = () => {
                       </div>
                     </div>
                     <div className="card-body">
-                      {/* Tích hợp biểu đồ vào đây */}
                       <div
                         id="store-visits-source"
                         className="apex-charts"
@@ -832,7 +798,6 @@ const HomePage = () => {
                   </div>
                 </div>
 
-                {/* 2. RECENT ORDERS (Cột phải - 8 phần) */}
                 <div className="col-xl-8">
                   <div className="card card-height-100">
                     <div className="card-header align-items-center d-flex">

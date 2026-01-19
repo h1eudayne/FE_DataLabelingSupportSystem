@@ -3,7 +3,7 @@
 import MainLayouts from "./components/layouts/MainLayouts";
 import HomePage from "./page/HomePage";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LoginPage from "./page/LoginPage";
+import LoginPage from "./page/auth/LoginPage";
 import RegisterPage from "./page/RegisterPage";
 import WorkplaceLabelingTaskPage from "./page/WorkplaceLabelingTaskPage";
 import ProjectsAllProjectPage from "./page/ProjectsAllProjectsPage";
@@ -14,6 +14,7 @@ import DashboardProjectStatus from "./page/DashboardProjectStatus";
 import ProjectsDatasetPage from "./page/ProjectsDatasetsPage";
 import SettingUserManagement from "./page/SettingUserManagement";
 import SettingsSystemLogs from "./page/SettingsSystemLogs";
+import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 
 function App() {
   /*
@@ -30,14 +31,29 @@ function App() {
         <Route path="dashboard" element={<HomePage />} />
         <Route
           path="/workplace-labeling-task"
-          element={<WorkplaceLabelingTaskPage />}
+          element={
+            <RoleProtectedRoute allowRoles={["Annotator"]}>
+              <WorkplaceLabelingTaskPage />
+            </RoleProtectedRoute>
+          }
         />
         <Route
           path="/workplace-review-task"
-          element={<WorkplaceReviewTaskPage />}
+          element={
+            <RoleProtectedRoute allowRoles={["Reviewer"]}>
+              <WorkplaceReviewTaskPage />
+            </RoleProtectedRoute>
+          }
         />
         <Route path="/export" element={<ExportPage />} />
-        <Route path="/dashboard-analytics" element={<DashboardAnalytics />} />
+        <Route
+          path="/dashboard-analytics"
+          element={
+            <RoleProtectedRoute allowRoles={["Admin", "Manager"]}>
+              <DashboardAnalytics />
+            </RoleProtectedRoute>
+          }
+        />{" "}
         <Route
           path="/dashboard-project-status"
           element={<DashboardProjectStatus />}
@@ -49,7 +65,11 @@ function App() {
         <Route path="/projects-datasets" element={<ProjectsDatasetPage />} />
         <Route
           path="/settings-user-management"
-          element={<SettingUserManagement />}
+          element={
+            <RoleProtectedRoute allowRoles={["Admin"]}>
+              <SettingUserManagement />
+            </RoleProtectedRoute>
+          }
         />
         <Route path="/settings-system-logs" element={<SettingsSystemLogs />} />
       </Route>

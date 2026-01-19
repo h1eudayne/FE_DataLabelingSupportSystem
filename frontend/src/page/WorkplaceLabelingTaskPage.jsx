@@ -606,7 +606,6 @@ const WorkplaceLabelingTaskPage = () => {
             {/*end card*/}
             <div className="card">
               <div className="card-header">
-                {/* 2. Thanh điều hướng (Tabs) */}
                 <ul
                   className="nav nav-tabs-custom rounded card-header-tabs border-bottom-0"
                   role="tablist"

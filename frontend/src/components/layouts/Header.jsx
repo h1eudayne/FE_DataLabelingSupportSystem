@@ -1,7 +1,19 @@
 import React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { logout } from "@/store/auth/auth.slice";
 
 const Header = ({ toggleSidebar, sidebarSize }) => {
-  const isLoggedIn = false;
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login", { replace: true });
+  };
+
   return (
     <header id="page-topbar">
       <div className="layout-width">
@@ -9,36 +21,39 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           <div className="d-flex">
             {/* LOGO */}
             <div className="navbar-brand-box horizontal-logo">
-              <a href="index.html" className="logo logo-dark">
+              <a href="/" className="logo logo-dark">
                 <span className="logo-sm">
-                  <img src="../assets/images/logo-sm.png" alt="" height={22} />
+                  <img src="assets/images/logo-sm.png" alt="" height="22" />
                 </span>
                 <span className="logo-lg">
-                  <img src="assets/images/logo-dark.png" alt="" height={17} />
+                  <img src="assets/images/logo-dark.png" alt="" height="17" />
                 </span>
               </a>
-              <a href="index.html" className="logo logo-light">
+
+              <a href="/" className="logo logo-light">
                 <span className="logo-sm">
-                  <img src="assets/images/logo-sm.png" alt height={22} />
+                  <img src="assets/images/logo-sm.png" alt="" height="22" />
                 </span>
                 <span className="logo-lg">
-                  <img src="assets/images/logo-light.png" alt height={17} />
+                  <img src="assets/images/logo-light.png" alt="" height="17" />
                 </span>
-              </a>{" "}
+              </a>
             </div>
 
+            {/* SIDEBAR TOGGLE */}
             <button
               onClick={toggleSidebar}
               className="btn btn-sm px-3 fs-16 header-item"
               id="topnav-hamburger-icon"
             >
               {sidebarSize === "lg" ? (
-                <i className="ri-menu-2-line"></i> // hamburger
+                <i className="ri-menu-2-line"></i>
               ) : (
-                <i className="ri-arrow-right-line" style={{ fontSize: 28 }}></i> // mũi tên
+                <i className="ri-arrow-right-line" style={{ fontSize: 28 }}></i>
               )}
             </button>
 
+            {/* SEARCH (GIỮ NGUYÊN) */}
             <form className="app-search d-none d-md-block">
               <div className="position-relative">
                 <input
@@ -60,7 +75,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                 id="search-dropdown"
               >
                 <div data-simplebar style={{ maxHeight: 320 }}>
-                  {/* item*/}
                   <div className="dropdown-header">
                     <h6 className="text-overflow text-muted mb-0 text-uppercase">
                       Recent Searches
@@ -80,13 +94,11 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                       buttons <i className="mdi mdi-magnify ms-1" />
                     </a>
                   </div>
-                  {/* item*/}
                   <div className="dropdown-header mt-2">
                     <h6 className="text-overflow text-muted mb-1 text-uppercase">
                       Pages
                     </h6>
                   </div>
-                  {/* item*/}
                   <a
                     href="javascript:void(0);"
                     className="dropdown-item notify-item"
@@ -94,7 +106,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     <i className="ri-bubble-chart-line align-middle fs-18 text-muted me-2" />
                     <span>Analytics Dashboard</span>
                   </a>
-                  {/* item*/}
                   <a
                     href="javascript:void(0);"
                     className="dropdown-item notify-item"
@@ -185,7 +196,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
               </div>{" "}
             </form>
           </div>
-          {isLoggedIn ? (
+          {isAuthenticated && user ? (
             <div className="d-flex align-items-center">
               <div className="dropdown d-md-none topbar-head-dropdown header-item">
                 <button
@@ -1220,54 +1231,48 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                   </span>
                 </button>
                 <div className="dropdown-menu dropdown-menu-end">
-                  {/* item*/}
-                  <h6 className="dropdown-header">Welcome Anna!</h6>
-                  <a className="dropdown-item" href="pages-profile.html">
-                    <i className="mdi mdi-account-circle text-muted fs-16 align-middle me-1" />{" "}
+                  <h6 className="dropdown-header">
+                    Welcome {user?.fullName || user?.email || "User"}!
+                  </h6>
+
+                  <Link to="/profile" className="dropdown-item">
+                    <i className="mdi mdi-account-circle text-muted fs-16 align-middle me-1" />
                     <span className="align-middle">Profile</span>
-                  </a>
-                  <a className="dropdown-item" href="apps-chat.html">
-                    <i className="mdi mdi-message-text-outline text-muted fs-16 align-middle me-1" />{" "}
+                  </Link>
+
+                  <Link to="/messages" className="dropdown-item">
+                    <i className="mdi mdi-message-text-outline text-muted fs-16 align-middle me-1" />
                     <span className="align-middle">Messages</span>
-                  </a>
-                  <a className="dropdown-item" href="apps-tasks-kanban.html">
-                    <i className="mdi mdi-calendar-check-outline text-muted fs-16 align-middle me-1" />{" "}
+                  </Link>
+
+                  <Link to="/tasks" className="dropdown-item">
+                    <i className="mdi mdi-calendar-check-outline text-muted fs-16 align-middle me-1" />
                     <span className="align-middle">Taskboard</span>
-                  </a>
-                  <a className="dropdown-item" href="pages-faqs.html">
-                    <i className="mdi mdi-lifebuoy text-muted fs-16 align-middle me-1" />{" "}
+                  </Link>
+
+                  <Link to="/help" className="dropdown-item">
+                    <i className="mdi mdi-lifebuoy text-muted fs-16 align-middle me-1" />
                     <span className="align-middle">Help</span>
-                  </a>
+                  </Link>
+
                   <div className="dropdown-divider" />
-                  <a className="dropdown-item" href="pages-profile.html">
-                    <i className="mdi mdi-wallet text-muted fs-16 align-middle me-1" />{" "}
-                    <span className="align-middle">
-                      Balance : <b>$5971.67</b>
-                    </span>
-                  </a>
-                  <a
-                    className="dropdown-item"
-                    href="pages-profile-settings.html"
-                  >
+
+                  <Link to="/settings" className="dropdown-item">
                     <span className="badge bg-success-subtle text-success mt-1 float-end">
                       New
                     </span>
-                    <i className="mdi mdi-cog-outline text-muted fs-16 align-middle me-1" />{" "}
+                    <i className="mdi mdi-cog-outline text-muted fs-16 align-middle me-1" />
                     <span className="align-middle">Settings</span>
-                  </a>
-                  <a
+                  </Link>
+
+                  <button
+                    type="button"
                     className="dropdown-item"
-                    href="auth-lockscreen-basic.html"
+                    onClick={handleLogout}
                   >
-                    <i className="mdi mdi-lock text-muted fs-16 align-middle me-1" />{" "}
-                    <span className="align-middle">Lock screen</span>
-                  </a>
-                  <a className="dropdown-item" href="auth-logout-basic.html">
-                    <i className="mdi mdi-logout text-muted fs-16 align-middle me-1" />{" "}
-                    <span className="align-middle" data-key="t-logout">
-                      Logout
-                    </span>
-                  </a>
+                    <i className="mdi mdi-logout text-muted fs-16 align-middle me-1" />
+                    <span className="align-middle">Logout</span>
+                  </button>
                 </div>
               </div>
             </div>

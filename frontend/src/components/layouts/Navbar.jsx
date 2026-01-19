@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom"; // Thêm useLocation để làm Active Menu
+import { Link } from "react-router-dom";
 import SimpleBar from "simplebar-react";
 import Collapse from "react-bootstrap/Collapse";
 
@@ -7,8 +7,12 @@ import Collapse from "react-bootstrap/Collapse";
 import logoSm from "../../assets/images/logo-sm.png";
 import logoDark from "../../assets/images/logo-dark.png";
 import logoLight from "../../assets/images/logo-light.png";
+import { useSelector } from "react-redux";
 
 const Navbar = () => {
+  const { user } = useSelector((state) => state.auth);
+  const role = user?.role; // ADMIN | MANAGER | REVIEWER | ANNOTATOR
+
   const [openMenu, setOpenMenu] = useState("");
 
   const handleToggle = (menuId) => {
@@ -46,102 +50,113 @@ const Navbar = () => {
       </div>
       <SimpleBar style={{ maxHeight: "100%" }}>
         <ul className="navbar-nav" id="navbar-nav">
-          <li className="menu-title">
-            <span data-key="t-menu">Dashboard</span>
-          </li>
-          {/* Dashboard */}
-          <li className="nav-item">
-            <a
-              className={`nav-link menu-link ${
-                openMenu === "sidebarDashboards" ? "" : "collapsed"
-              }`}
-              href="#!"
-              onClick={(e) => {
-                e.preventDefault();
-                handleToggle("sidebarDashboards");
-              }}
-              data-bs-toggle="collapse"
-              aria-expanded={openMenu === "sidebarDashboards"}
-            >
-              <i className="ri-dashboard-2-line"></i> <span>Dashboards</span>
-            </a>
-
-            <Collapse in={openMenu === "sidebarDashboards"}>
-              <div>
-                <div className="menu-dropdown">
-                  <ul className="nav nav-sm flex-column">
-                    <li className="nav-item">
-                      <a href="/dashboard-analytics" className="nav-link">
-                        Analytics
-                      </a>
-                    </li>
-                    <li className="nav-item">
-                      <a href="/dashboard-project-status" className="nav-link">
-                        Project Status
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Collapse>
-          </li>
-          {/* end Dashboard Menu */}
-          <li className="menu-title">
-            <i className="ri-more-fill" />{" "}
-            <span data-key="t-pages">Projects</span>
-          </li>
-
-          {/* Authentication */}
-          <li className="nav-item">
-            <a
-              className={`nav-link menu-link ${
-                openMenu === "sidebarApps" ? "" : "collapsed"
-              }`}
-              href="#!"
-              onClick={(e) => {
-                e.preventDefault();
-                handleToggle("sidebarApps");
-              }}
-              data-bs-toggle="collapse"
-              aria-expanded={openMenu === "sidebarApps"}
-            >
-              <i className="ri-apps-2-line"></i>{" "}
-              <span data-key="t-apps">Projects</span>
-            </a>
-
-            <Collapse in={openMenu === "sidebarApps"}>
-              <div>
-                <div
-                  className={`collapse menu-dropdown ${
-                    openMenu === "sidebarApps" ? "show" : ""
+          {["Admin", "Manager"].includes(role) && (
+            <>
+              <li className="menu-title">
+                <span data-key="t-menu">Dashboard</span>
+              </li>
+              {/* Dashboard */}
+              <li className="nav-item">
+                <a
+                  className={`nav-link menu-link ${
+                    openMenu === "sidebarDashboards" ? "" : "collapsed"
                   }`}
-                  id="sidebarApps"
+                  href="#!"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleToggle("sidebarDashboards");
+                  }}
+                  data-bs-toggle="collapse"
+                  aria-expanded={openMenu === "sidebarDashboards"}
                 >
-                  <ul className="nav nav-sm flex-column">
-                    <li className="nav-item">
-                      <a href="/projects-all-projects" className="nav-link">
-                        {" "}
-                        All Projects{" "}
-                      </a>
-                    </li>
-                    <li className="nav-item">
-                      <a href="/projects-datasets" className="nav-link">
-                        {" "}
-                        Datasets{" "}
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Collapse>
-          </li>
+                  <i className="ri-dashboard-2-line"></i>{" "}
+                  <span>Dashboards</span>
+                </a>
+
+                <Collapse in={openMenu === "sidebarDashboards"}>
+                  <div>
+                    <div className="menu-dropdown">
+                      <ul className="nav nav-sm flex-column">
+                        <li className="nav-item">
+                          <a href="/dashboard-analytics" className="nav-link">
+                            Analytics
+                          </a>
+                        </li>
+                        <li className="nav-item">
+                          <a
+                            href="/dashboard-project-status"
+                            className="nav-link"
+                          >
+                            Project Status
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </Collapse>
+              </li>
+            </>
+          )}
+          {/* end Dashboard Menu */}
+          {["Admin", "Manager"].includes(role) && (
+            <>
+              <li className="menu-title">
+                <i className="ri-more-fill" />{" "}
+                <span data-key="t-pages">Projects</span>
+              </li>
+
+              {/* Authentication */}
+              <li className="nav-item">
+                <a
+                  className={`nav-link menu-link ${
+                    openMenu === "sidebarApps" ? "" : "collapsed"
+                  }`}
+                  href="#!"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleToggle("sidebarApps");
+                  }}
+                  data-bs-toggle="collapse"
+                  aria-expanded={openMenu === "sidebarApps"}
+                >
+                  <i className="ri-apps-2-line"></i>{" "}
+                  <span data-key="t-apps">Projects</span>
+                </a>
+
+                <Collapse in={openMenu === "sidebarApps"}>
+                  <div>
+                    <div
+                      className={`collapse menu-dropdown ${
+                        openMenu === "sidebarApps" ? "show" : ""
+                      }`}
+                      id="sidebarApps"
+                    >
+                      <ul className="nav nav-sm flex-column">
+                        <li className="nav-item">
+                          <a href="/projects-all-projects" className="nav-link">
+                            {" "}
+                            All Projects{" "}
+                          </a>
+                        </li>
+                        <li className="nav-item">
+                          <a href="/projects-datasets" className="nav-link">
+                            {" "}
+                            Datasets{" "}
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </Collapse>
+              </li>
+            </>
+          )}
 
           <li className="menu-title">
             <i className="ri-more-fill" />{" "}
             <span data-key="t-components">Workplace</span>
           </li>
 
-          {/* Charts */}
           <li className="nav-item">
             <a
               className={`nav-link menu-link ${
@@ -170,118 +185,135 @@ const Navbar = () => {
                   id="sidebarCharts"
                 >
                   <ul className="nav nav-sm flex-column">
-                    <li className="nav-item">
-                      <a
-                        href="/workplace-labeling-task"
-                        className="nav-link"
-                        data-key="t-chartjs"
-                      >
-                        {" "}
-                        Labeling Task{" "}
-                      </a>
-                    </li>
-                    <li className="nav-item">
-                      <a
-                        href="/workplace-review-task"
-                        className="nav-link"
-                        data-key="t-echarts"
-                      >
-                        {" "}
-                        Review Task{" "}
-                      </a>
-                    </li>
+                    {role === "Annotator" && (
+                      <>
+                        <li className="nav-item">
+                          <a
+                            href="/workplace-labeling-task"
+                            className="nav-link"
+                            data-key="t-chartjs"
+                          >
+                            {" "}
+                            Labeling Task{" "}
+                          </a>
+                        </li>
+                      </>
+                    )}
+                    {role === "Reviewer" && (
+                      <>
+                        <li className="nav-item">
+                          <a
+                            href="/workplace-review-task"
+                            className="nav-link"
+                            data-key="t-echarts"
+                          >
+                            Review Task
+                          </a>
+                        </li>
+                      </>
+                    )}
                   </ul>
                 </div>
               </div>
             </Collapse>
           </li>
 
-          <li className="menu-title">
-            <i className="ri-more-fill" />{" "}
-            <span data-key="t-components">Export</span>
-          </li>
+          {["Admin", "Manager"].includes(role) && (
+            <li className="menu-title">
+              <i className="ri-more-fill" />{" "}
+              <span data-key="t-components">Export</span>
+            </li>
+          )}
 
-          {/* Base UI */}
-          <li className="nav-item">
-            <a
-              className={`nav-link menu-link ${
-                openMenu === "sidebarUI" ? "" : "collapsed"
-              }`}
-              href="/export"
-            >
-              <i className="ri-pencil-ruler-2-line" />{" "}
-              <span data-key="t-base-ui">Export</span>
-            </a>
-          </li>
-          <li className="menu-title">
-            <i className="ri-more-fill" />{" "}
-            <span data-key="t-components">Settings</span>
-          </li>
+          {["Admin", "Manager"].includes(role) && (
+            <li className="nav-item">
+              <a
+                className={`nav-link menu-link ${
+                  openMenu === "sidebarUI" ? "" : "collapsed"
+                }`}
+                href="/export"
+              >
+                <i className="ri-pencil-ruler-2-line" />{" "}
+                <span data-key="t-base-ui">Export</span>
+              </a>
+            </li>
+          )}
+          {role === "Admin" && (
+            <>
+              <li className="menu-title">
+                <i className="ri-more-fill" />{" "}
+                <span data-key="t-components">Settings</span>
+              </li>
 
-          {/* Base UI */}
-          <li className="nav-item">
-            <a
-              className={`nav-link menu-link ${
-                openMenu === "sidebarUI" ? "" : "collapsed"
-              }`}
-              href="#!"
-              onClick={(e) => {
-                e.preventDefault();
-                handleToggle("sidebarUI");
-              }}
-              data-bs-toggle="collapse"
-              role="button"
-              aria-expanded={openMenu === "sidebarUI"}
-              aria-controls="sidebarUI"
-            >
-              <i className="ri-pencil-ruler-2-line" />{" "}
-              <span data-key="t-base-ui">Settings</span>
-            </a>
-
-            <Collapse in={openMenu === "sidebarUI"}>
-              <div>
-                <div
-                  className={`collapse menu-dropdown mega-dropdown-menu ${
-                    openMenu === "sidebarUI" ? "show" : ""
+              <li className="nav-item">
+                <a
+                  className={`nav-link menu-link ${
+                    openMenu === "sidebarUI" ? "" : "collapsed"
                   }`}
-                  id="sidebarUI"
+                  href="#!"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleToggle("sidebarUI");
+                  }}
+                  data-bs-toggle="collapse"
+                  role="button"
+                  aria-expanded={openMenu === "sidebarUI"}
+                  aria-controls="sidebarUI"
                 >
-                  <div className="row">
-                    <div className="col-lg-4">
-                      <ul className="nav nav-sm flex-column">
-                        <li className="nav-item">
-                          <a
-                            href="/settings-user-management"
-                            className="nav-link"
-                            data-key="t-alerts"
-                          >
-                            {" "}
-                            User Management{" "}
-                          </a>
-                        </li>
-                        <li className="nav-item">
-                          <a href="#!" className="nav-link" data-key="t-badges">
-                            {" "}
-                            AI Config{" "}
-                          </a>
-                        </li>
-                        <li className="nav-item">
-                          <a
-                            href="/settings-system-logs"
-                            className="nav-link"
-                            data-key="t-badges"
-                          >
-                            {" "}
-                            System Logs{" "}
-                          </a>
-                        </li>
-                      </ul>
+                  <i className="ri-pencil-ruler-2-line" />{" "}
+                  <span data-key="t-base-ui">Settings</span>
+                </a>
+
+                <Collapse in={openMenu === "sidebarUI"}>
+                  <div>
+                    <div
+                      className={`collapse menu-dropdown mega-dropdown-menu ${
+                        openMenu === "sidebarUI" ? "show" : ""
+                      }`}
+                      id="sidebarUI"
+                    >
+                      <div className="row">
+                        <div className="col-lg-4">
+                          <ul className="nav nav-sm flex-column">
+                            <li className="nav-item">
+                              <a
+                                href="/settings-user-management"
+                                className="nav-link"
+                                data-key="t-alerts"
+                              >
+                                {" "}
+                                User Management{" "}
+                              </a>
+                            </li>
+                            <li className="nav-item">
+                              <a
+                                href="#!"
+                                className="nav-link"
+                                data-key="t-badges"
+                              >
+                                {" "}
+                                AI Config{" "}
+                              </a>
+                            </li>
+                            <li className="nav-item">
+                              <a
+                                href="/settings-system-logs"
+                                className="nav-link"
+                                data-key="t-badges"
+                              >
+                                {" "}
+                                System Logs{" "}
+                              </a>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </Collapse>
-          </li>
+                </Collapse>
+              </li>
+            </>
+          )}
         </ul>
       </SimpleBar>
     </div>
