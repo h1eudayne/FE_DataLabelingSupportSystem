@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import SimpleBar from "simplebar-react";
 import Collapse from "react-bootstrap/Collapse";
 
-// Import ảnh
 import logoSm from "../../assets/images/logo-sm.png";
 import logoDark from "../../assets/images/logo-dark.png";
 import logoLight from "../../assets/images/logo-light.png";
@@ -195,6 +194,11 @@ const Navbar = () => {
                           >
                             {" "}
                             Labeling Task{" "}
+                          </a>
+                        </li>
+                        <li className="nav-item">
+                          <a href="/my-dashboard" className="nav-link">
+                            My Dashboard
                           </a>
                         </li>
                       </>

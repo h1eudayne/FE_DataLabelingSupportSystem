@@ -2,10 +2,10 @@
 
 import MainLayouts from "./components/layouts/MainLayouts";
 import HomePage from "./page/HomePage";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./page/auth/LoginPage";
 import RegisterPage from "./page/RegisterPage";
-import WorkplaceLabelingTaskPage from "./page/WorkplaceLabelingTaskPage";
+import WorkplaceLabelingTaskPage from "./page/annotator/labeling/WorkplaceLabelingTaskPage";
 import ProjectsAllProjectPage from "./page/ProjectsAllProjectsPage";
 import WorkplaceReviewTaskPage from "./page/WorkplaceReviewTaskPage";
 import DashboardAnalytics from "./page/DashboardAnalytics";
@@ -15,6 +15,8 @@ import ProjectsDatasetPage from "./page/ProjectsDatasetsPage";
 import SettingUserManagement from "./page/SettingUserManagement";
 import SettingsSystemLogs from "./page/SettingsSystemLogs";
 import RoleProtectedRoute from "./routes/RoleProtectedRoute";
+import AccessDenied from "./routes/AccessDenied";
+import AnnotatorDashboard from "./page/annotator/dashboard/AnnotatorDashboard";
 
 function App() {
   /*
@@ -49,7 +51,7 @@ function App() {
         <Route
           path="/dashboard-analytics"
           element={
-            <RoleProtectedRoute allowRoles={["Admin", "Manager"]}>
+            <RoleProtectedRoute allowRoles={["Admin", "Manager", "Annotator"]}>
               <DashboardAnalytics />
             </RoleProtectedRoute>
           }
@@ -72,9 +74,12 @@ function App() {
           }
         />
         <Route path="/settings-system-logs" element={<SettingsSystemLogs />} />
+        <Route path="/my-dashboard" element={<AnnotatorDashboard />} />
       </Route>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/access-denied" element={<AccessDenied />} />
+      <Route path="*" element={<Navigate to="/access-denied" replace />} />
     </Routes>
   );
 }
