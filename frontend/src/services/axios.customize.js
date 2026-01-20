@@ -8,28 +8,24 @@ const instance = axios.create({
 // Alter defaults after instance has been created
 // instance.defaults.headers.common['Authorization'] = AUTH_TOKEN;
 
-// Add a request interceptor
 instance.interceptors.request.use(
-  function (config) {
-    // Do something before the request is sent
+  (config) => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
-  function (error) {
-    // Do something with the request error
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
-// Add a response interceptor
 instance.interceptors.response.use(
-  function (response) {
-    // Any status code that lies within the range of 2xx causes this function to trigger
-    // Do something with response data
-    return response;
-  },
-  function (error) {
-    // Any status codes that fall outside the range of 2xx cause this function to trigger
-    // Do something with response error
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.warn("401 Unauthorized – token missing or expired");
+      // optional: dispatch(logout())
+    }
     return Promise.reject(error);
   },
 );

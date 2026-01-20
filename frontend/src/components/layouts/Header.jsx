@@ -1222,7 +1222,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     />
                     <span className="text-start ms-xl-2">
                       <span className="d-none d-xl-inline-block ms-1 fw-medium user-name-text">
-                        Anna Adame
+                        {user?.aud}
                       </span>
                       <span className="d-none d-xl-block ms-1 fs-12 user-name-sub-text">
                         Founder
@@ -1232,7 +1232,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                 </button>
                 <div className="dropdown-menu dropdown-menu-end">
                   <h6 className="dropdown-header">
-                    Welcome {user?.fullName || user?.email || "User"}!
+                    Welcome {user?.aud || user?.email || "User"}!
                   </h6>
 
                   <Link to="/profile" className="dropdown-item">
