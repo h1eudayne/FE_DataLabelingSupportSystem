@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import commentService from "../../services/annotator/labeling/commentService";
+import commentService from "../../../../services/annotator/labeling/commentService";
 import { toast } from "react-toastify";
 
 const CommentSection = ({ taskId }) => {
@@ -7,7 +7,6 @@ const CommentSection = ({ taskId }) => {
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Lấy danh sách bình luận khi taskId thay đổi
   useEffect(() => {
     if (taskId) {
       loadComments();
@@ -17,7 +16,6 @@ const CommentSection = ({ taskId }) => {
   const loadComments = async () => {
     try {
       const res = await commentService.getComments(taskId);
-      // Giả sử API trả về mảng dữ liệu trong res.data hoặc res.data.data
       setComments(res.data?.data || res.data || []);
     } catch {
       console.error("Không thể tải bình luận");
@@ -30,7 +28,7 @@ const CommentSection = ({ taskId }) => {
     try {
       await commentService.postComment(taskId, newComment);
       setNewComment("");
-      loadComments(); // Tải lại danh sách sau khi gửi
+      loadComments();
       toast.success("Đã gửi phản hồi");
     } catch {
       toast.error("Gửi phản hồi thất bại");

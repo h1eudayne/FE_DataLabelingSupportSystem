@@ -17,6 +17,7 @@ namespace DTOs.Requests
     public class UpdateProjectRequest
     {
         public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
         public decimal PricePerLabel { get; set; }
         public decimal TotalBudget { get; set; }
         public DateTime Deadline { get; set; }
@@ -33,5 +34,4 @@ namespace DTOs.Requests
     {
         public List<string> StorageUrls { get; set; } = new List<string>();
     }
-
 }

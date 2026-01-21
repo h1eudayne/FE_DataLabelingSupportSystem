@@ -8,7 +8,6 @@ export default function StatCard({
   color = "primary",
 }) {
   return (
-    // <div className="col-xl-2 col-md-6">
     <div className={`card card-animate h-100`}>
       <div className="card-body">
         <div className="d-flex align-items-center">
@@ -36,6 +35,5 @@ export default function StatCard({
         </div>
       </div>
     </div>
-    // </div>
   );
 }

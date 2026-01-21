@@ -1,4 +1,3 @@
-// store/annotator/labelling/labelingSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
 const labelingSlice = createSlice({
@@ -17,7 +16,7 @@ const labelingSlice = createSlice({
       );
     },
     setAnnotations: (state, action) => {
-      state.annotations = action.payload; // Dùng khi load dữ liệu cũ/Draft
+      state.annotations = action.payload;
     },
     setSelectedLabel: (state, action) => {
       state.selectedLabel = action.payload;

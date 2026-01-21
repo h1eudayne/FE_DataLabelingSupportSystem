@@ -1,4 +1,3 @@
-// src/layouts/DashboardLayout.jsx
 import React from "react";
 
 const DashboardLayout = ({ title, children }) => {

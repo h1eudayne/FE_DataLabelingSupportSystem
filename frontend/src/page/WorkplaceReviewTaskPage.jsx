@@ -4,7 +4,6 @@ const WorkplaceReviewTaskPage = () => {
   return (
     <>
       <div>
-        {/* start page title */}
         <div className="row">
           <div className="col-12">
             <div className="page-title-box d-sm-flex align-items-center justify-content-between">
@@ -20,7 +19,6 @@ const WorkplaceReviewTaskPage = () => {
             </div>
           </div>
         </div>
-        {/* end page title */}
         <div className="row">
           <div className="col-xxl-3 col-sm-6">
             <div className="card card-animate">
@@ -36,9 +34,8 @@ const WorkplaceReviewTaskPage = () => {
                     </h2>
                     <p className="mb-0 text-muted">
                       <span className="badge bg-light text-success mb-0">
-                        {" "}
                         <i className="ri-arrow-up-line align-middle" /> 17.32 %
-                      </span>{" "}
+                      </span>
                       vs. previous month
                     </p>
                   </div>
@@ -51,11 +48,8 @@ const WorkplaceReviewTaskPage = () => {
                   </div>
                 </div>
               </div>
-              {/* end card body */}
-            </div>{" "}
-            {/* end card*/}
+            </div>
           </div>
-          {/*end col*/}
           <div className="col-xxl-3 col-sm-6">
             <div className="card card-animate">
               <div className="card-body">
@@ -70,9 +64,8 @@ const WorkplaceReviewTaskPage = () => {
                     </h2>
                     <p className="mb-0 text-muted">
                       <span className="badge bg-light text-danger mb-0">
-                        {" "}
                         <i className="ri-arrow-down-line align-middle" /> 0.87 %
-                      </span>{" "}
+                      </span>
                       vs. previous month
                     </p>
                   </div>
@@ -85,10 +78,8 @@ const WorkplaceReviewTaskPage = () => {
                   </div>
                 </div>
               </div>
-              {/* end card body */}
             </div>
           </div>
-          {/*end col*/}
           <div className="col-xxl-3 col-sm-6">
             <div className="card card-animate">
               <div className="card-body">
@@ -103,9 +94,8 @@ const WorkplaceReviewTaskPage = () => {
                     </h2>
                     <p className="mb-0 text-muted">
                       <span className="badge bg-light text-danger mb-0">
-                        {" "}
-                        <i className="ri-arrow-down-line align-middle" /> 2.52 %{" "}
-                      </span>{" "}
+                        <i className="ri-arrow-down-line align-middle" /> 2.52 %
+                      </span>
                       vs. previous month
                     </p>
                   </div>
@@ -118,10 +108,8 @@ const WorkplaceReviewTaskPage = () => {
                   </div>
                 </div>
               </div>
-              {/* end card body */}
             </div>
           </div>
-          {/*end col*/}
           <div className="col-xxl-3 col-sm-6">
             <div className="card card-animate">
               <div className="card-body">
@@ -136,9 +124,8 @@ const WorkplaceReviewTaskPage = () => {
                     </h2>
                     <p className="mb-0 text-muted">
                       <span className="badge bg-light text-success mb-0">
-                        {" "}
-                        <i className="ri-arrow-up-line align-middle" /> 0.63 %{" "}
-                      </span>{" "}
+                        <i className="ri-arrow-up-line align-middle" /> 0.63 %
+                      </span>
                       vs. previous month
                     </p>
                   </div>
@@ -151,12 +138,9 @@ const WorkplaceReviewTaskPage = () => {
                   </div>
                 </div>
               </div>
-              {/* end card body */}
             </div>
           </div>
-          {/*end col*/}
         </div>
-        {/*end row*/}
         <div className="row">
           <div className="col-lg-12">
             <div className="card" id="tasksList">
@@ -197,7 +181,6 @@ const WorkplaceReviewTaskPage = () => {
                         <i className="ri-search-line search-icon" />
                       </div>
                     </div>
-                    {/*end col*/}
                     <div className="col-xxl-3 col-sm-4">
                       <input
                         type="text"
@@ -209,7 +192,6 @@ const WorkplaceReviewTaskPage = () => {
                         placeholder="Select date range"
                       />
                     </div>
-                    {/*end col*/}
                     <div className="col-xxl-3 col-sm-4">
                       <div className="input-light">
                         <select
@@ -230,24 +212,19 @@ const WorkplaceReviewTaskPage = () => {
                         </select>
                       </div>
                     </div>
-                    {/*end col*/}
                     <div className="col-xxl-1 col-sm-4">
                       <button
                         type="button"
                         className="btn btn-primary w-100"
                         onclick="SearchData();"
                       >
-                        {" "}
                         <i className="ri-equalizer-fill me-1 align-bottom" />
                         Filters
                       </button>
                     </div>
-                    {/*end col*/}
                   </div>
-                  {/*end row*/}
                 </form>
               </div>
-              {/*end card-body*/}
               <div className="card-body">
                 <div className="table-responsive table-card mb-4">
                   <table
@@ -401,7 +378,6 @@ const WorkplaceReviewTaskPage = () => {
                       </tr>
                     </tbody>
                   </table>
-                  {/*end table*/}
                   <div className="noresult" style={{ display: "none" }}>
                     <div className="text-center">
                       <lord-icon
@@ -430,13 +406,9 @@ const WorkplaceReviewTaskPage = () => {
                   </div>
                 </div>
               </div>
-              {/*end card-body*/}
             </div>
-            {/*end card*/}
           </div>
-          {/*end col*/}
         </div>
-        {/*end row*/}
         <div
           className="modal fade flip"
           id="deleteOrder"
@@ -475,7 +447,6 @@ const WorkplaceReviewTaskPage = () => {
             </div>
           </div>
         </div>
-        {/*end delete modal */}
         <div
           className="modal fade zoomIn"
           id="showModal"
@@ -513,7 +484,6 @@ const WorkplaceReviewTaskPage = () => {
                         required
                       />
                     </div>
-                    {/*end col*/}
                     <div className="col-lg-12">
                       <div>
                         <label
@@ -531,7 +501,6 @@ const WorkplaceReviewTaskPage = () => {
                         />
                       </div>
                     </div>
-                    {/*end col*/}
                     <div className="col-lg-12">
                       <label htmlFor="clientName-field" className="form-label">
                         Client Name
@@ -544,7 +513,6 @@ const WorkplaceReviewTaskPage = () => {
                         required
                       />
                     </div>
-                    {/*end col*/}
                     <div className="col-lg-12">
                       <label className="form-label">Assigned To</label>
                       <div data-simplebar style={{ height: 95 }}>
@@ -812,7 +780,6 @@ const WorkplaceReviewTaskPage = () => {
                         </ul>
                       </div>
                     </div>
-                    {/*end col*/}
                     <div className="col-lg-6">
                       <label htmlFor="duedate-field" className="form-label">
                         Due Date
@@ -826,7 +793,6 @@ const WorkplaceReviewTaskPage = () => {
                         required
                       />
                     </div>
-                    {/*end col*/}
                     <div className="col-lg-6">
                       <label htmlFor="ticket-status" className="form-label">
                         Status
@@ -839,7 +805,6 @@ const WorkplaceReviewTaskPage = () => {
                         <option value="Completed">Completed</option>
                       </select>
                     </div>
-                    {/*end col*/}
                     <div className="col-lg-12">
                       <label htmlFor="priority-field" className="form-label">
                         Priority
@@ -851,9 +816,7 @@ const WorkplaceReviewTaskPage = () => {
                         <option value="Low">Low</option>
                       </select>
                     </div>
-                    {/*end col*/}
                   </div>
-                  {/*end row*/}
                 </div>
                 <div className="modal-footer">
                   <div className="hstack gap-2 justify-content-end">
@@ -872,14 +835,12 @@ const WorkplaceReviewTaskPage = () => {
                     >
                       Add Task
                     </button>
-                    {/* <button type="button" class="btn btn-success" id="edit-btn">Update Task</button> */}
                   </div>
                 </div>
               </form>
             </div>
           </div>
         </div>
-        {/*end modal*/}
       </div>
     </>
   );

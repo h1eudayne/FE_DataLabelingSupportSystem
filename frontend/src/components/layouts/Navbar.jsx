@@ -21,7 +21,6 @@ const Navbar = () => {
   return (
     <div className="app-menu navbar-menu">
       <div className="navbar-brand-box">
-        {/* Logo Dark */}
         <Link to="/" className="logo logo-dark">
           <span className="logo-sm">
             <img src={logoSm} alt="" height="22" />
@@ -54,7 +53,6 @@ const Navbar = () => {
               <li className="menu-title">
                 <span data-key="t-menu">Dashboard</span>
               </li>
-              {/* Dashboard */}
               <li className="nav-item">
                 <a
                   className={`nav-link menu-link ${
@@ -68,7 +66,7 @@ const Navbar = () => {
                   data-bs-toggle="collapse"
                   aria-expanded={openMenu === "sidebarDashboards"}
                 >
-                  <i className="ri-dashboard-2-line"></i>{" "}
+                  <i className="ri-dashboard-2-line"></i>
                   <span>Dashboards</span>
                 </a>
 
@@ -96,15 +94,13 @@ const Navbar = () => {
               </li>
             </>
           )}
-          {/* end Dashboard Menu */}
           {["Admin", "Manager"].includes(role) && (
             <>
               <li className="menu-title">
-                <i className="ri-more-fill" />{" "}
+                <i className="ri-more-fill" />
                 <span data-key="t-pages">Projects</span>
               </li>
 
-              {/* Authentication */}
               <li className="nav-item">
                 <a
                   className={`nav-link menu-link ${
@@ -118,7 +114,7 @@ const Navbar = () => {
                   data-bs-toggle="collapse"
                   aria-expanded={openMenu === "sidebarApps"}
                 >
-                  <i className="ri-apps-2-line"></i>{" "}
+                  <i className="ri-apps-2-line"></i>
                   <span data-key="t-apps">Projects</span>
                 </a>
 
@@ -133,14 +129,12 @@ const Navbar = () => {
                       <ul className="nav nav-sm flex-column">
                         <li className="nav-item">
                           <a href="/projects-all-projects" className="nav-link">
-                            {" "}
-                            All Projects{" "}
+                            All Projects
                           </a>
                         </li>
                         <li className="nav-item">
                           <a href="/projects-datasets" className="nav-link">
-                            {" "}
-                            Datasets{" "}
+                            Datasets
                           </a>
                         </li>
                       </ul>
@@ -152,7 +146,7 @@ const Navbar = () => {
           )}
 
           <li className="menu-title">
-            <i className="ri-more-fill" />{" "}
+            <i className="ri-more-fill" />
             <span data-key="t-components">Workplace</span>
           </li>
 
@@ -171,7 +165,7 @@ const Navbar = () => {
               aria-expanded={openMenu === "sidebarCharts"}
               aria-controls="sidebarCharts"
             >
-              <i className="ri-pie-chart-line" />{" "}
+              <i className="ri-pie-chart-line" />
               <span data-key="t-charts">Workplace</span>
             </a>
 
@@ -201,8 +195,7 @@ const Navbar = () => {
                             className="nav-link"
                             data-key="t-chartjs"
                           >
-                            {" "}
-                            Labeling Task{" "}
+                            Labeling Task
                           </a>
                         </li>
                         <li className="nav-item">
@@ -233,7 +226,7 @@ const Navbar = () => {
 
           {["Admin", "Manager"].includes(role) && (
             <li className="menu-title">
-              <i className="ri-more-fill" />{" "}
+              <i className="ri-more-fill" />
               <span data-key="t-components">Export</span>
             </li>
           )}
@@ -246,7 +239,7 @@ const Navbar = () => {
                 }`}
                 href="/export"
               >
-                <i className="ri-pencil-ruler-2-line" />{" "}
+                <i className="ri-pencil-ruler-2-line" />
                 <span data-key="t-base-ui">Export</span>
               </a>
             </li>
@@ -254,7 +247,7 @@ const Navbar = () => {
           {role === "Admin" && (
             <>
               <li className="menu-title">
-                <i className="ri-more-fill" />{" "}
+                <i className="ri-more-fill" />
                 <span data-key="t-components">Settings</span>
               </li>
 
@@ -273,7 +266,7 @@ const Navbar = () => {
                   aria-expanded={openMenu === "sidebarUI"}
                   aria-controls="sidebarUI"
                 >
-                  <i className="ri-pencil-ruler-2-line" />{" "}
+                  <i className="ri-pencil-ruler-2-line" />
                   <span data-key="t-base-ui">Settings</span>
                 </a>
 
@@ -294,8 +287,7 @@ const Navbar = () => {
                                 className="nav-link"
                                 data-key="t-alerts"
                               >
-                                {" "}
-                                User Management{" "}
+                                User Management
                               </a>
                             </li>
                             <li className="nav-item">
@@ -304,8 +296,7 @@ const Navbar = () => {
                                 className="nav-link"
                                 data-key="t-badges"
                               >
-                                {" "}
-                                AI Config{" "}
+                                AI Config
                               </a>
                             </li>
                             <li className="nav-item">
@@ -314,8 +305,7 @@ const Navbar = () => {
                                 className="nav-link"
                                 data-key="t-badges"
                               >
-                                {" "}
-                                System Logs{" "}
+                                System Logs
                               </a>
                             </li>
                           </ul>

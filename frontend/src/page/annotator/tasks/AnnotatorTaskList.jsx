@@ -68,7 +68,6 @@ const AnnotatorTaskList = () => {
                     </div>
                   </div>
 
-                  {/* Hiển thị tên dự án từ bảng Projects (Yêu cầu API Join bảng) */}
                   <h5 className="fs-15 text-dark text-truncate mb-2 fw-semibold">
                     {task.projectName || `Dự án #${task.assignmentId}`}
                   </h5>

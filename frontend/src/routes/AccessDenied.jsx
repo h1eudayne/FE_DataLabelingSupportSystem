@@ -50,7 +50,7 @@ const AccessDenied = () => (
             <div className="col-lg-12">
               <div className="text-center">
                 <p className="mb-0 text-muted">
-                  © Velzon. Crafted with{" "}
+                  © Velzon. Crafted with
                   <i className="mdi mdi-heart text-danger" /> by Themesbrand
                 </p>
               </div>

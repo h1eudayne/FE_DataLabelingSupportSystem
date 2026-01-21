@@ -515,7 +515,7 @@ namespace DAL.Migrations
             modelBuilder.Entity("DTOs.Entities.UserProjectStat", b =>
                 {
                     b.HasOne("DTOs.Entities.Project", "Project")
-                        .WithMany()
+                        .WithMany("UserProjectStats")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -548,6 +548,8 @@ namespace DAL.Migrations
                     b.Navigation("DataItems");
 
                     b.Navigation("LabelClasses");
+
+                    b.Navigation("UserProjectStats");
                 });
 
             modelBuilder.Entity("DTOs.Entities.User", b =>

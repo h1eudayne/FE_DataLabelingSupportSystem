@@ -19,7 +19,6 @@ const RegisterPage = () => {
   return (
     <div className="auth-page-wrapper auth-bg-cover py-5 d-flex justify-content-center align-items-center min-vh-100">
       <div className="bg-overlay" />
-      {/* auth-page content */}
       <div className="auth-page-content overflow-hidden pt-lg-5">
         <div className="container">
           <div className="row">
@@ -112,7 +111,6 @@ const RegisterPage = () => {
                               </div>
                             </div>
                           </div>
-                          {/* end carousel */}
                         </div>
                       </div>
                     </div>
@@ -193,7 +191,7 @@ const RegisterPage = () => {
                           </div>
                           <div className="mb-4">
                             <p className="mb-0 fs-12 text-muted fst-italic">
-                              By registering you agree to the Velzon{" "}
+                              By registering you agree to the Velzon
                               <a
                                 href="#"
                                 className="text-primary text-decoration-underline fst-normal fw-medium"
@@ -278,23 +276,17 @@ const RegisterPage = () => {
                   </div>
                 </div>
               </div>
-              {/* end card */}
             </div>
-            {/* end col */}
           </div>
-          {/* end row */}
         </div>
-        {/* end container */}
       </div>
-      {/* end auth page content */}
-      {/* footer */}
       <footer className="footer">
         <div className="container">
           <div className="row">
             <div className="col-lg-12">
               <div className="text-center">
                 <p className="mb-0">
-                  © Velzon. Crafted with{" "}
+                  © Velzon. Crafted with
                   <i className="mdi mdi-heart text-danger" /> by Themesbrand
                 </p>
               </div>
@@ -302,7 +294,6 @@ const RegisterPage = () => {
           </div>
         </div>
       </footer>
-      {/* end Footer */}
     </div>
   );
 };

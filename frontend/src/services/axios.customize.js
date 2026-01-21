@@ -1,12 +1,11 @@
 import axios from "axios";
 
-// Set config defaults when creating the instance
 const instance = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
 });
 
-// Alter defaults after instance has been created
-// instance.defaults.headers.common['Authorization'] = AUTH_TOKEN;
+instance.defaults.headers.common["Authorization"] =
+  `Bearer ${localStorage.getItem("token")}`;
 
 instance.interceptors.request.use(
   (config) => {
@@ -24,7 +23,6 @@ instance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.warn("401 Unauthorized – token missing or expired");
-      // optional: dispatch(logout())
     }
     return Promise.reject(error);
   },

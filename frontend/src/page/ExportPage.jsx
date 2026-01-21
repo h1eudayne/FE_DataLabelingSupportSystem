@@ -4,7 +4,6 @@ const ExportPage = () => {
   return (
     <>
       <div>
-        {/* start page title */}
         <div className="row">
           <div className="col-12">
             <div className="page-title-box d-sm-flex align-items-center justify-content-between">
@@ -20,10 +19,8 @@ const ExportPage = () => {
             </div>
           </div>
         </div>
-        {/* end page title */}
         <div className="row">
           <div className="col-xl-3 col-md-6">
-            {/* card */}
             <div className="card card-animate">
               <div className="card-body">
                 <div className="d-flex align-items-center">
@@ -34,7 +31,7 @@ const ExportPage = () => {
                   </div>
                   <div className="flex-shrink-0">
                     <h5 className="text-success fs-14 mb-0">
-                      <i className="ri-arrow-right-up-line fs-13 align-middle" />{" "}
+                      <i className="ri-arrow-right-up-line fs-13 align-middle" />
                       +89.24 %
                     </h5>
                   </div>
@@ -48,7 +45,7 @@ const ExportPage = () => {
                       </span>
                       k
                     </h4>
-                    <span className="badge bg-warning me-1">2,258</span>{" "}
+                    <span className="badge bg-warning me-1">2,258</span>
                     <span className="text-muted">Invoices sent</span>
                   </div>
                   <div className="avatar-sm flex-shrink-0">
@@ -61,13 +58,9 @@ const ExportPage = () => {
                   </div>
                 </div>
               </div>
-              {/* end card body */}
             </div>
-            {/* end card */}
           </div>
-          {/* end col */}
           <div className="col-xl-3 col-md-6">
-            {/* card */}
             <div className="card card-animate">
               <div className="card-body">
                 <div className="d-flex align-items-center">
@@ -78,7 +71,7 @@ const ExportPage = () => {
                   </div>
                   <div className="flex-shrink-0">
                     <h5 className="text-danger fs-14 mb-0">
-                      <i className="ri-arrow-right-down-line fs-13 align-middle" />{" "}
+                      <i className="ri-arrow-right-down-line fs-13 align-middle" />
                       +8.09 %
                     </h5>
                   </div>
@@ -92,7 +85,7 @@ const ExportPage = () => {
                       </span>
                       k
                     </h4>
-                    <span className="badge bg-warning me-1">1,958</span>{" "}
+                    <span className="badge bg-warning me-1">1,958</span>
                     <span className="text-muted">Paid by clients</span>
                   </div>
                   <div className="avatar-sm flex-shrink-0">
@@ -105,13 +98,9 @@ const ExportPage = () => {
                   </div>
                 </div>
               </div>
-              {/* end card body */}
             </div>
-            {/* end card */}
           </div>
-          {/* end col */}
           <div className="col-xl-3 col-md-6">
-            {/* card */}
             <div className="card card-animate">
               <div className="card-body">
                 <div className="d-flex align-items-center">
@@ -122,7 +111,7 @@ const ExportPage = () => {
                   </div>
                   <div className="flex-shrink-0">
                     <h5 className="text-danger fs-14 mb-0">
-                      <i className="ri-arrow-right-down-line fs-13 align-middle" />{" "}
+                      <i className="ri-arrow-right-down-line fs-13 align-middle" />
                       +9.01 %
                     </h5>
                   </div>
@@ -136,7 +125,7 @@ const ExportPage = () => {
                       </span>
                       k
                     </h4>
-                    <span className="badge bg-warning me-1">338</span>{" "}
+                    <span className="badge bg-warning me-1">338</span>
                     <span className="text-muted">Unpaid by clients</span>
                   </div>
                   <div className="avatar-sm flex-shrink-0">
@@ -149,13 +138,9 @@ const ExportPage = () => {
                   </div>
                 </div>
               </div>
-              {/* end card body */}
             </div>
-            {/* end card */}
           </div>
-          {/* end col */}
           <div className="col-xl-3 col-md-6">
-            {/* card */}
             <div className="card card-animate">
               <div className="card-body">
                 <div className="d-flex align-items-center">
@@ -166,7 +151,7 @@ const ExportPage = () => {
                   </div>
                   <div className="flex-shrink-0">
                     <h5 className="text-success fs-14 mb-0">
-                      <i className="ri-arrow-right-up-line fs-13 align-middle" />{" "}
+                      <i className="ri-arrow-right-up-line fs-13 align-middle" />
                       +7.55 %
                     </h5>
                   </div>
@@ -180,7 +165,7 @@ const ExportPage = () => {
                       </span>
                       k
                     </h4>
-                    <span className="badge bg-warning me-1">502</span>{" "}
+                    <span className="badge bg-warning me-1">502</span>
                     <span className="text-muted">Cancelled by clients</span>
                   </div>
                   <div className="avatar-sm flex-shrink-0">
@@ -193,13 +178,9 @@ const ExportPage = () => {
                   </div>
                 </div>
               </div>
-              {/* end card body */}
             </div>
-            {/* end card */}
           </div>
-          {/* end col */}
-        </div>{" "}
-        {/* end row*/}
+        </div>
         <div className="row">
           <div className="col-lg-12">
             <div className="card" id="invoiceList">
@@ -239,7 +220,6 @@ const ExportPage = () => {
                         <i className="ri-search-line search-icon" />
                       </div>
                     </div>
-                    {/*end col*/}
                     <div className="col-xxl-3 col-sm-4">
                       <input
                         type="text"
@@ -248,7 +228,6 @@ const ExportPage = () => {
                         placeholder="Select date"
                       />
                     </div>
-                    {/*end col*/}
                     <div className="col-xxl-3 col-sm-4">
                       <div className="input-light">
                         <select
@@ -269,20 +248,17 @@ const ExportPage = () => {
                         </select>
                       </div>
                     </div>
-                    {/*end col*/}
                     <div className="col-xxl-1 col-sm-4">
                       <button
                         type="button"
                         className="btn btn-primary w-100"
                         onclick="SearchData();"
                       >
-                        <i className="ri-equalizer-fill me-1 align-bottom" />{" "}
+                        <i className="ri-equalizer-fill me-1 align-bottom" />
                         Filters
                       </button>
                     </div>
-                    {/*end col*/}
                   </div>
-                  {/*end row*/}
                 </form>
               </div>
               <div className="card-body">
@@ -384,7 +360,6 @@ const ExportPage = () => {
                     </div>
                   </div>
                 </div>
-                {/* Modal */}
                 <div
                   className="modal fade flip"
                   id="deleteOrder"
@@ -413,7 +388,7 @@ const ExportPage = () => {
                               id="deleteRecord-close"
                               data-bs-dismiss="modal"
                             >
-                              <i className="ri-close-line me-1 align-middle" />{" "}
+                              <i className="ri-close-line me-1 align-middle" />
                               Close
                             </button>
                             <button
@@ -428,13 +403,10 @@ const ExportPage = () => {
                     </div>
                   </div>
                 </div>
-                {/*end modal */}
               </div>
             </div>
           </div>
-          {/*end col*/}
         </div>
-        {/*end row*/}
       </div>
     </>
   );

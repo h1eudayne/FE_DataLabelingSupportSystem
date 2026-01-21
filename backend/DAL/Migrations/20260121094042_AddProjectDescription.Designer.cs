@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260119091103_FinalizeDbSchema")]
-    partial class FinalizeDbSchema
+    [Migration("20260121094042_AddProjectDescription")]
+    partial class AddProjectDescription
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -518,7 +518,7 @@ namespace DAL.Migrations
             modelBuilder.Entity("DTOs.Entities.UserProjectStat", b =>
                 {
                     b.HasOne("DTOs.Entities.Project", "Project")
-                        .WithMany()
+                        .WithMany("UserProjectStats")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -551,6 +551,8 @@ namespace DAL.Migrations
                     b.Navigation("DataItems");
 
                     b.Navigation("LabelClasses");
+
+                    b.Navigation("UserProjectStats");
                 });
 
             modelBuilder.Entity("DTOs.Entities.User", b =>

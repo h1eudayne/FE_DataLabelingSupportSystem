@@ -40,6 +40,7 @@ namespace BLL.Services
             {
                 ManagerId = managerId,
                 Name = request.Name,
+                Description = request.Description,
                 PricePerLabel = request.PricePerLabel,
                 TotalBudget = request.TotalBudget,
                 Deadline = request.Deadline,
@@ -63,6 +64,7 @@ namespace BLL.Services
             {
                 Id = project.Id,
                 Name = project.Name,
+                Description = project.Description,
                 PricePerLabel = project.PricePerLabel,
                 TotalBudget = project.TotalBudget,
                 Deadline = project.Deadline,
@@ -120,10 +122,15 @@ namespace BLL.Services
             var project = await _projectRepository.GetProjectWithDetailsAsync(projectId);
             if (project == null) return null;
 
+            int total = project.DataItems.Count;
+            int done = project.DataItems.Count(d => d.Status == "Done" || d.Status == "Completed" || d.Status == "Approved");
+            int progressPercent = (total > 0) ? (int)((double)done / total * 100) : 0;
+
             return new ProjectDetailResponse
             {
                 Id = project.Id,
                 Name = project.Name,
+                Description = project.Description,
                 PricePerLabel = project.PricePerLabel,
                 TotalBudget = project.TotalBudget,
                 Deadline = project.Deadline,
@@ -137,8 +144,16 @@ namespace BLL.Services
                     Color = l.Color,
                     GuideLine = l.GuideLine
                 }).ToList(),
-                TotalDataItems = project.DataItems.Count,
-                ProcessedItems = project.DataItems.Count(d => d.Status == "Done")
+                TotalDataItems = total,
+                ProcessedItems = done,
+                Progress = progressPercent,
+                Members = project.UserProjectStats?.Select(s => new MemberResponse
+                {
+                    Id = s.User.Id,
+                    FullName = !string.IsNullOrEmpty(s.User.FullName) ? s.User.FullName : s.User.Email,
+                    Email = s.User.Email,
+                    Role = s.User.Role
+                }).ToList() ?? new List<MemberResponse>()
             };
         }
 
@@ -165,6 +180,9 @@ namespace BLL.Services
             if (project == null) throw new Exception("Project not found");
 
             project.Name = request.Name;
+
+            if (!string.IsNullOrEmpty(request.Description)) project.Description = request.Description;
+
             project.PricePerLabel = request.PricePerLabel;
             project.TotalBudget = request.TotalBudget;
             project.Deadline = request.Deadline;

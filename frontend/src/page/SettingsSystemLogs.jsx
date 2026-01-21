@@ -4,7 +4,6 @@ const SettingsSystemLogs = () => {
   return (
     <>
       <div>
-        {/* start page title */}
         <div className="row">
           <div className="col-12">
             <div className="page-title-box d-sm-flex align-items-center justify-content-between">
@@ -20,7 +19,6 @@ const SettingsSystemLogs = () => {
             </div>
           </div>
         </div>
-        {/* end page title */}
         <div className="row">
           <div className="col-lg-12">
             <div>
@@ -40,7 +38,7 @@ const SettingsSystemLogs = () => {
                       </div>
                       <div className="flex-grow-1 ms-3">
                         <h5 className="fs-15">
-                          @Erica245{" "}
+                          @Erica245
                           <small className="text-muted fs-13 fw-normal">
                             - 10 min Ago
                           </small>
@@ -95,7 +93,7 @@ const SettingsSystemLogs = () => {
                           </div>
                         </div>
                       </div>
-                      {/*end col*/}
+
                       <div className="col-sm-6">
                         <div className="d-flex border border-dashed p-2 rounded position-relative">
                           <div className="flex-shrink-0 avatar-xs">
@@ -116,9 +114,7 @@ const SettingsSystemLogs = () => {
                           </div>
                         </div>
                       </div>
-                      {/*end col*/}
                     </div>
-                    {/*end row*/}
                   </div>
                 </div>
                 <div className="timeline-item left">
@@ -198,7 +194,7 @@ const SettingsSystemLogs = () => {
                   <div className="date">18 May 2021</div>
                   <div className="content">
                     <h5>
-                      Donald Palmer{" "}
+                      Donald Palmer
                       <small className="text-muted fs-13 fw-normal">
                         - Has changed 2 attributes
                       </small>
@@ -241,7 +237,7 @@ const SettingsSystemLogs = () => {
                           className="img-fluid rounded"
                         />
                       </div>
-                      {/*end col*/}
+
                       <div className="col-3">
                         <img
                           src="assets/images/small/img-3.jpg"
@@ -249,7 +245,7 @@ const SettingsSystemLogs = () => {
                           className="img-fluid rounded"
                         />
                       </div>
-                      {/*end col*/}
+
                       <div className="col-3">
                         <img
                           src="assets/images/small/img-4.jpg"
@@ -257,7 +253,7 @@ const SettingsSystemLogs = () => {
                           className="img-fluid rounded"
                         />
                       </div>
-                      {/*end col*/}
+
                       <div className="col-3">
                         <img
                           src="assets/images/small/img-6.jpg"
@@ -265,9 +261,7 @@ const SettingsSystemLogs = () => {
                           className="img-fluid rounded"
                         />
                       </div>
-                      {/*end col*/}
                     </div>
-                    {/*end row*/}
                   </div>
                 </div>
                 <div className="timeline-item right">
@@ -275,7 +269,7 @@ const SettingsSystemLogs = () => {
                   <div className="date">01 Jan 2021</div>
                   <div className="content">
                     <h5>
-                      New ticket received{" "}
+                      New ticket received
                       <span className="badge bg-success-subtle text-success fs-10 align-middle ms-1">
                         Completed
                       </span>
@@ -297,9 +291,8 @@ const SettingsSystemLogs = () => {
               </div>
             </div>
           </div>
-          {/*end col*/}
         </div>
-        {/*end row*/}
+
         <div className="row mt-4">
           <div className="col-lg-12">
             <div>
@@ -331,7 +324,7 @@ const SettingsSystemLogs = () => {
                                 design. Increase or decrease the letter spacing
                                 depending on the situation and try, try again
                                 until it looks right, and each letter has the
-                                perfect spot of its own.{" "}
+                                perfect spot of its own.
                               </p>
                             </div>
                           </div>
@@ -362,7 +355,7 @@ const SettingsSystemLogs = () => {
                                 />
                               </a>
                             </div>
-                            {/*end col*/}
+
                             <div className="col-3">
                               <a href="javascript:void(0);">
                                 <img
@@ -372,7 +365,7 @@ const SettingsSystemLogs = () => {
                                 />
                               </a>
                             </div>
-                            {/*end col*/}
+
                             <div className="col-3">
                               <a href="javascript:void(0);">
                                 <img
@@ -382,7 +375,7 @@ const SettingsSystemLogs = () => {
                                 />
                               </a>
                             </div>
-                            {/*end col*/}
+
                             <div className="col-3">
                               <a href="javascript:void(0);">
                                 <img
@@ -392,7 +385,6 @@ const SettingsSystemLogs = () => {
                                 />
                               </a>
                             </div>
-                            {/*end col*/}
                           </div>
                         </div>
                       </div>
@@ -479,9 +471,8 @@ const SettingsSystemLogs = () => {
               </div>
             </div>
           </div>
-          {/*end col*/}
         </div>
-        {/*end row*/}
+
         <div className="row mt-4">
           <div className="col-lg-12">
             <div>
@@ -504,7 +495,7 @@ const SettingsSystemLogs = () => {
                         </div>
                       </div>
                     </div>
-                    {/*end swiper-slide*/}
+
                     <div className="swiper-slide">
                       <div className="card pt-2 border-0 item-box text-center">
                         <div className="timeline-content p-3 rounded">
@@ -520,7 +511,7 @@ const SettingsSystemLogs = () => {
                         </div>
                       </div>
                     </div>
-                    {/*end swiper-slide*/}
+
                     <div className="swiper-slide">
                       <div className="card pt-2 border-0 item-box text-center">
                         <div className="timeline-content p-3 rounded">
@@ -534,7 +525,7 @@ const SettingsSystemLogs = () => {
                         </div>
                       </div>
                     </div>
-                    {/*end swiper-slide*/}
+
                     <div className="swiper-slide">
                       <div className="card pt-2 border-0 item-box text-center">
                         <div className="timeline-content p-3 rounded">
@@ -550,7 +541,7 @@ const SettingsSystemLogs = () => {
                         </div>
                       </div>
                     </div>
-                    {/*end swiper-slide*/}
+
                     <div className="swiper-slide">
                       <div className="card pt-2 border-0 item-box text-center">
                         <div className="timeline-content p-3 rounded">
@@ -564,7 +555,7 @@ const SettingsSystemLogs = () => {
                         </div>
                       </div>
                     </div>
-                    {/*end swiper-slide*/}
+
                     <div className="swiper-slide">
                       <div className="card pt-2 border-0 item-box text-center">
                         <div className="timeline-content p-3 rounded">
@@ -578,7 +569,7 @@ const SettingsSystemLogs = () => {
                         </div>
                       </div>
                     </div>
-                    {/*end swiper-slide*/}
+
                     <div className="swiper-slide">
                       <div className="card pt-2 border-0 item-box text-center">
                         <div className="timeline-content p-3 rounded">
@@ -592,7 +583,7 @@ const SettingsSystemLogs = () => {
                         </div>
                       </div>
                     </div>
-                    {/*end swiper-slide*/}
+
                     <div className="swiper-slide">
                       <div className="card pt-2 border-0 item-box text-center">
                         <div className="timeline-content p-3 rounded">
@@ -608,18 +599,14 @@ const SettingsSystemLogs = () => {
                         </div>
                       </div>
                     </div>
-                    {/*end swiper-slide*/}
                   </div>
                   <div className="swiper-button-next" />
                   <div className="swiper-button-prev" />
                 </div>
               </div>
-              {/*end timeline*/}
             </div>
           </div>
-          {/*end col*/}
         </div>
-        {/*end row*/}
       </div>
     </>
   );

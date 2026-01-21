@@ -6,18 +6,21 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./page/auth/LoginPage";
 import RegisterPage from "./page/RegisterPage";
 import WorkplaceLabelingTaskPage from "./page/annotator/labeling/WorkplaceLabelingTaskPage";
-import ProjectsAllProjectPage from "./page/ProjectsAllProjectsPage";
+import ProjectsAllProjectPage from "./page/manager/project/ProjectsAllProjectsPage";
 import WorkplaceReviewTaskPage from "./page/WorkplaceReviewTaskPage";
-import DashboardAnalytics from "./page/DashboardAnalytics";
 import ExportPage from "./page/ExportPage";
-import DashboardProjectStatus from "./page/DashboardProjectStatus";
-import ProjectsDatasetPage from "./page/ProjectsDatasetsPage";
+import DashboardProjectStatus from "./page/manager/status/DashboardProjectStatus";
 import SettingUserManagement from "./page/SettingUserManagement";
 import SettingsSystemLogs from "./page/SettingsSystemLogs";
 import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 import AccessDenied from "./routes/AccessDenied";
 import AnnotatorDashboard from "./page/annotator/dashboard/AnnotatorDashboard";
 import AnnotatorTaskList from "./page/annotator/tasks/AnnotatorTaskList";
+import ProjectImportData from "./page/manager/project/ProjectImportData";
+import ProjectAssignTask from "./page/manager/project/ProjectAssignTask";
+import CreateProject from "./page/manager/project/CreateProject";
+import ProjectsDatasetsPage from "./page/manager/datasets/ProjectsDatasetsPage";
+import DashboardAnalytics from "./page/manager/analytics/DashboardAnalyticsPage";
 
 function App() {
   /*
@@ -29,7 +32,6 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<MainLayouts />}>
-        {/* Default */}
         <Route index element={<HomePage />} />
         <Route path="dashboard" element={<HomePage />} />
         <Route
@@ -56,7 +58,7 @@ function App() {
               <DashboardAnalytics />
             </RoleProtectedRoute>
           }
-        />{" "}
+        />
         <Route
           path="/dashboard-project-status"
           element={<DashboardProjectStatus />}
@@ -65,7 +67,7 @@ function App() {
           path="/projects-all-projects"
           element={<ProjectsAllProjectPage />}
         />
-        <Route path="/projects-datasets" element={<ProjectsDatasetPage />} />
+        <Route path="/projects-datasets" element={<ProjectsDatasetsPage />} />
         <Route
           path="/settings-user-management"
           element={
@@ -87,6 +89,30 @@ function App() {
           element={
             <RoleProtectedRoute allowRoles={["Annotator"]}>
               <WorkplaceLabelingTaskPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects-datasets/:id"
+          element={
+            <RoleProtectedRoute allowRoles={["Manager", "Admin"]}>
+              <ProjectImportData />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects-create"
+          element={
+            <RoleProtectedRoute allowRoles={["Manager", "Admin"]}>
+              <CreateProject />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects-assign/:id"
+          element={
+            <RoleProtectedRoute allowRoles={["Manager", "Admin"]}>
+              <ProjectAssignTask />
             </RoleProtectedRoute>
           }
         />

@@ -147,7 +147,6 @@ const HomePage = () => {
 
   return (
     <>
-      {/* Begin page */}
       <div id="layout-wrapper">
         <div
           id="removeNotificationModal"
@@ -233,17 +232,17 @@ const HomePage = () => {
                               </div>
                             </div>
                           </div>
-                          {/*end col*/}
+
                           <div className="col-auto">
                             <button
                               type="button"
                               className="btn btn-soft-success"
                             >
-                              <i className="ri-add-circle-line align-middle me-1" />{" "}
+                              <i className="ri-add-circle-line align-middle me-1" />
                               Add Product
                             </button>
                           </div>
-                          {/*end col*/}
+
                           <div className="col-auto">
                             <button
                               type="button"
@@ -252,32 +251,26 @@ const HomePage = () => {
                               <i className="ri-pulse-line" />
                             </button>
                           </div>
-                          {/*end col*/}
                         </div>
-                        {/*end row*/}
                       </form>
                     </div>
                   </div>
-                  {/* end card header */}
                 </div>
-                {/*end col*/}
               </div>
-              {/*end row*/}
+
               <div className="row">
                 <div className="col-xl-3 col-md-6">
-                  {/* card */}
                   <div className="card card-animate">
                     <div className="card-body">
                       <div className="d-flex align-items-center">
                         <div className="flex-grow-1 overflow-hidden">
                           <p className="text-uppercase fw-medium text-muted text-truncate mb-0">
-                            {" "}
                             Total Earnings
                           </p>
                         </div>
                         <div className="flex-shrink-0">
                           <h5 className="text-success fs-14 mb-0">
-                            <i className="ri-arrow-right-up-line fs-13 align-middle" />{" "}
+                            <i className="ri-arrow-right-up-line fs-13 align-middle" />
                             +16.24 %
                           </h5>
                         </div>
@@ -292,7 +285,7 @@ const HomePage = () => {
                             >
                               0
                             </span>
-                            k{" "}
+                            k
                           </h4>
                           <a href="#" className="text-decoration-underline">
                             View net earnings
@@ -305,13 +298,10 @@ const HomePage = () => {
                         </div>
                       </div>
                     </div>
-                    {/* end card body */}
                   </div>
-                  {/* end card */}
                 </div>
-                {/* end col */}
+
                 <div className="col-xl-3 col-md-6">
-                  {/* card */}
                   <div className="card card-animate">
                     <div className="card-body">
                       <div className="d-flex align-items-center">
@@ -322,7 +312,7 @@ const HomePage = () => {
                         </div>
                         <div className="flex-shrink-0">
                           <h5 className="text-danger fs-14 mb-0">
-                            <i className="ri-arrow-right-down-line fs-13 align-middle" />{" "}
+                            <i className="ri-arrow-right-down-line fs-13 align-middle" />
                             -3.57 %
                           </h5>
                         </div>
@@ -345,13 +335,10 @@ const HomePage = () => {
                         </div>
                       </div>
                     </div>
-                    {/* end card body */}
                   </div>
-                  {/* end card */}
                 </div>
-                {/* end col */}
+
                 <div className="col-xl-3 col-md-6">
-                  {/* card */}
                   <div className="card card-animate">
                     <div className="card-body">
                       <div className="d-flex align-items-center">
@@ -362,7 +349,7 @@ const HomePage = () => {
                         </div>
                         <div className="flex-shrink-0">
                           <h5 className="text-success fs-14 mb-0">
-                            <i className="ri-arrow-right-up-line fs-13 align-middle" />{" "}
+                            <i className="ri-arrow-right-up-line fs-13 align-middle" />
                             +29.08 %
                           </h5>
                         </div>
@@ -376,7 +363,7 @@ const HomePage = () => {
                             >
                               0
                             </span>
-                            M{" "}
+                            M
                           </h4>
                           <a href="#" className="text-decoration-underline">
                             See details
@@ -389,19 +376,15 @@ const HomePage = () => {
                         </div>
                       </div>
                     </div>
-                    {/* end card body */}
                   </div>
-                  {/* end card */}
                 </div>
-                {/* end col */}
+
                 <div className="col-xl-3 col-md-6">
-                  {/* card */}
                   <div className="card card-animate">
                     <div className="card-body">
                       <div className="d-flex align-items-center">
                         <div className="flex-grow-1 overflow-hidden">
                           <p className="text-uppercase fw-medium text-muted text-truncate mb-0">
-                            {" "}
                             My Balance
                           </p>
                         </div>
@@ -419,7 +402,7 @@ const HomePage = () => {
                             >
                               0
                             </span>
-                            k{" "}
+                            k
                           </h4>
                           <a href="#" className="text-decoration-underline">
                             Withdraw money
@@ -432,11 +415,8 @@ const HomePage = () => {
                         </div>
                       </div>
                     </div>
-                    {/* end card body */}
                   </div>
-                  {/* end card */}
                 </div>
-                {/* end col */}
               </div>
               <div className="row">
                 <div className="col-xl-8">
@@ -489,7 +469,6 @@ const HomePage = () => {
                       </div>
                     </div>
                     <div className="card-body">
-                      {/* Bản đồ nền */}
                       <div
                         className="text-center mb-4"
                         style={{ height: "170px", position: "relative" }}
@@ -748,7 +727,7 @@ const HomePage = () => {
                   </div>
                 </div>
               </div>
-              {/* end row*/}
+
               <div className="row">
                 <div className="col-xl-4">
                   <div className="card card-height-100">
@@ -809,7 +788,7 @@ const HomePage = () => {
                           type="button"
                           className="btn btn-soft-info btn-sm"
                         >
-                          <i className="ri-file-list-3-line align-middle me-1" />{" "}
+                          <i className="ri-file-list-3-line align-middle me-1" />
                           Generate Report
                         </button>
                       </div>
@@ -937,11 +916,8 @@ const HomePage = () => {
                   </div>
                 </div>
               </div>
-              {/* end row*/}
-            </div>{" "}
-            {/* end .h-100*/}
-          </div>{" "}
-          {/* end col */}
+            </div>
+          </div>
           <div className="col-auto layout-rightside-col">
             <div className="overlay" />
             <div className="layout-rightside">
@@ -969,7 +945,7 @@ const HomePage = () => {
                             Purchase by James Price
                           </h6>
                           <p className="text-muted mb-1">
-                            Product noise evolve smartwatch{" "}
+                            Product noise evolve smartwatch
                           </p>
                           <small className="mb-0 text-muted">
                             02:14 PM Today
@@ -984,7 +960,7 @@ const HomePage = () => {
                         </div>
                         <div className="flex-grow-1 ms-3">
                           <h6 className="mb-1 lh-base">
-                            Added new{" "}
+                            Added new
                             <span className="fw-semibold">
                               style collection
                             </span>
@@ -1060,7 +1036,7 @@ const HomePage = () => {
                         </div>
                         <div className="flex-grow-1 ms-3">
                           <h6 className="mb-1 lh-base">
-                            Today offers by{" "}
+                            Today offers by
                             <a
                               href="apps-ecommerce-seller-details.html"
                               className="link-secondary"
@@ -1105,11 +1081,11 @@ const HomePage = () => {
                         </div>
                         <div className="flex-grow-1 ms-3">
                           <h6 className="mb-1 lh-base">
-                            Flash sale starting{" "}
+                            Flash sale starting
                             <span className="text-primary">Tomorrow.</span>
                           </h6>
                           <p className="text-muted mb-0">
-                            Flash sale by{" "}
+                            Flash sale by
                             <a
                               href="javascript:void(0);"
                               className="link-secondary fw-medium"
@@ -1133,8 +1109,8 @@ const HomePage = () => {
                         <div className="flex-grow-1 ms-3">
                           <h6 className="mb-1 lh-base">Monthly sales report</h6>
                           <p className="text-muted mb-2">
-                            <span className="text-danger">2 days left</span>{" "}
-                            notification to submit the monthly sales report.{" "}
+                            <span className="text-danger">2 days left</span>
+                            notification to submit the monthly sales report.
                             <a
                               href="javascript:void(0);"
                               className="link-warning text-decoration-underline"
@@ -1173,7 +1149,7 @@ const HomePage = () => {
                     <ol className="ps-3 text-muted">
                       <li className="py-1">
                         <a href="#" className="text-muted">
-                          Mobile &amp; Accessories{" "}
+                          Mobile &amp; Accessories
                           <span className="float-end">(10,294)</span>
                         </a>
                       </li>
@@ -1189,7 +1165,7 @@ const HomePage = () => {
                       </li>
                       <li className="py-1">
                         <a href="#" className="text-muted">
-                          Home &amp; Furniture{" "}
+                          Home &amp; Furniture
                           <span className="float-end">(2,275)</span>
                         </a>
                       </li>
@@ -1210,19 +1186,19 @@ const HomePage = () => {
                       </li>
                       <li className="py-1">
                         <a href="#" className="text-muted">
-                          Beauty, Toys &amp; More{" "}
+                          Beauty, Toys &amp; More
                           <span className="float-end">(924)</span>
                         </a>
                       </li>
                       <li className="py-1">
                         <a href="#" className="text-muted">
-                          Food &amp; Drinks{" "}
+                          Food &amp; Drinks
                           <span className="float-end">(701)</span>
                         </a>
                       </li>
                       <li className="py-1">
                         <a href="#" className="text-muted">
-                          Toys &amp; Games{" "}
+                          Toys &amp; Games
                           <span className="float-end">(239)</span>
                         </a>
                       </li>
@@ -1240,7 +1216,6 @@ const HomePage = () => {
                     <h6 className="text-muted mb-3 text-uppercase fw-semibold">
                       Products Reviews
                     </h6>
-                    {/* Swiper */}
                     <div
                       className="swiper vertical-swiper"
                       style={{ height: 250 }}
@@ -1262,7 +1237,6 @@ const HomePage = () => {
                                 <div className="flex-grow-1 ms-3">
                                   <div>
                                     <p className="text-muted mb-1 fst-italic text-truncate-two-lines">
-                                      {" "}
                                       " Great product and looks great, lots of
                                       features. "
                                     </p>
@@ -1275,7 +1249,7 @@ const HomePage = () => {
                                     </div>
                                   </div>
                                   <div className="text-end mb-0 text-muted">
-                                    - by{" "}
+                                    - by
                                     <cite title="Source Title">
                                       Force Medicines
                                     </cite>
@@ -1299,7 +1273,6 @@ const HomePage = () => {
                                 <div className="flex-grow-1 ms-3">
                                   <div>
                                     <p className="text-muted mb-1 fst-italic text-truncate-two-lines">
-                                      {" "}
                                       " Amazing template, very easy to
                                       understand and manipulate. "
                                     </p>
@@ -1312,7 +1285,7 @@ const HomePage = () => {
                                     </div>
                                   </div>
                                   <div className="text-end mb-0 text-muted">
-                                    - by{" "}
+                                    - by
                                     <cite title="Source Title">
                                       Henry Baird
                                     </cite>
@@ -1338,7 +1311,6 @@ const HomePage = () => {
                                 <div className="flex-grow-1 ms-3">
                                   <div>
                                     <p className="text-muted mb-1 fst-italic text-truncate-two-lines">
-                                      {" "}
                                       "Very beautiful product and Very helpful
                                       customer service."
                                     </p>
@@ -1351,7 +1323,7 @@ const HomePage = () => {
                                     </div>
                                   </div>
                                   <div className="text-end mb-0 text-muted">
-                                    - by{" "}
+                                    - by
                                     <cite title="Source Title">
                                       Zoetic Fashion
                                     </cite>
@@ -1387,7 +1359,7 @@ const HomePage = () => {
                                     </div>
                                   </div>
                                   <div className="text-end mb-0 text-muted">
-                                    - by{" "}
+                                    - by
                                     <cite title="Source Title">
                                       Nancy Martino
                                     </cite>
@@ -1452,7 +1424,6 @@ const HomePage = () => {
                           </div>
                         </div>
                       </div>
-                      {/* end row */}
                       <div className="row align-items-center g-2">
                         <div className="col-auto">
                           <div className="p-1">
@@ -1479,7 +1450,6 @@ const HomePage = () => {
                           </div>
                         </div>
                       </div>
-                      {/* end row */}
                       <div className="row align-items-center g-2">
                         <div className="col-auto">
                           <div className="p-1">
@@ -1506,7 +1476,6 @@ const HomePage = () => {
                           </div>
                         </div>
                       </div>
-                      {/* end row */}
                       <div className="row align-items-center g-2">
                         <div className="col-auto">
                           <div className="p-1">
@@ -1533,7 +1502,6 @@ const HomePage = () => {
                           </div>
                         </div>
                       </div>
-                      {/* end row */}
                       <div className="row align-items-center g-2">
                         <div className="col-auto">
                           <div className="p-1">
@@ -1560,7 +1528,6 @@ const HomePage = () => {
                           </div>
                         </div>
                       </div>
-                      {/* end row */}
                     </div>
                   </div>
                   <div className="card sidebar-alert bg-light border-0 text-center mx-4 mb-0 mt-3">
@@ -1575,22 +1542,17 @@ const HomePage = () => {
                           type="button"
                           className="btn btn-primary btn-label rounded-pill"
                         >
-                          <i className="ri-mail-fill label-icon align-middle rounded-pill fs-16 me-2" />{" "}
+                          <i className="ri-mail-fill label-icon align-middle rounded-pill fs-16 me-2" />
                           Invite Now
                         </button>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>{" "}
-              {/* end card*/}
-            </div>{" "}
-            {/* end .rightbar*/}
-          </div>{" "}
-          {/* end col */}
+              </div>
+            </div>
+          </div>
         </div>
-        {/* container-fluid */}
-        {/* End Page-content */}
         <footer className="footer">
           <div className="container-fluid">
             <div className="row">
@@ -1603,10 +1565,7 @@ const HomePage = () => {
             </div>
           </div>
         </footer>
-        {/* end main content*/}
       </div>
-      {/* END layout-wrapper */}
-      {/*start back-to-top*/}
       <button
         onClick="topFunction()"
         className="btn btn-danger btn-icon"
@@ -1614,15 +1573,7 @@ const HomePage = () => {
       >
         <i className="ri-arrow-up-line" />
       </button>
-      {/*end back-to-top*/}
-      {/*preloader*/}
-      {/* <div id="preloader">
-        <div id="status">
-          <div className="spinner-border text-primary avatar-sm" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-        </div>
-      </div> */}
+
       <div className="customizer-setting d-none d-md-block">
         <div
           className="btn-info rounded-pill shadow-lg btn btn-icon btn-lg p-2"
@@ -1633,7 +1584,6 @@ const HomePage = () => {
           <i className="mdi mdi-spin mdi-cog-outline fs-22" />
         </div>
       </div>
-      {/* Theme Settings */}
       <div
         className="offcanvas offcanvas-end border-0"
         tabIndex={-1}
@@ -1755,7 +1705,7 @@ const HomePage = () => {
                   </div>
                   <h5 className="fs-13 text-center mt-2">Two Column</h5>
                 </div>
-                {/* end col */}
+
                 <div className="col-4">
                   <div className="form-check card-radio">
                     <input
@@ -1789,7 +1739,6 @@ const HomePage = () => {
                   </div>
                   <h5 className="fs-13 text-center mt-2">Semi Box</h5>
                 </div>
-                {/* end col */}
               </div>
               <h6 className="mt-4 mb-0 fw-semibold text-uppercase">
                 Color Scheme
@@ -2441,7 +2390,6 @@ const HomePage = () => {
                     <h5 className="fs-13 text-center mt-2">Gradient</h5>
                   </div>
                 </div>
-                {/* end row */}
                 <div className="collapse" id="collapseBgGradient">
                   <div className="d-flex gap-2 flex-wrap img-switch p-2 px-3 bg-light rounded">
                     <div className="form-check sidebar-setting card-radio">
@@ -2643,7 +2591,6 @@ const HomePage = () => {
                             </span>
                           </span>
                         </span>
-                        {/* <div id="preloader"> */}
                         <div
                           id="status"
                           className="d-flex align-items-center justify-content-center"
@@ -2655,7 +2602,6 @@ const HomePage = () => {
                             <span className="visually-hidden">Loading...</span>
                           </div>
                         </div>
-                        {/* </div> */}
                       </label>
                     </div>
                     <h5 className="fs-13 text-center mt-2">Enable</h5>

@@ -3,15 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
-// Components
-import TimeTrackingCard from "../../../components/tasks/TimeTrackingCard";
+import TimeTrackingCard from "../../../components/annotator/labeling/tasks/TimeTrackingCard";
 import LabelingWorkspace from "../../../components/annotator/labeling/LabelingWorkspace";
-import TaskInfoTable from "../../../components/tasks/TaskInfoTable";
-import CommentSection from "../../../components/tasks/CommentSection";
+import TaskInfoTable from "../../../components/annotator/labeling/tasks/TaskInfoTable";
+import CommentSection from "../../../components/annotator/labeling/tasks/CommentSection";
 import LabelPicker from "../../../components/annotator/labeling/LabelPicker";
-import AttachmentList from "../../../components/tasks/AttachmentList";
+import AttachmentList from "../../../components/annotator/labeling/tasks/AttachmentList";
 
-// Actions & Hooks
 import {
   fetchTaskById,
   startTimer,
@@ -108,7 +106,6 @@ const WorkplaceLabelingTaskPage = () => {
 
   return (
     <div className="row">
-      {/* Cột trái: Thông tin bổ trợ */}
       <div className="col-xxl-3 col-lg-4">
         <TimeTrackingCard time={timeString} taskTitle={currentTask?.title} />
 
@@ -126,7 +123,6 @@ const WorkplaceLabelingTaskPage = () => {
         </div>
       </div>
 
-      {/* Cột phải: Khu vực làm việc chính */}
       <div className="col-xxl-9 col-lg-8">
         <div className="card shadow-sm border-0">
           <div className="card-header bg-white d-flex justify-content-between align-items-center py-3">
@@ -152,7 +148,7 @@ const WorkplaceLabelingTaskPage = () => {
           </div>
 
           <div className="card-body bg-light-subtle">
-            <LabelingWorkspace imageUrl={currentTask?.storageUrl} />{" "}
+            <LabelingWorkspace imageUrl={currentTask?.storageUrl} />
             <div className="mt-2 d-flex justify-content-between">
               <small className="text-muted">
                 <i className="ri-information-line me-1"></i>

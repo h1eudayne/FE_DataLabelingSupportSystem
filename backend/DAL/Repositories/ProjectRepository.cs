@@ -7,16 +7,16 @@ namespace DAL.Repositories
     public class ProjectRepository : Repository<Project>, IProjectRepository
     {
         public ProjectRepository(ApplicationDbContext context) : base(context) { }
-
         public async Task<Project?> GetProjectWithDetailsAsync(int id)
         {
             return await _context.Projects
                 .Include(p => p.Manager)
                 .Include(p => p.LabelClasses)
                 .Include(p => p.DataItems)
+                .Include(p => p.UserProjectStats)
+                    .ThenInclude(s => s.User)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
-
         public async Task<Project?> GetProjectForExportAsync(int id)
         {
             return await _context.Projects

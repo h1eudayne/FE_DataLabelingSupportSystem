@@ -19,7 +19,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
       <div className="layout-width">
         <div className="navbar-header">
           <div className="d-flex">
-            {/* LOGO */}
             <div className="navbar-brand-box horizontal-logo">
               <a href="/" className="logo logo-dark">
                 <span className="logo-sm">
@@ -40,7 +39,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
               </a>
             </div>
 
-            {/* SIDEBAR TOGGLE */}
             <button
               onClick={toggleSidebar}
               className="btn btn-sm px-3 fs-16 header-item"
@@ -53,7 +51,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
               )}
             </button>
 
-            {/* SEARCH (GIỮ NGUYÊN) */}
             <form className="app-search d-none d-md-block">
               <div className="position-relative">
                 <input
@@ -62,7 +59,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                   placeholder="Search..."
                   autoComplete="off"
                   id="search-options"
-                  // defaultValue
                 />
                 <span className="mdi mdi-magnify search-widget-icon" />
                 <span
@@ -113,7 +109,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     <i className="ri-lifebuoy-line align-middle fs-18 text-muted me-2" />
                     <span>Help Center</span>
                   </a>
-                  {/* item*/}
                   <a
                     href="javascript:void(0);"
                     className="dropdown-item notify-item"
@@ -121,14 +116,12 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     <i className="ri-user-settings-line align-middle fs-18 text-muted me-2" />
                     <span>My account settings</span>
                   </a>
-                  {/* item*/}
                   <div className="dropdown-header mt-2">
                     <h6 className="text-overflow text-muted mb-2 text-uppercase">
                       Members
                     </h6>
                   </div>
                   <div className="notification-list">
-                    {/* item */}
                     <a
                       href="javascript:void(0);"
                       className="dropdown-item notify-item py-2"
@@ -145,7 +138,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                         </div>
                       </div>
                     </a>
-                    {/* item */}
                     <a
                       href="javascript:void(0);"
                       className="dropdown-item notify-item py-2"
@@ -164,7 +156,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                         </div>
                       </div>
                     </a>
-                    {/* item */}
                     <a
                       href="javascript:void(0);"
                       className="dropdown-item notify-item py-2"
@@ -193,7 +184,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     View All Results <i className="ri-arrow-right-line ms-1" />
                   </a>
                 </div>
-              </div>{" "}
+              </div>
             </form>
           </div>
           {isAuthenticated && user ? (
@@ -247,7 +238,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                   />
                 </button>
                 <div className="dropdown-menu dropdown-menu-end">
-                  {/* item*/}
                   <a
                     href="javascript:void(0);"
                     className="dropdown-item notify-item language py-2"
@@ -262,7 +252,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     />
                     <span className="align-middle">English</span>
                   </a>
-                  {/* item*/}
                   <a
                     href="javascript:void(0);"
                     className="dropdown-item notify-item language"
@@ -277,7 +266,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     />
                     <span className="align-middle">Española</span>
                   </a>
-                  {/* item*/}
+
                   <a
                     href="javascript:void(0);"
                     className="dropdown-item notify-item language"
@@ -289,10 +278,10 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                       alt="user-image"
                       className="me-2 rounded"
                       height={18}
-                    />{" "}
+                    />
                     <span className="align-middle">Deutsche</span>
                   </a>
-                  {/* item*/}
+
                   <a
                     href="javascript:void(0);"
                     className="dropdown-item notify-item language"
@@ -307,7 +296,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     />
                     <span className="align-middle">Italiana</span>
                   </a>
-                  {/* item*/}
+
                   <a
                     href="javascript:void(0);"
                     className="dropdown-item notify-item language"
@@ -322,7 +311,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     />
                     <span className="align-middle">русский</span>
                   </a>
-                  {/* item*/}
+
                   <a
                     href="javascript:void(0);"
                     className="dropdown-item notify-item language"
@@ -337,7 +326,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     />
                     <span className="align-middle">中国人</span>
                   </a>
-                  {/* item*/}
+
                   <a
                     href="javascript:void(0);"
                     className="dropdown-item notify-item language"
@@ -352,7 +341,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     />
                     <span className="align-middle">français</span>
                   </a>
-                  {/* item*/}
+
                   <a
                     href="javascript:void(0);"
                     className="dropdown-item notify-item language"
@@ -387,7 +376,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                       </div>
                       <div className="col-auto">
                         <a href="#!" className="btn btn-sm btn-soft-info">
-                          {" "}
                           View All Apps
                           <i className="ri-arrow-right-s-line align-middle" />
                         </a>
@@ -746,13 +734,11 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                       <div className="row align-items-center">
                         <div className="col">
                           <h6 className="m-0 fs-16 fw-semibold text-white">
-                            {" "}
-                            Notifications{" "}
+                            Notifications
                           </h6>
                         </div>
                         <div className="col-auto dropdown-tabs">
                           <span className="badge bg-light-subtle text-body fs-13">
-                            {" "}
                             4 New
                           </span>
                         </div>
@@ -825,8 +811,8 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                             <div className="flex-grow-1">
                               <a href="#!" className="stretched-link">
                                 <h6 className="mt-0 mb-2 lh-base">
-                                  Your <b>Elite</b> author Graphic Optimization{" "}
-                                  <span className="text-secondary">reward</span>{" "}
+                                  Your <b>Elite</b> author Graphic Optimization
+                                  <span className="text-secondary">reward</span>
                                   is ready!
                                 </h6>
                               </a>
@@ -842,7 +828,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                                 <input
                                   className="form-check-input"
                                   type="checkbox"
-                                  // defaultValue
                                   id="all-notification-check01"
                                 />
                                 <label
@@ -905,7 +890,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                             <div className="flex-grow-1">
                               <a href="#!" className="stretched-link">
                                 <h6 className="mt-0 mb-2 fs-13 lh-base">
-                                  You have received{" "}
+                                  You have received
                                   <b className="text-success">20</b> new
                                   messages in the conversation
                                 </h6>
@@ -979,7 +964,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                             type="button"
                             className="btn btn-soft-success waves-effect waves-light"
                           >
-                            View All Notifications{" "}
+                            View All Notifications
                             <i className="ri-arrow-right-line align-middle" />
                           </button>
                         </div>
@@ -1167,7 +1152,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                             type="button"
                             className="btn btn-soft-success waves-effect waves-light"
                           >
-                            View All Messages{" "}
+                            View All Messages
                             <i className="ri-arrow-right-line align-middle" />
                           </button>
                         </div>
@@ -1184,14 +1169,14 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                       id="notification-actions"
                     >
                       <div className="d-flex text-muted justify-content-center">
-                        Select{" "}
+                        Select
                         <div
                           id="select-content"
                           className="text-body fw-semibold px-1"
                         >
                           0
-                        </div>{" "}
-                        Result{" "}
+                        </div>
+                        Result
                         <button
                           type="button"
                           className="btn btn-link link-danger p-0 ms-3"

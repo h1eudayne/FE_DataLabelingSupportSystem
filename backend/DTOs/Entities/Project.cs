@@ -33,5 +33,7 @@ namespace DTOs.Entities
 
         public virtual ICollection<LabelClass> LabelClasses { get; set; } = new List<LabelClass>();
         public virtual ICollection<DataItem> DataItems { get; set; } = new List<DataItem>();
+
+        public virtual ICollection<UserProjectStat> UserProjectStats { get; set; } = new List<UserProjectStat>();
     }
 }

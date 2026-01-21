@@ -3,7 +3,6 @@ import React from "react";
 const SettingUserManagement = () => {
   return (
     <div>
-      {/* start page title */}
       <div className="row">
         <div className="col-12">
           <div className="page-title-box d-sm-flex align-items-center justify-content-between">
@@ -19,9 +18,8 @@ const SettingUserManagement = () => {
           </div>
         </div>
       </div>
-      {/* end page title */}
       <div className="alert alert-danger" role="alert">
-        This is <strong>Datatable</strong> page in wihch we have used{" "}
+        This is <strong>Datatable</strong> page in wihch we have used
         <b>jQuery</b> with cnd link!
       </div>
       <div className="row">
@@ -104,19 +102,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -166,19 +164,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -228,19 +226,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -290,19 +288,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -352,19 +350,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -414,19 +412,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -476,19 +474,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -538,19 +536,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -600,19 +598,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -662,19 +660,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -724,19 +722,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -786,19 +784,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -850,19 +848,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -912,19 +910,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -937,9 +935,7 @@ const SettingUserManagement = () => {
             </div>
           </div>
         </div>
-        {/*end col*/}
       </div>
-      {/*end row*/}
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
@@ -1744,9 +1740,7 @@ const SettingUserManagement = () => {
             </div>
           </div>
         </div>
-        {/*end col*/}
       </div>
-      {/*end row*/}
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
@@ -1827,19 +1821,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -1889,19 +1883,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -1951,19 +1945,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2013,19 +2007,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2075,19 +2069,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2137,19 +2131,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2199,19 +2193,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2261,19 +2255,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2323,19 +2317,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2385,19 +2379,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2447,19 +2441,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2509,19 +2503,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2573,19 +2567,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2635,19 +2629,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -2660,9 +2654,7 @@ const SettingUserManagement = () => {
             </div>
           </div>
         </div>
-        {/*end col*/}
       </div>
-      {/*end row*/}
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
@@ -3097,9 +3089,7 @@ const SettingUserManagement = () => {
             </div>
           </div>
         </div>
-        {/*end col*/}
       </div>
-      {/*end row*/}
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
@@ -3130,9 +3120,7 @@ const SettingUserManagement = () => {
             </div>
           </div>
         </div>
-        {/*end col*/}
       </div>
-      {/*end row*/}
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
@@ -3213,19 +3201,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3275,19 +3263,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3337,19 +3325,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3399,19 +3387,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3461,19 +3449,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3523,19 +3511,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3585,19 +3573,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3647,19 +3635,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3709,19 +3697,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3771,19 +3759,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3833,19 +3821,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3895,19 +3883,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -3959,19 +3947,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4021,19 +4009,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4047,7 +4035,6 @@ const SettingUserManagement = () => {
           </div>
         </div>
       </div>
-      {/*end row*/}
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
@@ -4108,19 +4095,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4160,19 +4147,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4212,19 +4199,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4264,19 +4251,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4316,19 +4303,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4368,19 +4355,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4420,19 +4407,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4472,19 +4459,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4524,19 +4511,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4576,19 +4563,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4628,19 +4615,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4680,19 +4667,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4734,19 +4721,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4786,19 +4773,19 @@ const SettingUserManagement = () => {
                         <ul className="dropdown-menu dropdown-menu-end">
                           <li>
                             <a href="#!" className="dropdown-item">
-                              <i className="ri-eye-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-eye-fill align-bottom me-2 text-muted" />
                               View
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item edit-item-btn">
-                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-pencil-fill align-bottom me-2 text-muted" />
                               Edit
                             </a>
                           </li>
                           <li>
                             <a className="dropdown-item remove-item-btn">
-                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />{" "}
+                              <i className="ri-delete-bin-fill align-bottom me-2 text-muted" />
                               Delete
                             </a>
                           </li>
@@ -4812,7 +4799,6 @@ const SettingUserManagement = () => {
           </div>
         </div>
       </div>
-      {/*end row*/}
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
@@ -5060,7 +5046,6 @@ const SettingUserManagement = () => {
           </div>
         </div>
       </div>
-      {/*end row*/}
       <div className="row">
         <div className="col-lg-12">
           <div className="card">
@@ -5097,9 +5082,7 @@ const SettingUserManagement = () => {
             </div>
           </div>
         </div>
-        {/*end col*/}
       </div>
-      {/*end row*/}
     </div>
   );
 };
