@@ -27,7 +27,6 @@ const AuthLoginForm = () => {
     );
   };
 
-  // Redirect theo role
   useEffect(() => {
     if (isAuthenticated && user) {
       if (user.role === "Admin") {
@@ -38,7 +37,6 @@ const AuthLoginForm = () => {
     }
   }, [isAuthenticated, user, navigate]);
 
-  // Khong render lai khi da login
   if (isAuthenticated && user) {
     return null;
   }

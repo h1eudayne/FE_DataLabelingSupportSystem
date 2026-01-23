@@ -2,11 +2,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const ProjectCard = ({ project, onDelete }) => {
+  const annotatorCount = project.members ? project.members.length : 0;
+  const isAssigned = annotatorCount > 0;
+
   const totalItems = project.totalDataItems || 0;
   const progress = project.progress || 0;
 
-  const annotatorCount = project.annotatorCount || 0;
-  const isAssigned = annotatorCount > 0;
+  console.log("project", project);
 
   return (
     <div className="col-xxl-3 col-sm-6 mb-4">

@@ -46,12 +46,13 @@ const taskSlice = createSlice({
       .addCase(fetchTaskById.fulfilled, (state, action) => {
         state.status = "succeeded";
 
-        console.log("Payload từ API:", action.payload);
-
         const data = action.payload?.data || action.payload;
+
         state.currentTask = data;
 
-        state.labels = data?.labels || [];
+        state.labels = Array.isArray(data)
+          ? data[0]?.labels || []
+          : data?.labels || [];
       })
       .addCase(fetchTaskById.rejected, (state, action) => {
         state.status = "failed";

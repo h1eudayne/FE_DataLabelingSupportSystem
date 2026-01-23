@@ -106,6 +106,8 @@ const CreateProject = () => {
           })),
       };
 
+      console.log("projectPayload", projectPayload);
+
       const resProj = await projectService.createProject(projectPayload);
       const projectId =
         resProj?.projectId || resProj?.data?.projectId || resProj?.data?.id;

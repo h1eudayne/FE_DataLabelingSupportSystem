@@ -12,6 +12,9 @@ const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
   const role = user?.role; // ADMIN | MANAGER | REVIEWER | ANNOTATOR
 
+  const currentTask = useSelector((state) => state.task?.currentTask);
+  const currentActiveTaskId = currentTask?.id;
+
   const [openMenu, setOpenMenu] = useState("");
 
   const handleToggle = (menuId) => {
@@ -191,7 +194,7 @@ const Navbar = () => {
                         </li>
                         <li className="nav-item">
                           <a
-                            href="/workplace-labeling-task"
+                            href={`/workplace-labeling-task/${currentActiveTaskId}`}
                             className="nav-link"
                             data-key="t-chartjs"
                           >
