@@ -10,7 +10,7 @@ import ProjectsAllProjectPage from "./page/manager/project/ProjectsAllProjectsPa
 import WorkplaceReviewTaskPage from "./page/WorkplaceReviewTaskPage";
 import ExportPage from "./page/ExportPage";
 import DashboardProjectStatus from "./page/manager/status/DashboardProjectStatus";
-import SettingUserManagement from "./page/SettingUserManagement";
+import SettingUserManagement from "./page/admin/SettingUserManagement";
 import SettingsSystemLogs from "./page/SettingsSystemLogs";
 import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 import AccessDenied from "./routes/AccessDenied";
