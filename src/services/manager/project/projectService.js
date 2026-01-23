@@ -13,8 +13,13 @@ const projectService = {
 
   deleteProject: (id) => axios.delete(`/api/Project/${id}`),
 
-  importData: (projectId, data) =>
-    axios.post(`/api/Project/${projectId}/import-data`, data),
+  uploadDirect: (projectId, formData) =>
+    axios.post(`/api/Project/${projectId}/upload-direct`, formData),
+
+  importData: (projectId, urls) =>
+    axios.post(`/api/Project/${projectId}/import-data`, {
+      storageUrls: urls,
+    }),
 
   getProjectStats: (id) => axios.get(`/api/Project/${id}/stats`),
 

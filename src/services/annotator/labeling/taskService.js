@@ -1,18 +1,17 @@
+// services/annotator/labeling/taskService.js
 import axiosInstance from "../../axios.customize";
+
 const taskService = {
-  getMyTasks: () => {
-    return axiosInstance.get(`/api/Task/my-tasks`);
+  getMyAssignments: () => {
+    return axiosInstance.get(`/api/Project/annotator/assigned`);
   },
+
   getTaskDetail: (assignmentId) => {
     if (!assignmentId) {
-      console.error("Lỗi: assignmentId bị undefined khi gọi API detail");
+      console.error("assignmentId undefined");
       return Promise.reject("ID không hợp lệ");
     }
     return axiosInstance.get(`/api/Task/detail/${assignmentId}`);
-  },
-
-  getProjectLabels: (projectId) => {
-    return axiosInstance.get(`/api/Project/${projectId}`);
   },
 
   submitTask: (payload) => {

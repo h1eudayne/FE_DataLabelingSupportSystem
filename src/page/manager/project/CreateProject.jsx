@@ -14,6 +14,8 @@ import {
 } from "reactstrap";
 import Select from "react-select";
 
+import axios from "../../../services/axios.customize";
+
 import projectService from "../../../services/manager/project/projectService";
 import datasetService from "../../../services/manager/dataset/datasetService";
 import { userService } from "../../../services/manager/project/userService";
@@ -43,6 +45,8 @@ const CreateProject = () => {
     const fetchAnnotators = async () => {
       try {
         const res = await userService.getUsers();
+        console.log(res);
+
         const filtered = res.data
           .filter((u) => u.role === "Annotator" || u.roleId === 2)
           .map((u) => ({
@@ -81,14 +85,15 @@ const CreateProject = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (selectedFiles.length === 0) return toast.warning("Chưa chọn ảnh!");
-    if (selectedAnnotators.length === 0)
-      return toast.warning("Chưa chọn người thực hiện!");
+    if (selectedFiles.length === 0 || selectedAnnotators.length === 0) {
+      toast.warning("Vui lòng kiểm tra lại file và nhân viên!");
+      return;
+    }
 
     setLoading(true);
     try {
-      const projectPayload = {
+      // 1. Tạo Project
+      const resProj = await projectService.createProject({
         name: projectInfo.name,
         description: projectInfo.description,
         pricePerLabel: 10,
@@ -98,46 +103,50 @@ const CreateProject = () => {
           : new Date().toISOString(),
         allowGeometryTypes: projectInfo.type,
         labelClasses: labels
-          .filter((l) => l.name.trim() !== "")
+          .filter((l) => l.name)
           .map((l) => ({
             name: l.name,
             color: l.color,
             guideLine: l.guideline,
           })),
-      };
-
-      console.log("projectPayload", projectPayload);
-
-      const resProj = await projectService.createProject(projectPayload);
-      const projectId =
-        resProj?.projectId || resProj?.data?.projectId || resProj?.data?.id;
-
-      if (!projectId) throw new Error("Không lấy được ID dự án");
-
-      await datasetService.uploadFiles(projectId, selectedFiles);
-
-      const totalImages = selectedFiles.length;
-      const quantityPerAnnotator = Math.floor(
-        totalImages / selectedAnnotators.length,
-      );
-
-      const assignPromises = selectedAnnotators.map((annotator) => {
-        return taskService.assignTask({
-          projectId: projectId,
-          annotatorId: annotator.value,
-          quantity: quantityPerAnnotator,
-        });
       });
+      const projectId = resProj.data?.id || resProj.data?.projectId;
 
-      await Promise.all(assignPromises);
+      // 2. Upload & Import
+      const formData = new FormData();
+      selectedFiles.forEach((f) => formData.append("files", f));
+      const uploadRes = await projectService.uploadDirect(projectId, formData);
+      const urls = uploadRes.data?.urls || uploadRes.data;
+      await projectService.importData(projectId, urls);
 
-      toast.success("Tạo dự án và phân công thành công!");
+      // 🕒 Quan trọng: Đợi một chút để DB hoàn tất Import trước khi Assign
+      toast.info("Đang chuẩn bị dữ liệu phân công...");
+      await new Promise((r) => setTimeout(r, 2000));
+
+      // 3. Phân công (Assign)
+      const total = urls.length;
+      let remaining = total;
+
+      for (let i = 0; i < selectedAnnotators.length; i++) {
+        let qty = Math.floor(total / selectedAnnotators.length);
+        if (i === selectedAnnotators.length - 1) qty = remaining;
+
+        if (qty > 0) {
+          await taskService.assignTask({
+            projectId: Number(projectId),
+            annotatorId: String(selectedAnnotators[i].value),
+            quantity: Number(qty),
+          });
+          remaining -= qty;
+        }
+      }
+
+      toast.success("Dự án đã sẵn sàng!");
       navigate("/projects-all-projects");
     } catch (error) {
-      console.error("Lỗi quy trình:", error);
-      const errorMsg =
-        error.response?.data?.message || error.message || "Lỗi quy trình";
-      toast.error(errorMsg);
+      console.error("Lỗi:", error.response?.data);
+      const msg = error.response?.data?.message || "Lỗi hệ thống";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
