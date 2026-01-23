@@ -23,9 +23,12 @@ const ProjectsAllProjectsPage = () => {
       .includes(searchTerm.toLowerCase());
     const matchesStatus =
       filterStatus === "All" ||
-      (filterStatus === "Active" && !project.isCompleted);
+      (filterStatus === "Active" && project.status === "Active") ||
+      (filterStatus === "Completed" && project.status === "Completed");
     return matchesSearch && matchesStatus;
   });
+
+  console.log("filteredProjects", filteredProjects);
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({

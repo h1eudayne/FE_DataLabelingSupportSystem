@@ -34,14 +34,14 @@ function App() {
       <Route path="/" element={<MainLayouts />}>
         <Route index element={<HomePage />} />
         <Route path="dashboard" element={<HomePage />} />
-        <Route
+        {/* <Route
           path="/workplace-labeling-task"
           element={
             <RoleProtectedRoute allowRoles={["Annotator"]}>
               <WorkplaceLabelingTaskPage />
             </RoleProtectedRoute>
           }
-        />
+        /> */}
         <Route
           path="/workplace-review-task"
           element={

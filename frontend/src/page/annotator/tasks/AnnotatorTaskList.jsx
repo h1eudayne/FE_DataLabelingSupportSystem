@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import taskService from "../../../services/annotator/labeling/taskService";
+import { toast } from "react-toastify";
 
 const AnnotatorTaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  console.log(tasks);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -22,6 +22,29 @@ const AnnotatorTaskList = () => {
     };
     fetchTasks();
   }, []);
+
+  /**
+   * LOGIC QUAN TRỌNG: Gom nhóm các ảnh lẻ thành 1 Task duy nhất
+   * Dựa trên assignmentId
+   */
+  const groupedTasks = useMemo(() => {
+    if (!tasks || tasks.length === 0) return [];
+
+    const groups = tasks.reduce((acc, item) => {
+      const key = item.assignmentId; // Dùng ID của nhiệm vụ tổng để gom nhóm
+      if (!acc[key]) {
+        acc[key] = {
+          ...item,
+          totalImages: 1, // Khởi tạo đếm ảnh
+        };
+      } else {
+        acc[key].totalImages += 1; // Nếu đã tồn tại thì tăng số lượng ảnh lên
+      }
+      return acc;
+    }, {});
+
+    return Object.values(groups);
+  }, [tasks]);
 
   if (loading) {
     return (
@@ -42,15 +65,16 @@ const AnnotatorTaskList = () => {
         <div className="col-12 text-start">
           <h4 className="mb-0 fw-bold">Nhiệm vụ gán nhãn của tôi</h4>
           <p className="text-muted small">
-            Chọn một nhiệm vụ bên dưới để bắt đầu làm việc.
+            Chọn một nhiệm vụ bên dưới để bắt đầu làm việc (
+            {groupedTasks.length} nhiệm vụ).
           </p>
         </div>
       </div>
 
       <div className="row">
-        {tasks && tasks.length > 0 ? (
-          tasks.map((task) => (
-            <div className="col-xl-3 col-md-6 mb-4" key={task.id}>
+        {groupedTasks.length > 0 ? (
+          groupedTasks.map((task) => (
+            <div className="col-xl-3 col-md-6 mb-4" key={task.assignmentId}>
               <div className="card card-animate shadow-sm h-100 border-0">
                 <div className="card-body">
                   <div className="d-flex align-items-center mb-3">
@@ -72,6 +96,14 @@ const AnnotatorTaskList = () => {
                     {task.projectName || `Dự án #${task.assignmentId}`}
                   </h5>
 
+                  <div className="text-muted mb-2 small">
+                    <i className="ri-image-line me-1"></i>
+                    Số lượng:{" "}
+                    <span className="fw-bold text-primary">
+                      {task.totalImages} hình ảnh
+                    </span>
+                  </div>
+
                   <div className="text-muted mb-4 small">
                     <i className="ri-time-line me-1"></i>
                     Ngày giao:{" "}
@@ -82,12 +114,19 @@ const AnnotatorTaskList = () => {
 
                   <button
                     className="btn btn-primary w-100 shadow-none py-2"
-                    onClick={() =>
-                      navigate(`/workplace-labeling-task/${task.id}`)
-                    }
+                    onClick={() => {
+                      // Thử lấy assignmentId, nếu không có thì thử lấy id
+                      const targetId = task.assignmentId || task.id;
+
+                      if (targetId) {
+                        navigate(`/workplace-labeling-task/${targetId}`);
+                      } else {
+                        toast.error("Không tìm thấy ID nhiệm vụ!");
+                        console.error("Task object missing ID:", task);
+                      }
+                    }}
                   >
-                    <i className="ri-edit-2-line align-bottom me-1"></i> Bắt đầu
-                    gán nhãn
+                    Làm việc ({task.totalImages} ảnh)
                   </button>
                 </div>
               </div>

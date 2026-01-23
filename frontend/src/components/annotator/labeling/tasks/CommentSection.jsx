@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import commentService from "../../../../services/annotator/labeling/commentService";
 import { toast } from "react-toastify";
 
-const CommentSection = ({ taskId }) => {
+const CommentSection = ({ projectId, taskId }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,28 +14,34 @@ const CommentSection = ({ taskId }) => {
   }, [taskId]);
 
   const loadComments = async () => {
+    if (!projectId) return;
     try {
-      const res = await commentService.getComments(taskId);
-      setComments(res.data?.data || res.data || []);
-    } catch {
-      console.error("Không thể tải bình luận");
+      const res = await commentService.getCommentsByProject(projectId);
+      setComments(res.data || []);
+    } catch (error) {
+      console.error("Lỗi tải bình luận:", error);
     }
   };
 
   const handlePostComment = async () => {
-    if (!newComment.trim()) return;
-    setLoading(true);
     try {
-      await commentService.postComment(taskId, newComment);
+      const data = {
+        projectId: projectId,
+        taskId: taskId,
+        comment: newComment,
+      };
+      await commentService.postComment(data);
       setNewComment("");
       loadComments();
       toast.success("Đã gửi phản hồi");
     } catch {
-      toast.error("Gửi phản hồi thất bại");
-    } finally {
-      setLoading(false);
+      toast.error("Gửi thất bại");
     }
   };
+
+  useEffect(() => {
+    loadComments();
+  }, [projectId]);
 
   return (
     <div className="card mt-4 shadow-sm border-0">

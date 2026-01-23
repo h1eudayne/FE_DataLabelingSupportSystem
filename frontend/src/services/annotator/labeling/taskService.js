@@ -4,6 +4,10 @@ const taskService = {
     return axiosInstance.get(`/api/Task/my-tasks`);
   },
   getTaskDetail: (assignmentId) => {
+    if (!assignmentId) {
+      console.error("Lỗi: assignmentId bị undefined khi gọi API detail");
+      return Promise.reject("ID không hợp lệ");
+    }
     return axiosInstance.get(`/api/Task/detail/${assignmentId}`);
   },
 
@@ -11,12 +15,8 @@ const taskService = {
     return axiosInstance.get(`/api/Project/${projectId}`);
   },
 
-  submitTask: (assignmentId, annotations) => {
-    return axiosInstance.post(`/api/Task/submit`, {
-      assignmentId,
-      annotations,
-      status: "Submitted",
-    });
+  submitTask: (payload) => {
+    return axiosInstance.post(`/api/Task/submit`, payload);
   },
 };
 

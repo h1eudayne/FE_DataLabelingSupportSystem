@@ -1,4 +1,5 @@
 import React from "react";
+import moment from "moment"; // Cài đặt: npm install moment
 
 const TaskInfoTable = ({ taskId, status, priority, dueDate }) => {
   return (
@@ -9,15 +10,17 @@ const TaskInfoTable = ({ taskId, status, priority, dueDate }) => {
             <tbody>
               <tr>
                 <td className="fw-medium">Mã nhiệm vụ</td>
-                <td>{taskId || "#VLZ456"}</td>
+                <td>{taskId ? `#${taskId}` : "---"}</td>
               </tr>
               <tr>
                 <td className="fw-medium">Độ ưu tiên</td>
                 <td>
                   <span
-                    className={`badge ${priority === "High" ? "bg-danger text-uppercase" : "bg-info text-uppercase"}`}
+                    className={`badge ${
+                      priority === "High" ? "bg-danger" : "bg-info"
+                    } text-uppercase`}
                   >
-                    {priority || "High"}
+                    {priority || "Normal"}
                   </span>
                 </td>
               </tr>
@@ -25,13 +28,17 @@ const TaskInfoTable = ({ taskId, status, priority, dueDate }) => {
                 <td className="fw-medium">Trạng thái</td>
                 <td>
                   <span className="badge bg-secondary-subtle text-secondary text-uppercase">
-                    {status || "Inprogress"}
+                    {status || "N/A"}
                   </span>
                 </td>
               </tr>
               <tr>
                 <td className="fw-medium">Hạn chót</td>
-                <td>{dueDate || "29 Dec, 2024"}</td>
+                <td>
+                  {dueDate
+                    ? moment(dueDate).format("DD MMM, YYYY")
+                    : "Không có hạn"}
+                </td>
               </tr>
             </tbody>
           </table>
