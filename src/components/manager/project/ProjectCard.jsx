@@ -2,18 +2,19 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const ProjectCard = ({ project, onDelete }) => {
-  const annotatorCount = project.members ? project.members.length : 0;
+  const annotatorCount = project.totalMembers ?? 0;
   const isAssigned = annotatorCount > 0;
 
-  const totalItems = project.totalDataItems || 0;
-  const progress = project.progress || 0;
+  const totalItems = project.totalDataItems ?? 0;
+  const progress = Number(project.progress ?? 0);
 
-  console.log("project", project);
+  const safeProgress = progress === 0 ? 1 : progress;
 
   return (
     <div className="col-xxl-3 col-sm-6 mb-4">
       <div className="card h-100 shadow-sm border-0 card-animate">
         <div className="card-body">
+          {/* Header */}
           <div className="d-flex align-items-center mb-3">
             <div className="flex-grow-1">
               <h5 className="fs-15 mb-1 text-dark fw-bold">
@@ -23,24 +24,28 @@ const ProjectCard = ({ project, onDelete }) => {
               </h5>
               <small className="text-muted d-flex align-items-center">
                 <i className="ri-stack-line me-1 text-primary"></i>
-                {project.allowGeometryTypes || "Object Detection"}
+                Object Detection
               </small>
             </div>
             <div className="flex-shrink-0">
               <span
-                className={`badge ${isAssigned ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning"}`}
+                className={`badge ${
+                  isAssigned
+                    ? "bg-success-subtle text-success"
+                    : "bg-warning-subtle text-warning"
+                }`}
               >
                 {isAssigned ? "Đã giao việc" : "Chưa giao"}
               </span>
             </div>
           </div>
 
+          {/* Info */}
           <div className="row gy-3 mb-4">
             <div className="col-6">
               <p className="text-muted mb-1 small">Ngân sách</p>
               <h6 className="mb-0 text-primary">
-                <i className="ri-money-dollar-circle-line me-1"></i>$
-                {project.totalBudget || 0}
+                <i className="ri-money-dollar-circle-line me-1"></i>$0
               </h6>
             </div>
             <div className="col-6 text-end">
@@ -54,6 +59,7 @@ const ProjectCard = ({ project, onDelete }) => {
             </div>
           </div>
 
+          {/* Progress */}
           <div className="mt-4">
             <div className="d-flex justify-content-between mb-2">
               <small className="text-muted">Tiến độ</small>
@@ -62,11 +68,15 @@ const ProjectCard = ({ project, onDelete }) => {
             <div className="progress progress-sm">
               <div
                 className="progress-bar bg-success"
-                style={{ width: `${progress}%` }}
+                style={{ width: `${safeProgress}%` }}
+                aria-valuenow={progress}
+                aria-valuemin="0"
+                aria-valuemax="100"
               ></div>
             </div>
           </div>
 
+          {/* Footer info */}
           <div className="d-flex align-items-center gap-3 border-top border-top-dashed pt-3 mt-4">
             <div className="d-flex align-items-center text-muted small">
               <i className="ri-image-2-line me-2 fs-16 text-info"></i>
@@ -83,6 +93,7 @@ const ProjectCard = ({ project, onDelete }) => {
           </div>
         </div>
 
+        {/* Actions */}
         <div className="card-footer bg-transparent border-top-dashed d-flex gap-2">
           <Link
             to={`/projects-datasets/${project.id}`}

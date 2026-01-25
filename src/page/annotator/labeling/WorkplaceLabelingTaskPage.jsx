@@ -151,7 +151,7 @@ const WorkplaceLabelingTaskPage = () => {
 
             <LabelingWorkspace
               key={currentImageData.dataItemId || currentImageData.id}
-              imageUrl={`${import.meta.env.VITE_BACKEND_URL}${currentImageData.storageUrl}`}
+              imageUrl={currentImageData.storageUrl}
             />
 
             <div className="d-flex justify-content-between align-items-center mt-3">
