@@ -3,25 +3,6 @@ import { useNavigate } from "react-router-dom";
 import taskService from "../../../services/annotator/labeling/taskService";
 import { toast } from "react-toastify";
 
-const groupTasksByAssignment = (tasks) => {
-  const map = {};
-
-  tasks.forEach((t) => {
-    if (!map[t.assignmentId]) {
-      map[t.assignmentId] = {
-        assignmentId: t.assignmentId,
-        projectName: t.projectName,
-        status: t.status,
-        deadline: t.deadline,
-        totalImages: 0,
-      };
-    }
-    map[t.assignmentId].totalImages += 1;
-  });
-
-  return Object.values(map);
-};
-
 const AnnotatorTaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,15 +11,27 @@ const AnnotatorTaskList = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        // 👉 API ĐÚNG: trả về từng ảnh
-        const res = await taskService.getMyTasks();
+        const res = await taskService.getMyProjects();
 
-        const rawTasks = res.data || [];
-        const groupedTasks = groupTasksByAssignment(rawTasks);
+        const projects = (res.data || []).map((p) => ({
+          assignmentId: p.projectId, // giữ cho routing
+          projectName: p.projectName,
+          description: p.description,
+          deadline: p.deadline,
+          assignedDate: p.assignedDate,
 
-        setTasks(groupedTasks);
-      } catch (error) {
-        console.error("Lỗi khi tải nhiệm vụ:", error);
+          status: p.status, // ✅ DÙNG THẲNG BACKEND
+          progress: Number(p.progressPercent ?? 0),
+
+          totalImages: p.totalImages ?? 0,
+          completedImages: p.completedImages ?? 0,
+
+          thumbnailUrl: p.thumbnailUrl,
+        }));
+
+        setTasks(projects);
+      } catch (err) {
+        console.error(err);
         toast.error("Không thể tải danh sách nhiệm vụ");
       } finally {
         setLoading(false);
@@ -48,96 +41,104 @@ const AnnotatorTaskList = () => {
     fetchTasks();
   }, []);
 
+  const statusColor = (status) => {
+    switch (status) {
+      case "Completed":
+        return "success";
+      case "InProgress":
+        return "warning";
+      case "Assigned":
+        return "info";
+      default:
+        return "secondary";
+    }
+  };
+
   if (loading) {
     return (
       <div
         className="d-flex justify-content-center align-items-center"
-        style={{ minHeight: "300px" }}
+        style={{ minHeight: 300 }}
       >
-        <div className="spinner-border text-primary" role="status" />
+        <div className="spinner-border text-primary" />
       </div>
     );
   }
 
   return (
     <div className="container-fluid">
-      <div className="row mb-3">
-        <div className="col-12 text-start">
-          <h4 className="mb-0 fw-bold">Nhiệm vụ gán nhãn của tôi</h4>
-          <p className="text-muted small">
-            Chọn một nhiệm vụ bên dưới để bắt đầu làm việc ({tasks.length} nhiệm
-            vụ).
-          </p>
-        </div>
-      </div>
+      <h4 className="fw-bold mb-3">Nhiệm vụ gán nhãn của tôi</h4>
 
       <div className="row">
-        {tasks.length > 0 ? (
-          tasks.map((task) => (
-            <div className="col-xl-3 col-md-6 mb-4" key={task.assignmentId}>
-              <div className="card card-animate shadow-sm h-100 border-0">
-                <div className="card-body">
-                  <div className="d-flex align-items-center mb-3">
-                    <div className="flex-grow-1">
-                      <span className="badge bg-light text-primary text-uppercase">
-                        ID: {task.assignmentId}
-                      </span>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <span
-                        className={`badge ${
-                          task.status === "Completed"
-                            ? "bg-success"
-                            : task.status === "InProgress"
-                              ? "bg-warning"
-                              : "bg-info"
-                        }`}
-                      >
-                        {task.status}
-                      </span>
-                    </div>
-                  </div>
+        {tasks.map((task) => (
+          <div className="col-xl-3 col-md-6 mb-4" key={task.assignmentId}>
+            <div className="card h-100 shadow-sm border-0">
+              {task.thumbnailUrl && (
+                <img
+                  src={task.thumbnailUrl}
+                  className="card-img-top"
+                  alt="thumbnail"
+                  style={{ height: 160, objectFit: "cover" }}
+                />
+              )}
 
-                  <h5 className="fs-15 text-dark text-truncate mb-2 fw-semibold">
-                    {task.projectName || `Dự án #${task.assignmentId}`}
-                  </h5>
-
-                  <div className="text-muted mb-2 small">
-                    <i className="ri-image-line me-1"></i>
-                    Số lượng:{" "}
-                    <span className="fw-bold text-primary">
-                      {task.totalImages} hình ảnh
-                    </span>
-                  </div>
-
-                  <div className="text-muted mb-4 small">
-                    <i className="ri-time-line me-1"></i>
-                    Deadline:{" "}
-                    {task.deadline
-                      ? new Date(task.deadline).toLocaleDateString()
-                      : "N/A"}
-                  </div>
-
-                  <button
-                    className="btn btn-primary w-100 shadow-none py-2"
-                    onClick={() =>
-                      navigate(`/workplace-labeling-task/${task.assignmentId}`)
-                    }
-                  >
-                    Làm việc ({task.totalImages} ảnh)
-                  </button>
+              <div className="card-body">
+                {/* HEADER */}
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="badge bg-light text-primary">
+                    ID: {task.assignmentId}
+                  </span>
+                  <span className={`badge bg-${statusColor(task.status)}`}>
+                    {task.status}
+                  </span>
                 </div>
+
+                {/* TITLE */}
+                <h5 className="fs-15 fw-semibold text-truncate">
+                  {task.projectName}
+                </h5>
+
+                {/* INFO */}
+                <p className="text-muted small mb-2">
+                  {task.completedImages}/{task.totalImages} ảnh hoàn thành
+                </p>
+
+                {/* PROGRESS */}
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between small mb-1">
+                    <span>Tiến độ</span>
+                    <span>{task.progress}%</span>
+                  </div>
+                  <div className="progress" style={{ height: 6 }}>
+                    <div
+                      className={`progress-bar bg-${statusColor(task.status)}`}
+                      style={{ width: `${task.progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* DEADLINE */}
+                <p className="text-muted small mb-3">
+                  <i className="ri-time-line me-1" />
+                  {task.deadline
+                    ? new Date(task.deadline).toLocaleDateString()
+                    : "N/A"}
+                </p>
+
+                {/* ACTION */}
+                <button
+                  className="btn btn-primary w-100"
+                  disabled={task.status === "Completed"}
+                  onClick={() =>
+                    navigate(`/workplace-labeling-task/${task.assignmentId}`)
+                  }
+                >
+                  {task.status === "Completed" ? "Đã hoàn thành" : "Tiếp tục"}
+                </button>
               </div>
             </div>
-          ))
-        ) : (
-          <div className="col-12 text-center py-5">
-            <i className="ri-inbox-archive-line display-4 text-muted"></i>
-            <p className="mt-2 text-muted fw-medium">
-              Bạn hiện chưa có nhiệm vụ nào được giao.
-            </p>
           </div>
-        )}
+        ))}
       </div>
     </div>
   );

@@ -3,36 +3,47 @@ import { createSlice } from "@reduxjs/toolkit";
 const labelingSlice = createSlice({
   name: "labeling",
   initialState: {
-    annotations: [],
     selectedLabel: null,
+    annotationsByAssignment: {}, // key = assignmentId (imageId)
   },
   reducers: {
-    addAnnotation: (state, action) => {
-      state.annotations.push(action.payload);
-    },
-    removeAnnotation: (state, action) => {
-      state.annotations = state.annotations.filter(
-        (ann) => ann.id !== action.payload,
-      );
-    },
-    setAnnotations: (state, action) => {
-      state.annotations = action.payload;
-    },
-    setSelectedLabel: (state, action) => {
+    setSelectedLabel(state, action) {
       state.selectedLabel = action.payload;
     },
-    resetWorkspace: (state) => {
-      state.annotations = [];
-      state.selectedLabel = null;
+
+    addAnnotation(state, action) {
+      const { assignmentId } = action.payload;
+      if (!state.annotationsByAssignment[assignmentId]) {
+        state.annotationsByAssignment[assignmentId] = [];
+      }
+      state.annotationsByAssignment[assignmentId].push(action.payload);
+    },
+
+    removeAnnotation(state, action) {
+      const { assignmentId, id } = action.payload;
+      state.annotationsByAssignment[assignmentId] =
+        state.annotationsByAssignment[assignmentId]?.filter(
+          (a) => a.id !== id,
+        ) || [];
+    },
+
+    setAnnotationsForAssignment(state, action) {
+      const { assignmentId, annotations } = action.payload;
+      state.annotationsByAssignment[assignmentId] = annotations || [];
+    },
+
+    clearAnnotationsForAssignment(state, action) {
+      delete state.annotationsByAssignment[action.payload];
     },
   },
 });
 
 export const {
+  setSelectedLabel,
   addAnnotation,
   removeAnnotation,
-  setAnnotations,
-  setSelectedLabel,
-  resetWorkspace,
+  setAnnotationsForAssignment,
+  clearAnnotationsForAssignment,
 } = labelingSlice.actions;
+
 export default labelingSlice.reducer;

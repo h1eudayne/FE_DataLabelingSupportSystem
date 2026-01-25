@@ -14,53 +14,54 @@ import {
   removeAnnotation,
 } from "../../../store/annotator/labelling/labelingSlice";
 
-const LabelingWorkspace = ({ imageUrl }) => {
+const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
   const dispatch = useDispatch();
   const containerRef = useRef(null);
-  const { annotations, selectedLabel } = useSelector((state) => state.labeling);
 
-  const [image, status] = useImage(imageUrl, "anonymous");
+  const { selectedLabel, annotationsByAssignment } = useSelector(
+    (state) => state.labeling,
+  );
+
+  const annotations = annotationsByAssignment[assignmentId] || [];
+
+  const [image] = useImage(imageUrl, "anonymous");
   const [stageScale, setStageScale] = useState(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [newRect, setNewRect] = useState(null);
   const [size, setSize] = useState({ width: 0, height: 600 });
 
-  // Căn giữa ảnh và tính toán Scale khi ảnh load xong
   useEffect(() => {
     if (containerRef.current && image) {
-      const stageWidth = containerRef.current.offsetWidth;
-      const stageHeight = 600;
-      setSize({ width: stageWidth, height: stageHeight });
+      const w = containerRef.current.offsetWidth;
+      const h = 600;
+      setSize({ width: w, height: h });
 
-      const scale =
-        Math.min(stageWidth / image.width, stageHeight / image.height) * 0.85;
+      const scale = Math.min(w / image.width, h / image.height) * 0.85;
       setStageScale(scale);
-
-      // Công thức căn giữa Stage để không bị lệch phải
       setStagePos({
-        x: (stageWidth - image.width * scale) / 2,
-        y: (stageHeight - image.height * scale) / 2,
+        x: (w - image.width * scale) / 2,
+        y: (h - image.height * scale) / 2,
       });
     }
   }, [image]);
 
   const handleMouseDown = (e) => {
     if (!selectedLabel) return;
-    const stage = e.currentTarget.getStage();
-    const pointer = stage.getPointerPosition();
-    const x = (pointer.x - stage.x()) / stageScale;
-    const y = (pointer.y - stage.y()) / stageScale;
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
+    const x = (pos.x - stagePos.x) / stageScale;
+    const y = (pos.y - stagePos.y) / stageScale;
     setNewRect({ x, y, width: 0, height: 0 });
   };
 
   const handleMouseMove = (e) => {
     if (!newRect) return;
-    const stage = e.currentTarget.getStage();
-    const pointer = stage.getPointerPosition();
-    setNewRect((prev) => ({
-      ...prev,
-      width: (pointer.x - stage.x()) / stageScale - prev.x,
-      height: (pointer.y - stage.y()) / stageScale - prev.y,
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
+    setNewRect((r) => ({
+      ...r,
+      width: (pos.x - stagePos.x) / stageScale - r.x,
+      height: (pos.y - stagePos.y) / stageScale - r.y,
     }));
   };
 
@@ -69,6 +70,7 @@ const LabelingWorkspace = ({ imageUrl }) => {
       dispatch(
         addAnnotation({
           id: Date.now().toString(),
+          assignmentId,
           labelId: selectedLabel.id,
           labelName: selectedLabel.name,
           color: selectedLabel.color,
@@ -83,11 +85,7 @@ const LabelingWorkspace = ({ imageUrl }) => {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="bg-dark rounded overflow-hidden position-relative w-100"
-      style={{ height: "600px" }}
-    >
+    <div ref={containerRef} className="bg-dark rounded" style={{ height: 600 }}>
       <Stage
         width={size.width}
         height={size.height}
@@ -95,77 +93,36 @@ const LabelingWorkspace = ({ imageUrl }) => {
         scaleY={stageScale}
         x={stagePos.x}
         y={stagePos.y}
-        draggable={!selectedLabel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onWheel={(e) => {
-          e.evt.preventDefault();
-          const scaleBy = 1.1;
-          const oldScale = stageScale;
-          const pointer = e.target.getStage().getPointerPosition();
-          const newScale =
-            e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
-          setStageScale(newScale);
-          setStagePos({
-            x: pointer.x - ((pointer.x - stagePos.x) / oldScale) * newScale,
-            y: pointer.y - ((pointer.y - stagePos.y) / oldScale) * newScale,
-          });
-        }}
       >
         <Layer>
-          {image && (
-            <KonvaImage
-              image={image}
-              width={image.width}
-              height={image.height}
-              listening={true}
-            />
-          )}
-          {annotations.map((ann) => (
-            <Group key={ann.id}>
+          {image && <KonvaImage image={image} />}
+          {annotations.map((a) => (
+            <Group key={a.id}>
               <Rect
-                x={ann.x}
-                y={ann.y}
-                width={ann.width}
-                height={ann.height}
-                stroke={ann.color}
+                {...a}
+                stroke={a.color}
                 strokeWidth={2 / stageScale}
-                fill={ann.color + "33"}
-                onDblClick={(e) => {
-                  e.cancelBubble = true;
-                  dispatch(removeAnnotation(ann.id));
-                }}
+                fill={a.color + "33"}
+                onDblClick={() =>
+                  dispatch(removeAnnotation({ assignmentId, id: a.id }))
+                }
               />
-              <Group x={ann.x} y={ann.y - 18 / stageScale} listening={false}>
-                <Rect
-                  fill={ann.color}
-                  height={18 / stageScale}
-                  width={
-                    ann.labelName.length * (8 / stageScale) + 12 / stageScale
-                  }
-                />
-                <Text
-                  text={ann.labelName}
-                  fill="white"
-                  fontSize={12 / stageScale}
-                  fontStyle="bold"
-                  padding={4 / stageScale}
-                />
-              </Group>
+              <Text
+                x={a.x}
+                y={a.y - 16 / stageScale}
+                text={a.labelName}
+                fill="white"
+                fontSize={12 / stageScale}
+              />
             </Group>
           ))}
-          {newRect && (
-            <Rect
-              {...newRect}
-              stroke={selectedLabel?.color}
-              strokeWidth={1 / stageScale}
-              dash={[4, 4]}
-            />
-          )}
         </Layer>
       </Stage>
     </div>
   );
 };
+
 export default LabelingWorkspace;

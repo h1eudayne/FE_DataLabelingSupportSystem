@@ -1,178 +1,125 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
 import LabelingWorkspace from "../../../components/annotator/labeling/LabelingWorkspace";
+import LabelPicker from "../../../components/annotator/labeling/LabelPicker";
 import TaskInfoTable from "../../../components/annotator/labeling/tasks/TaskInfoTable";
 import CommentSection from "../../../components/annotator/labeling/tasks/CommentSection";
-import LabelPicker from "../../../components/annotator/labeling/LabelPicker";
 
-import { fetchTaskById } from "../../../store/annotator/labelling/taskSlice";
-import { resetWorkspace } from "../../../store/annotator/labelling/labelingSlice";
+import { setAnnotationsForAssignment } from "../../../store/annotator/labelling/labelingSlice";
+
 import taskService from "../../../services/annotator/labeling/taskService";
+import projectService from "../../../services/annotator/labeling/projectService";
 
 const WorkplaceLabelingTaskPage = () => {
-  const { assignmentId } = useParams();
+  const { assignmentId: projectId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const [images, setImages] = useState([]);
+  const [labels, setLabels] = useState([]);
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
-
-  const { annotations } = useSelector((state) => state.labeling);
-  const { currentTask, status } = useSelector((state) => state.task);
-
-  useEffect(() => {
-    if (assignmentId && assignmentId !== "undefined") {
-      dispatch(fetchTaskById(assignmentId));
-    }
-  }, [assignmentId, dispatch]);
-
-  /**
-   * CHỖ CẦN LƯU Ý:
-   * Đảm bảo biến 'images' lấy đúng danh sách các mục dữ liệu (data items)
-   */
-  const images = useMemo(() => {
-    if (!currentTask) return [];
-
-    // Nếu API trả về một Object Task lớn có mảng con dataItems (thường là vậy)
-    if (currentTask.dataItems && Array.isArray(currentTask.dataItems)) {
-      return currentTask.dataItems;
-    }
-
-    // Nếu currentTask trả về chính là một mảng các ảnh
-    if (Array.isArray(currentTask)) {
-      return currentTask;
-    }
-
-    // Trường hợp cuối: Chỉ có 1 ảnh đơn lẻ
-    return [currentTask];
-  }, [currentTask]);
+  const [loading, setLoading] = useState(true);
 
   const currentImageData = images[currentImgIndex];
 
-  const handlePrevImage = () => {
-    if (currentImgIndex > 0) {
-      setCurrentImgIndex((prev) => prev - 1);
-      dispatch(resetWorkspace()); // Reset để xóa nhãn ảnh cũ
-    }
-  };
+  const annotations = useSelector(
+    (state) =>
+      state.labeling.annotationsByAssignment[currentImageData?.id] || [],
+  );
 
-  const handleNextImage = () => {
-    if (currentImgIndex < images.length - 1) {
-      setCurrentImgIndex((prev) => prev + 1);
-      dispatch(resetWorkspace()); // Reset để xóa nhãn ảnh cũ
-    }
-  };
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        setLoading(true);
+        const projectRes = await projectService.getById(projectId);
+        setLabels(projectRes.data.labels || []);
 
-  const handleSubmitWork = async () => {
-    try {
-      if (annotations.length === 0) {
-        toast.warning("Vui lòng gán nhãn trước khi lưu!");
-        return;
+        const imgRes = await taskService.getProjectImages(projectId);
+        setImages(imgRes.data || []);
+      } catch {
+        toast.error("Không tải được dữ liệu");
+      } finally {
+        setLoading(false);
       }
+    };
+    fetchAll();
+  }, [projectId]);
 
-      // Cấu trúc chuẩn theo Swagger của bạn
-      const payload = {
-        assignmentId: parseInt(assignmentId), // Lấy từ URL
-        annotations: annotations.map((ann) => ({
-          labelClassId: ann.labelId,
-          valueJson: JSON.stringify({
-            x: ann.x,
-            y: ann.y,
-            width: ann.width,
-            height: ann.height,
-          }),
-        })),
-      };
+  useEffect(() => {
+    if (!currentImageData) return;
+    if (currentImageData.annotationData) {
+      dispatch(
+        setAnnotationsForAssignment({
+          assignmentId: currentImageData.id,
+          annotations: JSON.parse(currentImageData.annotationData),
+        }),
+      );
+    }
+  }, [currentImageData, dispatch]);
 
-      await taskService.submitTask(payload);
-      toast.success("Nộp bài thành công!");
+  const saveDraft = async () => {
+    if (!annotations.length) return;
+    await taskService.saveDraft({
+      assignmentId: currentImageData.id,
+      dataJSON: JSON.stringify(annotations),
+    });
+  };
 
-      // Sau khi nộp thành công 1 assignmentId, quay lại danh sách
+  const next = async () => {
+    await saveDraft();
+    setCurrentImgIndex((i) => i + 1);
+  };
+
+  const submit = async () => {
+    await taskService.submitTask({
+      assignmentId: currentImageData.id,
+      dataJSON: JSON.stringify(annotations),
+    });
+    toast.success("Đã submit ảnh");
+
+    if (currentImgIndex === images.length - 1) {
       navigate("/annotator-my-tasks");
-    } catch (error) {
-      toast.error("Lỗi khi nộp bài");
+    } else {
+      await next();
     }
   };
 
-  if (status === "loading" || !currentTask) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" role="status"></div>
-      </div>
-    );
-  }
-
-  if (images.length === 0 || !currentImageData) {
-    return <div className="alert alert-warning m-5">Không có dữ liệu ảnh.</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (!currentImageData) return <div>Không có ảnh</div>;
 
   return (
     <div className="row g-3">
-      <div className="col-xxl-3 col-lg-4">
-        <TaskInfoTable
-          taskId={assignmentId}
-          status={currentImageData.status}
-          priority={currentImageData.priority || "Normal"}
-          dueDate={currentImageData.deadline}
-        />
-        <LabelPicker />
+      <div className="col-lg-3">
+        <TaskInfoTable taskId={currentImageData.id} />
+        <LabelPicker labels={labels} />
       </div>
 
-      <div className="col-xxl-9 col-lg-8">
-        <div className="card shadow-none border">
-          <div className="card-body">
-            {/* Thanh điều hướng nhanh giữa các ảnh ssf... */}
-            <div className="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded">
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                disabled={currentImgIndex === 0}
-                onClick={handlePrevImage}
-              >
-                <i className="ri-arrow-left-s-line"></i> Trước
-              </button>
-
-              <div className="text-center">
-                <h6 className="mb-0">{currentImageData.projectName}</h6>
-                <small className="text-muted">
-                  Ảnh {currentImgIndex + 1} trên tổng số {images.length}
-                </small>
-              </div>
-
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                disabled={currentImgIndex === images.length - 1}
-                onClick={handleNextImage}
-              >
-                Tiếp <i className="ri-arrow-right-s-line"></i>
-              </button>
-            </div>
-
-            <LabelingWorkspace
-              key={currentImageData.dataItemId || currentImageData.id}
-              imageUrl={currentImageData.storageUrl}
-            />
-
-            <div className="d-flex justify-content-between align-items-center mt-3">
-              <div className="text-muted small">
-                ID: {currentImageData.dataItemId}
-              </div>
-              <button
-                className="btn btn-success px-5"
-                onClick={handleSubmitWork}
-              >
-                {currentImgIndex === images.length - 1
-                  ? "Hoàn thành Task"
-                  : "Lưu & Tiếp theo"}
-              </button>
-            </div>
-          </div>
-        </div>
-        <CommentSection
-          projectId={currentImageData.projectId}
-          taskId={assignmentId}
+      <div className="col-lg-9">
+        <LabelingWorkspace
+          assignmentId={currentImageData.id}
+          imageUrl={currentImageData.dataItemUrl}
         />
+
+        <div className="d-flex justify-content-between mt-3">
+          <button
+            className="btn btn-secondary"
+            disabled={currentImgIndex === 0}
+            onClick={() => setCurrentImgIndex((i) => i - 1)}
+          >
+            Trước
+          </button>
+
+          <button className="btn btn-success" onClick={submit}>
+            {currentImgIndex === images.length - 1
+              ? "Hoàn thành"
+              : "Lưu & Tiếp"}
+          </button>
+        </div>
+
+        <CommentSection projectId={projectId} taskId={currentImageData.id} />
       </div>
     </div>
   );

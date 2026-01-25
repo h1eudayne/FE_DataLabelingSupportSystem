@@ -2,10 +2,9 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setSelectedLabel } from "../../../store/annotator/labelling/labelingSlice";
 
-const LabelPicker = () => {
+const LabelPicker = ({ labels }) => {
   const dispatch = useDispatch();
 
-  const { labels } = useSelector((state) => state.task);
   const { selectedLabel } = useSelector((state) => state.labeling);
 
   // Hàm xử lý Toggle chọn/bỏ chọn
