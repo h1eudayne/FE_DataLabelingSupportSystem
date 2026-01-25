@@ -14,7 +14,11 @@ const projectService = {
   deleteProject: (id) => axios.delete(`/api/Project/${id}`),
 
   uploadDirect: (projectId, formData) =>
-    axios.post(`/api/Project/${projectId}/upload-direct`, formData),
+    axios.post(`/api/Project/${projectId}/upload-direct`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
 
   importData: (projectId, urls) =>
     axios.post(`/api/Project/${projectId}/import-data`, {

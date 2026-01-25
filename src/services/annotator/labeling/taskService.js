@@ -2,15 +2,15 @@
 import axiosInstance from "../../axios.customize";
 
 const taskService = {
-  getMyAssignments: () => {
-    return axiosInstance.get(`/api/Project/annotator/assigned`);
+  getMyTasks: (projectId = 0, status) => {
+    const params = new URLSearchParams();
+    params.append("projectId", projectId);
+    if (status) params.append("status", status);
+
+    return axiosInstance.get(`/api/Task/my-tasks?${params.toString()}`);
   },
 
   getTaskDetail: (assignmentId) => {
-    if (!assignmentId) {
-      console.error("assignmentId undefined");
-      return Promise.reject("ID không hợp lệ");
-    }
     return axiosInstance.get(`/api/Task/detail/${assignmentId}`);
   },
 

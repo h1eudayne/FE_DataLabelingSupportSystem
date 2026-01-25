@@ -16,18 +16,21 @@ import Select from "react-select";
 
 import axios from "../../../services/axios.customize";
 
+import { uploadToCloudinary } from "../../../services/cloudinaryService";
+
 import projectService from "../../../services/manager/project/projectService";
-import datasetService from "../../../services/manager/dataset/datasetService";
 import { userService } from "../../../services/manager/project/userService";
 import taskService from "../../../services/manager/project/taskService";
 
 const CreateProject = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const isSubmittingRef = useRef(false); // 🔥 CHẶN TUYỆT ĐỐI
 
   const [loading, setLoading] = useState(false);
   const [annotatorOptions, setAnnotatorOptions] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [selectedAnnotators, setSelectedAnnotators] = useState([]);
 
   const [projectInfo, setProjectInfo] = useState({
     name: "",
@@ -39,14 +42,12 @@ const CreateProject = () => {
   const [labels, setLabels] = useState([
     { name: "", guideline: "", color: "#0ab39c" },
   ]);
-  const [selectedAnnotators, setSelectedAnnotators] = useState([]);
 
+  // ================= FETCH ANNOTATORS =================
   useEffect(() => {
     const fetchAnnotators = async () => {
       try {
         const res = await userService.getUsers();
-        console.log(res);
-
         const filtered = res.data
           .filter((u) => u.role === "Annotator" || u.roleId === 2)
           .map((u) => ({
@@ -61,38 +62,43 @@ const CreateProject = () => {
     fetchAnnotators();
   }, []);
 
+  // ================= LABEL =================
   const addLabel = () =>
     setLabels([...labels, { name: "", guideline: "", color: "#0ab39c" }]);
 
   const removeLabel = (index) => {
-    if (labels.length > 1) {
-      setLabels(labels.filter((_, i) => i !== index));
-    } else {
-      toast.info("Phải có ít nhất một nhãn");
-    }
+    if (labels.length === 1) return toast.info("Phải có ít nhất một nhãn");
+    setLabels(labels.filter((_, i) => i !== index));
   };
 
   const updateLabel = (index, field, value) => {
-    const newLabels = [...labels];
-    newLabels[index][field] = value;
-    setLabels(newLabels);
+    const clone = [...labels];
+    clone[index][field] = value;
+    setLabels(clone);
   };
 
+  // ================= FILE =================
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    setSelectedFiles([...selectedFiles, ...files]);
+    setSelectedFiles((prev) => [...prev, ...files]);
   };
 
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedFiles.length === 0 || selectedAnnotators.length === 0) {
+
+    if (isSubmittingRef.current) return;
+
+    if (!selectedFiles.length || !selectedAnnotators.length) {
       toast.warning("Vui lòng kiểm tra lại file và nhân viên!");
       return;
     }
 
+    isSubmittingRef.current = true;
     setLoading(true);
+
     try {
-      // 1. Tạo Project
+      // 1️⃣ CREATE PROJECT
       const resProj = await projectService.createProject({
         name: projectInfo.name,
         description: projectInfo.description,
@@ -107,24 +113,27 @@ const CreateProject = () => {
           .map((l) => ({
             name: l.name,
             color: l.color,
-            guideLine: l.guideline,
+            guideline: l.guideline,
           })),
       });
+
       const projectId = resProj.data?.id || resProj.data?.projectId;
+      if (!projectId) throw new Error("Không lấy được projectId");
 
-      // 2. Upload & Import
-      const formData = new FormData();
-      selectedFiles.forEach((f) => formData.append("files", f));
-      const uploadRes = await projectService.uploadDirect(projectId, formData);
-      const urls = uploadRes.data?.urls || uploadRes.data;
-      await projectService.importData(projectId, urls);
+      // 2️⃣ UPLOAD CLOUDINARY
+      toast.info("Đang upload ảnh lên Cloudinary...");
+      const uploadedUrls = [];
 
-      // 🕒 Quan trọng: Đợi một chút để DB hoàn tất Import trước khi Assign
-      toast.info("Đang chuẩn bị dữ liệu phân công...");
-      await new Promise((r) => setTimeout(r, 2000));
+      for (const file of selectedFiles) {
+        const url = await uploadToCloudinary(file);
+        uploadedUrls.push(url);
+      }
 
-      // 3. Phân công (Assign)
-      const total = urls.length;
+      // 3️⃣ IMPORT DATA (GỬI URL ẢNH CHO BACKEND)
+      await projectService.importData(projectId, uploadedUrls);
+
+      // 4️⃣ ASSIGN TASK
+      const total = uploadedUrls.length;
       let remaining = total;
 
       for (let i = 0; i < selectedAnnotators.length; i++) {
@@ -141,13 +150,13 @@ const CreateProject = () => {
         }
       }
 
-      toast.success("Dự án đã sẵn sàng!");
+      toast.success("Tạo dự án thành công!");
       navigate("/projects-all-projects");
-    } catch (error) {
-      console.error("Lỗi:", error.response?.data);
-      const msg = error.response?.data?.message || "Lỗi hệ thống";
-      toast.error(msg);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Lỗi hệ thống");
     } finally {
+      isSubmittingRef.current = false;
       setLoading(false);
     }
   };
@@ -357,6 +366,9 @@ const CreateProject = () => {
                 color="primary"
                 className="w-100 py-3 fw-bold shadow"
                 disabled={loading}
+                onClick={(e) => {
+                  if (loading) e.preventDefault();
+                }}
               >
                 {loading ? (
                   <span className="spinner-border spinner-border-sm me-2"></span>
