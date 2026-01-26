@@ -1,0 +1,33 @@
+.navbar-menu .menu-dropdown {
+    transition: all 0.35s ease-in-out !important;
+}
+
+.simplebar-content-wrapper {
+    scroll-behavior: smooth;
+}
+
+.navbar-menu .collapse {
+    display: block !important;
+    height: auto;
+}
+
+.collapse:not(.show) {
+    display: none !important;
+}
+
+.app-menu {
+    transition: all 0.3s ease !important;
+}
+
+.main-content {
+    transition: all 0.3s ease !important;
+}
+
+#topnav-hamburger-icon {
+    z-index: 1005 !important;
+    position: relative;
+}
+
+.header-item i {
+    font-size: 20px;
+}

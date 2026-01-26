@@ -231,7 +231,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                 >
                   <img
                     id="header-lang-img"
-                    src={"../assets/images/flags/us.svg"}
+                    // src={"../assets/images/flags/us.svg"}
                     alt="Header Language"
                     height={20}
                     className="rounded"
