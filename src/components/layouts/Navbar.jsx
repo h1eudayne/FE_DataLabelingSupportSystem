@@ -193,15 +193,6 @@ const Navbar = () => {
                           </a>
                         </li>
                         <li className="nav-item">
-                          <a
-                            href={`/workplace-labeling-task/${currentActiveTaskId}`}
-                            className="nav-link"
-                            data-key="t-chartjs"
-                          >
-                            Labeling Task
-                          </a>
-                        </li>
-                        <li className="nav-item">
                           <a href="/my-dashboard" className="nav-link">
                             My Dashboard
                           </a>
