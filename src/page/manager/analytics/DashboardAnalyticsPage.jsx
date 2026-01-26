@@ -25,10 +25,18 @@ import { Database, CheckCircle, Clock, Users } from "lucide-react";
 import StatCard from "../../../components/manager/analytics/StatCard";
 import { analyticsService } from "../../../services/manager/analytics/analyticsService";
 
-const COLORS = ["#0ab39c", "#f7b84b", "#f06548", "#405189"];
+const COLORS = ["#0ab39c", "#f7b84b", "#405189", "#f06548"];
+
+const EMPTY_STATS = {
+  totalAssigned: 0,
+  completed: 0,
+  pending: 0,
+  submitted: 0,
+  rejected: 0,
+};
 
 const DashboardAnalytics = () => {
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState(EMPTY_STATS);
   const [projectChartData, setProjectChartData] = useState([]);
   const [annotatorData, setAnnotatorData] = useState([]);
   const [totalAnnotators, setTotalAnnotators] = useState(0);
@@ -38,16 +46,55 @@ const DashboardAnalytics = () => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        const [resStats, resProjects, resUsers] = await Promise.all([
-          analyticsService.getDashboardStats(),
-          analyticsService.getMyProjects(),
-          analyticsService.getUsers(),
-        ]);
 
-        const s = resStats.data || resStats;
-        setStats(s);
+        // ================= PROJECTS =================
+        const resProjects = await analyticsService.getMyProjects();
+        const projects = resProjects.data || [];
 
-        const projects = resProjects.data || resProjects || [];
+        console.log("📦 PROJECTS:", projects);
+
+        let totalAssigned = 0;
+        let completed = 0;
+        let pending = 0;
+        let submitted = 0;
+        let rejected = 0;
+
+        // ================= PROJECT STATS =================
+        for (const project of projects) {
+          console.log("➡️ Fetch stats for project:", project.id, project.name);
+
+          try {
+            const res = await analyticsService.getProjectStats(project.id);
+            const s = res.data;
+
+            console.log("📊 PROJECT STATS:", s);
+
+            totalAssigned += s.totalAssignments ?? 0;
+            completed += s.approvedAssignments ?? 0;
+            pending += s.pendingAssignments ?? 0;
+            submitted += s.submittedAssignments ?? 0;
+            rejected += s.rejectedAssignments ?? 0;
+          } catch (err) {
+            if (err.response?.status === 400) {
+              console.warn(`⚠️ Project ${project.id} chưa có task → stats = 0`);
+              continue;
+            }
+            throw err;
+          }
+        }
+
+        const finalStats = {
+          totalAssigned,
+          completed,
+          pending,
+          submitted,
+          rejected,
+        };
+
+        console.log("📈 FINAL COUNT:", finalStats);
+        setStats(finalStats);
+
+        // ================= BAR CHART =================
         setProjectChartData(
           projects.map((p) => ({
             name: p.name,
@@ -58,24 +105,32 @@ const DashboardAnalytics = () => {
           })),
         );
 
-        const users = resUsers.data || resUsers || [];
+        // ================= USERS =================
+        const resUsers = await analyticsService.getUsers();
+        const users = resUsers.data || [];
+
+        console.log("👥 USERS:", users);
+
         const annotators = users.filter((u) => u.role === "Annotator");
         setTotalAnnotators(annotators.length);
 
-        const topAnnotators = annotators
-          .map((u) => ({
-            name: u.fullName || u.email.split("@")[0],
-            taskCount: u.assignments?.length || 0,
-          }))
-          .sort((a, b) => b.taskCount - a.taskCount)
-          .slice(0, 5);
-        setAnnotatorData(topAnnotators);
-      } catch (error) {
-        console.error("Lỗi khi tải dữ liệu Analytics:", error);
+        setAnnotatorData(
+          annotators
+            .map((u) => ({
+              name: u.fullName || u.email?.split("@")[0],
+              taskCount: u.assignments?.length || 0,
+            }))
+            .sort((a, b) => b.taskCount - a.taskCount)
+            .slice(0, 5),
+        );
+      } catch (err) {
+        console.error("❌ Analytics error:", err);
+        setStats(EMPTY_STATS);
       } finally {
         setLoading(false);
       }
     };
+
     fetchAllData();
   }, []);
 
@@ -91,20 +146,12 @@ const DashboardAnalytics = () => {
   return (
     <div className="page-content">
       <Container fluid>
-        <div className="mb-4">
-          <h4 className="text-uppercase fw-bold text-primary">
-            Hệ thống phân tích dự án
-          </h4>
-          <p className="text-muted">
-            Theo dõi tiến độ và năng suất gán nhãn thời gian thực.
-          </p>
-        </div>
-
+        {/* ================= STAT CARDS ================= */}
         <Row>
           <Col md={3}>
             <StatCard
               title="Tổng Task Gán"
-              value={stats?.totalAssigned}
+              value={stats.totalAssigned}
               icon={Database}
               color="primary"
             />
@@ -113,7 +160,7 @@ const DashboardAnalytics = () => {
           <Col md={3}>
             <StatCard
               title="Hoàn thành"
-              value={stats?.completed}
+              value={stats.completed}
               icon={CheckCircle}
               color="success"
             />
@@ -122,7 +169,7 @@ const DashboardAnalytics = () => {
           <Col md={3}>
             <StatCard
               title="Đang chờ"
-              value={stats?.pending}
+              value={stats.pending}
               icon={Clock}
               color="warning"
             />
@@ -138,27 +185,22 @@ const DashboardAnalytics = () => {
           </Col>
         </Row>
 
+        {/* ================= PROJECT BAR CHART ================= */}
         <Row className="mt-4">
           <Col xl={8}>
             <Card className="shadow-sm border-0 h-100">
-              <CardHeader className="bg-white border-bottom d-flex align-items-center">
-                <h5 className="mb-0 flex-grow-1">
-                  So sánh quy mô dữ liệu dự án
-                </h5>
+              <CardHeader className="bg-white border-bottom">
+                <h5 className="mb-0">So sánh quy mô dữ liệu dự án</h5>
               </CardHeader>
               <CardBody>
                 <div style={{ width: "100%", height: 350 }}>
                   <ResponsiveContainer>
                     <BarChart data={projectChartData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" stroke="#888" fontSize={12} />
-                      <YAxis
-                        stroke="#888"
-                        fontSize={12}
-                        allowDecimals={false}
-                      />
-                      <Tooltip cursor={{ fill: "#f3f6f9" }} />
-                      <Legend verticalAlign="top" align="right" />
+                      <XAxis dataKey="name" fontSize={12} />
+                      <YAxis allowDecimals={false} fontSize={12} />
+                      <Tooltip />
+                      <Legend />
                       <Bar
                         dataKey="total"
                         fill="#405189"
@@ -172,6 +214,7 @@ const DashboardAnalytics = () => {
             </Card>
           </Col>
 
+          {/* ================= TASK STATUS PIE ================= */}
           <Col xl={4}>
             <Card className="shadow-sm border-0 h-100">
               <CardHeader className="bg-white border-bottom">
@@ -183,33 +226,17 @@ const DashboardAnalytics = () => {
                     <PieChart>
                       <Pie
                         data={[
-                          {
-                            name: "Hoàn thành",
-                            value: Number(stats?.completed || 0),
-                          },
-                          {
-                            name: "Đang chờ",
-                            value: Number(stats?.pending || 0),
-                          },
-                          {
-                            name: "Đã nộp",
-                            value: Number(stats?.submitted || 0),
-                          },
-                          {
-                            name: "Bị từ chối",
-                            value: Number(stats?.rejected || 0),
-                          },
+                          { name: "Hoàn thành", value: stats.completed },
+                          { name: "Đang chờ", value: stats.pending },
+                          { name: "Đã nộp", value: stats.submitted },
+                          { name: "Bị từ chối", value: stats.rejected },
                         ]}
                         innerRadius={70}
                         outerRadius={100}
-                        paddingAngle={5}
                         dataKey="value"
                       >
-                        {COLORS.map((_, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
+                        {COLORS.map((color, index) => (
+                          <Cell key={index} fill={color} />
                         ))}
                       </Pie>
                       <Tooltip />
@@ -222,10 +249,11 @@ const DashboardAnalytics = () => {
           </Col>
         </Row>
 
+        {/* ================= TOP ANNOTATORS ================= */}
         <Row className="mt-4">
           <Col xl={12}>
             <Card className="shadow-sm border-0">
-              <CardHeader className="bg-white border-bottom d-flex align-items-center">
+              <CardHeader className="bg-white border-bottom">
                 <h5 className="mb-0">
                   Top 5 Annotators làm việc hiệu quả nhất
                 </h5>
@@ -236,26 +264,21 @@ const DashboardAnalytics = () => {
                     <BarChart
                       data={annotatorData}
                       layout="vertical"
-                      margin={{ left: 50, right: 30 }}
+                      margin={{ left: 60, right: 30 }}
                     >
                       <CartesianGrid
                         strokeDasharray="3 3"
-                        horizontal={true}
+                        horizontal
                         vertical={false}
                       />
                       <XAxis type="number" hide />
-                      <YAxis
-                        dataKey="name"
-                        type="category"
-                        stroke="#6c757d"
-                        width={100}
-                      />
+                      <YAxis dataKey="name" type="category" width={120} />
                       <Tooltip />
                       <Bar
                         dataKey="taskCount"
                         fill="#4b38b3"
-                        name="Số lượng ảnh đã gán"
-                        barSize={25}
+                        name="Số task được giao"
+                        barSize={24}
                         radius={[0, 4, 4, 0]}
                       />
                     </BarChart>
