@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   getProfile,
-  getDashboardStats,
   getAssignedProjects,
   getMyTasks,
   getAllReviewerFeedback,
@@ -13,12 +12,6 @@ const useAnnotatorDashboard = (projectId) => {
     queryFn: getProfile,
   });
 
-  const stats = useQuery({
-    queryKey: ["dashboard-stats"],
-    queryFn: getDashboardStats,
-    retry: false,
-  });
-
   const projects = useQuery({
     queryKey: ["assigned-projects"],
     queryFn: getAssignedProjects,
@@ -28,6 +21,8 @@ const useAnnotatorDashboard = (projectId) => {
     queryKey: ["my-tasks", projectId],
     queryFn: () => getMyTasks(projectId),
     enabled: !!projectId,
+    retry: false,
+    staleTime: 1000 * 30,
   });
 
   const reviewerFeedback = useQuery({
@@ -38,7 +33,6 @@ const useAnnotatorDashboard = (projectId) => {
 
   return {
     profile,
-    stats,
     projects,
     tasksByProject,
     reviewerFeedback,

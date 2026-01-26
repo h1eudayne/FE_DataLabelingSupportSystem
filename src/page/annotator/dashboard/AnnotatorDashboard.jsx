@@ -20,17 +20,11 @@ const AnnotatorDashboard = () => {
   const stats = useMemo(() => {
     const tasks = tasksByProject.data || [];
 
-    console.log(tasks);
-
     return {
       assigned: tasks.length,
-
       inProgress: tasks.filter((t) => t.status === "InProgress").length,
-
       submitted: tasks.filter((t) => t.status === "Submitted").length,
-
       approved: tasks.filter((t) => t.status === "Approved").length,
-
       rejected: tasks.filter((t) => t.status === "Rejected").length,
     };
   }, [tasksByProject.data]);
@@ -67,16 +61,16 @@ const AnnotatorDashboard = () => {
         />
 
         <StatCard
-          title="Pending Review"
-          value={stats.pendingReview}
-          icon="ri-time-line"
+          title="Approved"
+          value={stats.approved}
+          icon="ri-check-double-line"
           color="info"
           loading={isLoadingStats}
         />
 
         <StatCard
-          title="Returned"
-          value={stats.returned}
+          title="Rejected"
+          value={stats.rejected}
           icon="ri-close-circle-line"
           color="danger"
           loading={isLoadingStats}
