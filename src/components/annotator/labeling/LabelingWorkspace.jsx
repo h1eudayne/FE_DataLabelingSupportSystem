@@ -31,7 +31,6 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
   const [newRect, setNewRect] = useState(null);
   const [size, setSize] = useState({ width: 0, height: 600 });
 
-  // ✅ SCALE IMAGE
   useEffect(() => {
     if (containerRef.current && image) {
       const w = containerRef.current.offsetWidth;
@@ -47,7 +46,6 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
     }
   }, [image]);
 
-  // ✅ DELETE / BACKSPACE
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === "Backspace" || e.key === "Delete") {
@@ -134,7 +132,6 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
             </Group>
           ))}
 
-          {/* ✅ PREVIEW KHI ĐANG VẼ */}
           {newRect && (
             <Rect
               {...newRect}

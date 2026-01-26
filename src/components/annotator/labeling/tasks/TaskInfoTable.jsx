@@ -1,5 +1,5 @@
 import React from "react";
-import moment from "moment"; // Cài đặt: npm install moment
+import moment from "moment";
 
 const TaskInfoTable = ({ taskId, status, priority, dueDate }) => {
   return (

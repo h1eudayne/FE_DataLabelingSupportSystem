@@ -10,7 +10,6 @@ export default function StatCard({
   return (
     <div className="card card-animate h-100 shadow-sm">
       <div className="card-body d-flex align-items-center justify-content-between">
-        {/* LEFT */}
         <div>
           <p className="text-uppercase fw-semibold text-muted mb-1 fs-12">
             {title}
@@ -25,7 +24,6 @@ export default function StatCard({
           )}
         </div>
 
-        {/* RIGHT ICON */}
         {icon && (
           <div
             className={`stat-icon bg-${color} bg-opacity-10 text-${color}`}

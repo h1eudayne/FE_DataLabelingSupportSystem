@@ -7,13 +7,10 @@ const LabelPicker = ({ labels }) => {
 
   const { selectedLabel } = useSelector((state) => state.labeling);
 
-  // Hàm xử lý Toggle chọn/bỏ chọn
   const handleLabelClick = (label) => {
     if (selectedLabel?.id === label.id) {
-      // Nếu đang chọn nhãn này rồi thì dispatch null để bỏ chọn
       dispatch(setSelectedLabel(null));
     } else {
-      // Nếu chưa chọn hoặc đang chọn nhãn khác thì chọn nhãn mới
       dispatch(setSelectedLabel(label));
     }
   };
@@ -40,7 +37,7 @@ const LabelPicker = ({ labels }) => {
             return (
               <button
                 key={label.id}
-                onClick={() => handleLabelClick(label)} // Sử dụng hàm handle mới
+                onClick={() => handleLabelClick(label)}
                 className={`btn text-start d-flex justify-content-between align-items-center p-2 transition-all ${
                   isSelected
                     ? "btn-dark shadow"

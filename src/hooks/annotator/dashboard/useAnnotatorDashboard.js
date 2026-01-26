@@ -24,7 +24,6 @@ const useAnnotatorDashboard = (projectId) => {
     queryFn: getAssignedProjects,
   });
 
-  // ⭐ CHỈ CALL KHI CÓ projectId
   const tasksByProject = useQuery({
     queryKey: ["my-tasks", projectId],
     queryFn: () => getMyTasks(projectId),

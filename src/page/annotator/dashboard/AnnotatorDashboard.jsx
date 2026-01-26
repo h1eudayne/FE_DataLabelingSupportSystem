@@ -11,14 +11,12 @@ const AnnotatorDashboard = () => {
   const { profile, projects, tasksByProject, reviewerFeedback } =
     useAnnotatorDashboard(projectId);
 
-  // ✅ Auto chọn project đầu tiên
   useEffect(() => {
     if (projects.data?.length > 0 && !projectId) {
       setProjectId(projects.data[0].projectId);
     }
   }, [projects.data, projectId]);
 
-  // ✅ TÍNH STAT TỪ TASK (KHÔNG CALL API – ĐÚNG BACKEND)
   const stats = useMemo(() => {
     const tasks = tasksByProject.data || [];
 
@@ -43,7 +41,6 @@ const AnnotatorDashboard = () => {
     <DashboardLayout title="My Dashboard" className="page-content">
       <h4>Welcome, {profile?.data?.fullName}</h4>
 
-      {/* ================= STATS ================= */}
       <div className="row row-cols-1 row-cols-md-3 row-cols-xl-5 g-4 mt-3">
         <StatCard
           title="Assigned"
@@ -86,7 +83,6 @@ const AnnotatorDashboard = () => {
         />
       </div>
 
-      {/* ================= TASK LIST ================= */}
       <div className="row mt-4">
         <div className="col-12">
           <div className="card">
@@ -122,7 +118,6 @@ const AnnotatorDashboard = () => {
         </div>
       </div>
 
-      {/* ================= REVIEWER FEEDBACK ================= */}
       <ReviewerFeedbackTable
         loading={reviewerFeedback.isLoading}
         data={reviewerFeedback.data || []}

@@ -14,7 +14,6 @@ const ProjectCard = ({ project, onDelete }) => {
     <div className="col-xxl-3 col-sm-6 mb-4">
       <div className="card h-100 shadow-sm border-0 card-animate">
         <div className="card-body">
-          {/* Header */}
           <div className="d-flex align-items-center mb-3">
             <div className="flex-grow-1">
               <h5 className="fs-15 mb-1 text-dark fw-bold">
@@ -40,7 +39,6 @@ const ProjectCard = ({ project, onDelete }) => {
             </div>
           </div>
 
-          {/* Info */}
           <div className="row gy-3 mb-4">
             <div className="col-6">
               <p className="text-muted mb-1 small">Ngân sách</p>
@@ -59,7 +57,6 @@ const ProjectCard = ({ project, onDelete }) => {
             </div>
           </div>
 
-          {/* Progress */}
           <div className="mt-4">
             <div className="d-flex justify-content-between mb-2">
               <small className="text-muted">Tiến độ</small>
@@ -76,7 +73,6 @@ const ProjectCard = ({ project, onDelete }) => {
             </div>
           </div>
 
-          {/* Footer info */}
           <div className="d-flex align-items-center gap-3 border-top border-top-dashed pt-3 mt-4">
             <div className="d-flex align-items-center text-muted small">
               <i className="ri-image-2-line me-2 fs-16 text-info"></i>
@@ -93,7 +89,6 @@ const ProjectCard = ({ project, onDelete }) => {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="card-footer bg-transparent border-top-dashed d-flex gap-2">
           <Link
             to={`/projects-datasets/${project.id}`}

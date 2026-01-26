@@ -14,13 +14,13 @@ const AnnotatorTaskList = () => {
         const res = await taskService.getMyProjects();
 
         const projects = (res.data || []).map((p) => ({
-          assignmentId: p.projectId, // giữ cho routing
+          assignmentId: p.projectId,
           projectName: p.projectName,
           description: p.description,
           deadline: p.deadline,
           assignedDate: p.assignedDate,
 
-          status: p.status, // ✅ DÙNG THẲNG BACKEND
+          status: p.status,
           progress: Number(p.progressPercent ?? 0),
 
           totalImages: p.totalImages ?? 0,
@@ -83,7 +83,6 @@ const AnnotatorTaskList = () => {
               )}
 
               <div className="card-body">
-                {/* HEADER */}
                 <div className="d-flex justify-content-between mb-2">
                   <span className="badge bg-light text-primary">
                     ID: {task.assignmentId}
@@ -93,17 +92,14 @@ const AnnotatorTaskList = () => {
                   </span>
                 </div>
 
-                {/* TITLE */}
                 <h5 className="fs-15 fw-semibold text-truncate">
                   {task.projectName}
                 </h5>
 
-                {/* INFO */}
                 <p className="text-muted small mb-2">
                   {task.completedImages}/{task.totalImages} ảnh hoàn thành
                 </p>
 
-                {/* PROGRESS */}
                 <div className="mb-3">
                   <div className="d-flex justify-content-between small mb-1">
                     <span>Tiến độ</span>
@@ -117,7 +113,6 @@ const AnnotatorTaskList = () => {
                   </div>
                 </div>
 
-                {/* DEADLINE */}
                 <p className="text-muted small mb-3">
                   <i className="ri-time-line me-1" />
                   {task.deadline
@@ -125,7 +120,6 @@ const AnnotatorTaskList = () => {
                     : "N/A"}
                 </p>
 
-                {/* ACTION */}
                 <button
                   className="btn btn-primary w-100"
                   disabled={task.status === "Completed"}

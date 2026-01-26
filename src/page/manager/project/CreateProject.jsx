@@ -25,7 +25,7 @@ import taskService from "../../../services/manager/project/taskService";
 const CreateProject = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const isSubmittingRef = useRef(false); // 🔥 CHẶN TUYỆT ĐỐI
+  const isSubmittingRef = useRef(false);
 
   const [loading, setLoading] = useState(false);
   const [annotatorOptions, setAnnotatorOptions] = useState([]);
@@ -43,7 +43,6 @@ const CreateProject = () => {
     { name: "", guideline: "", color: "#0ab39c" },
   ]);
 
-  // ================= FETCH ANNOTATORS =================
   useEffect(() => {
     const fetchAnnotators = async () => {
       try {
@@ -62,7 +61,6 @@ const CreateProject = () => {
     fetchAnnotators();
   }, []);
 
-  // ================= LABEL =================
   const addLabel = () =>
     setLabels([...labels, { name: "", guideline: "", color: "#0ab39c" }]);
 
@@ -77,13 +75,11 @@ const CreateProject = () => {
     setLabels(clone);
   };
 
-  // ================= FILE =================
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     setSelectedFiles((prev) => [...prev, ...files]);
   };
 
-  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -98,7 +94,6 @@ const CreateProject = () => {
     setLoading(true);
 
     try {
-      // 1️⃣ CREATE PROJECT
       const resProj = await projectService.createProject({
         name: projectInfo.name,
         description: projectInfo.description,
@@ -120,7 +115,6 @@ const CreateProject = () => {
       const projectId = resProj.data?.id || resProj.data?.projectId;
       if (!projectId) throw new Error("Không lấy được projectId");
 
-      // 2️⃣ UPLOAD CLOUDINARY
       toast.info("Đang upload ảnh lên Cloudinary...");
       const uploadedUrls = [];
 
@@ -129,10 +123,8 @@ const CreateProject = () => {
         uploadedUrls.push(url);
       }
 
-      // 3️⃣ IMPORT DATA (GỬI URL ẢNH CHO BACKEND)
       await projectService.importData(projectId, uploadedUrls);
 
-      // 4️⃣ ASSIGN TASK
       const total = uploadedUrls.length;
       let remaining = total;
 

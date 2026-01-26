@@ -4,7 +4,7 @@ const labelingSlice = createSlice({
   name: "labeling",
   initialState: {
     selectedLabel: null,
-    annotationsByAssignment: {}, // key = imageId
+    annotationsByAssignment: {},
   },
   reducers: {
     setSelectedLabel(state, action) {
@@ -31,7 +31,6 @@ const labelingSlice = createSlice({
       ).filter((a) => a.id !== id);
     },
 
-    // ✅ QUAN TRỌNG: XÓA NHÃN GẦN NHẤT
     removeLastAnnotation(state, action) {
       const assignmentId = action.payload;
       const list = state.annotationsByAssignment[assignmentId];
@@ -47,7 +46,7 @@ export const {
   setAnnotations,
   addAnnotation,
   removeAnnotation,
-  removeLastAnnotation, // ✅ EXPORT RÕ RÀNG
+  removeLastAnnotation,
 } = labelingSlice.actions;
 
 export default labelingSlice.reducer;

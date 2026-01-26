@@ -13,7 +13,7 @@ import taskService from "../../../services/annotator/labeling/taskService";
 import projectService from "../../../services/annotator/labeling/projectService";
 
 const WorkplaceLabelingTaskPage = () => {
-  const { assignmentId } = useParams(); // 👈 assignmentId đúng nghĩa
+  const { assignmentId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -28,17 +28,14 @@ const WorkplaceLabelingTaskPage = () => {
     (state) => state.labeling.annotationsByAssignment[currentImage?.id] || [],
   );
 
-  // ================= LOAD PROJECT + TASK =================
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // 1️⃣ Lấy project + labels
         const projectRes = await projectService.getById(assignmentId);
         setLabels(projectRes.data?.labels || []);
 
-        // 2️⃣ Lấy danh sách task (images)
         const imgRes = await taskService.getProjectImages(assignmentId);
         setImages(imgRes.data || []);
       } catch (err) {
@@ -51,7 +48,6 @@ const WorkplaceLabelingTaskPage = () => {
     fetchData();
   }, [assignmentId]);
 
-  // ================= LOAD DRAFT ANNOTATION =================
   useEffect(() => {
     if (!currentImage) return;
 
@@ -65,7 +61,6 @@ const WorkplaceLabelingTaskPage = () => {
     }
   }, [currentImage, annotations.length, dispatch]);
 
-  // ================= SAVE DRAFT =================
   const saveDraft = async () => {
     if (!currentImage) return;
 
@@ -75,13 +70,11 @@ const WorkplaceLabelingTaskPage = () => {
     });
   };
 
-  // ================= NEXT IMAGE =================
   const next = async () => {
     await saveDraft();
     setCurrentImgIndex((i) => i + 1);
   };
 
-  // ================= SUBMIT =================
   const submit = async () => {
     await saveDraft();
     toast.success("Đã submit ảnh");
@@ -93,19 +86,16 @@ const WorkplaceLabelingTaskPage = () => {
     }
   };
 
-  // ================= RENDER =================
   if (loading) return <div>Loading...</div>;
   if (!currentImage) return <div>Không có ảnh</div>;
 
   return (
     <div className="row g-3">
-      {/* ========== LEFT PANEL ========== */}
       <div className="col-lg-3">
         <TaskInfoTable taskId={currentImage.id} />
         <LabelPicker labels={labels} />
       </div>
 
-      {/* ========== RIGHT PANEL ========== */}
       <div className="col-lg-9">
         <LabelingWorkspace
           assignmentId={currentImage.id}

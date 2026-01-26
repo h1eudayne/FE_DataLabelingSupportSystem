@@ -8,7 +8,7 @@ const RegisterPage = () => {
   const [error, setError] = useState("");
 
   const handleRegister = async (e) => {
-    e.preventDefault(); // chặn reload page
+    e.preventDefault();
     setError("");
 
     try {
@@ -18,7 +18,7 @@ const RegisterPage = () => {
       setError(err?.response?.data?.message || "Register failed");
     }
   };
-  
+
   const quotes = [
     {
       text: "Great things never come from comfort zones.",
