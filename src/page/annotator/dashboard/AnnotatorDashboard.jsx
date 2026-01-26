@@ -1,43 +1,92 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useAnnotatorDashboard from "../../../hooks/annotator/dashboard/useAnnotatorDashboard";
 import DashboardLayout from "../../../components/layouts/DashboardLayout";
-import StatCard from "../../../components/annotator/dashboard/StatCard";
 import TaskTable from "../../../components/annotator/dashboard/TaskTable";
 import ReviewerFeedbackTable from "../../../components/annotator/dashboard/ReviewerFeedbackTable";
+import StatCard from "../../../components/annotator/dashboard/StatCard";
 
 const AnnotatorDashboard = () => {
   const [projectId, setProjectId] = useState(null);
 
-  const { profile, stats, projects, tasksByProject, reviewerFeedback } =
+  const { profile, projects, tasksByProject, reviewerFeedback } =
     useAnnotatorDashboard(projectId);
 
-  const dashboardStats = stats.data || [];
-
-  console.log("profile", profile);
-
-  console.log("dashboardStats", dashboardStats);
-
-  console.log("reviewerFeedback", reviewerFeedback);
-
-  console.log("tasksByProject", tasksByProject);
-
+  // ✅ Auto chọn project đầu tiên
   useEffect(() => {
-    if (projects.data && projects.data.length > 0 && !projectId) {
-      setProjectId(projects.data[0].id);
+    if (projects.data?.length > 0 && !projectId) {
+      setProjectId(projects.data[0].projectId);
     }
-  }, [projects.data]);
+  }, [projects.data, projectId]);
+
+  // ✅ TÍNH STAT TỪ TASK (KHÔNG CALL API – ĐÚNG BACKEND)
+  const stats = useMemo(() => {
+    const tasks = tasksByProject.data || [];
+
+    console.log(tasks);
+
+    return {
+      assigned: tasks.length,
+
+      inProgress: tasks.filter((t) => t.status === "InProgress").length,
+
+      submitted: tasks.filter((t) => t.status === "Submitted").length,
+
+      approved: tasks.filter((t) => t.status === "Approved").length,
+
+      rejected: tasks.filter((t) => t.status === "Rejected").length,
+    };
+  }, [tasksByProject.data]);
+
+  const isLoadingStats = tasksByProject.isLoading;
 
   return (
     <DashboardLayout title="My Dashboard" className="page-content">
       <h4>Welcome, {profile?.data?.fullName}</h4>
-      <div className="row row-cols-1 row-cols-md-3 row-cols-xl-5 g-4 justify-content-center">
-        <StatCard title="Assigned" value={dashboardStats.totalAssigned} />
-        <StatCard title="Submitted" value={dashboardStats.submitted} />
-        <StatCard title="In Progress" value={dashboardStats.inProgress} />
-        <StatCard title="Pending Review" value={dashboardStats.pendingReview} />
-        <StatCard title="Returned" value={dashboardStats.returned} />
+
+      {/* ================= STATS ================= */}
+      <div className="row row-cols-1 row-cols-md-3 row-cols-xl-5 g-4 mt-3">
+        <StatCard
+          title="Assigned"
+          value={stats.assigned}
+          icon="ri-task-line"
+          color="primary"
+          loading={isLoadingStats}
+        />
+
+        <StatCard
+          title="Submitted"
+          value={stats.submitted}
+          icon="ri-checkbox-circle-line"
+          color="success"
+          loading={isLoadingStats}
+        />
+
+        <StatCard
+          title="In Progress"
+          value={stats.inProgress}
+          icon="ri-loader-4-line"
+          color="warning"
+          loading={isLoadingStats}
+        />
+
+        <StatCard
+          title="Pending Review"
+          value={stats.pendingReview}
+          icon="ri-time-line"
+          color="info"
+          loading={isLoadingStats}
+        />
+
+        <StatCard
+          title="Returned"
+          value={stats.returned}
+          icon="ri-close-circle-line"
+          color="danger"
+          loading={isLoadingStats}
+        />
       </div>
 
+      {/* ================= TASK LIST ================= */}
       <div className="row mt-4">
         <div className="col-12">
           <div className="card">
@@ -56,17 +105,16 @@ const AnnotatorDashboard = () => {
                   }
                 >
                   <option value="">Select Project</option>
-                  {Array.isArray(projects.data) &&
-                    projects.data.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
+                  {projects.data?.map((p) => (
+                    <option key={p.projectId} value={p.projectId}>
+                      {p.projectName}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <TaskTable
-                loading={tasksByProject.isLoading || tasksByProject.isFetching}
+                loading={tasksByProject.isLoading}
                 data={tasksByProject.data || []}
               />
             </div>
@@ -74,6 +122,7 @@ const AnnotatorDashboard = () => {
         </div>
       </div>
 
+      {/* ================= REVIEWER FEEDBACK ================= */}
       <ReviewerFeedbackTable
         loading={reviewerFeedback.isLoading}
         data={reviewerFeedback.data || []}

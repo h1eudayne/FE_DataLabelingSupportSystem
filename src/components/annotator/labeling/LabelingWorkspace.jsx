@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   addAnnotation,
   removeAnnotation,
+  removeLastAnnotation,
 } from "../../../store/annotator/labelling/labelingSlice";
 
 const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
@@ -30,6 +31,7 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
   const [newRect, setNewRect] = useState(null);
   const [size, setSize] = useState({ width: 0, height: 600 });
 
+  // ✅ SCALE IMAGE
   useEffect(() => {
     if (containerRef.current && image) {
       const w = containerRef.current.offsetWidth;
@@ -44,6 +46,18 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
       });
     }
   }, [image]);
+
+  // ✅ DELETE / BACKSPACE
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Backspace" || e.key === "Delete") {
+        dispatch(removeLastAnnotation(assignmentId));
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [dispatch, assignmentId]);
 
   const handleMouseDown = (e) => {
     if (!selectedLabel) return;
@@ -85,7 +99,7 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
   };
 
   return (
-    <div ref={containerRef} className="bg-dark rounded" style={{ height: 600 }}>
+    <div ref={containerRef} style={{ height: 600 }} className="bg-dark rounded">
       <Stage
         width={size.width}
         height={size.height}
@@ -119,6 +133,16 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
               />
             </Group>
           ))}
+
+          {/* ✅ PREVIEW KHI ĐANG VẼ */}
+          {newRect && (
+            <Rect
+              {...newRect}
+              stroke="yellow"
+              dash={[6, 4]}
+              strokeWidth={2 / stageScale}
+            />
+          )}
         </Layer>
       </Stage>
     </div>

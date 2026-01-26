@@ -8,13 +8,12 @@ import LabelPicker from "../../../components/annotator/labeling/LabelPicker";
 import TaskInfoTable from "../../../components/annotator/labeling/tasks/TaskInfoTable";
 import CommentSection from "../../../components/annotator/labeling/tasks/CommentSection";
 
-import { setAnnotationsForAssignment } from "../../../store/annotator/labelling/labelingSlice";
-
+import { setAnnotations } from "../../../store/annotator/labelling/labelingSlice";
 import taskService from "../../../services/annotator/labeling/taskService";
 import projectService from "../../../services/annotator/labeling/projectService";
 
 const WorkplaceLabelingTaskPage = () => {
-  const { assignmentId: projectId } = useParams();
+  const { assignmentId } = useParams(); // 👈 assignmentId đúng nghĩa
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -23,84 +22,94 @@ const WorkplaceLabelingTaskPage = () => {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const currentImageData = images[currentImgIndex];
+  const currentImage = images[currentImgIndex];
 
   const annotations = useSelector(
-    (state) =>
-      state.labeling.annotationsByAssignment[currentImageData?.id] || [],
+    (state) => state.labeling.annotationsByAssignment[currentImage?.id] || [],
   );
 
+  // ================= LOAD PROJECT + TASK =================
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const projectRes = await projectService.getById(projectId);
-        setLabels(projectRes.data.labels || []);
 
-        const imgRes = await taskService.getProjectImages(projectId);
+        // 1️⃣ Lấy project + labels
+        const projectRes = await projectService.getById(assignmentId);
+        setLabels(projectRes.data?.labels || []);
+
+        // 2️⃣ Lấy danh sách task (images)
+        const imgRes = await taskService.getProjectImages(assignmentId);
         setImages(imgRes.data || []);
-      } catch {
+      } catch (err) {
         toast.error("Không tải được dữ liệu");
       } finally {
         setLoading(false);
       }
     };
-    fetchAll();
-  }, [projectId]);
 
+    fetchData();
+  }, [assignmentId]);
+
+  // ================= LOAD DRAFT ANNOTATION =================
   useEffect(() => {
-    if (!currentImageData) return;
-    if (currentImageData.annotationData) {
+    if (!currentImage) return;
+
+    if (currentImage.annotationData && annotations.length === 0) {
       dispatch(
-        setAnnotationsForAssignment({
-          assignmentId: currentImageData.id,
-          annotations: JSON.parse(currentImageData.annotationData),
+        setAnnotations({
+          assignmentId: currentImage.id,
+          annotations: JSON.parse(currentImage.annotationData),
         }),
       );
     }
-  }, [currentImageData, dispatch]);
+  }, [currentImage, annotations.length, dispatch]);
 
+  // ================= SAVE DRAFT =================
   const saveDraft = async () => {
-    if (!annotations.length) return;
+    if (!currentImage) return;
+
     await taskService.saveDraft({
-      assignmentId: currentImageData.id,
+      assignmentId: currentImage.id,
       dataJSON: JSON.stringify(annotations),
     });
   };
 
+  // ================= NEXT IMAGE =================
   const next = async () => {
     await saveDraft();
     setCurrentImgIndex((i) => i + 1);
   };
 
+  // ================= SUBMIT =================
   const submit = async () => {
-    await taskService.submitTask({
-      assignmentId: currentImageData.id,
-      dataJSON: JSON.stringify(annotations),
-    });
+    await saveDraft();
     toast.success("Đã submit ảnh");
 
     if (currentImgIndex === images.length - 1) {
       navigate("/annotator-my-tasks");
     } else {
-      await next();
+      next();
     }
   };
 
+  // ================= RENDER =================
   if (loading) return <div>Loading...</div>;
-  if (!currentImageData) return <div>Không có ảnh</div>;
+  if (!currentImage) return <div>Không có ảnh</div>;
 
   return (
     <div className="row g-3">
+      {/* ========== LEFT PANEL ========== */}
       <div className="col-lg-3">
-        <TaskInfoTable taskId={currentImageData.id} />
+        <TaskInfoTable taskId={currentImage.id} />
         <LabelPicker labels={labels} />
       </div>
 
+      {/* ========== RIGHT PANEL ========== */}
       <div className="col-lg-9">
         <LabelingWorkspace
-          assignmentId={currentImageData.id}
-          imageUrl={currentImageData.dataItemUrl}
+          assignmentId={currentImage.id}
+          imageUrl={currentImage.dataItemUrl}
         />
 
         <div className="d-flex justify-content-between mt-3">
@@ -119,7 +128,10 @@ const WorkplaceLabelingTaskPage = () => {
           </button>
         </div>
 
-        <CommentSection projectId={projectId} taskId={currentImageData.id} />
+        {(currentImage.status === "Approved" ||
+          currentImage.status === "Rejected") && (
+          <CommentSection projectId={assignmentId} taskId={currentImage.id} />
+        )}
       </div>
     </div>
   );

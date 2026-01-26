@@ -4,11 +4,16 @@ const labelingSlice = createSlice({
   name: "labeling",
   initialState: {
     selectedLabel: null,
-    annotationsByAssignment: {}, // key = assignmentId (imageId)
+    annotationsByAssignment: {}, // key = imageId
   },
   reducers: {
     setSelectedLabel(state, action) {
       state.selectedLabel = action.payload;
+    },
+
+    setAnnotations(state, action) {
+      const { assignmentId, annotations } = action.payload;
+      state.annotationsByAssignment[assignmentId] = annotations || [];
     },
 
     addAnnotation(state, action) {
@@ -21,29 +26,28 @@ const labelingSlice = createSlice({
 
     removeAnnotation(state, action) {
       const { assignmentId, id } = action.payload;
-      state.annotationsByAssignment[assignmentId] =
-        state.annotationsByAssignment[assignmentId]?.filter(
-          (a) => a.id !== id,
-        ) || [];
+      state.annotationsByAssignment[assignmentId] = (
+        state.annotationsByAssignment[assignmentId] || []
+      ).filter((a) => a.id !== id);
     },
 
-    setAnnotationsForAssignment(state, action) {
-      const { assignmentId, annotations } = action.payload;
-      state.annotationsByAssignment[assignmentId] = annotations || [];
-    },
-
-    clearAnnotationsForAssignment(state, action) {
-      delete state.annotationsByAssignment[action.payload];
+    // ✅ QUAN TRỌNG: XÓA NHÃN GẦN NHẤT
+    removeLastAnnotation(state, action) {
+      const assignmentId = action.payload;
+      const list = state.annotationsByAssignment[assignmentId];
+      if (list && list.length > 0) {
+        list.pop();
+      }
     },
   },
 });
 
 export const {
   setSelectedLabel,
+  setAnnotations,
   addAnnotation,
   removeAnnotation,
-  setAnnotationsForAssignment,
-  clearAnnotationsForAssignment,
+  removeLastAnnotation, // ✅ EXPORT RÕ RÀNG
 } = labelingSlice.actions;
 
 export default labelingSlice.reducer;
