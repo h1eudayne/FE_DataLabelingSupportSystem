@@ -3,6 +3,7 @@ import {
   getUsers,
   getUserProfile,
   updateUser,
+  updateStatus,
 } from "../../services/admin/managementUsers/user.api";
 import UserTable from "../../components/admin/managementUser/UserTable";
 import { Card, CardBody, CardHeader } from "reactstrap";
@@ -76,10 +77,10 @@ const SettingUserManagement = () => {
     }
   };
 
-  const handleActive = async (userId, userIsActive) => {
+  const handleActive = async (userId, isActive) => {
     try {
       if (userId) {
-        await updateUser(userId, userIsActive);
+        await updateStatus(userId, isActive);
         console.log("Updated Successfully");
       }
       await fetchUsers();
@@ -99,7 +100,6 @@ const SettingUserManagement = () => {
           <UserTable
             users={filteredUsers}
             onEdit={handleEdit}
-            onDelete={handleDelete}
             onActive={handleActive}
             currentRole={currentRole}
           />

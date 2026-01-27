@@ -15,3 +15,7 @@ export const updateUser = (id, data) => {
 export const getUserProfile = () => {
   return axios.get("/api/User/profile");
 };
+
+export const updateStatus = (id, isActive) => {
+  return axios.patch(`/api/User/${id}/status?isActive=${isActive}`);
+};
