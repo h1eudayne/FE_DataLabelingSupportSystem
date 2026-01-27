@@ -16,6 +16,6 @@ export const getUserProfile = () => {
   return axios.get("/api/User/profile");
 };
 
-export const updateStatus = (id) => {
-  return axios.patch(`/api/User/${id}/status`);
+export const updateStatus = (id, isActive) => {
+  return axios.patch(`/api/User/${id}/status?isActive=${isActive}`);
 };

@@ -77,10 +77,10 @@ const SettingUserManagement = () => {
     }
   };
 
-  const handleActive = async (userId) => {
+  const handleActive = async (userId, isActive) => {
     try {
       if (userId) {
-        await updateStatus(userId);
+        await updateStatus(userId, isActive);
         console.log("Updated Successfully");
       }
       await fetchUsers();

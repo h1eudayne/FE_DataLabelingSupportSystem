@@ -42,7 +42,7 @@ const UserTable = (props) => {
                       </button>
                       <button
                         className={`btn btn-sm btn-icon-label ${user.isActive ? "btn-soft-success" : "btn-soft-danger"}`}
-                        onClick={() => onActive(user.id)}
+                        onClick={() => onActive(user.id, !user.isActive)}
                       >
                         <i
                           className={
