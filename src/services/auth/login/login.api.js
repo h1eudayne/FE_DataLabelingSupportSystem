@@ -1,4 +1,4 @@
-import axios from "../axios.customize";
+import axios from "../../axios.customize";
 
 const loginApi = (email, password) => {
   const URL_BACKEND = "/api/Auth/login";

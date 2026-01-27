@@ -1,4 +1,6 @@
-import { AuthLeft, AuthRight, AuthFooter } from "../../components/auth";
+import AuthLeft from "../../../components/auth/auth-left/AuthLeft";
+import AuthRight from "../../../components/auth/auth-right/AuthRight";
+import AuthFooter from "../../../components/auth/AuthFooter";
 
 const LoginPage = () => {
   return (

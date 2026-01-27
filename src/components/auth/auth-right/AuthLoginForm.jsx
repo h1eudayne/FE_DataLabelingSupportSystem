@@ -89,6 +89,7 @@ const AuthLoginForm = () => {
               disabled={loading}
             />
             <button
+              aria-label="toggle password visibility"
               className="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted"
               type="button"
               onClick={() => setShowPassword(!showPassword)}
