@@ -1,7 +1,7 @@
 import errorImg from "../assets/images/error.svg";
 
 const AccessDenied = () => (
-  <div class="auth-page-wrapper pt-5">
+  <div className="auth-page-wrapper pt-5">
     <div>
       <div className="auth-one-bg-position auth-one-bg" id="auth-particles">
         <div className="bg-overlay" />

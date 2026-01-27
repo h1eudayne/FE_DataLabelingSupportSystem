@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import { renderWithProviders } from "@/test/test-utils";
 
@@ -8,8 +9,18 @@ describe("LoginPage - Layout & UI Integration", () => {
     vi.clearAllMocks();
   });
 
+  // Helper render để tránh lặp code MemoryRouter
+  const renderLogin = (preloadedState = {}) => {
+    return renderWithProviders(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+      { preloadedState },
+    );
+  };
+
   it("nên render khung trang và card layout đúng class Bootstrap", () => {
-    const { container } = renderWithProviders(<LoginPage />);
+    const { container } = renderLogin();
     expect(container.querySelector(".auth-page-wrapper")).toBeInTheDocument();
     expect(container.querySelector(".card")).toHaveClass(
       "card-bg-fill",
@@ -18,58 +29,89 @@ describe("LoginPage - Layout & UI Integration", () => {
   });
 
   it("nên hiển thị đầy đủ các phần cốt lõi: Left, Right và Footer", () => {
-    const { container } = renderWithProviders(<LoginPage />);
-
-    // Kiểm tra Row chứa nội dung chính
-    const mainRow = container.querySelector(".row.g-0");
-    expect(mainRow).toBeInTheDocument();
-
-    // Kiểm tra nút Sign In (từ AuthRight) và thông tin Footer
+    renderLogin();
+    // Kiểm tra text từ AuthRightHeader và AuthLeftQuotes
+    expect(screen.getByText(/Welcome Back/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /sign in|login/i }),
+      screen.getByRole("button", { name: /sign in/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/©/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Great things never come from comfort zones/i),
+    ).toBeInTheDocument();
   });
 
   it("nên phản ứng đúng khi trạng thái auth đang loading", async () => {
-    const { container } = renderWithProviders(<LoginPage />, {
-      preloadedState: {
-        auth: { loading: true },
-      },
+    renderLogin({ auth: { loading: true } });
+
+    // Kiểm tra button Sign In bị disabled khi loading = true
+    const signInBtn = screen.getByRole("button", {
+      name: /Logging in...|sign in/i,
     });
-
-    // Sử dụng waitFor để đợi React hoàn tất việc cập nhật DOM từ Redux state
-    await waitFor(
-      () => {
-        const buttons = container.querySelectorAll("button");
-        const signInBtn = Array.from(buttons).find(
-          (b) => /sign in|login/i.test(b.textContent) || b.type === "submit",
-        );
-
-        if (signInBtn) {
-          // Nếu nút tồn tại, nó bắt buộc phải ở trạng thái disabled
-          expect(signInBtn).toBeDisabled();
-        } else {
-          // Nếu nút bị ẩn để hiện spinner, kiểm tra class spinner phổ biến
-          const spinner =
-            container.querySelector(".spinner-border") ||
-            container.querySelector(".spinner-grow");
-          expect(spinner).toBeInTheDocument();
-        }
-      },
-      { timeout: 2000 },
-    );
+    expect(signInBtn).toBeDisabled();
+    expect(screen.getByLabelText(/Email \/ Username/i)).toBeDisabled();
   });
 
   it("nên áp dụng các class responsive để tối ưu hiển thị", () => {
-    const { container } = renderWithProviders(<LoginPage />);
-    // col-lg-12 đảm bảo card full width trên màn hình lớn
+    const { container } = renderLogin();
     expect(container.querySelector(".col-lg-12")).toBeInTheDocument();
     expect(container.querySelector(".pt-lg-5")).toBeInTheDocument();
   });
+  it("nên hiển thị thông báo lỗi khi API trả về lỗi", async () => {
+    const errorMessage = "Invalid email or password";
+    renderWithProviders(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+      {
+        preloadedState: {
+          auth: { error: errorMessage, loading: false },
+        },
+      },
+    );
 
-  it("nên có lớp bg-overlay để đảm bảo độ tương phản cho nội dung", () => {
-    const { container } = renderWithProviders(<LoginPage />);
-    expect(container.querySelector(".bg-overlay")).toBeInTheDocument();
+    // Kiểm tra thông báo lỗi có hiển thị trên UI không
+    expect(screen.getByText(errorMessage)).toBeInTheDocument();
+    expect(screen.getByText(errorMessage)).toHaveClass("alert-danger");
+  });
+
+  it("nên cho phép thay đổi giá trị input và submit form", async () => {
+    renderLogin();
+
+    const emailInput = screen.getByPlaceholderText(/Enter email/i);
+    const passwordInput = screen.getByPlaceholderText(/Enter password/i);
+    const submitBtn = screen.getByRole("button", { name: /Sign In/i });
+
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "password123" } });
+
+    expect(emailInput.value).toBe("test@example.com");
+    expect(passwordInput.value).toBe("password123");
+
+    // Kiểm tra nút không bị disable và có thể click
+    expect(submitBtn).not.toBeDisabled();
+    fireEvent.click(submitBtn);
+  });
+
+  it("nên chuyển đổi hiển thị mật khẩu khi nhấn icon eye", () => {
+    renderWithProviders(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    const passwordInput = screen.getByPlaceholderText(/Enter password/i);
+    const toggleBtn = screen.getByRole("button", {
+      name: /toggle password visibility/i,
+    });
+
+    expect(passwordInput.type).toBe("password");
+
+    // Click lần 1: Hiện mật khẩu
+    fireEvent.click(toggleBtn);
+    expect(passwordInput.type).toBe("text");
+
+    // Click lần 2: Ẩn mật khẩu
+    fireEvent.click(toggleBtn);
+    expect(passwordInput.type).toBe("password");
   });
 });

@@ -18,16 +18,18 @@ const AuthLeftQuotes = () => {
       <div className="mb-3">
         <i className="ri-double-quotes-l display-4 text-success" />
       </div>
-
+      // src/components/auth/auth-left/AuthLeftQuotes.jsx
       <Carousel
-        indicators={true}
+        indicators={true} // Hoặc đơn giản là 'indicators'
         controls={false}
         interval={2000}
-        fade={true}
+        fade={true} // Hoặc đơn giản là 'fade'
         id="qoutescarouselIndicators"
+        className="mt-auto"
       >
         {quotes.map((quote, index) => (
           <Carousel.Item key={index} className="text-center text-white pb-5">
+            {/* Đảm bảo fst-italic không nhận giá trị boolean */}
             <p className="fs-15 fst-italic">"{quote.text}"</p>
             <span className="text-white-50 small">- {quote.author}</span>
           </Carousel.Item>
