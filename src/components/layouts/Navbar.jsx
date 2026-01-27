@@ -12,9 +12,6 @@ const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
   const role = user?.role; // ADMIN | MANAGER | REVIEWER | ANNOTATOR
 
-  const currentTask = useSelector((state) => state.task?.currentTask);
-  const currentActiveTaskId = currentTask?.id;
-
   const [openMenu, setOpenMenu] = useState("");
 
   const handleToggle = (menuId) => {

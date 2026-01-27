@@ -17,11 +17,6 @@ const SettingUserManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentRole, setCurrentRole] = useState(null);
 
-  useEffect(() => {
-    fetchUsers();
-    fetchSelf();
-  }, []);
-
   const fetchSelf = async () => {
     try {
       const res = await getUserProfile();
@@ -40,6 +35,12 @@ const SettingUserManagement = () => {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchUsers();
+    fetchSelf();
+  }, []);
 
   const handleEdit = (user) => {
     setSelectUser(user);

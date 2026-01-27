@@ -1,0 +1,169 @@
+
+> frontend@0.0.0 lint
+> eslint .
+
+
+/app/src/components/admin/managementUser/UserModal.jsx
+  11:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+   9 |     useEffect(() => {
+  10 |         if (user) {
+> 11 |             setFormData({ role: user.role || "Annotator" });
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  12 |         }
+  13 |     }, []);
+  14 |  react-hooks/set-state-in-effect
+  13:8   warning  React Hook useEffect has a missing dependency: 'user'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+
+/app/src/components/annotator/labeling/tasks/CommentSection.jsx
+   8:19  error    'setLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+  12:7   error    Error: Cannot access variable before it is declared
+
+`loadComments` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  10 |   useEffect(() => {
+  11 |     if (taskId) {
+> 12 |       loadComments();
+     |       ^^^^^^^^^^^^ `loadComments` accessed before it is declared
+  13 |     }
+  14 |   }, [taskId]);
+  15 |
+
+  14 |   }, [taskId]);
+  15 |
+> 16 |   const loadComments = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |     if (!projectId) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |     try {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |       const res = await commentService.getCommentsByProject(projectId);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |       setComments(res.data || []);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |     } catch (error) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |       console.error("Lỗi tải bình luận:", error);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |     }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |   };
+     | ^^^^^ `loadComments` is declared here
+  25 |
+  26 |   const handlePostComment = async () => {
+  27 |     try {  react-hooks/immutability
+  14:6   warning  React Hook useEffect has a missing dependency: 'loadComments'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+  44:6   warning  React Hook useEffect has a missing dependency: 'loadComments'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+
+/app/src/components/layouts/Navbar.jsx
+  16:9  error  'currentActiveTaskId' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/manager/status/StatCards.jsx
+  7:9  error  'start' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/page/admin/SettingUserManagement.jsx
+  21:5  error  Error: Cannot access variable before it is declared
+
+`fetchUsers` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  19 |
+  20 |   useEffect(() => {
+> 21 |     fetchUsers();
+     |     ^^^^^^^^^^ `fetchUsers` accessed before it is declared
+  22 |     fetchSelf();
+  23 |   }, []);
+  24 |
+
+  32 |   };
+  33 |
+> 34 |   const fetchUsers = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 35 |     try {
+     | ^^^^^^^^^
+> 36 |       const res = await getUsers();
+     | ^^^^^^^^^
+> 37 |       setUsers(res.data);
+     | ^^^^^^^^^
+> 38 |       setFilteredUsers(res.data);
+     | ^^^^^^^^^
+> 39 |     } catch (error) {
+     | ^^^^^^^^^
+> 40 |       console.error(error);
+     | ^^^^^^^^^
+> 41 |     }
+     | ^^^^^^^^^
+> 42 |   };
+     | ^^^^^ `fetchUsers` is declared here
+  43 |
+  44 |   const handleEdit = (user) => {
+  45 |     setSelectUser(user);  react-hooks/immutability
+  22:5  error  Error: Cannot access variable before it is declared
+
+`fetchSelf` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  20 |   useEffect(() => {
+  21 |     fetchUsers();
+> 22 |     fetchSelf();
+     |     ^^^^^^^^^ `fetchSelf` accessed before it is declared
+  23 |   }, []);
+  24 |
+  25 |   const fetchSelf = async () => {
+
+  23 |   }, []);
+  24 |
+> 25 |   const fetchSelf = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 26 |     try {
+     | ^^^^^^^^^
+> 27 |       const res = await getUserProfile();
+     | ^^^^^^^^^
+> 28 |       setCurrentRole(res.data.role);
+     | ^^^^^^^^^
+> 29 |     } catch (error) {
+     | ^^^^^^^^^
+> 30 |       console.error(error);
+     | ^^^^^^^^^
+> 31 |     }
+     | ^^^^^^^^^
+> 32 |   };
+     | ^^^^^ `fetchSelf` is declared here
+  33 |
+  34 |   const fetchUsers = async () => {
+  35 |     try {                       react-hooks/immutability
+
+/app/src/page/annotator/dashboard/AnnotatorDashboard.jsx
+  16:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  14 |   useEffect(() => {
+  15 |     if (projects.data?.length > 0 && !projectId) {
+> 16 |       setProjectId(projects.data[0].projectId);
+     |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  17 |     }
+  18 |   }, [projects.data, projectId]);
+  19 |  react-hooks/set-state-in-effect
+
+/app/src/page/manager/project/ProjectImportData.jsx
+  20:18  error  'setLabels' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/routes/DashboardRouter.jsx
+  6:28  error  'role' is defined but never used  no-unused-vars
+
+/app/src/services/annotator/dashboard/annotator.api.js
+  50:12  error  'err' is defined but never used  no-unused-vars
+
+/app/vite.config.js
+  15:25  error  '__dirname' is not defined  no-undef
+
+✖ 15 problems (12 errors, 3 warnings)

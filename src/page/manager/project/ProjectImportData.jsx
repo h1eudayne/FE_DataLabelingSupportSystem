@@ -17,7 +17,7 @@ const CreateProject = () => {
     allowGeometryTypes: "BoundingBox",
     deadline: "",
   });
-  const [labels, setLabels] = useState([
+  const [labels] = useState([
     { name: "", color: "#0ab39c", guideLine: "N/A" },
   ]);
   const [urlInput, setUrlInput] = useState("");
