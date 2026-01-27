@@ -1,5 +1,5 @@
 # 🚀 Data Labeling Support System
-![Build Status](https://github.com/h1eudayne/FE_DataLabelingSupportSystem/actions/workflows/main.yml/badge.svg)
+![Build Status](https://img.shields.io/github/actions/workflow/status/h1eudayne/FE_DataLabelingSupportSystem/main.yml?branch=main&label=Build&logo=github&style=flat-square)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
 ---
@@ -171,4 +171,5 @@ npm install axios@latest
    ```
 
 ---
+
 
