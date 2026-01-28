@@ -1,0 +1,37 @@
+.btn-icon-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    min-width: 100px;
+
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.btn-soft-success {
+    background-color: rgba(40, 167, 69, 0.1) !important;
+    color: #28a745 !important;
+}
+
+.btn-soft-success:hover {
+    background-color: #28a745 !important;
+    color: #ffffff !important;
+}
+
+.btn-soft-danger {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: #dc3545 !important;
+}
+
+.btn-soft-danger:hover {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+.btn-icon-label i {
+    display: inline-block;
+    width: 16px;
+    text-align: center;
+}

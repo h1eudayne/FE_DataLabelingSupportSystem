@@ -1,5 +1,5 @@
 const UserTable = (props) => {
-  const { users, onEdit, onDelete, currentRole, onActive } = props;
+  const { users, onEdit, currentRole, onActive } = props;
 
   return (
     <>
@@ -27,9 +27,10 @@ const UserTable = (props) => {
                   </span>
                 </td>
                 <td>
-                  {user.role === "Manager"
-                    ? `${user.managedProjects?.length || 0} dự án`
-                    : `${user.assignments?.length || 0} nhiệm vụ`}
+                  {user.role !== "Admin" &&
+                    (user.role === "Manager"
+                      ? `${user.managedProjects?.length || 0} dự án`
+                      : `${user.assignments?.length || 0} nhiệm vụ`)}
                 </td>
                 <td>
                   {user.role !== currentRole && (
