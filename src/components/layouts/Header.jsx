@@ -4,6 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { logout } from "@/store/auth/auth.slice";
 
 const Header = ({ toggleSidebar, sidebarSize }) => {
+  const DEFAULT_AVATAR =
+    "https://res.cloudinary.com/deu3ur8w9/image/upload/v1769402498/ipkoqezcvbqy997mcqhm.jpg";
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -157,7 +160,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                   <span className="d-flex align-items-center">
                     <img
                       className="rounded-circle header-profile-user"
-                      src="assets/images/users/avatar-1.jpg"
+                      src={DEFAULT_AVATAR}
                       alt="Header Avatar"
                     />
                     <span className="text-start ms-xl-2">
