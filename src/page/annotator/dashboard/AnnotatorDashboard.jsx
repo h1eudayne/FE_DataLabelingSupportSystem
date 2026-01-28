@@ -13,6 +13,7 @@ const AnnotatorDashboard = () => {
 
   useEffect(() => {
     if (projects.data?.length > 0 && !projectId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProjectId(projects.data[0].projectId);
     }
   }, [projects.data, projectId]);

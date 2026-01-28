@@ -4,7 +4,6 @@ const StatCard = ({ title, value = 0, icon: Icon, color = "primary" }) => {
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    let start = 0;
     const end = Number(value) || 0;
     const duration = 800;
     const startTime = performance.now();

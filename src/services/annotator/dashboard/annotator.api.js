@@ -47,7 +47,7 @@ export const getReviewerFeedbackByProject = async (projectId) => {
   try {
     const res = await axios.get(`/api/Review/project/${projectId}`);
     return res.data;
-  } catch (err) {
+  } catch {
     return [];
   }
 };

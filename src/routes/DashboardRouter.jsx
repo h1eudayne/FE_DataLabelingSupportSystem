@@ -3,7 +3,7 @@
 // import ManagerDashboard from "../pages/dashboard/manager/ManagerDashboard";
 import AnnotatorDashboard from "../page/dashboard/AnnotatorDashboard";
 
-const DashboardRouter = ({ role }) => {
+const DashboardRouter = () => {
   //   if (role === "ADMIN") return <AdminDashboard />;
   //   if (role === "MANAGER") return <ManagerDashboard />;
   return <AnnotatorDashboard />;

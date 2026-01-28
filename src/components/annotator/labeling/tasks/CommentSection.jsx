@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import commentService from "../../../../services/annotator/labeling/commentService";
 import { toast } from "react-toastify";
 
@@ -7,13 +7,7 @@ const CommentSection = ({ projectId, taskId }) => {
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (taskId) {
-      loadComments();
-    }
-  }, [taskId]);
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     if (!projectId) return;
     try {
       const res = await commentService.getCommentsByProject(projectId);
@@ -21,9 +15,16 @@ const CommentSection = ({ projectId, taskId }) => {
     } catch (error) {
       console.error("Lỗi tải bình luận:", error);
     }
-  };
+  }, [projectId]);
+
+  useEffect(() => {
+    if (taskId) {
+      loadComments();
+    }
+  }, [taskId, loadComments]);
 
   const handlePostComment = async () => {
+    setLoading(true);
     try {
       const data = {
         projectId: projectId,
@@ -36,12 +37,14 @@ const CommentSection = ({ projectId, taskId }) => {
       toast.success("Đã gửi phản hồi");
     } catch {
       toast.error("Gửi thất bại");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     loadComments();
-  }, [projectId]);
+  }, [projectId, loadComments]);
 
   return (
     <div className="card mt-4 shadow-sm border-0">
