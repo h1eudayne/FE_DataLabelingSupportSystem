@@ -22,12 +22,9 @@ describe("Navbar Component", () => {
       </Provider>,
     );
 
-    // 1. Tìm chính xác nút toggle "Settings" (là thẻ có role="button" hoặc link)
-    // Cách này giúp phân biệt với thẻ tiêu đề (menu-title)
     const settingsToggle = screen.getByRole("button", { name: /settings/i });
     fireEvent.click(settingsToggle);
 
-    // 2. Đợi "User Management" xuất hiện
     const userLink = await screen.findByText(
       /User Management/i,
       {},

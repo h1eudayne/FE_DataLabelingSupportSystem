@@ -10,7 +10,7 @@ import { useSelector } from "react-redux";
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
-  const role = user?.role; // ADMIN | MANAGER | REVIEWER | ANNOTATOR
+  const role = user?.role;
 
   const [openMenu, setOpenMenu] = useState("");
 
@@ -147,13 +147,11 @@ const Navbar = () => {
 
           {["Annotator", "Reviewer"].includes(role) && (
             <>
-              {/* Header Menu */}
               <li className="menu-title">
                 <i className="ri-more-fill" />
                 <span data-key="t-components">Workplace</span>
               </li>
 
-              {/* Nav Item */}
               <li className="nav-item">
                 <a
                   className={`nav-link menu-link ${
@@ -182,7 +180,6 @@ const Navbar = () => {
                       id="sidebarCharts"
                     >
                       <ul className="nav nav-sm flex-column">
-                        {/* Nội dung cho Annotator */}
                         {role === "Annotator" && (
                           <>
                             <li className="nav-item">
@@ -202,7 +199,6 @@ const Navbar = () => {
                           </>
                         )}
 
-                        {/* Nội dung cho Reviewer */}
                         {role === "Reviewer" && (
                           <li className="nav-item">
                             <a

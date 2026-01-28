@@ -30,7 +30,7 @@ const AuthLoginForm = () => {
   useEffect(() => {
     if (isAuthenticated && user) {
       if (user.role === "Admin") {
-        navigate("/dashboard-analytics", { replace: true });
+        navigate("/", { replace: true });
       } else {
         navigate("/", { replace: true });
       }

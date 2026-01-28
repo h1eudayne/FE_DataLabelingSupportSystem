@@ -6,7 +6,6 @@ import { configureStore } from "@reduxjs/toolkit";
 import LoginPage from "./LoginPage";
 import "@testing-library/jest-dom";
 
-// Helper để tạo store động
 const createMockStore = (preloadedState) => {
   return configureStore({
     reducer: {
@@ -45,7 +44,6 @@ describe("LoginPage - Layout & UI Integration", () => {
     const errorMessage = "Invalid email or password";
     renderLogin({ auth: { error: errorMessage, loading: false } });
 
-    // Tìm text error và kiểm tra class alert-danger (thường dùng trong Bootstrap)
     const errorEl = screen.getByText(errorMessage);
     expect(errorEl).toBeInTheDocument();
   });
@@ -53,7 +51,6 @@ describe("LoginPage - Layout & UI Integration", () => {
   it("nên disable các trường input khi đang loading", () => {
     renderLogin({ auth: { loading: true } });
 
-    // Kiểm tra button và input. Lưu ý: Tên role/label phải khớp với AuthRight
     const emailInput = screen.getByLabelText(/Email \/ Username|Email/i);
     const submitBtn = screen.getByRole("button", {
       name: /sign in|logging in/i,
@@ -82,7 +79,6 @@ describe("LoginPage - Layout & UI Integration", () => {
     renderLogin();
 
     const passwordInput = screen.getByPlaceholderText(/Enter password/i);
-    // Lưu ý: Nút này cần có aria-label="toggle password visibility" trong component con
     const toggleBtn = screen.getByRole("button", {
       name: /toggle password visibility/i,
     });
