@@ -39,7 +39,9 @@ describe("App Integration - Security & Roles", () => {
 
   it("nên hiển thị trang Login khi chưa đăng nhập", async () => {
     const store = createMockStore({
-      auth: { user: null, token: null, isAuthenticated: false },
+      user: null,
+      token: null,
+      isAuthenticated: false,
     });
 
     render(
@@ -64,11 +66,9 @@ describe("App Integration - Security & Roles", () => {
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQW5ub3RhdG9yIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
     const store = createMockStore({
-      auth: {
-        user: { role: "Annotator" },
-        isAuthenticated: true,
-        token: fakeValidToken,
-      },
+      user: { role: "Annotator" },
+      isAuthenticated: true,
+      token: fakeValidToken,
     });
 
     render(
@@ -99,11 +99,9 @@ describe("App Integration - Security & Roles", () => {
 
   it("nên hiển thị Header khi Admin đăng nhập thành công", async () => {
     const store = createMockStore({
-      auth: {
-        user: { role: "Admin", name: "Anna" },
-        token: "admin-token",
-        isAuthenticated: true,
-      },
+      user: { role: "Admin", name: "Anna" },
+      token: "admin-token",
+      isAuthenticated: true,
     });
 
     render(
@@ -123,6 +121,6 @@ describe("App Integration - Security & Roles", () => {
       { timeout: 8000 },
     );
 
-    expect(screen.getByText(/Sales Forecast/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tổng nhân sự/i)).toBeInTheDocument();
   });
 });
