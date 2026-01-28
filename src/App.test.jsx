@@ -6,7 +6,6 @@ import { configureStore } from "@reduxjs/toolkit";
 import App from "./App";
 import "@testing-library/jest-dom";
 
-// 1. MOCKS
 vi.mock("react-apexcharts", () => ({
   default: () => <div data-testid="chart">Chart</div>,
 }));
@@ -34,7 +33,6 @@ const createMockStore = (authData) => {
 };
 
 describe("App Integration - Security & Roles", () => {
-  // Tăng testTimeout cho toàn bộ block này
   vi.setConfig({ testTimeout: 10000 });
 
   it("nên hiển thị trang Login khi chưa đăng nhập", async () => {
@@ -50,7 +48,6 @@ describe("App Integration - Security & Roles", () => {
       </Provider>,
     );
 
-    // Tìm theo Role heading thường chính xác hơn findByText đơn thuần
     const loginHeader = await screen.findByRole(
       "heading",
       { name: /Sign In/i },
@@ -79,12 +76,6 @@ describe("App Integration - Security & Roles", () => {
       </Provider>,
     );
 
-    // Dòng này sẽ in mã HTML ra terminal khi chạy test.
-    // Bạn hãy nhìn vào đó: Nếu thấy "Sign In" -> Bạn đang ở trang Login
-    // Nếu thấy "Dashboard" -> Bạn đang ở trang chính (Logic phân quyền chưa chặn được)
-    // screen.debug();
-
-    // 2. Tìm số 404 linh hoạt hơn
     const code404 = await screen.findByText(
       (content, element) => {
         return element.textContent.includes("404");
@@ -114,10 +105,8 @@ describe("App Integration - Security & Roles", () => {
       </Provider>,
     );
 
-    // Đợi layout render xong
     await waitFor(
       () => {
-        // Dùng document.body.textContent để quét toàn bộ, tránh lỗi thẻ span chia nhỏ text
         expect(document.body.textContent).toContain("Anna");
       },
       { timeout: 8000 },

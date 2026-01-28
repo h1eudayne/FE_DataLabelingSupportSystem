@@ -2,11 +2,10 @@ import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
-import { configureStore } from "@reduxjs/toolkit"; // Dùng bản này thay vì redux-mock-store
+import { configureStore } from "@reduxjs/toolkit";
 import Header from "./Header";
 import "@testing-library/jest-dom";
 
-// Mock Navigate
 const mockedNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -19,7 +18,6 @@ describe("Header Component - Comprehensive Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Khởi tạo store thực tế để tránh lỗi "Element type is invalid"
     store = configureStore({
       reducer: {
         auth: (
@@ -31,7 +29,6 @@ describe("Header Component - Comprehensive Suite", () => {
       },
     });
 
-    // Mock Fullscreen API
     if (typeof document.documentElement.requestFullscreen !== "function") {
       document.documentElement.requestFullscreen = vi
         .fn()
@@ -52,7 +49,6 @@ describe("Header Component - Comprehensive Suite", () => {
     it.skip("nên hiển thị thông tin User chính xác", async () => {
       renderHeader();
 
-      // Sử dụng hàm matcher để tìm text linh hoạt hơn, xuyên qua các thẻ lồng nhau
       const userName = await screen.findByText(
         (content, element) => {
           return element.textContent.includes("Nguyễn Văn A");
@@ -103,7 +99,6 @@ describe("Header Component - Comprehensive Suite", () => {
 
   describe("Authentication Logic", () => {
     it("nên gọi Logout và chuyển hướng về /login", async () => {
-      // Lưu ý: Test Logout với toolkit store cần check dispatch hoặc mock logout action
       const spyDispatch = vi.spyOn(store, "dispatch");
       renderHeader();
 
@@ -113,7 +108,6 @@ describe("Header Component - Comprehensive Suite", () => {
       const logoutBtn = screen.getByRole("button", { name: /logout/i });
       fireEvent.click(logoutBtn);
 
-      // Kiểm tra xem có action logout nào được gửi đi không
       expect(spyDispatch).toHaveBeenCalled();
       expect(mockedNavigate).toHaveBeenCalledWith("/login", { replace: true });
     });

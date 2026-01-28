@@ -23,7 +23,6 @@ describe("authSlice - Comprehensive & Edge Case Tests", () => {
     vi.clearAllMocks();
     vi.resetModules();
 
-    // Chặn console.error để tránh làm bẩn log test khi simulate lỗi decode
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     const module = await import("./auth.slice");

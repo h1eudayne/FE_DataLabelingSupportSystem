@@ -41,7 +41,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
               </Link>
             </div>
 
-            {/* Hamburger Icon */}
             <button
               onClick={toggleSidebar}
               className="btn btn-sm px-3 fs-16 header-item shadow-none"
@@ -55,7 +54,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
               )}
             </button>
 
-            {/* Search Form (Desktop) */}
             <form className="app-search d-none d-md-block">
               <div className="position-relative">
                 <input
@@ -96,7 +94,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           </div>
 
           <div className="d-flex align-items-center">
-            {/* Search Icon (Mobile) */}
             <div className="dropdown d-md-none topbar-head-dropdown header-item">
               <button
                 type="button"
@@ -108,7 +105,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
               </button>
             </div>
 
-            {/* Language Selection */}
             <div className="dropdown ms-1 topbar-head-dropdown header-item">
               <button
                 type="button"
@@ -133,7 +129,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
               </div>
             </div>
 
-            {/* Fullscreen Button */}
             <div className="ms-1 header-item d-none d-sm-flex">
               <button
                 type="button"
@@ -164,7 +159,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                       alt="Header Avatar"
                     />
                     <span className="text-start ms-xl-2">
-                      {/* Thêm class 'user-name-display' để Test dễ lấy chính xác tên này */}
                       <span className="d-none d-xl-inline-block ms-1 fw-medium user-name-text user-name-display">
                         {user?.name || user?.fullName || "Nguyễn Văn A"}
                       </span>
@@ -174,7 +168,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     </span>
                   </span>
                 </button>
-                {/* THÊM data-testid="user-profile-menu" theo yêu cầu của Test file */}
                 <div
                   className="dropdown-menu dropdown-menu-end"
                   data-testid="user-profile-menu"

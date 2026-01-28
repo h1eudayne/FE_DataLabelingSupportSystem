@@ -28,21 +28,40 @@ import ProjectsDatasetsPage from "./page/manager/datasets/ProjectsDatasetsPage";
 import DashboardAnalytics from "./page/manager/analytics/DashboardAnalyticsPage";
 import LoginPage from "./page/auth/login/LoginPage";
 import { ROLES } from "./constants/roles";
+import LandingPage from "./page/LandingPage";
 
 function App() {
+  const isLoggedIn = !!localStorage.getItem("accessToken");
+
   return (
     <>
       <Routes>
-        {/* PUBLIC ROUTES */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/"
+          element={
+            isLoggedIn ? <Navigate to="/dashboard" replace /> : <LandingPage />
+          }
+        />
+
+        <Route
+          path="/login"
+          element={
+            isLoggedIn ? <Navigate to="/dashboard" replace /> : <LoginPage />
+          }
+        />
+
+        <Route
+          path="/register"
+          element={
+            isLoggedIn ? <Navigate to="/dashboard" replace /> : <RegisterPage />
+          }
+        />
+
         <Route path="/access-denied" element={<AccessDenied />} />
-        {/* PROTECTED ROUTES */}
-        <Route path="/" element={<MainLayouts />}>
-          <Route index element={<HomePage />} />
+
+        <Route element={<MainLayouts />}>
           <Route path="dashboard" element={<HomePage />} />
 
-          {/* NHÓM ADMIN: Quản trị hệ thống */}
           <Route element={<RoleProtectedRoute allowRoles={["Admin"]} />}>
             <Route
               path="settings-user-management"
@@ -54,7 +73,6 @@ function App() {
             />
           </Route>
 
-          {/* NHÓM MANAGER & ADMIN: Quản lý dự án */}
           <Route
             element={<RoleProtectedRoute allowRoles={["Admin", "Manager"]} />}
           >
@@ -71,10 +89,8 @@ function App() {
               element={<ProjectsDatasetsPage />}
             />
             <Route path="projects-create" element={<CreateProject />} />
-            {/* ... các route manager khác */}
           </Route>
 
-          {/* NHÓM ANNOTATOR: Làm việc */}
           <Route element={<RoleProtectedRoute allowRoles={["Annotator"]} />}>
             <Route path="my-dashboard" element={<AnnotatorDashboard />} />
             <Route path="annotator-my-tasks" element={<AnnotatorTaskList />} />
@@ -85,8 +101,9 @@ function App() {
           </Route>
         </Route>
 
-        <Route path="*" element={<Navigate to="/access-denied" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
       <SpeedInsights />
     </>
   );

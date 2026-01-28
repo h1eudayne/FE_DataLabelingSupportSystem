@@ -11,7 +11,6 @@ describe("MainLayouts Component", () => {
   let store;
 
   beforeEach(() => {
-    // Khởi tạo store giả lập với đầy đủ các state mà Header và Navbar cần
     store = mockStore({
       auth: {
         isAuthenticated: true,
@@ -20,7 +19,6 @@ describe("MainLayouts Component", () => {
       task: { currentTask: null },
     });
 
-    // Reset lại thuộc tính body trước mỗi test case
     document.body.removeAttribute("data-layout");
     document.body.removeAttribute("data-sidebar-size");
   });
@@ -34,7 +32,6 @@ describe("MainLayouts Component", () => {
       </Provider>,
     );
 
-    // Kiểm tra useEffect đã chạy và set đúng giá trị mặc định
     expect(document.body.getAttribute("data-layout")).toBe("vertical");
     expect(document.body.getAttribute("data-sidebar-size")).toBe("lg");
   });
@@ -48,21 +45,17 @@ describe("MainLayouts Component", () => {
       </Provider>,
     );
 
-    // Tìm nút hamburger bằng ID chính xác từ file Header.jsx của bạn
     const toggleBtn = document.getElementById("topnav-hamburger-icon");
 
     if (!toggleBtn) {
-      // Debug nếu không tìm thấy nút
       screen.debug();
       throw new Error(
         "Không tìm thấy nút #topnav-hamburger-icon. Kiểm tra lại ID trong Header.jsx",
       );
     }
 
-    // Thực hiện click
     fireEvent.click(toggleBtn);
 
-    // Chờ cho đến khi thuộc tính trên body thay đổi (vì là cập nhật state bất đồng bộ)
     await waitFor(
       () => {
         expect(document.body.getAttribute("data-sidebar-size")).toBe(
@@ -72,7 +65,6 @@ describe("MainLayouts Component", () => {
       { timeout: 2000 },
     );
 
-    // Click lần nữa để quay lại size cũ
     fireEvent.click(toggleBtn);
 
     await waitFor(() => {
@@ -89,14 +81,11 @@ describe("MainLayouts Component", () => {
       </Provider>,
     );
 
-    // Giả lập trạng thái sidebar đang mở trên mobile
     document.body.classList.add("sidebar-enable");
 
-    // Tìm lớp phủ bằng class name
     const overlay = document.querySelector(".vertical-overlay");
     fireEvent.click(overlay);
 
-    // Kiểm tra class đã bị xóa chưa
     expect(document.body.classList.contains("sidebar-enable")).toBe(false);
   });
 });

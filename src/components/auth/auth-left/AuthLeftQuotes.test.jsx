@@ -19,16 +19,7 @@ describe("AuthLeftQuotes", () => {
     );
     expect(firstQuote).toBeInTheDocument();
 
-    // Giả lập thời gian trôi qua (ví dụ 5 giây)
     vi.advanceTimersByTime(5000);
-
-    // Thay vì viết "second quote text", hãy tìm quote thực tế tiếp theo
-    // Nếu bạn biết text tiếp theo là gì, hãy điền vào đây.
-    // Ví dụ nếu quote 2 là "Success is not final":
-    // expect(screen.getByText(/success is not final/i)).toBeInTheDocument();
-
-    // Cách an toàn hơn: Kiểm tra xem quote cũ đã biến mất hoặc quote mới xuất hiện
-    // (Tùy thuộc vào cách bạn code Carousel)
 
     vi.useRealTimers();
   });
@@ -42,7 +33,6 @@ it("nên hiển thị icon dấu ngoặc kép để nhận diện khu vực quot
 
 it("nên hiển thị tên tác giả hoặc chức danh", () => {
   render(<AuthLeftQuotes />);
-  // Giả sử các quote đều có chữ "User" hoặc "Admin" hoặc tên riêng
   const author =
     screen.queryByText(/founder/i) || screen.queryByText(/graphic designer/i);
   if (author) expect(author).toBeInTheDocument();

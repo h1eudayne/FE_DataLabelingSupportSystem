@@ -5,12 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import configureStore from "redux-mock-store";
 
-// Mock App component để tránh render quá nặng, tập trung test các Provider
 vi.mock("./App", () => ({
   default: () => <div data-testid="app-root">App Rendered</div>,
 }));
 
-// Mock các tài nguyên tĩnh để không gây lỗi khi chạy môi trường Node (JSDOM)
 vi.mock("bootstrap/dist/css/bootstrap.min.css", () => ({}));
 vi.mock("./assets/css/app.min.css", () => ({}));
 
@@ -21,14 +19,12 @@ describe("Main Entry Point - Ecosystem Integration", () => {
   let store;
 
   beforeEach(() => {
-    // 1. Khởi tạo QueryClient giống hệt cấu hình trong main.jsx
     queryClient = new QueryClient({
       defaultOptions: {
         queries: { refetchOnWindowFocus: false, retry: 1 },
       },
     });
 
-    // 2. Khởi tạo Mock Store với state mặc định
     store = mockStore({
       auth: { isAuthenticated: false, user: null },
     });
@@ -39,7 +35,6 @@ describe("Main Entry Point - Ecosystem Integration", () => {
       <BrowserRouter>
         <Provider store={store}>
           <QueryClientProvider client={queryClient}>
-            {/* Giả lập cấu hình createRoot trong main.jsx */}
             <div id="root">
               <div data-testid="app-root">App Rendered</div>
             </div>
@@ -62,7 +57,6 @@ describe("Main Entry Point - Ecosystem Integration", () => {
 
   it("nên cung cấp Store cho các component bên dưới", () => {
     renderMain();
-    // Kiểm tra xem store có tồn tại và nhận được actions không
     store.dispatch({ type: "TEST_ACTION" });
     const actions = store.getActions();
     expect(actions).toContainEqual({ type: "TEST_ACTION" });
@@ -70,7 +64,6 @@ describe("Main Entry Point - Ecosystem Integration", () => {
 
   it("nên render App bên trong môi trường Router", () => {
     renderMain();
-    // Kiểm tra xem location có tồn tại (chứng minh BrowserRouter đang hoạt động)
     expect(window.location.pathname).toBe("/");
   });
 

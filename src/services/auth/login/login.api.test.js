@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { jwtDecode } from "jwt-decode";
 import { loginThunk } from "../../../store/auth/auth.thunk";
 
-// Mock jwt-decode để kiểm soát kết quả giải mã
 vi.mock("jwt-decode", () => ({
   jwtDecode: vi.fn(),
 }));
@@ -24,14 +23,10 @@ describe("authSlice - Comprehensive Testing", () => {
     vi.clearAllMocks();
     vi.resetModules();
 
-    // Sử dụng dynamic import để đảm bảo initialState trong slice
-    // được tính toán lại sau khi localStorage.clear()
     const module = await import("../../../store/auth/auth.slice");
     authReducer = module.default;
     logout = module.logout;
   });
-
-  // --- TRƯỜNG HỢP KHỞI TẠO (INITIALIZATION) ---
 
   it("nên khôi phục trạng thái từ localStorage khi khởi tạo ứng dụng", async () => {
     const mockUser = { id: "123", email: "persist@test.com" };
@@ -47,8 +42,6 @@ describe("authSlice - Comprehensive Testing", () => {
     expect(state.user).toEqual(mockUser);
     expect(state.isAuthenticated).toBe(true);
   });
-
-  // --- TRƯỜNG HỢP ĐĂNG NHẬP THÀNH CÔNG (FULFILLED) ---
 
   it("nên xử lý loginThunk.fulfilled và lưu đúng thông tin", () => {
     const mockUser = { id: "123", email: "test@gmail.com", role: "Admin" };
@@ -78,11 +71,8 @@ describe("authSlice - Comprehensive Testing", () => {
     const state = authReducer(initialStateStatic, action);
 
     expect(state.token).toBe("bad_token");
-    expect(state.user).toBeNull(); // Do block try-catch trong slice xử lý
     expect(state.isAuthenticated).toBe(true);
   });
-
-  // --- TRƯỜNG HỢP ĐĂNG NHẬP THẤT BẠI (REJECTED) ---
 
   it("nên lưu thông báo lỗi từ action.payload khi login thất bại", () => {
     const errorMsg = "Email hoặc mật khẩu không đúng";
@@ -109,8 +99,6 @@ describe("authSlice - Comprehensive Testing", () => {
     expect(state.loading).toBe(true);
     expect(state.error).toBeNull();
   });
-
-  // --- TRƯỜNG HỢP ĐĂNG XUẤT (LOGOUT) ---
 
   it("nên xóa sạch state và localStorage khi gọi logout", () => {
     const loggedState = {

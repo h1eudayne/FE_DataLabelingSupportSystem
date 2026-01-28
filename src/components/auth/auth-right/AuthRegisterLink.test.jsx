@@ -11,15 +11,12 @@ describe("AuthRegisterLink", () => {
       </BrowserRouter>,
     );
 
-    // Kiểm tra text câu hỏi
     expect(screen.getByText(/don't have an account/i)).toBeInTheDocument();
 
-    // Kiểm tra link chuyển trang
     const link = screen.getByRole("link", { name: /signup/i });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/register");
 
-    // Kiểm tra class style như trong code của bạn
     expect(link).toHaveClass(
       "fw-semibold",
       "text-primary",

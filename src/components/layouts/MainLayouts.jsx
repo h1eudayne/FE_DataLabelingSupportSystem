@@ -9,7 +9,15 @@ const MainLayouts = () => {
 
   useEffect(() => {
     document.body.setAttribute("data-layout", "vertical");
+    document.body.setAttribute("data-sidebar", "dark");
     document.body.setAttribute("data-sidebar-size", sidebarSize);
+
+    return () => {
+      document.body.removeAttribute("data-layout");
+      document.body.removeAttribute("data-sidebar-size");
+      document.body.removeAttribute("data-sidebar");
+      document.body.classList.remove("sidebar-enable");
+    };
   }, [sidebarSize]);
 
   const toggleSidebar = () => {
