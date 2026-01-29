@@ -1,17 +1,16 @@
 /* --- CẤU HÌNH CHUNG --- */
 .auth-right {
-    background-color: #fff;
-    display: flex;
-    flex-direction: column;
+    background-color: #fff !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
-/* BANNER MOBILE */
 .auth-banner-mobile {
-    height: 200px;
-    /* Mặc định */
     position: relative;
     width: 100%;
     overflow: hidden;
+    display: none;
+    /* Mặc định ẩn, chỉ hiện trên mobile */
 }
 
 .auth-banner-img {
@@ -19,17 +18,18 @@
     height: 100%;
     object-fit: cover;
     position: absolute;
-    z-index: 0;
+    top: 0;
+    left: 0;
 }
 
 .auth-banner-overlay {
     position: absolute;
     inset: 0;
-    padding: 1.2rem 1.5rem;
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
     color: white;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.8) 100%);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.7) 100%);
     z-index: 1;
 }
 
@@ -41,116 +41,82 @@
     text-align: center;
 }
 
-.auth-main-title {
-    font-weight: 800;
-    font-size: 2.8rem;
-    line-height: 0.9;
-    color: white;
-    margin: 0;
-    letter-spacing: -1.5px;
-}
-
-.text-precision {
-    color: #01edc6;
-    font-size: 3.2rem;
-    font-weight: 900;
-}
-
-/* FORM CONTAINER */
-.auth-form-container {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    background: white;
-    position: relative;
-    z-index: 3;
-}
-
-/* --- CHỈ SỬA CHO MOBILE (< 992px) --- */
+/* --- MOBILE RESPONSIVE (< 992px) --- */
 @media (max-width: 991.98px) {
-
-    /* Cho phép trang web dài ra và cuộn được */
-    body {
-        overflow-y: auto !important;
-        height: auto !important;
-    }
-
-    /* Ép AuthRight co giãn theo nội dung để có thể trượt */
     body .auth-right {
         height: auto !important;
         min-height: auto !important;
         display: block !important;
-        /* Chuyển về block để trôi nội dung tự nhiên */
-        overflow: visible !important;
+        /* Dùng block để các phần tử xếp chồng tự nhiên */
     }
 
-    /* TĂNG DIỆN TÍCH ẢNH BANNER */
     .auth-banner-mobile {
-        height: 260px !important;
-        /* Tăng diện tích ảnh lên */
-        min-height: 260px !important;
-        position: relative;
+        display: block !important;
+        /* Hiện banner trên mobile */
+        height: 250px !important;
+        /* Độ cao banner như ảnh 1 */
     }
 
     .auth-main-title {
-        font-size: 2.4rem !important;
-        line-height: 1.0 !important;
+        font-size: 3rem !important;
+        line-height: 1.1 !important;
+        font-weight: 800;
+        margin: 0;
+        color: white !important;
     }
 
     .text-precision {
-        font-size: 2.6rem !important;
+        font-size: 3rem !important;
+        color: #01edc6;
+        font-weight: 900;
     }
 
-    /* Form Container: Cho phép giãn cao theo số lượng ô input */
     .auth-form-container {
         padding: 2.5rem 1.5rem 3rem 1.5rem !important;
-        margin-top: -40px !important;
-        border-radius: 30px 30px 0 0 !important;
-        background: white;
-        height: auto !important;
-        min-height: auto !important;
-        display: block !important;
-        /* Để các input xếp chồng và đẩy chiều cao card */
+        margin-top: -45px !important;
+        /* Form đè lên banner */
+        border-radius: 35px 35px 0 0 !important;
+        /* Bo góc mạnh như ảnh 1 */
+        background: #fff !important;
+        position: relative;
+        z-index: 5;
+        box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.1);
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
     }
 
     .auth-form-content {
         width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 auto !important;
+        max-width: 380px !important;
     }
 }
 
-/* --- CHỈ SỬA CHO PC (>= 992px) --- */
+/* --- CHỈ SỬA TRONG ĐOẠN DESKTOP (>= 992px) --- */
 @media (min-width: 992px) {
+
+    /* Bước 1: Ép thẻ cột phải cao bằng Card */
     body .auth-right {
-        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        /* Chìa khóa ở đây: */
+        height: 620px !important;
+        /* Ép bằng đúng chiều cao Card bạn set ở Auth-wrapper */
     }
 
-    /* Khóa scroll trên PC nếu card đã chiếm full màn hình */
-    .auth-page-wrapper {
-        overflow: hidden;
-    }
-}
-
-/* --- CHỈ SỬA CHO PC (>= 992px) --- */
-@media (min-width: 992px) {
-    body .auth-right {
-        height: 100% !important;
-        /* Luôn cao bằng AuthLeft */
-    }
-
+    /* Bước 2: Ép container chứa form chiếm trọn 620px đó */
     .auth-form-container {
-        padding-left: 15% !important;
-        padding-right: 15% !important;
-        margin-top: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        /* Lúc này lò xo mới đẩy được vào giữa */
+        align-items: center !important;
+        padding: 0 50px !important;
     }
 
     .auth-form-content {
         width: 100%;
         max-width: 400px;
-        margin: 0 auto;
     }
 }

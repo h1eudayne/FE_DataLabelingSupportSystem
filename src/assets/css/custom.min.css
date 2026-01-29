@@ -239,6 +239,8 @@
     border-radius: 28px !important;
     overflow: hidden !important;
     background: #fff;
+    display: flex;
+    min-height: 620px;
 }
 
 .auth-card,
@@ -250,7 +252,9 @@
 
 .auth-left,
 .auth-right {
-    /* height: 100%; */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 /* Background trái */
@@ -288,10 +292,6 @@
     margin-left: 8px;
 }
 
-.auth-card {
-    transition: transform 0.3s ease;
-}
-
 .fs-14 {
     font-size: 14px;
 }
@@ -305,10 +305,26 @@
     border-color: #00a389;
 }
 
-/* Responsive chỉnh lại chiều cao card trên mobile */
+/* Quan trọng: Chỉ ép height 100% trên Desktop */
+@media (min-width: 992px) {
+
+    .auth-left,
+    .auth-right {
+        height: 100% !important;
+    }
+}
+
+/* Trên mobile, để chiều cao tự động theo nội dung */
 @media (max-width: 991.98px) {
+
+    .auth-left,
+    .auth-right {
+        height: auto !important;
+        min-height: auto !important;
+    }
+
     .auth-card {
-        border-radius: 2rem !important;
-        /* Bo góc cực mạnh trên mobile */
+        flex-direction: column;
+        height: auto !important;
     }
 }
