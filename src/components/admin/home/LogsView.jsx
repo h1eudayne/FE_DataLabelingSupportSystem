@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Badge, InputGroup, Form } from "react-bootstrap";
+import { Card, Badge, InputGroup, Form, Button } from "react-bootstrap";
 import { History, Activity, Search, User, Filter } from "lucide-react";
 
 const LogsView = () => {

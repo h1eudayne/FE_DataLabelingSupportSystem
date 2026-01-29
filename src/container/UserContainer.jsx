@@ -1,19 +1,16 @@
-import React, { useEffect, useState } from "react";
-import NavigationTabs from "../components/admin/home/NavigationTabs";
-import { Container } from "react-bootstrap";
+import { useEffect, useState } from "react";
 import {
   getUsers,
   getUserProfile,
   updateUser,
   updateStatus,
 } from "../services/admin/managementUsers/user.api";
-import UserManagementView from "../components/admin/home/UserManagementView";
-import AdminHeader from "../components/admin/home/AdminHeader";
-import LogsView from "../components/admin/home/LogsView";
+import { Card, CardBody, CardHeader } from "reactstrap";
+import UserFilter from "../components/admin/managementUser/UserFilter";
 import UserModal from "../components/admin/managementUser/UserModal";
+import UserTable from "../components/admin/managementUser/UserTable";
 
-const AdminContainer = () => {
-  const [activeTab, setActiveTab] = useState("users");
+const UserContainer = () => {
   const [users, setUsers] = useState([]);
   const [selectUser, setSelectUser] = useState(null);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -39,27 +36,14 @@ const AdminContainer = () => {
     }
   };
 
+  useEffect(() => {
+    fetchUsers();
+    fetchSelf();
+  }, []);
+
   const handleEdit = (user) => {
     setSelectUser(user);
     setIsModalOpen(true);
-  };
-
-  useEffect(() => {
-    if (activeTab === "users") {
-      fetchUsers();
-      fetchSelf();
-    }
-  }, [activeTab]);
-
-  const stats = {
-    total: users.length,
-    admins: users.filter((user) => user.role === "Admin").length,
-    workers: users.filter(
-      (user) =>
-        user.role === "Annotator" ||
-        user.role === "Reviewer" ||
-        user.role === "Manager",
-    ).length,
   };
 
   const handleSearch = (searchTerm) => {
@@ -104,40 +88,31 @@ const AdminContainer = () => {
       console.error(error);
     }
   };
-
   return (
-    <Container
-      fluid
-      className="p-4"
-      style={{ backgroundColor: "#f3f3f9", minHeight: "100vh" }}
-    >
-      <AdminHeader email="Admin@gmail.com" />
-
-      <NavigationTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-
-      {activeTab === "users" && (
-        <>
-          <UserManagementView
-            stats={stats}
+    <>
+      <Card>
+        <CardHeader className="d-flex align-items-center">
+          <h4 className="card-title mb-0 flex-grow-1">User Management</h4>
+        </CardHeader>
+        <CardBody>
+          <UserFilter onSearch={handleSearch} />
+          <UserTable
             users={filteredUsers}
-            onSearch={handleSearch}
-            onActive={handleActive}
             onEdit={handleEdit}
+            onActive={handleActive}
             currentRole={currentRole}
           />
-          <UserModal
-            isOpen={isModalOpen}
-            toggle={toggleModal}
-            user={selectUser}
-            handleSave={handleSave}
-          />
-        </>
-      )}
+        </CardBody>
+      </Card>
 
-      {activeTab === "settings" && <SettingsView />}
-      {activeTab === "logs" && <LogsView />}
-    </Container>
+      <UserModal
+        isOpen={isModalOpen}
+        toggle={toggleModal}
+        user={selectUser}
+        handleSave={handleSave}
+      />
+    </>
   );
 };
 
-export default AdminContainer;
+export default UserContainer;
