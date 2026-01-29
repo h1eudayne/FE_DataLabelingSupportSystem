@@ -44,7 +44,7 @@ const AuthLoginForm = () => {
   if (isAuthenticated && user) return null;
 
   return (
-    <div className="mt-4">
+    <div>
       {/* Error */}
       {error && (
         <div className="alert alert-danger py-2 small">
@@ -134,7 +134,7 @@ const AuthLoginForm = () => {
           {loading ? "Đang xử lý..." : "Đăng nhập"}
         </button>
 
-        <AuthSocialLogin />
+        {/* <AuthSocialLogin /> */}
       </form>
     </div>
   );

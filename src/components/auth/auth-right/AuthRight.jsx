@@ -1,12 +1,11 @@
-import AuthLeftQuotes from "../auth-left/AuthLeftQuotes";
 import AuthLoginForm from "./AuthLoginForm";
 import AuthRegisterLink from "./AuthRegisterLink";
 import "../../../assets/css/AuthRight.css";
 
 const AuthRight = () => {
   return (
-    <div className="col-lg-6 auth-right bg-white p-0 d-flex flex-column">
-      {/* BANNER MOBILE */}
+    <div className="col-lg-6 auth-right bg-white p-0 d-flex flex-column h-100">
+      {/* BANNER MOBILE - Chỉ hiển thị trên thiết bị nhỏ */}
       <div className="auth-banner-mobile d-lg-none">
         <img
           alt="Banner"
@@ -15,56 +14,59 @@ const AuthRight = () => {
         />
 
         <div className="auth-banner-overlay">
-          {/* 1. LOGO */}
-          <div className="auth-logo-text">VELZON</div>
-
-          {/* 2. TIÊU ĐỀ */}
-          <div className="auth-title-container">
+          <div className="auth-logo-text" style={{ fontSize: "30px" }}>
+            VELZON
+          </div>
+          <div
+            className="auth-title-container"
+            style={{ paddingBottom: "20px" }}
+          >
             <h1 className="auth-main-title" style={{ color: "white" }}>
               Label data with <br />
               <span className="text-precision">precision.</span>
             </h1>
           </div>
 
-          {/* 3. ANNOTATION BOX */}
-          <div className="auth-annotation-box">
-            <span className="auth-annotation-tag">
+          <div
+            className="annotation-box-min"
+            style={{
+              top: "60%",
+              left: "15%",
+              width: "62%",
+              height: "18%",
+            }}
+          >
+            <span className="annotation-tag">
               <i className="ri-focus-3-line me-1"></i>
-              Label data with
+              Label data with 99.2%
             </span>
 
-            {/* Các điểm neo 4 góc */}
-            <div className="anchor anchor-tl" />
-            <div className="anchor anchor-tr" />
-            <div className="anchor anchor-bl" />
-            <div className="anchor anchor-br" />
-          </div>
-
-          {/* 4. QUOTES */}
-          <div className="auth-quotes-wrapper">
-            <AuthLeftQuotes isMobile={true} />
+            <div className="anchor-point" style={{ top: 0, left: 0 }} />
+            <div className="anchor-point" style={{ top: 0, left: "100%" }} />
+            <div className="anchor-point" style={{ top: "100%", left: 0 }} />
+            <div
+              className="anchor-point"
+              style={{ top: "100%", left: "100%" }}
+            />
           </div>
         </div>
       </div>
 
-      {/* FORM SECTION */}
-      <div className="auth-form-container">
-        <div className="text-start mb-4">
-          <h2 className="auth-welcome-text">Chào mừng trở lại!</h2>
-          <p className="text-muted fw-medium">
-            Đăng nhập để tiếp tục với AILABEL
-          </p>
+      {/* FORM SECTION - Tự động giãn để căn giữa nội dung */}
+      <div className="auth-form-container flex-grow-1 d-flex flex-column justify-content-center">
+        <div className="auth-form-content">
+          <div className="text-start mb-4">
+            <h2 className="auth-welcome-text">Chào mừng trở lại!</h2>
+            <p className="text-muted small fw-medium">
+              Đăng nhập để tiếp tục với{" "}
+              <span className="text-primary">AILABEL</span>
+            </p>
+          </div>
+          <AuthLoginForm />
+          <div className="mt-3 text-center text-md-start">
+            <AuthRegisterLink />
+          </div>
         </div>
-
-        <AuthLoginForm />
-        <AuthRegisterLink />
-
-        <footer className="auth-footer d-lg-none">
-          <p className="mb-0">
-            © 2026 Velzon. Crafted with <span className="text-danger">❤️</span>{" "}
-            by Themesbrand
-          </p>
-        </footer>
       </div>
     </div>
   );

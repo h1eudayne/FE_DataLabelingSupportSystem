@@ -1,6 +1,7 @@
-/* Container chính cho Banner Mobile */
+/* Container chính cho Banner Mobile - Đã bóp ngắn lại */
 .auth-banner-mobile {
-    height: 450px;
+    height: 200px !important;
+    /* Chiều cao vừa phải, không quá dài */
     position: relative;
     width: 100%;
     overflow: hidden;
@@ -17,129 +18,165 @@
 .auth-banner-overlay {
     position: absolute;
     inset: 0;
-    padding: 1.5rem;
+    padding: 1.2rem 1.5rem;
     display: flex;
     flex-direction: column;
     color: white;
-    /* background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.9) 100%); */
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.8) 100%);
     z-index: 1;
 }
 
-/* Typography */
+/* LOGO - Thu nhỏ nhẹ để dành chỗ cho tiêu đề */
 .auth-logo-text {
-    font-weight: bold;
+    font-weight: 800;
     text-transform: uppercase;
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     letter-spacing: 2px;
+    opacity: 0.9;
 }
 
+/* TIÊU ĐỀ - Căn giữa tuyệt đối trong banner */
 .auth-title-container {
-    margin-top: 40px;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    /* Căn giữa dọc */
+    justify-content: center;
+    /* Căn giữa ngang (nếu muốn chữ nằm giữa) */
+    text-align: center;
+    /* Căn giữa dòng chữ */
 }
 
 .auth-main-title {
-    font-weight: bold;
-    font-size: 3.5rem;
-    line-height: 1.2;
+    font-weight: 800;
+    font-size: 2.8rem !important;
+    line-height: 0.9;
     color: white;
-    letter-spacing: -1px;
+    margin: 0;
+    letter-spacing: -1.5px;
 }
 
 .text-precision {
     color: #01edc6;
+    font-size: 3.2rem !important;
+    font-weight: 900;
 }
 
-/* Annotation Box */
-.auth-annotation-box {
-    position: absolute;
-    top: 20%;
-    left: 2%;
-    width: 62%;
-    height: 18%;
-    border: 2px solid #00a389;
-    z-index: 2;
-}
-
-.auth-annotation-tag {
-    position: absolute;
-    top: -26px;
-    left: -2px;
-    background: #00a389;
-    color: white;
-    padding: 2px 8px;
-    font-size: 12px;
-    white-space: nowrap;
-}
-
-/* Anchors */
-.anchor {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: white;
-    border: 1px solid #00a389;
-}
-
-.anchor-tl {
-    top: -4px;
-    left: -4px;
-}
-
-.anchor-tr {
-    top: -4px;
-    right: -4px;
-}
-
-.anchor-bl {
-    bottom: -4px;
-    left: -4px;
-}
-
-.anchor-br {
-    bottom: -4px;
-    right: -4px;
-}
-
-/* Quotes Wrapper */
-.auth-quotes-wrapper {
-    margin-top: auto;
-    margin-bottom: 1.5rem;
-    opacity: 0.9;
-    padding-right: 20px;
-}
-
-/* Form Section */
+/* Form Section - Đẩy sát lên trên */
 .auth-form-container {
     padding: 1.5rem;
-    flex-grow: 1;
+    background: white;
+    border-radius: 25px 25px 0 0;
+    margin-top: -30px;
+    /* Đè lên banner nhiều hơn để thu ngắn tổng thể trang */
+    position: relative;
+    z-index: 3;
+    box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Ẩn Annotation Box trên mobile để banner không bị rối khi bóp ngắn */
+@media (max-width: 991.98px) {
+    .auth-annotation-box {
+        display: none;
+    }
+}
+
+@media (max-width: 991.98px) {
+
+    /* 1. Bóp ngắn chiều cao banner mobile */
+    .auth-banner-mobile {
+        height: 180px !important;
+        min-height: 180px !important;
+    }
+
+    /* 2. Giảm font chữ tiêu đề để tiết kiệm diện tích */
+    .auth-main-title {
+        font-size: 2.3rem !important;
+        line-height: 1.0 !important;
+        margin-top: 5px !important;
+    }
+
+    .text-precision {
+        font-size: 2.1rem !important;
+    }
+
+    /* 3. Bóp nhỏ Annotation Box bằng Transform (Vẫn giữ được box nhưng cực gọn) */
+    .auth-banner-mobile .annotation-box {
+        transform: scale(0.7);
+        transform-origin: top left;
+        top: 20% !important;
+        left: 5% !important;
+        width: 80% !important;
+    }
+
+    /* 4. Bóp khoảng cách Form Đăng Nhập */
+    .auth-form-container {
+        padding: 1.2rem 1.5rem !important;
+        margin-top: -30px !important;
+        /* Đè lên banner để thu ngắn trang */
+    }
+
+    .auth-welcome-text {
+        font-size: 1.25rem !important;
+        margin-bottom: 0 !important;
+    }
+}
+
+.auth-page-wrapper {
+    /* Đảm bảo nền luôn phủ kín màn hình */
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin-left: auto;
-    margin-right: auto;
-    width: 100%;
-    max-width: 480px;
+    align-items: center;
+    padding: 2rem 0;
+    /* Tạo khoảng trống trên dưới để không dính mép */
+}
+
+/* Chỉ áp dụng 100vh khi màn hình lớn (Desktop) */
+@media (min-width: 992px) {
+    .auth-page-wrapper {
+        height: 100vh;
+        overflow: hidden;
+        /* Khóa cuộn trên máy tính nếu muốn */
+        padding: 0;
+    }
 }
 
 @media (min-width: 992px) {
     .auth-form-container {
-        padding: 3rem;
+        /* Đẩy nội dung vào giữa bằng padding thay vì margin để giữ layout Bootstrap */
+        padding-left: 10% !important;
+        padding-right: 10% !important;
+    }
+
+    .auth-form-content {
+        /* Đây là chìa khóa: Giới hạn độ rộng của form */
+        width: 100%;
+        max-width: 420px;
+        /* Độ rộng lý tưởng cho form đăng nhập */
+        margin: 0 auto;
+        /* Căn giữa form trong vùng trắng */
+    }
+
+    .auth-welcome-text {
+        font-size: 1.75rem !important;
+        font-weight: 700;
     }
 }
 
-.auth-welcome-text {
-    font-weight: 900;
-    color: #212529;
-    margin-bottom: 0.25rem;
-    font-size: 1.85rem;
-    letter-spacing: -0.5px;
-}
+@media (min-width: 992px) {
+    .auth-form-container {
+        padding-left: 15% !important;
+        padding-right: 15% !important;
 
-.auth-footer {
-    margin-top: 3rem;
-    padding-top: 1.5rem;
-    text-align: center;
-    color: #6c757d;
-    font-size: 0.875rem;
-    border-top: 1px solid #dee2e6;
+        margin-top: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+
+    }
+
+    .auth-form-container>div {
+        width: 100%;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
 }

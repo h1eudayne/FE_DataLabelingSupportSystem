@@ -3,11 +3,11 @@ import AuthRight from "../../../components/auth/auth-right/AuthRight";
 
 const LoginPage = () => {
   return (
-    <div className="auth-page-wrapper d-flex justify-content-center align-items-center min-vh-100 bg-light py-4 py-lg-0">
+    <div className="auth-page-wrapper bg-light d-flex align-items-center justify-content-center py-4">
       <div className="container">
-        <div className="row justify-content-center">
+        <div className="row justify-content-center g-0">
           <div className="col-xl-9 col-lg-10 col-md-11 p-0">
-            {/* flex-column giúp banner nhảy lên đầu trên mobile */}
+            {/* Thẻ card sẽ tự co giãn theo nội dung bên trong, tránh dính đỉnh */}
             <div className="auth-card d-flex flex-column flex-lg-row overflow-hidden border-0 shadow-lg rounded-4 mx-2">
               <AuthLeft />
               <AuthRight />
