@@ -70,57 +70,66 @@
 /* --- CHỈ SỬA CHO MOBILE (< 992px) --- */
 @media (max-width: 991.98px) {
 
-    /* Ép AuthRight co lại theo nội dung, thắng height: 100% của custom.min.css */
+    /* Cho phép trang web dài ra và cuộn được */
+    body {
+        overflow-y: auto !important;
+        height: auto !important;
+    }
+
+    /* Ép AuthRight co giãn theo nội dung để có thể trượt */
     body .auth-right {
         height: auto !important;
         min-height: auto !important;
-        display: flex !important;
-        flex-direction: column !important;
+        display: block !important;
+        /* Chuyển về block để trôi nội dung tự nhiên */
+        overflow: visible !important;
     }
 
-    /* TĂNG DIỆN TÍCH ẢNH BANNER MOBILE */
+    /* TĂNG DIỆN TÍCH ẢNH BANNER */
     .auth-banner-mobile {
-        height: 240px !important;
-        min-height: 240px !important;
-        display: block !important;
+        height: 260px !important;
+        /* Tăng diện tích ảnh lên */
+        min-height: 260px !important;
+        position: relative;
     }
 
     .auth-main-title {
-        font-size: 2.2rem !important;
+        font-size: 2.4rem !important;
         line-height: 1.0 !important;
     }
 
     .text-precision {
-        font-size: 2.5rem !important;
+        font-size: 2.6rem !important;
     }
 
-    /* Căn giữa form trong vùng trắng */
+    /* Form Container: Cho phép giãn cao theo số lượng ô input */
     .auth-form-container {
-        padding: 2.5rem 1.5rem !important;
+        padding: 2.5rem 1.5rem 3rem 1.5rem !important;
         margin-top: -40px !important;
-        /* Đè lên banner sâu hơn để ảnh trông rộng hơn */
         border-radius: 30px 30px 0 0 !important;
-        flex-grow: 0 !important;
+        background: white;
         height: auto !important;
-        justify-content: center !important;
-        align-items: center !important;
-        box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.1);
+        min-height: auto !important;
+        display: block !important;
+        /* Để các input xếp chồng và đẩy chiều cao card */
     }
 
     .auth-form-content {
         width: 100% !important;
-        max-width: 360px !important;
+        max-width: 100% !important;
         margin: 0 auto !important;
     }
+}
 
-    /* Ẩn annotation box trên mobile để đỡ rối nếu banner ngắn */
-    .auth-banner-mobile .annotation-box {
-        display: none !important;
+/* --- CHỈ SỬA CHO PC (>= 992px) --- */
+@media (min-width: 992px) {
+    body .auth-right {
+        height: 100% !important;
     }
 
-    .auth-welcome-text {
-        font-size: 1.25rem !important;
-        margin-bottom: 5px !important;
+    /* Khóa scroll trên PC nếu card đã chiếm full màn hình */
+    .auth-page-wrapper {
+        overflow: hidden;
     }
 }
 
