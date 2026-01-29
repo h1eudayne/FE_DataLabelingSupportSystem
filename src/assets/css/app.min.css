@@ -540,7 +540,9 @@
 }
 
 .page-content {
-    padding: calc(70px + 1.5rem) calc(1.5rem * .5) 60px calc(1.5rem * .5)
+    padding: 90px 1.5rem 40px 1.5rem !important;
+    min-height: 100vh;
+    transition: all 0.3s ease;
 }
 
 .navbar-menu {

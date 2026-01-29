@@ -11,7 +11,6 @@ import AdminContainer from "../container/AdminContainer";
 import ManagerContainer from "../container/ManagerContainer";
 import AnnotatorContainer from "../container/AnnotatorContainer";
 import ReviewerContainer from "../container/ReviewerContainer";
-import UserHeader from "../components/home/UserHeader";
 
 const HomePage = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -32,7 +31,7 @@ const HomePage = () => {
 
   return (
     <div className="dashboard-layout bg-light min-vh-100">
-      <UserHeader user={user} />
+      {/* <UserHeader user={user} /> */}
 
       <Container fluid className="px-4 py-2">
         <RoleBasedRenderer role={user?.role} />

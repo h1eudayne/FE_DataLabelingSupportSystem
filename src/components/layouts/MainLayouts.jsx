@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Header from "./Header";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import UserHeader from "../home/UserHeader";
 
 const MainLayouts = () => {
   const [sidebarSize, setSidebarSize] = useState("lg");
+  const location = useLocation();
+
+  const isDashboard = location.pathname === "/dashboard";
 
   useEffect(() => {
     document.body.setAttribute("data-layout", "vertical");
