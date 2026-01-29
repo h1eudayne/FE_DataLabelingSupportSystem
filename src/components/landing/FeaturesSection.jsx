@@ -7,14 +7,17 @@ const FeaturesSection = () => {
   return (
     <section className="py-5 bg-light bg-opacity-50 border-top border-bottom">
       <Container className="py-5">
-        <div className="text-center mb-5 mx-auto" style={{ maxWidth: "700px" }}>
+        <div
+          className="text-center mb-5 mx-auto px-2"
+          style={{ maxWidth: "700px" }}
+        >
           <h2
-            className="fw-extrabold mb-3 display-6"
+            className="fw-extrabold mb-3 display-6 px-3"
             style={{ color: "#0f172a" }}
           >
             Giải pháp cho mọi vai trò
           </h2>
-          <p className="text-muted fs-5">
+          <p className="text-muted fs-6 fs-lg-5">
             Hệ thống phân quyền thông minh giúp tối ưu quy trình làm việc từ
             khâu thu thập đến khi hoàn thiện dữ liệu.
           </p>

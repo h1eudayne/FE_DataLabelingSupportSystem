@@ -49,7 +49,10 @@ const AuthLeft = () => {
             </div>
 
             {/* BOTTOM */}
-            <div className="quotes-wrapper" style={{ paddingLeft: "5px" }}>
+            <div
+              className="quotes-wrapper"
+              style={{ paddingLeft: "5px", paddingTop: "30px" }}
+            >
               <AuthLeftQuotes />
             </div>
           </div>

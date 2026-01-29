@@ -1,0 +1,145 @@
+/* Container chính cho Banner Mobile */
+.auth-banner-mobile {
+    height: 450px;
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.auth-banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    z-index: 0;
+}
+
+.auth-banner-overlay {
+    position: absolute;
+    inset: 0;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    color: white;
+    /* background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.9) 100%); */
+    z-index: 1;
+}
+
+/* Typography */
+.auth-logo-text {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+}
+
+.auth-title-container {
+    margin-top: 40px;
+}
+
+.auth-main-title {
+    font-weight: bold;
+    font-size: 3.5rem;
+    line-height: 1.2;
+    color: white;
+    letter-spacing: -1px;
+}
+
+.text-precision {
+    color: #01edc6;
+}
+
+/* Annotation Box */
+.auth-annotation-box {
+    position: absolute;
+    top: 20%;
+    left: 2%;
+    width: 62%;
+    height: 18%;
+    border: 2px solid #00a389;
+    z-index: 2;
+}
+
+.auth-annotation-tag {
+    position: absolute;
+    top: -26px;
+    left: -2px;
+    background: #00a389;
+    color: white;
+    padding: 2px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* Anchors */
+.anchor {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: white;
+    border: 1px solid #00a389;
+}
+
+.anchor-tl {
+    top: -4px;
+    left: -4px;
+}
+
+.anchor-tr {
+    top: -4px;
+    right: -4px;
+}
+
+.anchor-bl {
+    bottom: -4px;
+    left: -4px;
+}
+
+.anchor-br {
+    bottom: -4px;
+    right: -4px;
+}
+
+/* Quotes Wrapper */
+.auth-quotes-wrapper {
+    margin-top: auto;
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+    padding-right: 20px;
+}
+
+/* Form Section */
+.auth-form-container {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 480px;
+}
+
+@media (min-width: 992px) {
+    .auth-form-container {
+        padding: 3rem;
+    }
+}
+
+.auth-welcome-text {
+    font-weight: 900;
+    color: #212529;
+    margin-bottom: 0.25rem;
+    font-size: 1.85rem;
+    letter-spacing: -0.5px;
+}
+
+.auth-footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.875rem;
+    border-top: 1px solid #dee2e6;
+}

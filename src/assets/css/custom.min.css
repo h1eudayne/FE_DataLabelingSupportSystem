@@ -279,3 +279,28 @@
     margin-top: 23px;
     margin-left: 8px;
 }
+
+.auth-card {
+    transition: transform 0.3s ease;
+}
+
+.fs-14 {
+    font-size: 14px;
+}
+
+.text-primary-custom {
+    color: #00a389;
+}
+
+.btn-primary-custom {
+    background: #00a389;
+    border-color: #00a389;
+}
+
+/* Responsive chỉnh lại chiều cao card trên mobile */
+@media (max-width: 991.98px) {
+    .auth-card {
+        border-radius: 2rem !important;
+        /* Bo góc cực mạnh trên mobile */
+    }
+}

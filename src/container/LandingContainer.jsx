@@ -4,6 +4,7 @@ import LandingNavbar from "../components/landing/LandingNavbar";
 import HeroSection from "../components/landing/HeroSection";
 import FeaturesSection from "../components/landing/FeaturesSection";
 import LandingFooter from "../components/landing/LandingFooter";
+import CTASection from "../components/landing/CTASection";
 
 const LandingContainer = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const LandingContainer = () => {
       <LandingNavbar styles={styles} onLogin={goToLogin} />
       <HeroSection styles={styles} onExplore={goToLogin} />
       <FeaturesSection styles={styles} />
+      <CTASection />
       <LandingFooter />
     </div>
   );
