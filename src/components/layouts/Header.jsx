@@ -14,7 +14,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   return (

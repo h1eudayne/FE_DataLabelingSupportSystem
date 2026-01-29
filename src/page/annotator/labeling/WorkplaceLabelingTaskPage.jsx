@@ -8,7 +8,11 @@ import LabelPicker from "../../../components/annotator/labeling/LabelPicker";
 import TaskInfoTable from "../../../components/annotator/labeling/tasks/TaskInfoTable";
 import CommentSection from "../../../components/annotator/labeling/tasks/CommentSection";
 
-import { setAnnotations } from "../../../store/annotator/labelling/labelingSlice";
+import {
+  setAnnotations,
+  setSelectedLabel,
+} from "../../../store/annotator/labelling/labelingSlice";
+
 import { setCurrentTask } from "../../../store/annotator/labelling/taskSlice";
 
 import taskService from "../../../services/annotator/labeling/taskService";
@@ -27,7 +31,7 @@ const WorkplaceLabelingTaskPage = () => {
   const currentImage = images[currentImgIndex];
 
   const annotations = useSelector(
-    (state) => state.labeling.annotationsByAssignment[currentImage?.id] || []
+    (state) => state.labeling.annotationsByAssignment[currentImage?.id] || [],
   );
 
   useEffect(() => {
@@ -83,9 +87,15 @@ const WorkplaceLabelingTaskPage = () => {
       setAnnotations({
         assignmentId: currentImage.id,
         annotations: parsedAnnotations,
-      })
+      }),
     );
   }, [currentImage, dispatch]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(setSelectedLabel(null));
+    };
+  }, [dispatch]);
 
   const saveDraft = async (silent = false) => {
     if (!currentImage) return;
@@ -102,8 +112,8 @@ const WorkplaceLabelingTaskPage = () => {
         prev.map((img) =>
           img.id === currentImage.id
             ? { ...img, annotationData: dataJSON, status: "InProgress" }
-            : img
-        )
+            : img,
+        ),
       );
 
       if (!silent) toast.success("Đã lưu bản nháp");
@@ -140,8 +150,8 @@ const WorkplaceLabelingTaskPage = () => {
 
       setImages((prev) =>
         prev.map((img) =>
-          img.id === currentImage.id ? { ...img, status: "Submitted" } : img
-        )
+          img.id === currentImage.id ? { ...img, status: "Submitted" } : img,
+        ),
       );
 
       if (currentImgIndex === images.length - 1) {
@@ -175,9 +185,7 @@ const WorkplaceLabelingTaskPage = () => {
               className="progress-bar bg-primary"
               role="progressbar"
               style={{
-                width: `${
-                  ((currentImgIndex + 1) / images.length) * 100
-                }%`,
+                width: `${((currentImgIndex + 1) / images.length) * 100}%`,
               }}
             ></div>
           </div>
@@ -224,10 +232,7 @@ const WorkplaceLabelingTaskPage = () => {
         {(currentImage.status === "Approved" ||
           currentImage.status === "Rejected") && (
           <div className="mt-4">
-            <CommentSection
-              projectId={assignmentId}
-              taskId={currentImage.id}
-            />
+            <CommentSection projectId={assignmentId} taskId={currentImage.id} />
           </div>
         )}
       </div>
