@@ -30,6 +30,10 @@ import LoginPage from "./page/auth/login/LoginPage";
 import { ROLES } from "./constants/roles";
 import LandingPage from "./page/LandingPage";
 
+/**
+ * Sets up the application's routing, performs redirects to the dashboard when authenticated, defines protected route groups by role, and renders the main layout and performance reporter.
+ * @returns {JSX.Element} The root React element containing the configured Routes and the SpeedInsights component.
+ */
 function App() {
   const isLoggedIn = !!localStorage.getItem("accessToken");
 
