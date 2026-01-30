@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Modal,
   ModalBody,
@@ -12,13 +12,7 @@ import {
 const UserModal = (props) => {
   const { isOpen, toggle, user, handleSave } = props;
 
-  const [formData, setFormData] = useState({ role: "Annotator" });
-
-  useEffect(() => {
-    if (user) {
-      setFormData({ role: user.role || "Annotator" });
-    }
-  }, [user]);
+  const [formData, setFormData] = useState({ role: user?.role || "Annotator" });
 
   const handleChange = (e) => {
     setFormData({ role: e.target.value });

@@ -46,6 +46,7 @@ const AuthLeftQuotes = ({ isMobile }) => {
                   fontStyle: "italic",
                 }}
               >
+                <i className="ri-double-quotes-l me-2"></i>
                 "{quote.text}"
               </p>
               <span

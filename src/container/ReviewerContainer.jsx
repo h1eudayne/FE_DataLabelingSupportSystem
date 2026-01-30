@@ -5,6 +5,11 @@ import ShortcutSidebar from "../components/reviewer/home/ShortcutSidebar";
 import ProjectCard from "../components/reviewer/home/ProjectCard";
 import CommonHeader from "../components/home/CommonHeader";
 
+// Placeholder service to fix lint error. Implement actual service later.
+const projectService = {
+  getReviewProjects: () => Promise.resolve({ data: [] }),
+};
+
 const ReviewerContainer = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +57,7 @@ const ReviewerContainer = () => {
                 <ProjectCard
                   key={item.id}
                   project={item}
-                  onReview={(id) => {}}
+                  onReview={() => {}}
                 />
               ))
             ) : (

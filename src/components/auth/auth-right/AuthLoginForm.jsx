@@ -55,7 +55,10 @@ const AuthLoginForm = () => {
       <form onSubmit={handleSubmit} className="text-start">
         {/* Email */}
         <div className="mb-3">
-          <label className="form-label fw-bold text-muted small">
+          <label
+            htmlFor="email"
+            className="form-label fw-bold text-muted small"
+          >
             Email / Tên đăng nhập
           </label>
           <div className="input-group auth-input rounded-3">
@@ -63,6 +66,7 @@ const AuthLoginForm = () => {
               <i className="ri-mail-line"></i>
             </span>
             <input
+              id="email"
               type="email"
               className="form-control bg-transparent border-0 py-2"
               placeholder="Nhập tài khoản"
@@ -77,7 +81,10 @@ const AuthLoginForm = () => {
         {/* Password */}
         <div className="mb-3">
           <div className="d-flex justify-content-between">
-            <label className="form-label fw-bold text-muted small">
+            <label
+              htmlFor="password"
+              className="form-label fw-bold text-muted small"
+            >
               Mật khẩu
             </label>
             <Link
@@ -94,6 +101,7 @@ const AuthLoginForm = () => {
               <i className="ri-lock-line"></i>
             </span>
             <input
+              id="password"
               type={showPassword ? "text" : "password"}
               className="form-control bg-transparent border-0 py-2"
               placeholder="••••••••"
@@ -105,6 +113,7 @@ const AuthLoginForm = () => {
             <button
               type="button"
               className="btn border-0"
+              aria-label="toggle password visibility"
               onClick={() => setShowPassword(!showPassword)}
             >
               <i

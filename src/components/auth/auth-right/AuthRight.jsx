@@ -51,7 +51,9 @@ const AuthRight = () => {
 
       <div className="auth-form-container d-flex flex-column justify-content-center h-100">
         <div className="auth-form-content">
-          <h2 className="mb-1">Chào mừng trở lại!</h2>
+          <h2 className="mb-1" data-testid="header">
+            Chào mừng trở lại!
+          </h2>
           <p className="text-muted mb-4">
             Đăng nhập để tiếp tục với
             <span className="text-primary">AILABEL</span>

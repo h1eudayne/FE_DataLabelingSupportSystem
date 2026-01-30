@@ -37,8 +37,11 @@ const SettingUserManagement = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-    fetchSelf();
+    const init = async () => {
+      await fetchUsers();
+      await fetchSelf();
+    };
+    init();
   }, []);
 
   const handleEdit = (user) => {
@@ -107,6 +110,7 @@ const SettingUserManagement = () => {
       </Card>
 
       <UserModal
+        key={selectUser ? selectUser.id : "new"}
         isOpen={isModalOpen}
         toggle={toggleModal}
         user={selectUser}
