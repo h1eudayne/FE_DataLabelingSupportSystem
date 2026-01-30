@@ -23,7 +23,7 @@ import {
 } from "recharts";
 import { Database, CheckCircle, Clock, Users } from "lucide-react";
 import StatCard from "../../../components/manager/analytics/StatCard";
-import { analyticsService } from "../../../services/manager/analytics/analyticsService";
+import analyticsService from "../../../services/manager/analytics/analyticsService";
 
 const COLORS = ["#0ab39c", "#f7b84b", "#405189", "#f06548"];
 

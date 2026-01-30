@@ -5,7 +5,7 @@ import KpiCard from "../components/manager/home/KpiCard";
 import ProjectTable from "../components/manager/home/ProjectTable";
 import QualityDonutChart from "../components/manager/home/QualityDonutChart";
 import PerformanceBarChart from "../components/manager/home/PerformanceBarChart";
-import { analyticsService } from "../services/manager/analytics/analyticsService";
+import analyticsService from "../services/manager/analytics/analyticsService";
 
 const ManagerContainer = () => {
   const [data, setData] = useState(null);

@@ -3,7 +3,7 @@ import { Container, Row, Col, Spinner } from "reactstrap";
 import ProjectOverviewChart from "../../../components/manager/status/ProjectOverviewChart";
 import ProjectStatusSidebar from "../../../components/manager/status/ProjectStatusSidebar";
 import StatCards from "../../../components/manager/status/StatCards";
-import { analyticsService } from "../../../services/manager/analytics/analyticsService";
+import analyticsService from "../../../services/manager/analytics/analyticsService";
 
 const DashboardProjectStatus = () => {
   const [stats, setStats] = useState(null);
