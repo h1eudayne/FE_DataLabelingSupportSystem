@@ -142,7 +142,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
             </div>
 
             <div className="d-flex align-items-center gap-2">
-              NÚT CHỈNH THEME (Mặt trời/Mặt trăng) */}
               <Button
                 variant="light"
                 className="bg-transparent border-0 p-2 shadow-none rounded-circle theme-toggle-btn"
@@ -167,7 +166,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                 )}
               </Button>
 
-              NGÔN NGỮ - Mũi tên nhỏ mảnh */}
               <Dropdown>
                 <Dropdown.Toggle
                   variant="light"
@@ -243,7 +241,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                 style={{ height: "20px" }}
               ></div>
 
-              USER PROFILE - Mũi tên to đậm */}
               {isAuthenticated && user && (
                 <Dropdown align="end">
                   <Dropdown.Toggle
