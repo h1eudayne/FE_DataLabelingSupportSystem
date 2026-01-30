@@ -13,7 +13,7 @@ const AnnotatorDashboard = () => {
 
   useEffect(() => {
     if (projects.data?.length > 0 && !projectId) {
-      setProjectId(projects.data[0].projectId);
+      setTimeout(() => setProjectId(projects.data[0].projectId), 0);
     }
   }, [projects.data, projectId]);
 
