@@ -15,7 +15,7 @@ vi.mock("simplebar-react", () => ({
 }));
 
 beforeEach(() => {
-  global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
     unobserve: vi.fn(),
     disconnect: vi.fn(),
@@ -50,7 +50,7 @@ describe("App Integration - Security & Roles", () => {
 
     const loginHeader = await screen.findByRole(
       "heading",
-      { name: /Sign In/i },
+      { name: /Chào mừng trở lại!/i },
       { timeout: 8000 },
     );
     expect(loginHeader).toBeInTheDocument();

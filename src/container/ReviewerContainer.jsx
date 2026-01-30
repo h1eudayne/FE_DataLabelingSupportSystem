@@ -4,6 +4,7 @@ import ReviewerActionBar from "../components/reviewer/home/ReviewerActionBar";
 import ShortcutSidebar from "../components/reviewer/home/ShortcutSidebar";
 import ProjectCard from "../components/reviewer/home/ProjectCard";
 import CommonHeader from "../components/home/CommonHeader";
+import projectService from "../services/manager/project/projectService";
 
 const ReviewerContainer = () => {
   const [projects, setProjects] = useState([]);
@@ -49,11 +50,7 @@ const ReviewerContainer = () => {
               </div>
             ) : filteredProjects.length > 0 ? (
               filteredProjects.map((item) => (
-                <ProjectCard
-                  key={item.id}
-                  project={item}
-                  onReview={(id) => {}}
-                />
+                <ProjectCard key={item.id} project={item} onReview={() => {}} />
               ))
             ) : (
               <div className="text-center py-5 bg-white rounded-4 shadow-sm">

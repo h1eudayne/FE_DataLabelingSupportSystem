@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from "react";
 import NavigationTabs from "../components/admin/home/NavigationTabs";
 import { Container } from "react-bootstrap";
-import { userService } from "../services/manager/project/userService";
+import {
+  getUsers,
+  createUser,
+  deleteUser,
+} from "../services/admin/managementUsers/user.api";
 import UserManagementView from "../components/admin/home/UserManagementView";
+import UserModal from "../components/admin/managementUser/UserModal";
 import AdminHeader from "../components/admin/home/AdminHeader";
 import LogsView from "../components/admin/home/LogsView";
+import SettingsView from "../components/admin/home/SettingsView";
 
 const AdminContainer = () => {
   const [activeTab, setActiveTab] = useState("users");
@@ -16,7 +22,7 @@ const AdminContainer = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await userService.getUsers();
+      const res = await getUsers();
       setUsers(res.data || []);
     } catch (err) {
       console.error("Lỗi fetch users:", err);
@@ -28,11 +34,21 @@ const AdminContainer = () => {
   const handleDeleteUser = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa?")) {
       try {
-        await userService.deleteUser(id);
+        await deleteUser(id);
         fetchUsers();
       } catch (err) {
         console.error("Lỗi xóa:", err);
       }
+    }
+  };
+
+  const handleSaveUser = async (userData) => {
+    try {
+      await createUser(userData);
+      fetchUsers();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Lỗi tạo user:", err);
     }
   };
 
@@ -75,6 +91,12 @@ const AdminContainer = () => {
 
       {activeTab === "settings" && <SettingsView />}
       {activeTab === "logs" && <LogsView />}
+
+      <UserModal
+        isOpen={isModalOpen}
+        toggle={() => setIsModalOpen(!isModalOpen)}
+        handleSave={handleSaveUser}
+      />
     </Container>
   );
 };
