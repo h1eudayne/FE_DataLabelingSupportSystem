@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import axios from "../../axios.customize";
-import * as analyticsService from "./analyticsService";
+import analyticsService from "./analyticsService";
 
 vi.mock("../../axios.customize", () => ({
   default: {
