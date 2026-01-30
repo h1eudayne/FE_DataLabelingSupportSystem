@@ -136,7 +136,6 @@
 
 
 .quotes-wrapper {
-    /* min-height: 140px; */
     display: flex;
     flex-direction: column;
     margin-top: 250px;
@@ -145,7 +144,6 @@
 .auth-page-content {
     max-height: 90vh;
     display: flex;
-    /* align-items: center; */
 }
 
 @media (min-width: 992px) {
@@ -168,7 +166,6 @@
 
 .auth-right label {
     color: #1e293b;
-    /* slate-800 */
     font-weight: 600;
 }
 
@@ -183,7 +180,6 @@
 
 .auth-input::placeholder {
     color: #94a3b8;
-    /* slate-400 */
 }
 
 .auth-input:focus-within {
@@ -265,13 +261,11 @@
     flex: 1;
 }
 
-/* Background trái */
 .auth-one-bg {
     position: relative;
     overflow: hidden;
 }
 
-/* Overlay phải bo theo cha */
 .auth-one-bg::before {
     border-radius: inherit;
 }
@@ -289,7 +283,6 @@
 
     border-radius: 28px;
     overflow: hidden;
-    /* 🔥 BẮT BUỘC */
     background: #fff;
 
     box-shadow: 0 25px 60px rgba(0, 0, 0, .15);
@@ -313,7 +306,6 @@
     border-color: #00a389;
 }
 
-/* Quan trọng: Chỉ ép height 100% trên Desktop */
 @media (min-width: 992px) {
 
     .auth-left,
@@ -327,7 +319,6 @@
     }
 }
 
-/* Trên mobile, để chiều cao tự động theo nội dung */
 @media (max-width: 991.98px) {
 
     .auth-left,

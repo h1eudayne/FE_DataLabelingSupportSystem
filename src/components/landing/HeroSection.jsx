@@ -5,7 +5,7 @@ const HeroSection = ({ onExplore }) => {
   const customStyles = {
     section: {
       position: "relative",
-      padding: "60px 0 100px", // Padding nhỏ hơn trên mobile
+      padding: "60px 0 100px",
       backgroundColor: "#ffffff",
     },
     badge: {
@@ -65,7 +65,6 @@ const HeroSection = ({ onExplore }) => {
 
           <Col lg={6} className="mt-5 mt-lg-0">
             <div className="position-relative p-2 bg-white rounded-4 shadow-2xl border">
-              {/* Mockup Dashboard từ template của bạn */}
               <img
                 src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769629522/image.png_ptrdoq.png"
                 className="img-fluid rounded-4"

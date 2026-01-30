@@ -24,7 +24,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false); // State cho Theme
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const [currentLang, setCurrentLang] = useState({
     code: "vi",
@@ -32,11 +32,8 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
     name: "Tiếng Việt",
   });
 
-  // Xử lý chuyển đổi Theme
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
-    // Bạn có thể thêm logic lưu vào localStorage hoặc thay đổi thuộc tính data-theme ở đây
-    // document.documentElement.setAttribute('data-theme', isDarkMode ? 'light' : 'dark');
   };
 
   const handleFullscreen = () => {
@@ -145,7 +142,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
             </div>
 
             <div className="d-flex align-items-center gap-2">
-              {/* NÚT CHỈNH THEME (Mặt trời/Mặt trăng) */}
+              NÚT CHỈNH THEME (Mặt trời/Mặt trăng) */}
               <Button
                 variant="light"
                 className="bg-transparent border-0 p-2 shadow-none rounded-circle theme-toggle-btn"
@@ -170,7 +167,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                 )}
               </Button>
 
-              {/* NGÔN NGỮ - Mũi tên nhỏ mảnh */}
+              NGÔN NGỮ - Mũi tên nhỏ mảnh */}
               <Dropdown>
                 <Dropdown.Toggle
                   variant="light"
@@ -246,7 +243,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                 style={{ height: "20px" }}
               ></div>
 
-              {/* USER PROFILE - Mũi tên to đậm */}
+              USER PROFILE - Mũi tên to đậm */}
               {isAuthenticated && user && (
                 <Dropdown align="end">
                   <Dropdown.Toggle

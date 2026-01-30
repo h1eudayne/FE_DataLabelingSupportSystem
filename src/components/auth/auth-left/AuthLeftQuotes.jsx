@@ -22,12 +22,10 @@ const AuthLeftQuotes = ({ isMobile }) => {
         fade={true}
         pause={false}
         className="text-start"
-        // Ngăn chặn Carousel chiếm quyền focus hoặc gây nhảy trang
         touch={true}
       >
         {quotes.map((quote, index) => (
           <Carousel.Item key={index} className="text-white">
-            {/* Cố định chiều cao (minHeight) để khi đổi chữ dài/ngắn UI không bị giật */}
             <div
               style={{
                 minHeight: isMobile ? "80px" : "100px",
@@ -64,7 +62,6 @@ const AuthLeftQuotes = ({ isMobile }) => {
       </Carousel>
 
       <style>{`
-        /* 1. Cố định vị trí thanh gạch ngang để không nhảy theo chữ */
         .quotes-carousel-container .carousel-indicators {
           position: relative;
           margin: 15px 0 0 0;
@@ -72,7 +69,6 @@ const AuthLeftQuotes = ({ isMobile }) => {
           z-index: 1;
         }
 
-        /* 2. Tạo hình dáng thanh ngang hiện đại */
         .quotes-carousel-container .carousel-indicators [data-bs-target] {
           width: 30px;
           height: 4px;
@@ -83,13 +79,11 @@ const AuthLeftQuotes = ({ isMobile }) => {
           margin-right: 8px;
         }
 
-        /* 3. Thanh active sẽ dài ra và đổi màu */
         .quotes-carousel-container .carousel-indicators .active {
           width: 50px;
           background-color: #01edc6 !important;
         }
 
-        /* 4. Loại bỏ hoàn toàn viền focus mặc định gây xấu UI */
         .carousel-indicators [data-bs-target]:focus {
             outline: none;
             box-shadow: none;

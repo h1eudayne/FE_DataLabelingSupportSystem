@@ -1,4 +1,3 @@
-/* --- CẤU HÌNH CHUNG --- */
 .auth-right {
     background-color: #fff !important;
     display: flex !important;
@@ -10,7 +9,6 @@
     width: 100%;
     overflow: hidden;
     display: none;
-    /* Mặc định ẩn, chỉ hiện trên mobile */
 }
 
 .auth-banner-img {
@@ -41,7 +39,6 @@
     text-align: center;
 }
 
-/* --- MOBILE RESPONSIVE (< 992px) --- */
 @media (max-width: 991.98px) {
     body .auth-right {
         background-color: transparent !important;
@@ -63,10 +60,8 @@
 
     body .auth-right {
         background-color: transparent !important;
-        /* Trong suốt để hiện góc bo */
         height: auto !important;
         display: block !important;
-        /* Tạo khoảng cách 2 bên để thấy card không tràn màn hình */
     }
 
     .auth-main-title {
@@ -86,9 +81,7 @@
     .auth-form-container {
         padding: 2.5rem 1.5rem 3rem 1.5rem !important;
         margin-top: -30px !important;
-        /* Đẩy nhẹ lên để khớp với ảnh */
         border-radius: 35px 35px 28px 28px !important;
-        /* Bo mạnh phía trên, nhẹ phía dưới */
         background: #fff !important;
         position: relative;
         z-index: 5;
@@ -107,23 +100,19 @@
     min-height: 620px;
 }
 
-/* --- CHỈ SỬA TRONG ĐOẠN DESKTOP (>= 992px) --- */
 @media (min-width: 992px) {
 
     body .auth-right {
         height: 620px !important;
-        /* Ép bằng chiều cao card */
         display: flex !important;
         justify-content: center !important;
     }
 
     .auth-form-container {
         flex: 1;
-        /* Chiếm trọn 620px */
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
-        /* Đưa form vào giữa tâm dọc */
         align-items: center !important;
         width: 100%;
     }

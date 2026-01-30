@@ -31,8 +31,6 @@ const HomePage = () => {
 
   return (
     <div className="dashboard-layout bg-light min-vh-100">
-      {/* <UserHeader user={user} /> */}
-
       <Container fluid className="px-4 py-2">
         <RoleBasedRenderer role={user?.role} />
       </Container>

@@ -2,7 +2,7 @@ import { Navbar, Container, Nav, Button } from "react-bootstrap";
 
 const LandingNavbar = ({ onLogin }) => (
   <Navbar
-    expand="lg" // Tự động thu gọn trên mobile
+    expand="lg"
     className="py-3 sticky-top bg-white bg-opacity-75 border-bottom"
     style={{
       backdropFilter: "blur(10px)",
@@ -20,7 +20,6 @@ const LandingNavbar = ({ onLogin }) => (
         <span style={{ color: "#0f172a" }}>LABEL</span>
       </Navbar.Brand>
 
-      {/* Nút Hamburger chuẩn Bootstrap */}
       <Navbar.Toggle
         aria-controls="basic-navbar-nav"
         className="border-0 shadow-none"
