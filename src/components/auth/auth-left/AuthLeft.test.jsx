@@ -32,7 +32,6 @@ describe("AuthLeft", () => {
 
   it("render sub-component Quotes", () => {
     renderWithRouter();
-    // Kiểm tra xem quotes có xuất hiện không
     expect(
       screen.getByText(/Great things never come from comfort zones/i),
     ).toBeInTheDocument();

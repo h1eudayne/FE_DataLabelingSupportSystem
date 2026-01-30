@@ -6,7 +6,6 @@ import "@testing-library/jest-dom";
 describe("AuthRightHeader", () => {
   it("nên hiển thị tiêu đề chính (Heading)", () => {
     render(<AuthRightHeader />);
-    // Component dùng <h2>Chào mừng trở lại!</h2>
     const heading = screen.getByRole("heading", { level: 2 });
     expect(heading).toHaveTextContent(/Chào mừng trở lại/i);
   });

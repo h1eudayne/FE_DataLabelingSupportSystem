@@ -1,17 +1,17 @@
 import axios from "../../axios.customize";
 
-const getMyProjects = () => axios.get("/api/Project/manager/me");
+export const getMyProjects = () => axios.get("/api/Project/manager/me");
 
-const getProjectStats = (projectId) => {
+export const getProjectStats = (projectId) => {
   if (!projectId) {
     throw new Error("projectId is required");
   }
   return axios.get(`/api/Project/${projectId}/stats`);
 };
 
-const getUsers = () => axios.get("/api/User");
+export const getUsers = () => axios.get("/api/User");
 
-const getDashboardStats = async () => {
+export const getDashboardStats = async () => {
   const resProjects = await getMyProjects();
   const projects = resProjects.data || [];
 
@@ -46,11 +46,4 @@ const getDashboardStats = async () => {
     submitted,
     rejected,
   };
-};
-
-export const analyticsService = {
-  getMyProjects,
-  getProjectStats,
-  getUsers,
-  getDashboardStats,
 };

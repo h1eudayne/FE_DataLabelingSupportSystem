@@ -6,13 +6,10 @@ import { configureStore } from "@reduxjs/toolkit";
 import LoginPage from "./LoginPage";
 import "@testing-library/jest-dom";
 
-// Mock AuthLeft để giảm tải render
 vi.mock("../../../components/auth/auth-left/AuthLeft", () => ({
   default: () => <div data-testid="auth-left">AuthLeft</div>,
 }));
 
-// QUAN TRỌNG: Mock luôn AuthRight để kiểm soát input chính xác hoặc
-// để AuthRight render nhưng phải khớp Placeholder
 const createMockStore = (preloadedState) => {
   return configureStore({
     reducer: {
@@ -49,7 +46,6 @@ describe("LoginPage - Layout & UI Integration", () => {
   it("nên cho phép nhập liệu thông tin đăng nhập", async () => {
     renderLogin();
 
-    // Cập nhật Regex để khớp với "Nhập tài khoản" trong AuthLoginForm.jsx của bạn
     const emailInput = screen.getByPlaceholderText(/Nhập tài khoản|email/i);
     const passwordInput = screen.getByPlaceholderText(/••••••••|password/i);
 
@@ -64,7 +60,6 @@ describe("LoginPage - Layout & UI Integration", () => {
     renderLogin();
 
     const passwordInput = screen.getByPlaceholderText(/••••••••|password/i);
-    // Đảm bảo tìm đúng nút qua aria-label đã đặt trong AuthLoginForm
     const toggleBtn = screen.getByLabelText(/toggle password visibility/i);
 
     expect(passwordInput.type).toBe("password");
