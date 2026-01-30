@@ -19,6 +19,15 @@ body {
     text-rendering: optimizeLegibility;
 }
 
+html,
+body {
+    height: 100%;
+}
+
+.auth-page-wrapper {
+    min-height: 100dvh;
+}
+
 h1,
 h2,
 h3,

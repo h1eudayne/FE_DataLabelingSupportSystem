@@ -45,7 +45,6 @@ const AuthLoginForm = () => {
 
   return (
     <div>
-      {/* Error */}
       {error && (
         <div className="alert alert-danger py-2 small">
           {typeof error === "string" ? error : error?.title || "Login failed"}
@@ -53,7 +52,6 @@ const AuthLoginForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="text-start">
-        {/* Email */}
         <div className="mb-3">
           <label
             htmlFor="email-input"
@@ -78,7 +76,6 @@ const AuthLoginForm = () => {
           </div>
         </div>
 
-        {/* Password */}
         <div className="mb-3">
           <div className="d-flex justify-content-between">
             <label
@@ -123,7 +120,6 @@ const AuthLoginForm = () => {
           </div>
         </div>
 
-        {/* Remember */}
         <div className="form-check mb-4">
           <input className="form-check-input" type="checkbox" />
           <label className="form-check-label text-muted small">
@@ -131,7 +127,6 @@ const AuthLoginForm = () => {
           </label>
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
@@ -142,8 +137,6 @@ const AuthLoginForm = () => {
         >
           {loading ? "Đang xử lý..." : "Đăng nhập"}
         </button>
-
-        {/* <AuthSocialLogin /> */}
       </form>
     </div>
   );
