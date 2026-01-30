@@ -18,7 +18,6 @@ describe("Header Component - Comprehensive Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock store với đầy đủ thông tin để khớp với Header.jsx
     store = configureStore({
       reducer: {
         auth: (
@@ -34,7 +33,6 @@ describe("Header Component - Comprehensive Suite", () => {
       },
     });
 
-    // Giả lập Fullscreen API
     if (typeof document.documentElement.requestFullscreen !== "function") {
       document.documentElement.requestFullscreen = vi
         .fn()
@@ -52,7 +50,6 @@ describe("Header Component - Comprehensive Suite", () => {
     );
 
   describe("UI & Profile Dropdown", () => {
-    // FIX: Đã gỡ skip để đảm bảo test chạy
     it("nên hiển thị thông tin User chính xác", () => {
       renderHeader();
       expect(screen.getByText(/Nguyễn Văn A/i)).toBeInTheDocument();
@@ -61,23 +58,18 @@ describe("Header Component - Comprehensive Suite", () => {
     it("nên tương tác đầy đủ với Dropdown Profile", async () => {
       renderHeader();
 
-      // Click để mở dropdown
       const profileToggle = screen.getByText(/Nguyễn Văn A/i);
       fireEvent.click(profileToggle);
 
-      // SỬA LỖI: Dùng waitFor để chờ Popper.js render menu
       await waitFor(() => {
-        // Kiểm tra email hiển thị trong menu
         expect(screen.getByText(/staff1@gmail.com/i)).toBeInTheDocument();
 
-        // Kiểm tra các item chức năng
         const profileLink = screen.getByText(/Hồ sơ cá nhân/i);
         const logoutBtn = screen.getByText(/Đăng xuất/i);
 
         expect(profileLink).toBeInTheDocument();
         expect(logoutBtn).toBeInTheDocument();
 
-        // Kiểm tra logic định tuyến
         expect(profileLink.closest("a")).toHaveAttribute("href", "/profile");
       });
     });
@@ -102,12 +94,10 @@ describe("Header Component - Comprehensive Suite", () => {
   describe("Authentication Logic", () => {
     it("nên gọi Logout và chuyển hướng về trang chủ", async () => {
       const spyDispatch = vi.spyOn(store, "dispatch");
-      // Mock confirm dialog của trình duyệt
       vi.spyOn(window, "confirm").mockImplementation(() => true);
 
       renderHeader();
 
-      // Phải mở dropdown trước mới click được nút logout
       fireEvent.click(screen.getByText("Nguyễn Văn A"));
 
       const logoutBtn = screen.getByText(/Đăng xuất/i);

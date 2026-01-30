@@ -26,9 +26,7 @@ test("render AuthRight layout và kiểm tra tiêu đề", () => {
     </Provider>,
   );
 
-  // Kiểm tra text trực tiếp trong AuthRight.jsx
   expect(screen.getByText(/Chào mừng trở lại/i)).toBeInTheDocument();
-  // Kiểm tra sự hiện diện của Form (nút Đăng nhập)
   expect(
     screen.getByRole("button", { name: /Đăng nhập/i }),
   ).toBeInTheDocument();
