@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, Row, Col, Form, Button, Table, Badge } from "react-bootstrap";
 import {
   Settings,
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 const SettingsView = () => {
-  const [labels, setLabels] = useState([
+  const [labels] = useState([
     { id: 1, name: "Car", color: "#405189" },
     { id: 2, name: "Truck", color: "#0ab39c" },
   ]);

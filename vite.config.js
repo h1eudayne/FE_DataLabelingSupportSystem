@@ -20,6 +20,22 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes("node_modules")) {
+            if (id.includes("react") || id.includes("redux")) return "vendor";
+            if (id.includes("bootstrap") || id.includes("reactstrap"))
+              return "ui";
+            if (id.includes("chart") || id.includes("recharts"))
+              return "charts";
+            if (id.includes("axios") || id.includes("moment")) return "utils";
+          }
+        },
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     globals: true,

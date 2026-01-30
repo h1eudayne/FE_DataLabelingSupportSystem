@@ -3,6 +3,8 @@ import axios from "../../axios.customize";
 const projectService = {
   getManagerProjects: () => axios.get("/api/Project/manager/me"),
 
+  getReviewProjects: () => axios.get("/api/Project/reviewer/me"),
+
   getProjectById: (id) => axios.get(`/api/Project/${id}`),
 
   createProject: async (data) => {

@@ -62,12 +62,12 @@ describe("AuthLoginForm - Comprehensive Test", () => {
     renderUI();
 
     const loadingBtn = screen.getByRole("button", {
-      name: /logging in\.\.\./i,
+      name: /Đang xử lý\.\.\./i,
     });
     expect(loadingBtn).toBeDisabled();
 
-    expect(screen.getByLabelText(/Email \/ Username/i)).toBeDisabled();
-    expect(screen.getByPlaceholderText(/Enter password/i)).toBeDisabled();
+    expect(screen.getByLabelText(/Email \/ Tên đăng nhập/i)).toBeDisabled();
+    expect(screen.getByPlaceholderText(/••••••••/i)).toBeDisabled();
   });
 
   it("hiển thị chính xác thông báo lỗi từ API (xử lý cả trường hợp object có title)", () => {
@@ -86,7 +86,7 @@ describe("AuthLoginForm - Comprehensive Test", () => {
     const user = userEvent.setup();
     renderUI();
 
-    const passwordInput = screen.getByPlaceholderText(/Enter password/i);
+    const passwordInput = screen.getByPlaceholderText(/••••••••/i);
     const toggleBtn = screen.getByLabelText(/toggle password visibility/i);
 
     expect(passwordInput).toHaveAttribute("type", "password");
@@ -102,9 +102,9 @@ describe("AuthLoginForm - Comprehensive Test", () => {
     const user = userEvent.setup();
     renderUI();
 
-    const emailInput = screen.getByLabelText(/Email \/ Username/i);
-    const passwordInput = screen.getByPlaceholderText(/Enter password/i);
-    const submitBtn = screen.getByRole("button", { name: /sign in/i });
+    const emailInput = screen.getByLabelText(/Email \/ Tên đăng nhập/i);
+    const passwordInput = screen.getByPlaceholderText(/••••••••/i);
+    const submitBtn = screen.getByRole("button", { name: /Đăng nhập/i });
 
     await user.type(emailInput, "admin@gmail.com");
     await user.type(passwordInput, "Password123");
@@ -131,7 +131,7 @@ describe("AuthLoginForm - Comprehensive Test", () => {
 
   it("các input email và password phải có thuộc tính required", () => {
     renderUI();
-    expect(screen.getByLabelText(/Email \/ Username/i)).toBeRequired();
-    expect(screen.getByPlaceholderText(/Enter password/i)).toBeRequired();
+    expect(screen.getByLabelText(/Email \/ Tên đăng nhập/i)).toBeRequired();
+    expect(screen.getByPlaceholderText(/••••••••/i)).toBeRequired();
   });
 });

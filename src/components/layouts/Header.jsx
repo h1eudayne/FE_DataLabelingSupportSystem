@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Container, Dropdown, Form, InputGroup, Button } from "react-bootstrap";
 import {
   LogOut,
@@ -114,6 +114,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           <div className="d-flex justify-content-between align-items-center h-100">
             <div className="d-flex align-items-center gap-3">
               <Button
+                id="topnav-hamburger-icon"
                 onClick={toggleSidebar}
                 variant="light"
                 className="d-flex align-items-center justify-content-center p-0 border-0 custom-toggle-btn shadow-none"
@@ -160,6 +161,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
 
               <Button
                 variant="light"
+                aria-label="Fullscreen"
                 className="bg-transparent border-0 p-2 shadow-none rounded-circle"
                 onClick={handleFullscreen}
               >
@@ -250,6 +252,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
               {isAuthenticated && user && (
                 <Dropdown align="end">
                   <Dropdown.Toggle
+                    id="page-header-user-dropdown"
                     variant="none"
                     className="p-0 border-0 shadow-none d-flex align-items-center gap-2 no-caret"
                   >
@@ -284,6 +287,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     />
                   </Dropdown.Toggle>
                   <Dropdown.Menu
+                    data-testid="user-profile-menu"
                     align="end"
                     className="shadow-lg border-0 py-2 dropdown-menu-animated"
                     style={{

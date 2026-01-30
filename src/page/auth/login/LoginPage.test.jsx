@@ -37,7 +37,7 @@ describe("LoginPage - Layout & UI Integration", () => {
   it("nên render khung trang và card layout đúng class Bootstrap", () => {
     const { container } = renderLogin();
     expect(container.querySelector(".auth-page-wrapper")).toBeInTheDocument();
-    expect(container.querySelector(".auth-page-content")).toBeInTheDocument();
+    expect(container.querySelector(".auth-card")).toBeInTheDocument();
   });
 
   it("nên hiển thị thông báo lỗi khi có error trong state", () => {
@@ -51,9 +51,9 @@ describe("LoginPage - Layout & UI Integration", () => {
   it("nên disable các trường input khi đang loading", () => {
     renderLogin({ auth: { loading: true } });
 
-    const emailInput = screen.getByLabelText(/Email \/ Username|Email/i);
+    const emailInput = screen.getByLabelText(/Email \/ Tên đăng nhập/i);
     const submitBtn = screen.getByRole("button", {
-      name: /sign in|logging in/i,
+      name: /Đăng nhập|Đang xử lý/i,
     });
 
     expect(emailInput).toBeDisabled();
@@ -63,10 +63,8 @@ describe("LoginPage - Layout & UI Integration", () => {
   it("nên cho phép nhập liệu vào form", () => {
     renderLogin();
 
-    const emailInput = screen.getByPlaceholderText(
-      /Enter email|Enter username/i,
-    );
-    const passwordInput = screen.getByPlaceholderText(/Enter password/i);
+    const emailInput = screen.getByPlaceholderText(/Nhập tài khoản/i);
+    const passwordInput = screen.getByPlaceholderText(/••••••••/i);
 
     fireEvent.change(emailInput, { target: { value: "admin@test.com" } });
     fireEvent.change(passwordInput, { target: { value: "123456" } });
@@ -78,9 +76,9 @@ describe("LoginPage - Layout & UI Integration", () => {
   it("nên chuyển đổi hiển thị mật khẩu khi nhấn icon eye", () => {
     renderLogin();
 
-    const passwordInput = screen.getByPlaceholderText(/Enter password/i);
+    const passwordInput = screen.getByPlaceholderText(/••••••••/i);
     const toggleBtn = screen.getByRole("button", {
-      name: /toggle password visibility/i,
+      name: /toggle password visibility/i, // This might also need to change if the button aria-label is different? Check AuthLoginForm.
     });
 
     expect(passwordInput.type).toBe("password");

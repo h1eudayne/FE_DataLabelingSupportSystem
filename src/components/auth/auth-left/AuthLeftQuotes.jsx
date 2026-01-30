@@ -36,6 +36,7 @@ const AuthLeftQuotes = ({ isMobile }) => {
                 justifyContent: "center",
               }}
             >
+              <i className="ri-double-quotes-l display-4 text-success mb-2"></i>
               <p
                 className="fw-medium mb-1"
                 style={{
