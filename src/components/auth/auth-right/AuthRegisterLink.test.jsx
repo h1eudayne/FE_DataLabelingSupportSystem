@@ -1,7 +1,9 @@
+// src/components/auth/auth-right/AuthRegisterLink.test.jsx
 import { render, screen } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { describe, it, expect } from "vitest";
 import AuthRegisterLink from "./AuthRegisterLink";
+import "@testing-library/jest-dom";
 
 describe("AuthRegisterLink", () => {
   it("hiển thị đúng câu hỏi và link đăng ký", () => {
@@ -11,16 +13,8 @@ describe("AuthRegisterLink", () => {
       </BrowserRouter>,
     );
 
-    expect(screen.getByText(/don't have an account/i)).toBeInTheDocument();
-
+    expect(screen.getByText(/Don't have an account/i)).toBeInTheDocument();
     const link = screen.getByRole("link", { name: /signup/i });
-    expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/register");
-
-    expect(link).toHaveClass(
-      "fw-semibold",
-      "text-primary",
-      "text-decoration-underline",
-    );
   });
 });

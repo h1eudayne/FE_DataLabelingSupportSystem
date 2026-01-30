@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Container } from "react-bootstrap";
 
-const CTASection = () => (
+const CTASection = ({ onExplore }) => (
   <Container className="py-5">
     <div className="bg-primary-custom rounded-4 p-5 text-white text-center shadow-lg position-relative overflow-hidden">
       <div className="position-relative z-1">
@@ -15,6 +15,7 @@ const CTASection = () => (
           variant="light"
           className="fw-bold py-3 px-5 text-primary-custom w-100 w-md-auto"
           style={{ borderRadius: "12px" }}
+          onClick={onExplore}
         >
           Dùng thử miễn phí
         </Button>

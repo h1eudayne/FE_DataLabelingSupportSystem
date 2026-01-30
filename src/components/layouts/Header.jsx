@@ -111,6 +111,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           <div className="d-flex justify-content-between align-items-center h-100">
             <div className="d-flex align-items-center gap-3">
               <Button
+                id="topnav-hamburger-icon"
                 onClick={toggleSidebar}
                 variant="light"
                 className="d-flex align-items-center justify-content-center p-0 border-0 custom-toggle-btn shadow-none"

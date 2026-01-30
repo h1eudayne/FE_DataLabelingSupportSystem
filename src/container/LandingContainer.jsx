@@ -27,7 +27,7 @@ const LandingContainer = () => {
       <LandingNavbar styles={styles} onLogin={goToLogin} />
       <HeroSection styles={styles} onExplore={goToLogin} />
       <FeaturesSection styles={styles} />
-      <CTASection />
+      <CTASection onExplore={goToLogin} />
       <LandingFooter />
     </div>
   );

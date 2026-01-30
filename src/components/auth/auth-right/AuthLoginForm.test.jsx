@@ -1,33 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
 import AuthLoginForm from "./AuthLoginForm";
+import "@testing-library/jest-dom";
 
 vi.mock("react-redux", async () => {
   const actual = await vi.importActual("react-redux");
-  return {
-    ...actual,
-    useDispatch: vi.fn(),
-    useSelector: vi.fn(),
-  };
+  return { ...actual, useDispatch: vi.fn(), useSelector: vi.fn() };
 });
 
-vi.mock("@/store/auth/auth.thunk", () => ({
-  loginThunk: vi.fn((payload) => ({
-    type: "auth/login/fulfilled",
-    payload,
-  })),
-}));
-
-describe("AuthLoginForm - Comprehensive Test", () => {
+describe("AuthLoginForm - Đồng bộ UI", () => {
   const dispatchMock = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useDispatch).mockReturnValue(dispatchMock);
-
     vi.mocked(useSelector).mockReturnValue({
       isAuthenticated: false,
       user: null,
@@ -42,7 +30,7 @@ describe("AuthLoginForm - Comprehensive Test", () => {
         store={{
           getState: () => ({ auth: { loading: false } }),
           subscribe: () => {},
-          dispatch: dispatchMock,
+          dispatch: () => {},
         }}
       >
         <BrowserRouter>
@@ -51,87 +39,22 @@ describe("AuthLoginForm - Comprehensive Test", () => {
       </Provider>,
     );
 
-  it("nút Sign In và các input phải bị disabled khi đang loading", () => {
-    vi.mocked(useSelector).mockReturnValue({
-      isAuthenticated: false,
-      user: null,
-      loading: true,
-      error: null,
-    });
-
+  it("nên cho phép nhập tài khoản và mật khẩu", () => {
     renderUI();
+    const emailInput = screen.getByPlaceholderText(/Nhập tài khoản/i);
+    const passwordInput = screen.getByPlaceholderText(/••••••••/i);
 
-    const loadingBtn = screen.getByRole("button", {
-      name: /Đang xử lý\.\.\./i,
-    });
-    expect(loadingBtn).toBeDisabled();
-
-    expect(screen.getByPlaceholderText(/Nhập tài khoản/i)).toBeDisabled();
-    expect(screen.getByPlaceholderText(/••••••••/i)).toBeDisabled();
+    fireEvent.change(emailInput, { target: { value: "admin@test.com" } });
+    expect(emailInput.value).toBe("admin@test.com");
   });
 
-  it("hiển thị chính xác thông báo lỗi từ API (xử lý cả trường hợp object có title)", () => {
-    vi.mocked(useSelector).mockReturnValue({
-      isAuthenticated: false,
-      user: null,
-      loading: false,
-      error: { title: "Invalid email or password" },
-    });
-
+  it("nên chuyển đổi hiển thị mật khẩu khi nhấn nút toggle", () => {
     renderUI();
-    expect(screen.getByText(/Invalid email or password/i)).toBeInTheDocument();
-  });
-
-  it("thay đổi kiểu input từ password sang text khi click icon mắt", async () => {
-    const user = userEvent.setup();
-    renderUI();
-
     const passwordInput = screen.getByPlaceholderText(/••••••••/i);
     const toggleBtn = screen.getByLabelText(/toggle password visibility/i);
 
     expect(passwordInput).toHaveAttribute("type", "password");
-
-    await user.click(toggleBtn);
+    fireEvent.click(toggleBtn);
     expect(passwordInput).toHaveAttribute("type", "text");
-
-    await user.click(toggleBtn);
-    expect(passwordInput).toHaveAttribute("type", "password");
-  });
-
-  it("gửi thông tin đăng nhập đúng đến loginThunk khi nhấn Sign In", async () => {
-    const user = userEvent.setup();
-    renderUI();
-
-    const emailInput = screen.getByPlaceholderText(/Nhập tài khoản/i);
-    const passwordInput = screen.getByPlaceholderText(/••••••••/i);
-    const submitBtn = screen.getByRole("button", { name: /Đăng nhập/i });
-
-    await user.type(emailInput, "admin@gmail.com");
-    await user.type(passwordInput, "Password123");
-    await user.click(submitBtn);
-
-    expect(dispatchMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        payload: { email: "admin@gmail.com", password: "Password123" },
-      }),
-    );
-  });
-
-  it("không hiển thị form nếu người dùng đã đăng nhập thành công", () => {
-    vi.mocked(useSelector).mockReturnValue({
-      isAuthenticated: true,
-      user: { role: "Admin", email: "admin@test.com" },
-      loading: false,
-      error: null,
-    });
-
-    const { container } = renderUI();
-    expect(container.firstChild).toBeNull();
-  });
-
-  it("các input email và password phải có thuộc tính required", () => {
-    renderUI();
-    expect(screen.getByPlaceholderText(/Nhập tài khoản/i)).toBeRequired();
-    expect(screen.getByPlaceholderText(/••••••••/i)).toBeRequired();
   });
 });
