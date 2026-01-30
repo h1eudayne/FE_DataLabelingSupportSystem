@@ -57,6 +57,7 @@ const HeroSection = ({ onExplore }) => {
                 variant="light"
                 className="py-3 px-4 fw-bold"
                 style={{ borderRadius: "16px", backgroundColor: "#f1f5f9" }}
+                onClick={onExplore}
               >
                 Bắt đầu ngay
               </Button>

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
 import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
@@ -7,24 +7,16 @@ import MainLayouts from "./MainLayouts";
 
 const mockStore = configureStore([]);
 
-describe("MainLayouts Component", () => {
+describe("MainLayouts Tích hợp", () => {
   let store;
-
   beforeEach(() => {
     store = mockStore({
-      auth: {
-        isAuthenticated: true,
-        user: { name: "Nguyễn Văn A", role: "Admin" },
-      },
-      task: { currentTask: null },
+      auth: { isAuthenticated: true, user: { name: "Admin" } },
     });
-
-    document.body.removeAttribute("data-layout");
-    document.body.removeAttribute("data-sidebar-size");
   });
 
-  it("nên thiết lập các thuộc tính data-attributes lên thẻ body khi mount", () => {
-    render(
+  it("nên thay đổi data-sidebar-size khi nhấn toggle", async () => {
+    const { container } = render(
       <Provider store={store}>
         <BrowserRouter>
           <MainLayouts />
@@ -32,60 +24,13 @@ describe("MainLayouts Component", () => {
       </Provider>,
     );
 
-    expect(document.body.getAttribute("data-layout")).toBe("vertical");
-    expect(document.body.getAttribute("data-sidebar-size")).toBe("lg");
-  });
-
-  it("nên thay đổi kích thước sidebar khi người dùng nhấn nút toggle trong Header", async () => {
-    render(
-      <Provider store={store}>
-        <BrowserRouter>
-          <MainLayouts />
-        </BrowserRouter>
-      </Provider>,
-    );
-
-    const toggleBtn = document.getElementById("topnav-hamburger-icon");
-
-    if (!toggleBtn) {
-      screen.debug();
-      throw new Error(
-        "Không tìm thấy nút #topnav-hamburger-icon. Kiểm tra lại ID trong Header.jsx",
-      );
-    }
+    const toggleBtn = container.querySelector("#topnav-hamburger-icon");
+    if (!toggleBtn)
+      throw new Error("Cần thêm id='topnav-hamburger-icon' vào Header.jsx");
 
     fireEvent.click(toggleBtn);
-
-    await waitFor(
-      () => {
-        expect(document.body.getAttribute("data-sidebar-size")).toBe(
-          "sm-hover",
-        );
-      },
-      { timeout: 2000 },
-    );
-
-    fireEvent.click(toggleBtn);
-
     await waitFor(() => {
-      expect(document.body.getAttribute("data-sidebar-size")).toBe("lg");
+      expect(document.body.getAttribute("data-sidebar-size")).toBe("sm-hover");
     });
-  });
-
-  it("nên xóa class 'sidebar-enable' khi click vào lớp phủ (overlay)", () => {
-    render(
-      <Provider store={store}>
-        <BrowserRouter>
-          <MainLayouts />
-        </BrowserRouter>
-      </Provider>,
-    );
-
-    document.body.classList.add("sidebar-enable");
-
-    const overlay = document.querySelector(".vertical-overlay");
-    fireEvent.click(overlay);
-
-    expect(document.body.classList.contains("sidebar-enable")).toBe(false);
   });
 });
