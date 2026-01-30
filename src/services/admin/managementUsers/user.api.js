@@ -19,3 +19,7 @@ export const getUserProfile = () => {
 export const updateStatus = (id, isActive) => {
   return axios.patch(`/api/User/${id}/status?isActive=${isActive}`);
 };
+
+export const deleteUser = (id) => {
+  return axios.delete(`/api/User/${id}`);
+};

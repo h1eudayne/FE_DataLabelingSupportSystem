@@ -16,7 +16,8 @@ const UserModal = (props) => {
 
   useEffect(() => {
     if (user) {
-      setFormData({ role: user.role || "Annotator" });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFormData((prev) => ({ ...prev, role: user.role || "Annotator" }));
     }
   }, [user]);
 

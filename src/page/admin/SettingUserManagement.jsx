@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   getUsers,
   getUserProfile,
@@ -17,16 +17,16 @@ const SettingUserManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentRole, setCurrentRole] = useState(null);
 
-  const fetchSelf = async () => {
+  const fetchSelf = useCallback(async () => {
     try {
       const res = await getUserProfile();
       setCurrentRole(res.data.role);
     } catch (error) {
       console.error(error);
     }
-  };
+  }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const res = await getUsers();
       setUsers(res.data);
@@ -34,12 +34,13 @@ const SettingUserManagement = () => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
     fetchSelf();
-  }, []);
+  }, [fetchUsers, fetchSelf]);
 
   const handleEdit = (user) => {
     setSelectUser(user);
