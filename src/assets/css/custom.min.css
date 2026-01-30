@@ -148,9 +148,11 @@
     /* align-items: center; */
 }
 
-.auth-right {
-    background-color: #ffffff !important;
-    opacity: 1 !important;
+@media (min-width: 992px) {
+    .auth-right {
+        background-color: #ffffff !important;
+        opacity: 1 !important;
+    }
 }
 
 .auth-right h1,
@@ -241,6 +243,7 @@
     background: #fff;
     display: flex;
     min-height: 620px;
+    border: none !important;
 }
 
 .auth-card,
@@ -248,6 +251,11 @@
     border-radius: 28px !important;
     overflow: hidden;
     background: #fff;
+}
+
+.auth-card .row,
+.auth-card>div {
+    border-radius: inherit !important;
 }
 
 .auth-left,
@@ -311,6 +319,11 @@
     .auth-left,
     .auth-right {
         height: 100% !important;
+    }
+
+    .auth-left,
+    .auth-one-bg {
+        border-radius: 28px 0 0 28px !important;
     }
 }
 

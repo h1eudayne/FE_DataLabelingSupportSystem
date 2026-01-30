@@ -44,17 +44,29 @@
 /* --- MOBILE RESPONSIVE (< 992px) --- */
 @media (max-width: 991.98px) {
     body .auth-right {
+        background-color: transparent !important;
         height: auto !important;
-        min-height: auto !important;
         display: block !important;
-        /* Dùng block để các phần tử xếp chồng tự nhiên */
     }
 
     .auth-banner-mobile {
         display: block !important;
-        /* Hiện banner trên mobile */
         height: 250px !important;
-        /* Độ cao banner như ảnh 1 */
+        border-radius: 28px 28px 0 0 !important;
+        overflow: hidden !important;
+        position: relative;
+    }
+
+    .auth-banner-overlay {
+        border-radius: 28px 28px 0 0 !important;
+    }
+
+    body .auth-right {
+        background-color: transparent !important;
+        /* Trong suốt để hiện góc bo */
+        height: auto !important;
+        display: block !important;
+        /* Tạo khoảng cách 2 bên để thấy card không tràn màn hình */
     }
 
     .auth-main-title {
@@ -73,17 +85,13 @@
 
     .auth-form-container {
         padding: 2.5rem 1.5rem 3rem 1.5rem !important;
-        margin-top: -45px !important;
-        /* Form đè lên banner */
-        border-radius: 35px 35px 0 0 !important;
-        /* Bo góc mạnh như ảnh 1 */
+        margin-top: -30px !important;
+        /* Đẩy nhẹ lên để khớp với ảnh */
+        border-radius: 35px 35px 28px 28px !important;
+        /* Bo mạnh phía trên, nhẹ phía dưới */
         background: #fff !important;
         position: relative;
         z-index: 5;
-        box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.1);
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
     }
 
     .auth-form-content {
@@ -92,27 +100,32 @@
     }
 }
 
+.auth-card {
+    overflow: visible !important;
+    background: #fff;
+    display: flex;
+    min-height: 620px;
+}
+
 /* --- CHỈ SỬA TRONG ĐOẠN DESKTOP (>= 992px) --- */
 @media (min-width: 992px) {
 
-    /* Bước 1: Ép thẻ cột phải cao bằng Card */
     body .auth-right {
-        display: flex !important;
-        flex-direction: column !important;
-        /* Chìa khóa ở đây: */
         height: 620px !important;
-        /* Ép bằng đúng chiều cao Card bạn set ở Auth-wrapper */
+        /* Ép bằng chiều cao card */
+        display: flex !important;
+        justify-content: center !important;
     }
 
-    /* Bước 2: Ép container chứa form chiếm trọn 620px đó */
     .auth-form-container {
-        flex: 1 !important;
+        flex: 1;
+        /* Chiếm trọn 620px */
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
-        /* Lúc này lò xo mới đẩy được vào giữa */
+        /* Đưa form vào giữa tâm dọc */
         align-items: center !important;
-        padding: 0 50px !important;
+        width: 100%;
     }
 
     .auth-form-content {
