@@ -3,7 +3,6 @@ import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import UserHeader from "../home/UserHeader";
 
 const MainLayouts = () => {
   const [sidebarSize, setSidebarSize] = useState("lg");
