@@ -23,19 +23,35 @@ const Navbar = () => {
       <div className="navbar-brand-box">
         <Link to="/" className="logo logo-dark">
           <span className="logo-sm">
-            <img src={logoSm} alt="" height="22" />
+            <img
+              src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842133/logo-2_v1wquw.png"
+              alt=""
+              height="50"
+            />
           </span>
           <span className="logo-lg">
-            <img src={logoDark} alt="" height="17" />
+            <img
+              src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842054/logo-1_jc0rul.png"
+              alt=""
+              height="50"
+            />
           </span>
         </Link>
 
         <Link to="/" className="logo logo-light">
           <span className="logo-sm">
-            <img src={logoSm} alt="" height="22" />
+            <img
+              src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842133/logo-2_v1wquw.png"
+              alt=""
+              height="50"
+            />
           </span>
           <span className="logo-lg">
-            <img src={logoLight} alt="" height="17" />
+            <img
+              src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842054/logo-1_jc0rul.png"
+              alt=""
+              height="50"
+            />
           </span>
         </Link>
         <button

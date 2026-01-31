@@ -1,6 +1,7 @@
 import AuthLoginForm from "./AuthLoginForm";
 import AuthRegisterLink from "./AuthRegisterLink";
 import "../../../assets/css/AuthRight.css";
+import { Link } from "react-router-dom";
 
 const AuthRight = () => {
   return (
@@ -12,9 +13,13 @@ const AuthRight = () => {
           src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeItZ62kfSUg1zYALne-800k4zTmtIU23M8RgPaZdyr_gp4E4wdis7JpuanRWAca9DRwANX3E0gQ5oblKZDDsjjqgsr05cSOHA34YvcjaKOQwGPqc9XcZ03Or--PAzU_Xh-IWxXMMkcSrQfCUutunKNN81UXhlcTJvcBS9x2uvIBX7TTf_BTfgD1MGd36BZwoKkH1JiTvvkH3sOyj7Gg3MeEHyz2W-6S3-4hU44SgehHv-mwJd7TEdf8admcV88v0FfoITPZmuPgo"
         />
         <div className="auth-banner-overlay">
-          <div className="auth-logo-text" style={{ fontSize: "24px" }}>
-            VELZON
-          </div>
+          <Link to="/" className="d-block">
+            <img
+              src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842054/logo-1_jc0rul.png"
+              alt="logo"
+              height={35}
+            />
+          </Link>
           <div
             className="auth-title-container"
             style={{ marginBottom: "35px" }}
