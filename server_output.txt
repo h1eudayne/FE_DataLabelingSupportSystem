@@ -1,0 +1,10 @@
+
+> frontend@0.0.0 dev
+> vite --port 3000
+
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+  ROLLDOWN-VITE v7.2.5  ready in 281 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: use --host to expose
