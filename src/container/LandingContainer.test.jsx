@@ -26,12 +26,7 @@ describe("LandingContainer Component", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText("AI", { selector: ".navbar-brand span" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("LABEL", { selector: ".navbar-brand span" }),
-    ).toBeInTheDocument();
+    expect(screen.getByAltText("logo")).toBeInTheDocument();
 
     expect(screen.getByText(/Số hóa dữ liệu/i)).toBeInTheDocument();
 

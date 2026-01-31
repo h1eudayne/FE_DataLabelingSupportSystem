@@ -39,6 +39,7 @@ const SettingUserManagement = () => {
   useEffect(() => {
     fetchUsers();
     fetchSelf();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleEdit = (user) => {
@@ -107,6 +108,7 @@ const SettingUserManagement = () => {
       </Card>
 
       <UserModal
+        key={selectUser ? selectUser.id : "new"}
         isOpen={isModalOpen}
         toggle={toggleModal}
         user={selectUser}

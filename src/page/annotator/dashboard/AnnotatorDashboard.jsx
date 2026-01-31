@@ -12,10 +12,11 @@ const AnnotatorDashboard = () => {
     useAnnotatorDashboard(projectId);
 
   useEffect(() => {
-    if (projects.data?.length > 0 && projectId !== projects.data[0].projectId) {
+    if (projects.data?.length > 0 && !projectId) {
       setProjectId(projects.data[0].projectId);
     }
-  }, [projects.data, projectId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects.data]);
 
   const stats = useMemo(() => {
     const tasks = tasksByProject.data || [];
