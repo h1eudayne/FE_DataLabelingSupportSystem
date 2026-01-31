@@ -1,0 +1,53 @@
+
+> frontend@0.0.0 build
+> vite build
+
+rolldown-vite v7.2.5 building client environment for production...
+[2Ktransforming...✓ 3032 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                                 0.45 kB │ gzip:   0.29 kB
+dist/assets/error-DDEd8Ao5.svg                                  5.81 kB │ gzip:   2.39 kB
+dist/assets/logo-sm-C_2SwDY3.png                                7.22 kB
+dist/assets/la-regular-400-DuFMN_sw.woff2                      12.90 kB
+dist/assets/la-regular-400-ehe5HgcS.woff                       15.48 kB
+dist/assets/la-regular-400-CmnW_RTo.ttf                        33.72 kB
+dist/assets/la-regular-400-Cx6vm3uW.eot                        33.91 kB
+dist/assets/la-brands-400-Cq-R4OEF.woff2                       84.77 kB
+dist/assets/la-solid-900-TjMEgv3Q.woff2                        96.75 kB
+dist/assets/la-brands-400-D0lxOIwB.woff                        98.67 kB
+dist/assets/la-regular-400-BmVb34ql.svg                       113.53 kB │ gzip:  30.05 kB
+dist/assets/boxicons-CeGEncwm.woff2                           115.68 kB
+dist/assets/la-solid-900-CR_Kd-su.woff                        125.42 kB
+dist/assets/la-brands-400-gDglUfU7.ttf                        156.07 kB
+dist/assets/la-brands-400-LN4CMlGg.eot                        156.26 kB
+dist/assets/remixicon0c93-BCkO1-UF.woff2                      165.44 kB
+dist/assets/remixicon-DMdG15mt.woff2                          185.18 kB
+dist/assets/la-solid-900-BUOWlSBQ.ttf                         226.12 kB
+dist/assets/la-solid-900d41d-DkmX4G2x.eot                     226.31 kB
+dist/assets/remixicon0c93-IHD7miHF.woff                       227.38 kB
+dist/assets/remixicon-C6oSHjyR.woff                           254.98 kB
+dist/assets/boxicons-EIQNrSje.ttf                             320.94 kB
+dist/assets/boxicons-CTVby2V1.woff                            321.02 kB
+dist/assets/materialdesignicons-webfont9445-DsMmahHu.woff2    396.73 kB
+dist/assets/boxicons-CSrLvhY_.eot                             405.67 kB
+dist/assets/remixicon0c93-KtvQcpfP.ttf                        532.56 kB
+dist/assets/remixicon0c93-CTLsMfss.eot                        532.73 kB
+dist/assets/materialdesignicons-webfont9445-BqTIB9TP.woff     576.74 kB
+dist/assets/remixicon-Cr1pveRX.ttf                            602.76 kB
+dist/assets/remixicon-Dj-GCdWP.eot                            602.94 kB
+dist/assets/la-solid-900-dtlPMWb8.svg                         923.15 kB │ gzip: 304.45 kB
+dist/assets/la-brands-400-wsUI3UJ9.svg                        927.33 kB │ gzip: 313.58 kB
+dist/assets/boxiconsd41d-Dp7W9qN3.svg                       1,242.12 kB │ gzip: 361.41 kB
+dist/assets/materialdesignicons-webfont9445-CfT4HAkQ.ttf    1,279.99 kB
+dist/assets/materialdesignicons-webfontd41d-Cd51xsCA.eot    1,280.21 kB
+dist/assets/remixicon0c93-Dzy_cYSE.svg                      2,496.05 kB │ gzip: 547.10 kB
+dist/assets/remixicon-Cj6uv-K3.svg                          2,945.38 kB │ gzip: 638.59 kB
+dist/assets/index-B97dkBc6.css                              1,293.37 kB │ gzip: 205.45 kB
+dist/assets/index-GHXGPReK.js                               2,213.01 kB │ gzip: 638.21 kB
+[plugin builtin:reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 2.89s
