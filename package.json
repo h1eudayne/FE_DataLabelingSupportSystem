@@ -56,6 +56,7 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "jsdom": "^27.4.0",
+    "knip": "^5.82.1",
     "redux-mock-store": "^1.5.5",
     "vite": "npm:rolldown-vite@7.2.5",
     "vitest": "^4.0.18"

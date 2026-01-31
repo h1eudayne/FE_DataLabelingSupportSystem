@@ -1,9 +1,10 @@
 import { Navbar, Container, Nav, Button } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
 const LandingNavbar = ({ onLogin }) => (
   <Navbar
     expand="lg"
-    className="py-3 sticky-top bg-white bg-opacity-75 border-bottom"
+    className="py-0 sticky-top bg-white bg-opacity-75 border-bottom"
     style={{
       backdropFilter: "blur(10px)",
       WebkitBackdropFilter: "blur(10px)",
@@ -16,8 +17,13 @@ const LandingNavbar = ({ onLogin }) => (
         className="fw-extrabold fs-3 d-flex align-items-center"
         style={{ letterSpacing: "-1px" }}
       >
-        <span className="text-primary-custom">AI</span>
-        <span style={{ color: "#0f172a" }}>LABEL</span>
+        <Link to="/" className="d-block">
+          <img
+            src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842054/logo-1_jc0rul.png"
+            alt="logo"
+            height={60}
+          />
+        </Link>
       </Navbar.Brand>
 
       <Navbar.Toggle
