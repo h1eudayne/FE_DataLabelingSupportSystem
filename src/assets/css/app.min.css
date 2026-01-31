@@ -465,7 +465,6 @@
 }
 
 .footer {
-    bottom: 0;
     padding: 20px calc(1.5rem * .5);
     position: absolute;
     right: 0;
@@ -540,7 +539,7 @@
 }
 
 .page-content {
-    padding: 90px 1.5rem 40px 1.5rem !important;
+    padding: 90px 0 10px 0 !important;
     min-height: 100vh;
     transition: all 0.3s ease;
 }
