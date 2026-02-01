@@ -6,7 +6,6 @@ import {
   InputGroup,
   Form,
   Table,
-  Spinner,
   Badge,
 } from "react-bootstrap";
 import {
@@ -14,19 +13,19 @@ import {
   ShieldAlert,
   Award,
   UserCheck,
-  UserPlus,
   Search,
   Edit2,
-  Trash2,
+  CheckCircle,
+  Power,
 } from "lucide-react";
 
 const UserManagementView = ({
   stats,
   users,
-  loading,
   onSearch,
-  onAddClick,
-  onDelete,
+  onActive,
+  onEdit,
+  currentRole,
 }) => (
   <>
     <Row className="mb-4 g-3">
@@ -60,13 +59,6 @@ const UserManagementView = ({
             Quản lý tài khoản và phân quyền hệ thống.
           </small>
         </div>
-        <Button
-          variant="primary"
-          className="fw-bold px-4 py-2"
-          onClick={onAddClick}
-        >
-          <UserPlus size={18} className="me-2" /> Thêm thành viên
-        </Button>
       </Card.Header>
       <Card.Body className="px-4 pb-4">
         <InputGroup className="mb-3 border rounded-3 overflow-hidden">
@@ -85,58 +77,93 @@ const UserManagementView = ({
             <tr className="text-muted small text-uppercase fw-bold">
               <th>Người dùng</th>
               <th>Vai trò</th>
-              <th className="text-end">Thao tác</th>
+              <th className="text-center">Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="3" className="text-center py-5">
-                  <Spinner animation="border" variant="primary" />
+            {users.map((user, idx) => (
+              <tr key={idx}>
+                <td>
+                  <div className="d-flex align-items-center gap-3">
+                    <div
+                      className="bg-light text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center"
+                      style={{ width: "40px", height: "40px" }}
+                    >
+                      {user.email.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="fw-bold mb-0">{user.email}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <Badge
+                    bg={user.role === "Admin" ? "danger" : "info"}
+                    className="text-uppercase px-2 py-1"
+                  >
+                    {user.role}
+                  </Badge>
+                </td>
+                <td className="text-center">
+                  {user.role !== currentRole && (
+                    <>
+                      <Button
+                        variant="link"
+                        className="text-muted p-1 me-2"
+                        onClick={() => onEdit(user)}
+                      >
+                        <Edit2 size={16} />
+                      </Button>
+                      <Button
+                        variant="link"
+                        className={`p-1 shadow-none ${user.isActive ? "text-success" : "text-danger"}`}
+                        onClick={() => onActive(user.id, !user.isActive)}
+                        title={
+                          user.isActive
+                            ? "Click để khóa tài khoản"
+                            : "Click để kích hoạt"
+                        }
+                      >
+                        <div
+                          className={`d-flex align-items-center px-2 py-1 rounded ${user.isActive ? "bg-light-success" : "bg-light-danger"}`}
+                          style={{ minWidth: "90px", justifyContent: "center" }}
+                        >
+                          {user.isActive ? (
+                            <>
+                              <CheckCircle size={16} className="me-1" />
+                              <span
+                                style={{
+                                  fontSize: "13px",
+                                  fontWeight: "500",
+                                  width: "55px",
+                                  textAlign: "left",
+                                }}
+                              >
+                                Active
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <Power size={16} className="me-1" />
+                              <span
+                                style={{
+                                  fontSize: "13px",
+                                  fontWeight: "500",
+                                  width: "55px",
+                                  textAlign: "left",
+                                }}
+                              >
+                                Inactive
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </Button>
+                    </>
+                  )}
                 </td>
               </tr>
-            ) : (
-              users.map((user, idx) => (
-                <tr key={idx}>
-                  <td>
-                    <div className="d-flex align-items-center gap-3">
-                      <div
-                        className="bg-light text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center"
-                        style={{ width: "40px", height: "40px" }}
-                      >
-                        {user.email.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="fw-bold mb-0">{user.email}</div>
-                        <small className="text-muted font-monospace">
-                          UID: {user.id?.slice(-8)}
-                        </small>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <Badge
-                      bg={user.role === "Admin" ? "danger" : "info"}
-                      className="text-uppercase px-2 py-1"
-                    >
-                      {user.role}
-                    </Badge>
-                  </td>
-                  <td className="text-end">
-                    <Button variant="link" className="text-muted p-1 me-2">
-                      <Edit2 size={16} />
-                    </Button>
-                    <Button
-                      variant="link"
-                      className="text-danger p-1"
-                      onClick={() => onDelete(user.id)}
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </Table>
       </Card.Body>
