@@ -16,7 +16,7 @@ const Navbar = () => {
     // padding: "12px 20px",
     borderRadius: "8px",
     // margin: "4px 10px",
-    marginTop: "30px",
+    marginTop: "25px",
   };
 
   const iconStyle = {
@@ -29,27 +29,24 @@ const Navbar = () => {
     <div className="app-menu navbar-menu">
       <style>
         {`
-          /* Màu chữ mặc định (màu tối để nổi trên nền trắng) */
           .nav-item .menu-link {
             color: #495057 !important;
           }
 
-          /* HIỆU ỨNG HOVER - Sửa lại để thấy rõ trên nền trắng */
           .nav-item .menu-link:hover {
-            background-color: #f3f3f9 !important; /* Màu xám xanh rất nhạt */
-            color: #405189 !important;           /* Chữ chuyển sang màu xanh đậm chuyên nghiệp */
+            background-color: #f3f3f9 !important;
+            color: #405189 !important;
           }
           
           .nav-item .menu-link:hover i {
-            color: #405189 !important;           /* Icon cũng đổi màu theo chữ */
+            color: #405189 !important;
             transform: scale(1.1);
           }
 
-          /* Giữ nguyên Workplace và các tiêu đề */
           .menu-title {
             padding: 20px 20px 10px !important; 
             margin: 0 !important;
-            color: #adb5bd !important; /* Màu tiêu đề xám nhạt */
+            color: #adb5bd !important;
           }
         `}
       </style>
@@ -89,10 +86,7 @@ const Navbar = () => {
         </Link>
       </div>
 
-      <SimpleBar
-        style={{ maxHeight: "100%", marginTop: "10px" }}
-        className="h-100"
-      >
+      <SimpleBar style={{ maxHeight: "100%" }} className="h-100">
         <ul
           className="navbar-nav d-flex flex-column h-100"
           id="navbar-nav"
