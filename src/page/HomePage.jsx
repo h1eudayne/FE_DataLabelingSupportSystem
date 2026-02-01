@@ -11,6 +11,9 @@ import AdminContainer from "../container/AdminContainer";
 import ManagerContainer from "../container/ManagerContainer";
 import AnnotatorContainer from "../container/AnnotatorContainer";
 import ReviewerContainer from "../container/ReviewerContainer";
+import AnnotatorDashboard from "./annotator/dashboard/AnnotatorDashboard";
+import SettingUserManagement from "./admin/SettingUserManagement";
+import DashboardAnalytics from "./manager/analytics/DashboardAnalyticsPage";
 
 const HomePage = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -41,11 +44,14 @@ const HomePage = () => {
 const RoleBasedRenderer = ({ role }) => {
   switch (role) {
     case "Admin":
-      return <AdminContainer />;
+      // return <AdminContainer />;
+      return <SettingUserManagement />;
     case "Manager":
-      return <ManagerContainer />;
+      // return <ManagerContainer />;
+      return <DashboardAnalytics />;
     case "Annotator":
-      return <AnnotatorContainer />;
+      // return <AnnotatorContainer />;
+      return <AnnotatorDashboard />;
     case "Reviewer":
       return <ReviewerContainer />;
     default:

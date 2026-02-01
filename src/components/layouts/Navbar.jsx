@@ -1,26 +1,60 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import SimpleBar from "simplebar-react";
-import Collapse from "react-bootstrap/Collapse";
-
-import logoSm from "../../assets/images/logo-sm.png";
-import logoDark from "../../assets/images/logo-dark.png";
-import logoLight from "../../assets/images/logo-light.png";
 import { useSelector } from "react-redux";
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
   const role = user?.role;
 
-  const [openMenu, setOpenMenu] = useState("");
+  const menuItemStyle = {
+    display: "flex",
+    alignItems: "center",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    transition: "all 0.3s ease",
+    // padding: "12px 20px",
+    borderRadius: "8px",
+    // margin: "4px 10px",
+    marginTop: "30px",
+  };
 
-  const handleToggle = (menuId) => {
-    setOpenMenu(openMenu === menuId ? "" : menuId);
+  const iconStyle = {
+    minWidth: "24px",
+    display: "inline-block",
+    textAlign: "center",
   };
 
   return (
     <div className="app-menu navbar-menu">
-      <div className="navbar-brand-box">
+      <style>
+        {`
+          /* Màu chữ mặc định (màu tối để nổi trên nền trắng) */
+          .nav-item .menu-link {
+            color: #495057 !important;
+          }
+
+          /* HIỆU ỨNG HOVER - Sửa lại để thấy rõ trên nền trắng */
+          .nav-item .menu-link:hover {
+            background-color: #f3f3f9 !important; /* Màu xám xanh rất nhạt */
+            color: #405189 !important;           /* Chữ chuyển sang màu xanh đậm chuyên nghiệp */
+          }
+          
+          .nav-item .menu-link:hover i {
+            color: #405189 !important;           /* Icon cũng đổi màu theo chữ */
+            transform: scale(1.1);
+          }
+
+          /* Giữ nguyên Workplace và các tiêu đề */
+          .menu-title {
+            padding: 20px 20px 10px !important; 
+            margin: 0 !important;
+            color: #adb5bd !important; /* Màu tiêu đề xám nhạt */
+          }
+        `}
+      </style>
+
+      <div className="navbar-brand-box" style={{ textAlign: "left" }}>
         <Link to="/" className="logo logo-dark">
           <span className="logo-sm">
             <img
@@ -33,11 +67,10 @@ const Navbar = () => {
             <img
               src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842054/logo-1_jc0rul.png"
               alt=""
-              height="50"
+              height="55"
             />
           </span>
         </Link>
-
         <Link to="/" className="logo logo-light">
           <span className="logo-sm">
             <img
@@ -50,283 +83,221 @@ const Navbar = () => {
             <img
               src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842054/logo-1_jc0rul.png"
               alt=""
-              height="50"
+              height="55"
             />
           </span>
         </Link>
-        <button
-          type="button"
-          className="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover"
-          id="vertical-hover"
-        >
-          <i className="ri-record-circle-line" />
-        </button>
       </div>
-      <SimpleBar style={{ maxHeight: "100%" }}>
-        <ul className="navbar-nav" id="navbar-nav">
-          {["Admin", "Manager"].includes(role) && (
-            <>
-              <li className="menu-title">
-                <span data-key="t-menu">Dashboard</span>
-              </li>
-              <li className="nav-item">
-                <a
-                  className={`nav-link menu-link ${
-                    openMenu === "sidebarDashboards" ? "" : "collapsed"
-                  }`}
-                  href="#!"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleToggle("sidebarDashboards");
-                  }}
-                  data-bs-toggle="collapse"
-                  aria-expanded={openMenu === "sidebarDashboards"}
-                >
-                  <i className="ri-dashboard-2-line"></i>
-                  <span>Dashboards</span>
-                </a>
 
-                <Collapse in={openMenu === "sidebarDashboards"}>
-                  <div>
-                    <div className="menu-dropdown">
-                      <ul className="nav nav-sm flex-column">
-                        <li className="nav-item">
-                          <a href="/dashboard-analytics" className="nav-link">
-                            Analytics
-                          </a>
-                        </li>
-                        <li className="nav-item">
-                          <a
-                            href="/dashboard-project-status"
-                            className="nav-link"
-                          >
-                            Project Status
-                          </a>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </Collapse>
-              </li>
-            </>
-          )}
-          {["Admin", "Manager"].includes(role) && (
-            <>
-              <li className="menu-title">
-                <i className="ri-more-fill" />
-                <span data-key="t-pages">Projects</span>
-              </li>
+      <SimpleBar
+        style={{ maxHeight: "100%", marginTop: "10px" }}
+        className="h-100"
+      >
+        <ul
+          className="navbar-nav d-flex flex-column h-100"
+          id="navbar-nav"
+          style={{
+            minHeight: "calc(100vh - 60px)",
+            gap: "50px",
+          }}
+        >
+          <div className="flex-grow-1">
+            {["Admin", "Manager"].includes(role) && (
+              <>
+                <li className="menu-title">
+                  <span style={{ transition: "0.3s" }}>Main</span>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/dashboard-analytics"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-dashboard-2-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>Dashboard</span>
+                  </Link>
+                </li>
 
-              <li className="nav-item">
-                <a
-                  className={`nav-link menu-link ${
-                    openMenu === "sidebarApps" ? "" : "collapsed"
-                  }`}
-                  href="#!"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleToggle("sidebarApps");
-                  }}
-                  data-bs-toggle="collapse"
-                  aria-expanded={openMenu === "sidebarApps"}
-                >
-                  <i className="ri-apps-2-line"></i>
-                  <span data-key="t-apps">Projects</span>
-                </a>
+                <li className="menu-title">
+                  <span>Management</span>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/projects-all-projects"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-stack-fill fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>Projects</span>
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/projects-datasets"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-database-2-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>Datasets</span>
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/export"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-file-download-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>Export Data</span>
+                  </Link>
+                </li>
+              </>
+            )}
 
-                <Collapse in={openMenu === "sidebarApps"}>
-                  <div>
-                    <div
-                      className={`collapse menu-dropdown ${
-                        openMenu === "sidebarApps" ? "show" : ""
-                      }`}
-                      id="sidebarApps"
+            {["Annotator", "Reviewer"].includes(role) && (
+              <>
+                {/* <li className="menu-title">
+                  <span>Workplace</span>
+                </li> */}
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/my-dashboard"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-home-4-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>Dashboard</span>
+                  </Link>
+                </li>
+
+                {role === "Annotator" && (
+                  <>
+                    <li className="nav-item">
+                      <Link
+                        className="nav-link menu-link fs-18"
+                        to="/annotator-my-tasks"
+                        style={menuItemStyle}
+                      >
+                        <i
+                          className="ri-task-line fs-20 me-2"
+                          style={iconStyle}
+                        ></i>
+                        <span>My Task</span>
+                      </Link>
+                    </li>
+                    <li className="nav-item">
+                      <Link
+                        className="nav-link menu-link fs-18"
+                        to="/annotator-projects"
+                        style={menuItemStyle}
+                      >
+                        <i
+                          className="ri-folders-line fs-20 me-2"
+                          style={iconStyle}
+                        ></i>
+                        <span>Projects</span>
+                      </Link>
+                    </li>
+                    <li className="nav-item">
+                      <Link
+                        className="nav-link menu-link fs-18"
+                        to="/annotator-team"
+                        style={menuItemStyle}
+                      >
+                        <i
+                          className="ri-group-line fs-20 me-2"
+                          style={iconStyle}
+                        ></i>
+                        <span>Team</span>
+                      </Link>
+                    </li>
+                  </>
+                )}
+                {role === "Reviewer" && (
+                  <li className="nav-item">
+                    <Link
+                      className="nav-link menu-link fs-18"
+                      to="/workplace-review-task"
+                      style={menuItemStyle}
                     >
-                      <ul className="nav nav-sm flex-column">
-                        <li className="nav-item">
-                          <a href="/projects-all-projects" className="nav-link">
-                            All Projects
-                          </a>
-                        </li>
-                        <li className="nav-item">
-                          <a href="/projects-datasets" className="nav-link">
-                            Datasets
-                          </a>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </Collapse>
-              </li>
-            </>
-          )}
+                      <i
+                        className="ri-shield-check-line fs-20 me-2"
+                        style={iconStyle}
+                      ></i>
+                      <span>Review Task</span>
+                    </Link>
+                  </li>
+                )}
+              </>
+            )}
+          </div>
 
-          {["Annotator", "Reviewer"].includes(role) && (
-            <>
-              <li className="menu-title">
-                <i className="ri-more-fill" />
-                <span data-key="t-components">Workplace</span>
-              </li>
-
+          <div className="mt-auto mb-4">
+            <hr
+              className="mx-3 my-2"
+              style={{ borderColor: "rgba(0,0,0,0.1)" }}
+            />
+            {role === "Admin" && (
+              <>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/settings-user-management"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-user-settings-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>User Management</span>
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/settings-system-logs"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-list-settings-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>System Logs</span>
+                  </Link>
+                </li>
+              </>
+            )}
+            {["Annotator", "Manager", "Reviewer"].includes(role) && (
               <li className="nav-item">
-                <a
-                  className={`nav-link menu-link ${
-                    openMenu === "sidebarCharts" ? "" : "collapsed"
-                  }`}
-                  href="#!"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleToggle("sidebarCharts");
-                  }}
-                  data-bs-toggle="collapse"
-                  role="button"
-                  aria-expanded={openMenu === "sidebarCharts"}
-                  aria-controls="sidebarCharts"
+                <Link
+                  className="nav-link menu-link fs-18"
+                  to="/annotator-settings"
+                  style={menuItemStyle}
                 >
-                  <i className="ri-pie-chart-line" />
-                  <span data-key="t-charts">Workplace</span>
-                </a>
-
-                <Collapse in={openMenu === "sidebarCharts"}>
-                  <div>
-                    <div
-                      className={`collapse menu-dropdown ${
-                        openMenu === "sidebarCharts" ? "show" : ""
-                      }`}
-                      id="sidebarCharts"
-                    >
-                      <ul className="nav nav-sm flex-column">
-                        {role === "Annotator" && (
-                          <>
-                            <li className="nav-item">
-                              <a
-                                href="/annotator-my-tasks"
-                                className="nav-link"
-                                data-key="t-chartjs"
-                              >
-                                My Task
-                              </a>
-                            </li>
-                            <li className="nav-item">
-                              <a href="/my-dashboard" className="nav-link">
-                                My Dashboard
-                              </a>
-                            </li>
-                          </>
-                        )}
-
-                        {role === "Reviewer" && (
-                          <li className="nav-item">
-                            <a
-                              href="/workplace-review-task"
-                              className="nav-link"
-                              data-key="t-echarts"
-                            >
-                              Review Task
-                            </a>
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  </div>
-                </Collapse>
+                  <i
+                    className="ri-settings-4-line fs-20 me-2"
+                    style={iconStyle}
+                  ></i>
+                  <span>Settings</span>
+                </Link>
               </li>
-            </>
-          )}
-
-          {["Admin", "Manager"].includes(role) && (
-            <li className="menu-title">
-              <i className="ri-more-fill" />
-              <span data-key="t-components">Export</span>
-            </li>
-          )}
-
-          {["Admin", "Manager"].includes(role) && (
-            <li className="nav-item">
-              <a
-                className={`nav-link menu-link ${
-                  openMenu === "sidebarUI" ? "" : "collapsed"
-                }`}
-                href="/export"
-              >
-                <i className="ri-pencil-ruler-2-line" />
-                <span data-key="t-base-ui">Export</span>
-              </a>
-            </li>
-          )}
-          {role === "Admin" && (
-            <>
-              <li className="menu-title">
-                <i className="ri-more-fill" />
-                <span data-key="t-components">Settings</span>
-              </li>
-
-              <li className="nav-item">
-                <a
-                  className={`nav-link menu-link ${
-                    openMenu === "sidebarUI" ? "" : "collapsed"
-                  }`}
-                  href="#!"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleToggle("sidebarUI");
-                  }}
-                  data-bs-toggle="collapse"
-                  role="button"
-                  aria-expanded={openMenu === "sidebarUI"}
-                  aria-controls="sidebarUI"
-                >
-                  <i className="ri-pencil-ruler-2-line" />
-                  <span data-key="t-base-ui">Settings</span>
-                </a>
-
-                <Collapse in={openMenu === "sidebarUI"}>
-                  <div>
-                    <div
-                      className={`collapse menu-dropdown mega-dropdown-menu ${
-                        openMenu === "sidebarUI" ? "show" : ""
-                      }`}
-                      id="sidebarUI"
-                    >
-                      <div className="row">
-                        <div className="col-lg-4">
-                          <ul className="nav nav-sm flex-column">
-                            <li className="nav-item">
-                              <a
-                                href="/settings-user-management"
-                                className="nav-link"
-                                data-key="t-alerts"
-                              >
-                                User Management
-                              </a>
-                            </li>
-                            <li className="nav-item">
-                              <a
-                                href="#!"
-                                className="nav-link"
-                                data-key="t-badges"
-                              >
-                                AI Config
-                              </a>
-                            </li>
-                            <li className="nav-item">
-                              <a
-                                href="/settings-system-logs"
-                                className="nav-link"
-                                data-key="t-badges"
-                              >
-                                System Logs
-                              </a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Collapse>
-              </li>
-            </>
-          )}
+            )}
+          </div>
         </ul>
       </SimpleBar>
     </div>
