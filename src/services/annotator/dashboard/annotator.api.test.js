@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import axios from "/src/services/axios.customize.js";
 import {
   getProfile,
-  getAssignedProjects,
   getDashboardStats,
   getMyTasks,
   getReviewerFeedbackByProject,

@@ -9,6 +9,7 @@ import {
   Button,
   Form,
 } from "react-bootstrap";
+import Swal from "sweetalert2";
 
 const ProfileTable = ({ userSelf, onEditProfile, onChangePass }) => {
   const [formData, setFormData] = useState({
@@ -30,12 +31,12 @@ const ProfileTable = ({ userSelf, onEditProfile, onChangePass }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.oldPassword || !formData.newPassword) {
-      alert("Vui lòng nhập đầy đủ mật khẩu!");
+      Swal.fire("Lỗi", "Vui lòng nhập đầy đủ mật khẩu!", "warning");
       return;
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      alert("Mật khẩu mới và xác nhận mật khẩu không khớp!");
+      Swal.fire("Lỗi", "Mật khẩu mới và xác nhận mật khẩu không khớp!", "warning");
       return;
     }
     onChangePass(formData.oldPassword, formData.newPassword);

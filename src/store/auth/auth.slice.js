@@ -38,7 +38,6 @@ const authSlice = createSlice({
           const decoded = jwtDecode(token);
           state.user = decoded;
           localStorage.setItem("user", JSON.stringify(decoded));
-          console.log("Dữ liệu đã giải mã:", decoded);
         } catch (err) {
           console.error("Lỗi khi giải mã token:", err);
           state.user = null;
