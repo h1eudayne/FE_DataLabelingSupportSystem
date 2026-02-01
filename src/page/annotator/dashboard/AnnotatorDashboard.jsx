@@ -12,8 +12,8 @@ const AnnotatorDashboard = () => {
     useAnnotatorDashboard(projectId);
 
   useEffect(() => {
-    if (projects.data?.length > 0 && projectId !== projects.data[0].projectId) {
-      setProjectId(projects.data[0].projectId);
+    if (projects.data?.length > 0 && projectId === null) {
+      setProjectId(projects.data[0].projectId); // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [projects.data, projectId]);
 

@@ -3,16 +3,13 @@ import { Modal, Form, Row, Col, Button, Badge } from "react-bootstrap";
 
 const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
   const [formData, setFormData] = useState({
-    fullName: null,
-    avatarUrl: null,
+    fullName: userSelf?.fullName || "",
+    avatarUrl: userSelf?.avatarUrl || "",
   });
 
   useEffect(() => {
-    if (
-      userSelf &&
-      userSelf.fullName !== formData.fullName &&
-      userSelf.avatarUrl !== formData.avatarUrl
-    ) {
+    if (userSelf) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         fullName: userSelf.fullName,
         avatarUrl: userSelf.avatarUrl,

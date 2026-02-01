@@ -1,4 +1,4 @@
-import axios from "/src/services/axios.customize";
+import axios from "@/services/axios.customize";
 
 const taskService = {
   getMyProjects: () => axios.get("/api/Task/my-projects"),

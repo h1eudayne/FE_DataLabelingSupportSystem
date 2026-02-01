@@ -41,8 +41,10 @@ const ProjectAssignTask = () => {
       deadline: new Date().toISOString(),
     });
 
-    if (!selectedUser || selectedItems.length === 0)
-      return alert("Vui lòng chọn ảnh và người làm!");
+    if (!selectedUser || selectedItems.length === 0) {
+      Swal.fire("Lỗi", "Vui lòng chọn ảnh và người làm!", "warning");
+      return;
+    }
     const payload = {
       projectId: id,
       userIds: [selectedUser],
@@ -61,16 +63,18 @@ const ProjectAssignTask = () => {
       });
 
       if (response.data && response.data.isSuccess === false) {
-        alert("Lỗi từ hệ thống: " + response.data.message);
+        Swal.fire("Lỗi", "Lỗi từ hệ thống: " + response.data.message, "error");
         return;
       }
 
-      alert("Giao việc thành công!");
+      Swal.fire("Thành công", "Giao việc thành công!", "success");
       navigate("/projects-all-projects");
     } catch (error) {
       console.error("Chi tiết lỗi API:", error.response?.data);
-      alert(
+      Swal.fire(
+        "Lỗi",
         "Lỗi giao việc: " + (error.response?.data?.message || "Không xác định"),
+        "error"
       );
     } finally {
       setLoading(false);
