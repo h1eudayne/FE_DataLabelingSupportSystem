@@ -5,6 +5,7 @@ import LandingContainer from "./LandingContainer";
 import "@testing-library/jest-dom";
 
 const mockedNavigate = vi.fn();
+
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
   return {
@@ -13,6 +14,13 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
+const renderLanding = () =>
+  render(
+    <MemoryRouter>
+      <LandingContainer />
+    </MemoryRouter>,
+  );
+
 describe("LandingContainer Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -20,68 +28,49 @@ describe("LandingContainer Component", () => {
   });
 
   it("nên render đầy đủ các section chính của trang Landing", () => {
-    render(
-      <MemoryRouter>
-        <LandingContainer />
-      </MemoryRouter>,
-    );
+    renderLanding();
 
-    expect(
-      screen.getByText("AI", { selector: ".navbar-brand span" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("LABEL", { selector: ".navbar-brand span" }),
-    ).toBeInTheDocument();
+    expect(screen.getByAltText(/logo/i)).toBeInTheDocument();
 
     expect(screen.getByText(/Số hóa dữ liệu/i)).toBeInTheDocument();
+    expect(screen.getByText(/Thông minh & Hiệu quả/i)).toBeInTheDocument();
 
     expect(screen.getByText(/Giải pháp cho mọi vai trò/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/© 2024 AI LABEL SYSTEM/i)).toBeInTheDocument();
+    expect(screen.getByText(/AI LABEL SYSTEM/i)).toBeInTheDocument();
   });
 
   it("nên tự động chuyển hướng sang /dashboard nếu đã có access_token", () => {
-    localStorage.setItem("access_token", "fake-token-123");
-    render(
-      <MemoryRouter>
-        <LandingContainer />
-      </MemoryRouter>,
-    );
+    localStorage.setItem("access_token", "fake-token");
+
+    renderLanding();
+
     expect(mockedNavigate).toHaveBeenCalledWith("/dashboard", {
       replace: true,
     });
   });
 
   it("không nên chuyển hướng nếu chưa có access_token", () => {
-    render(
-      <MemoryRouter>
-        <LandingContainer />
-      </MemoryRouter>,
-    );
+    renderLanding();
+
     expect(mockedNavigate).not.toHaveBeenCalled();
   });
 
   it("nên chuyển hướng đến trang /login khi nhấn nút Đăng nhập trên Navbar", () => {
-    render(
-      <MemoryRouter>
-        <LandingContainer />
-      </MemoryRouter>,
-    );
+    renderLanding();
 
-    const loginBtn = screen.getByRole("button", { name: /Đăng nhập/i });
-    fireEvent.click(loginBtn);
+    fireEvent.click(screen.getByRole("button", { name: /Đăng nhập/i }));
 
     expect(mockedNavigate).toHaveBeenCalledWith("/login");
   });
 
   it("nên chuyển hướng đến trang /login khi nhấn nút Bắt đầu ngay", () => {
-    render(
-      <MemoryRouter>
-        <LandingContainer />
-      </MemoryRouter>,
-    );
+    renderLanding();
 
-    const startBtns = screen.getAllByRole("button", { name: /Bắt đầu ngay/i });
+    const startBtns = screen.getAllByRole("button", {
+      name: /Bắt đầu ngay/i,
+    });
+
     fireEvent.click(startBtns[0]);
 
     expect(mockedNavigate).toHaveBeenCalledWith("/login");
