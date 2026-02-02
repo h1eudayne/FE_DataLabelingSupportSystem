@@ -85,7 +85,6 @@ const AdminContainer = () => {
     try {
       if (selectUser) {
         await updateUser(selectUser.id, userData);
-        console.log("Updated Successfully");
       }
       await fetchUsers();
     } catch (error) {
@@ -97,7 +96,6 @@ const AdminContainer = () => {
     try {
       if (userId) {
         await updateStatus(userId, isActive);
-        console.log("Updated Successfully");
       }
       await fetchUsers();
     } catch (error) {

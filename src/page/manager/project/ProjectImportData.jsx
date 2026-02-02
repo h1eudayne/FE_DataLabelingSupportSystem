@@ -112,7 +112,6 @@ const CreateProject = () => {
                 <div className="card-body d-flex flex-column text-start">
                   <div className="mb-3">
                     <label className="form-label fw-bold">Tên dự án</label>
-                    http://localhost:3000/my-dashboard
                     <input
                       type="text"
                       className="form-control"

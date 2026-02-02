@@ -1,8 +1,4 @@
 // import "./App.css";
-import "./assets/css/app.min.css";
-import "./assets/css/bootstrap.min.css";
-import "./assets/css/custom.min.css";
-import "./assets/css/icons.min.css";
 import "./assets/css/usertable.min.css";
 
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -32,7 +28,7 @@ import LandingPage from "./page/LandingPage";
 import Profile from "./page/Profile";
 
 function App() {
-  const isLoggedIn = !!localStorage.getItem("accessToken");
+  const isLoggedIn = !!localStorage.getItem("access_token");
 
   return (
     <>
