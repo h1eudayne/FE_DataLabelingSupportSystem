@@ -50,8 +50,6 @@ const DashboardAnalytics = () => {
         const resProjects = await analyticsService.getMyProjects();
         const projects = resProjects.data || [];
 
-        console.log("📦 PROJECTS:", projects);
-
         let totalAssigned = 0;
         let completed = 0;
         let pending = 0;
@@ -59,13 +57,9 @@ const DashboardAnalytics = () => {
         let rejected = 0;
 
         for (const project of projects) {
-          console.log("➡️ Fetch stats for project:", project.id, project.name);
-
           try {
             const res = await analyticsService.getProjectStats(project.id);
             const s = res.data;
-
-            console.log("📊 PROJECT STATS:", s);
 
             totalAssigned += s.totalAssignments ?? 0;
             completed += s.approvedAssignments ?? 0;
@@ -89,7 +83,6 @@ const DashboardAnalytics = () => {
           rejected,
         };
 
-        console.log("📈 FINAL COUNT:", finalStats);
         setStats(finalStats);
 
         setProjectChartData(
@@ -104,8 +97,6 @@ const DashboardAnalytics = () => {
 
         const resUsers = await analyticsService.getUsers();
         const users = resUsers.data || [];
-
-        console.log("👥 USERS:", users);
 
         const annotators = users.filter((u) => u.role === "Annotator");
         setTotalAnnotators(annotators.length);

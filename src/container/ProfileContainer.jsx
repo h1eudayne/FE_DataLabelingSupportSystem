@@ -33,7 +33,6 @@ const ProfileContainer = () => {
   const handleSave = async (fullName, avatarUrl) => {
     try {
       await updateUserProfile(fullName, avatarUrl);
-      console.log("Update Successfully");
       await fetchSelf();
     } catch (error) {
       console.error(error);
@@ -43,7 +42,6 @@ const ProfileContainer = () => {
   const handleChangePassword = async (oldPassword, newPassword) => {
     try {
       await changePassword(oldPassword, newPassword);
-      console.log("Change Password Successfully");
       await fetchSelf();
     } catch (error) {
       console.error(error);
