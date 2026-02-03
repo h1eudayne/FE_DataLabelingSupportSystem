@@ -20,6 +20,10 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       localStorage.clear();
     },
+    updateUser(state, action) {
+      state.user = { ...state.user, ...action.payload };
+      localStorage.setItem("user", JSON.stringify(state.user));
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -28,20 +32,31 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        const token = action.payload.accessToken;
-        state.token = token;
-        state.isAuthenticated = true;
-        localStorage.setItem("access_token", token);
+        const payload = action.payload;
+        const token = payload?.accessToken || payload?.data?.accessToken;
 
-        try {
-          const decoded = jwtDecode(token);
-          state.user = decoded;
-          localStorage.setItem("user", JSON.stringify(decoded));
-          console.log("Dữ liệu đã giải mã:", decoded);
-        } catch (err) {
-          console.error("Lỗi khi giải mã token:", err);
-          state.user = null;
+        // Dữ liệu User trả về từ API lúc Login (nếu có)
+        const userDataFromApi =
+          payload?.user || payload?.data?.user || payload?.data;
+
+        if (token && typeof token === "string") {
+          state.loading = false;
+          state.token = token;
+          state.isAuthenticated = true;
+          localStorage.setItem("access_token", token);
+
+          try {
+            const decoded = jwtDecode(token);
+
+            // QUAN TRỌNG: Hợp nhất và ưu tiên dữ liệu thực tế (userDataFromApi)
+            // Nếu login không trả về user đầy đủ, userDataFromApi sẽ được lấp đầy sau bởi fetchSelf ở Header
+            const finalUser = { ...decoded, ...userDataFromApi };
+
+            state.user = finalUser;
+            localStorage.setItem("user", JSON.stringify(finalUser));
+          } catch (err) {
+            state.user = userDataFromApi || null;
+          }
         }
       })
       .addCase(loginThunk.rejected, (state, action) => {
@@ -51,5 +66,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, updateUser } = authSlice.actions;
 export default authSlice.reducer;

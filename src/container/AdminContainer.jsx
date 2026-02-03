@@ -19,11 +19,12 @@ const AdminContainer = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentRole, setCurrentRole] = useState(null);
-
+  const [currentName, setCurrentName] = useState(null);
   const fetchSelf = async () => {
     try {
       const res = await getUserProfile();
       setCurrentRole(res.data.role);
+      setCurrentName(res.data.fullName);
     } catch (error) {
       console.error(error);
     }
@@ -111,7 +112,7 @@ const AdminContainer = () => {
       className="p-4"
       style={{ backgroundColor: "#f3f3f9", minHeight: "100vh" }}
     >
-      <AdminHeader email="Admin@gmail.com" />
+      <AdminHeader fullName={currentName} />
 
       <NavigationTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
