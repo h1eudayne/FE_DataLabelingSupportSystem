@@ -3,25 +3,22 @@ import { Modal, Form, Row, Col, Button, Badge } from "react-bootstrap";
 
 const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
   const [formData, setFormData] = useState({
-    fullName: null,
-    avatarUrl: null,
+    fullName: "",
+    avatarUrl: "",
   });
 
   useEffect(() => {
-    if (
-      userSelf &&
-      userSelf.fullName !== formData.fullName &&
-      userSelf.avatarUrl !== formData.avatarUrl
-    ) {
+    if (userSelf && isOpen) {
       setFormData({
-        fullName: userSelf.fullName,
-        avatarUrl: userSelf.avatarUrl,
+        fullName: userSelf.fullName || "",
+        avatarUrl: userSelf.avatarUrl || "",
       });
     }
-  }, [userSelf]);
+  }, [userSelf, isOpen]);
 
   const handleChange = (e) => {
-    setFormData({ fullName: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
   return (
     <>
@@ -32,8 +29,47 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
 
         <Modal.Body>
           <Form>
+            <div className="text-center mb-4">
+              <div className="position-relative d-inline-block">
+                <img
+                  src={
+                    formData.avatarUrl ||
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${userSelf?.email}`
+                  }
+                  alt="avatar-preview"
+                  className="rounded-circle img-thumbnail shadow-sm"
+                  style={{
+                    width: "120px",
+                    height: "120px",
+                    objectFit: "cover",
+                  }}
+                />
+                <div className="position-absolute bottom-0 end-0">
+                  <Badge
+                    bg="primary"
+                    className="rounded-circle p-2 shadow"
+                    style={{ cursor: "pointer" }}
+                  ></Badge>
+                </div>
+              </div>
+              <p className="text-muted small mt-2">Xem trước ảnh đại diện</p>
+            </div>
             <Row className="g-3">
               <Col lg={12}>
+                <Col lg={12}>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="fw-semibold">
+                      Đường dẫn ảnh đại diện (URL)
+                    </Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="avatarUrl"
+                      placeholder="Dán link ảnh tại đây..."
+                      value={formData.avatarUrl}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
                 <Form.Group>
                   <Form.Label className="fw-semibold">Họ và tên</Form.Label>
                   <Form.Control

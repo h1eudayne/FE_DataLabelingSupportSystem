@@ -6,9 +6,13 @@ import {
   changePassword,
 } from "../services/admin/managementUsers/user.api";
 import ProfileModal from "../components/home/ProfileModal";
+import { useDispatch } from "react-redux";
+import { updateUser } from "@/store/auth/auth.slice";
+
 const ProfileContainer = () => {
   const [userSelf, setUserSelf] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const dispatch = useDispatch();
 
   const fetchSelf = async () => {
     try {
@@ -33,6 +37,7 @@ const ProfileContainer = () => {
   const handleSave = async (fullName, avatarUrl) => {
     try {
       await updateUserProfile(fullName, avatarUrl);
+      dispatch(updateUser({ fullName, avatarUrl }));
       console.log("Update Successfully");
       await fetchSelf();
     } catch (error) {
@@ -50,6 +55,7 @@ const ProfileContainer = () => {
       alert("Mật khẩu cũ không chính xác hoặc có lỗi xảy ra");
     }
   };
+
   return (
     <>
       <ProfileTable
