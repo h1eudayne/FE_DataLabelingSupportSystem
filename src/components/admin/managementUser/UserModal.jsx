@@ -15,10 +15,15 @@ const UserModal = (props) => {
   const [formData, setFormData] = useState({ role: "Annotator" });
 
   useEffect(() => {
-    if (user && formData.role !== user.role) {
-      setFormData({ role: user.role || "Annotator" });
+    if (user) {
+      setFormData((prev) => {
+        if (prev.role !== user.role) {
+          return { role: user.role || "Annotator" };
+        }
+        return prev;
+      });
     }
-  }, [user]);
+  }, [user?.role]);
 
   const handleChange = (e) => {
     setFormData({ role: e.target.value });

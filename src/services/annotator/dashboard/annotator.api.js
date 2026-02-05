@@ -1,4 +1,4 @@
-import axios from "/src/services/axios.customize.js";
+import axios from "@/services/axios.customize.js";
 
 export const getProfile = async () => {
   const res = await axios.get("/api/User/profile");

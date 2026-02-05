@@ -6,9 +6,19 @@ export const loginThunk = createAsyncThunk(
   async ({ email, password }, { rejectWithValue }) => {
     try {
       const res = await loginAPI(email, password);
-      console.log(res);
-      // Giả sử API trả về { accessToken: "...", data: { fullName: "...", avatarUrl: "..." } }
-      // Lưu vào localStorage để khi F5 không bị mất
+      // console.log(res);
+
+      // Extract token and user from response (handle various structures)
+      const accessToken = res.accessToken || res.data?.accessToken;
+      const user = res.user || res.data?.user;
+
+      if (accessToken) {
+        localStorage.setItem("access_token", accessToken);
+      }
+
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
 
       return res.data;
     } catch (err) {
