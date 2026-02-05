@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import axios from "/src/services/axios.customize.js";
+import axios from "@/services/axios.customize.js";
 import {
   getProfile,
   getAssignedProjects,
@@ -9,7 +9,7 @@ import {
   getAllReviewerFeedback,
 } from "./annotator.api";
 
-vi.mock("/src/services/axios.customize.js", () => ({
+vi.mock("@/services/axios.customize.js", () => ({
   default: {
     get: vi.fn(),
   },

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import axios from "/src/services/axios.customize";
+import axios from "@/services/axios.customize";
 import taskService from "./taskService";
 
-vi.mock("/src/services/axios.customize", () => ({
+vi.mock("@/services/axios.customize", () => ({
   default: { get: vi.fn(), post: vi.fn() },
 }));
 

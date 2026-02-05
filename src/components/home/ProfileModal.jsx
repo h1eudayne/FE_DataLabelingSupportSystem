@@ -9,12 +9,20 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
 
   useEffect(() => {
     if (userSelf && isOpen) {
-      setFormData({
-        fullName: userSelf.fullName || "",
-        avatarUrl: userSelf.avatarUrl || "",
+      setFormData((prev) => {
+        if (
+          prev.fullName !== (userSelf.fullName || "") ||
+          prev.avatarUrl !== (userSelf.avatarUrl || "")
+        ) {
+          return {
+            fullName: userSelf.fullName || "",
+            avatarUrl: userSelf.avatarUrl || "",
+          };
+        }
+        return prev;
       });
     }
-  }, [userSelf, isOpen]);
+  }, [userSelf?.fullName, userSelf?.avatarUrl, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
