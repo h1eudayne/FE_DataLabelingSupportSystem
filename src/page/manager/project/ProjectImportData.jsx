@@ -104,156 +104,154 @@ const CreateProject = () => {
   };
 
   return (
-    <div className="page-content bg-light">
-      <div className="container-fluid">
-        <form onSubmit={handleSubmit}>
-          <div className="row g-4 d-flex align-items-stretch">
-            <div className="col-lg-7">
-              <div className="card h-100 border-0 shadow-sm">
-                <div className="card-header bg-primary py-3">
-                  <h6 className="mb-0 text-white">1. CẤU HÌNH DỰ ÁN</h6>
+    <>
+      <form onSubmit={handleSubmit}>
+        <div className="row g-4 d-flex align-items-stretch">
+          <div className="col-lg-7">
+            <div className="card h-100 border-0 shadow-sm">
+              <div className="card-header bg-primary py-3">
+                <h6 className="mb-0 text-white">1. CẤU HÌNH DỰ ÁN</h6>
+              </div>
+              <div className="card-body d-flex flex-column text-start">
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Tên dự án</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    onChange={(e) =>
+                      setProjectData({ ...projectData, name: e.target.value })
+                    }
+                    required
+                  />
                 </div>
-                <div className="card-body d-flex flex-column text-start">
-                  <div className="mb-3">
-                    <label className="form-label fw-bold">Tên dự án</label>
+                <div className="row mb-3">
+                  <div className="col-6">
+                    <label className="form-label fw-bold">Loại hình</label>
+                    <select
+                      className="form-select"
+                      onChange={(e) =>
+                        setProjectData({
+                          ...projectData,
+                          allowGeometryTypes: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="BoundingBox">Bounding Box</option>
+                      <option value="Polygon">Polygon</option>
+                    </select>
+                  </div>
+                  <div className="col-6">
+                    <label className="form-label fw-bold">Hạn chót</label>
                     <input
-                      type="text"
+                      type="date"
                       className="form-control"
                       onChange={(e) =>
-                        setProjectData({ ...projectData, name: e.target.value })
+                        setProjectData({
+                          ...projectData,
+                          deadline: e.target.value,
+                        })
                       }
                       required
                     />
                   </div>
-                  <div className="row mb-3">
-                    <div className="col-6">
-                      <label className="form-label fw-bold">Loại hình</label>
-                      <select
-                        className="form-select"
-                        onChange={(e) =>
-                          setProjectData({
-                            ...projectData,
-                            allowGeometryTypes: e.target.value,
-                          })
-                        }
-                      >
-                        <option value="BoundingBox">Bounding Box</option>
-                        <option value="Polygon">Polygon</option>
-                      </select>
-                    </div>
-                    <div className="col-6">
-                      <label className="form-label fw-bold">Hạn chót</label>
-                      <input
-                        type="date"
-                        className="form-control"
-                        onChange={(e) =>
-                          setProjectData({
-                            ...projectData,
-                            deadline: e.target.value,
-                          })
-                        }
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="flex-grow-1 d-flex flex-column">
-                    <label className="form-label fw-bold">
-                      Danh sách URL ảnh (
-                      {urlInput.split("\n").filter((x) => x).length})
-                    </label>
-                    <textarea
-                      className="form-control flex-grow-1"
-                      style={{ minHeight: "300px" }}
-                      value={urlInput}
-                      onChange={(e) => setUrlInput(e.target.value)}
-                      required
-                    />
-                  </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="col-lg-5">
-              <div className="card h-100 border-0 shadow-sm d-flex flex-column">
-                <div className="card-header bg-dark py-3">
-                  <h6 className="mb-0 text-white">2. PHÂN CÔNG NHÂN SỰ</h6>
-                </div>
-                <div className="card-body d-flex flex-column text-start">
-                  <div className="mb-3">
-                    <label className="form-label fw-bold">Reviewer *</label>
-                    <select
-                      className="form-select"
-                      value={selectedReviewer}
-                      onChange={(e) => setSelectedReviewer(e.target.value)}
-                    >
-                      <option value="">
-                        -- Chọn Reviewer ({reviewers.length}) --
-                      </option>
-                      {reviewers.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.fullName || u.userName} ({u.email})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <input
-                    type="text"
-                    className="form-control mb-3"
-                    placeholder="Tìm annotator..."
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                <div className="flex-grow-1 d-flex flex-column">
+                  <label className="form-label fw-bold">
+                    Danh sách URL ảnh (
+                    {urlInput.split("\n").filter((x) => x).length})
+                  </label>
+                  <textarea
+                    className="form-control flex-grow-1"
+                    style={{ minHeight: "300px" }}
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    required
                   />
-                  <div
-                    className="flex-grow-1 overflow-auto border rounded bg-light p-2"
-                    style={{ maxHeight: "400px" }}
-                  >
-                    {annotators
-                      .filter((u) =>
-                        (u.fullName || u.userName || "")
-                          .toLowerCase()
-                          .includes(searchTerm.toLowerCase()),
-                      )
-                      .map((user) => (
-                        <div
-                          key={user.id}
-                          className={`p-3 mb-2 rounded border d-flex align-items-center ${selectedUsers.includes(user.id) ? "bg-soft-primary border-primary" : "bg-white"}`}
-                          onClick={() =>
-                            setSelectedUsers((prev) =>
-                              prev.includes(user.id)
-                                ? prev.filter((id) => id !== user.id)
-                                : [...prev, user.id],
-                            )
-                          }
-                          style={{ cursor: "pointer" }}
-                        >
-                          <input
-                            type="checkbox"
-                            className="form-check-input me-3"
-                            checked={selectedUsers.includes(user.id)}
-                            readOnly
-                          />
-                          <div>
-                            <div className="fw-bold">
-                              {user.fullName || user.userName}
-                            </div>
-                            <div className="small text-muted">{user.email}</div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                  <button
-                    type="submit"
-                    className="btn btn-primary w-100 py-3 mt-4 fw-bold"
-                    disabled={loading}
-                  >
-                    {loading ? "ĐANG XỬ LÝ..." : "XÁC NHẬN TẠO DỰ ÁN"}
-                  </button>
                 </div>
               </div>
             </div>
           </div>
-        </form>
-      </div>
-    </div>
+
+          <div className="col-lg-5">
+            <div className="card h-100 border-0 shadow-sm d-flex flex-column">
+              <div className="card-header bg-dark py-3">
+                <h6 className="mb-0 text-white">2. PHÂN CÔNG NHÂN SỰ</h6>
+              </div>
+              <div className="card-body d-flex flex-column text-start">
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Reviewer *</label>
+                  <select
+                    className="form-select"
+                    value={selectedReviewer}
+                    onChange={(e) => setSelectedReviewer(e.target.value)}
+                  >
+                    <option value="">
+                      -- Chọn Reviewer ({reviewers.length}) --
+                    </option>
+                    {reviewers.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.fullName || u.userName} ({u.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <input
+                  type="text"
+                  className="form-control mb-3"
+                  placeholder="Tìm annotator..."
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <div
+                  className="flex-grow-1 overflow-auto border rounded bg-light p-2"
+                  style={{ maxHeight: "400px" }}
+                >
+                  {annotators
+                    .filter((u) =>
+                      (u.fullName || u.userName || "")
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase()),
+                    )
+                    .map((user) => (
+                      <div
+                        key={user.id}
+                        className={`p-3 mb-2 rounded border d-flex align-items-center ${selectedUsers.includes(user.id) ? "bg-soft-primary border-primary" : "bg-white"}`}
+                        onClick={() =>
+                          setSelectedUsers((prev) =>
+                            prev.includes(user.id)
+                              ? prev.filter((id) => id !== user.id)
+                              : [...prev, user.id],
+                          )
+                        }
+                        style={{ cursor: "pointer" }}
+                      >
+                        <input
+                          type="checkbox"
+                          className="form-check-input me-3"
+                          checked={selectedUsers.includes(user.id)}
+                          readOnly
+                        />
+                        <div>
+                          <div className="fw-bold">
+                            {user.fullName || user.userName}
+                          </div>
+                          <div className="small text-muted">{user.email}</div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100 py-3 mt-4 fw-bold"
+                  disabled={loading}
+                >
+                  {loading ? "ĐANG XỬ LÝ..." : "XÁC NHẬN TẠO DỰ ÁN"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </>
   );
 };
 

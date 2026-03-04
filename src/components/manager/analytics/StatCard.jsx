@@ -35,9 +35,9 @@ const StatCard = ({ title, value = 0, icon: Icon, color = "primary" }) => {
             </p>
           </div>
         </div>
-        <div className="d-flex align-items-end justify-content-between mt-4">
+        <div className="d-flex align-items-end justify-content-between mt-2">
           <div>
-            <h4 className="fs-22 fw-semibold ff-secondary mb-4">
+            <h4 className="fs-22 fw-semibold ff-secondary mb-0">
               {displayValue.toLocaleString()}
             </h4>
           </div>
