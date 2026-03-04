@@ -6,20 +6,25 @@ import {
   getUserProfile,
   updateUser,
   updateStatus,
+  importUser,
 } from "../services/admin/managementUsers/user.api";
 import UserManagementView from "../components/admin/home/UserManagementView";
 import AdminHeader from "../components/admin/home/AdminHeader";
 import LogsView from "../components/admin/home/LogsView";
 import UserModal from "../components/admin/managementUser/UserModal";
+import AddUser from "../components/admin/home/AddUser";
 
 const AdminContainer = () => {
   const [activeTab, setActiveTab] = useState("users");
   const [users, setUsers] = useState([]);
   const [selectUser, setSelectUser] = useState(null);
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [currentRole, setCurrentRole] = useState(null);
   const [currentName, setCurrentName] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [file, setFile] = useState(null);
+
   const fetchSelf = async () => {
     try {
       const res = await getUserProfile();
@@ -42,7 +47,7 @@ const AdminContainer = () => {
 
   const handleEdit = (user) => {
     setSelectUser(user);
-    setIsModalOpen(true);
+    setIsUserModalOpen(true);
   };
 
   useEffect(() => {
@@ -78,8 +83,8 @@ const AdminContainer = () => {
   };
 
   const toggleModal = () => {
-    setIsModalOpen(!isModalOpen);
-    if (isModalOpen) setSelectUser(null);
+    setIsUserModalOpen(!isUserModalOpen);
+    if (isUserModalOpen) setSelectUser(null);
   };
 
   const handleSave = async (userData) => {
@@ -106,6 +111,24 @@ const AdminContainer = () => {
     }
   };
 
+  const onCloseCreateModal = () => {
+    setFile(null);
+    setIsCreateModalOpen(false);
+  };
+
+  const uploadUser = async (file) => {
+    try {
+      const res = await importUser(file);
+      if (res.data) {
+        console.log(res.data.successCount);
+        console.log(res.data.failureCount);
+      }
+      onCloseCreateModal();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <Container
       fluid
@@ -125,12 +148,20 @@ const AdminContainer = () => {
             onActive={handleActive}
             onEdit={handleEdit}
             currentRole={currentRole}
+            openCreateModal={setIsCreateModalOpen}
           />
           <UserModal
-            isOpen={isModalOpen}
+            isOpen={isUserModalOpen}
             toggle={toggleModal}
             user={selectUser}
             handleSave={handleSave}
+          />
+          <AddUser
+            isOpen={isCreateModalOpen}
+            onClose={onCloseCreateModal}
+            uploadUser={uploadUser}
+            file={file}
+            setFile={setFile}
           />
         </>
       )}
