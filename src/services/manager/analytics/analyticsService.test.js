@@ -41,7 +41,7 @@ describe("analyticsService - Full Coverage", () => {
           data: { totalAssignments: 20, approvedAssignments: 10 },
         });
 
-      const stats = await analyticsService.getDashboardStats();
+      const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(2);
       expect(stats.totalAssignments).toBe(30);
@@ -56,7 +56,7 @@ describe("analyticsService - Full Coverage", () => {
         .mockRejectedValueOnce(error400)
         .mockResolvedValueOnce({ data: { totalAssignments: 5 } });
 
-      const stats = await analyticsService.getDashboardStats();
+      const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(2);
       expect(stats.totalAssignments).toBe(5);
@@ -66,15 +66,15 @@ describe("analyticsService - Full Coverage", () => {
       axios.get.mockResolvedValueOnce({ data: [{ id: "P1" }] });
       axios.get.mockRejectedValueOnce(new Error("Database Crash"));
 
-      await expect(analyticsService.getDashboardStats()).rejects.toThrow(
-        "Database Crash",
-      );
+      await expect(
+        analyticsService.getDashboardStats("test-manager-id"),
+      ).rejects.toThrow("Database Crash");
     });
 
     it("TH Không có dự án: Trả về object chứa các giá trị 0", async () => {
       axios.get.mockResolvedValueOnce({ data: [] });
 
-      const stats = await analyticsService.getDashboardStats();
+      const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(0);
       expect(stats.totalAssignments).toBe(0);

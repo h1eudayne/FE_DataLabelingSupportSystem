@@ -1,15 +1,15 @@
 import axios from "../../axios.customize";
 
 const analyticsService = {
-  getMyProjects: () => axios.get("/api/Project/manager/me"),
+  getMyProjects: (managerId) => axios.get(`/api/Project/manager/${managerId}`),
 
   getProjectStats: (projectId) => {
     if (!projectId) throw new Error("projectId is required");
     return axios.get(`/api/Project/${projectId}/stats`);
   },
 
-  getDashboardStats: async () => {
-    const resProjects = await axios.get("/api/Project/manager/me");
+  getDashboardStats: async (managerId) => {
+    const resProjects = await axios.get(`/api/Project/manager/${managerId}`);
     const projects = resProjects.data || [];
 
     let totalAssignments = 0;
@@ -29,7 +29,6 @@ const analyticsService = {
         submitted += s.submittedAssignments ?? 0;
         rejected += s.rejectedAssignments ?? 0;
       } catch (err) {
-        // ✅ test yêu cầu
         if (err.response?.status === 400) continue;
         throw err;
       }

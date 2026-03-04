@@ -3,19 +3,22 @@ import { Container, Row, Col, Spinner } from "reactstrap";
 import ProjectOverviewChart from "../../../components/manager/status/ProjectOverviewChart";
 import ProjectStatusSidebar from "../../../components/manager/status/ProjectStatusSidebar";
 import StatCards from "../../../components/manager/status/StatCards";
+import { useSelector } from "react-redux";
 import analyticsService from "../../../services/manager/analytics/analyticsService";
 
 const DashboardProjectStatus = () => {
   const [stats, setStats] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useSelector((state) => state.auth);
+  const managerId = user?.nameid;
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       const [resStats, resProjects] = await Promise.all([
-        analyticsService.getDashboardStats(),
-        analyticsService.getMyProjects(),
+        analyticsService.getDashboardStats(managerId),
+        analyticsService.getMyProjects(managerId),
       ]);
 
       setStats(resStats.data || resStats);
@@ -29,7 +32,7 @@ const DashboardProjectStatus = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [managerId]);
 
   if (loading) {
     return (
