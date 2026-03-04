@@ -22,8 +22,18 @@ export const getUserProfile = () => {
 
 export const updateUserProfile = (fullName, avatarUrl) => {
   return axios.put(`/api/User/profile`, {
-    fullName: fullName,
-    avatarUrl: avatarUrl,
+    request: {
+      fullName: fullName,
+      avatarUrl: avatarUrl,
+    },
+  });
+};
+
+export const uploadAvatar = (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return axios.post("/api/User/upload-avatar", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
 };
 
