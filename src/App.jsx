@@ -26,6 +26,8 @@ import ProjectAssignTask from "./page/manager/project/ProjectAssignTask";
 import CreateProject from "./page/manager/project/CreateProject";
 import ProjectsDatasetsPage from "./page/manager/datasets/ProjectsDatasetsPage";
 import DashboardAnalytics from "./page/manager/analytics/DashboardAnalyticsPage";
+import DisputeManagementPage from "./page/manager/dispute/DisputeManagementPage";
+import ReviewAuditPage from "./page/manager/review/ReviewAuditPage";
 import LoginPage from "./page/auth/login/LoginPage";
 import { ROLES } from "./constants/roles";
 import LandingPage from "./page/LandingPage";
@@ -90,6 +92,11 @@ function App() {
               element={<ProjectsDatasetsPage />}
             />
             <Route path="projects-create" element={<CreateProject />} />
+            <Route
+              path="dispute-management"
+              element={<DisputeManagementPage />}
+            />
+            <Route path="review-audit" element={<ReviewAuditPage />} />
           </Route>
 
           <Route element={<RoleProtectedRoute allowRoles={["Annotator"]} />}>

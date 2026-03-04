@@ -8,6 +8,7 @@ const ProjectsDatasetsPage = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -48,6 +49,30 @@ const ProjectsDatasetsPage = () => {
     } finally {
       setUploading(false);
       event.target.value = null;
+    }
+  };
+
+  const handleExport = async () => {
+    if (!selectedProject) return;
+    setExporting(true);
+    try {
+      const res = await datasetService.exportData(selectedProject.id);
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], {
+        type: "application/json",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `project_${selectedProject.id}_export_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Xuất dữ liệu thành công!");
+    } catch (error) {
+      toast.error("Xuất dữ liệu thất bại.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -133,6 +158,18 @@ const ProjectsDatasetsPage = () => {
               onChange={handleFileUpload}
               accept="image/*"
             />
+            <button
+              className="btn btn-success btn-sm px-3"
+              disabled={!selectedProject || exporting}
+              onClick={handleExport}
+            >
+              {exporting ? (
+                <span className="spinner-border spinner-border-sm me-1"></span>
+              ) : (
+                <i className="ri-file-download-line align-middle me-1" />
+              )}
+              {exporting ? "Đang xuất..." : "Export JSON"}
+            </button>
             <button
               className="btn btn-primary btn-sm px-3"
               disabled={!selectedProject || uploading}
