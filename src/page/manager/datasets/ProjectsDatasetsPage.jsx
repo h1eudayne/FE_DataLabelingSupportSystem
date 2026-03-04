@@ -4,6 +4,8 @@ import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import projectService from "../../../services/manager/project/projectService";
 import datasetService from "../../../services/manager/dataset/datasetService";
+import analyticsService from "../../../services/manager/analytics/analyticsService";
+import disputeService from "../../../services/manager/dispute/disputeService";
 
 const ProjectsDatasetsPage = () => {
   const { id: paramId } = useParams();
@@ -12,6 +14,12 @@ const ProjectsDatasetsPage = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportCheck, setExportCheck] = useState({
+    ready: false,
+    allApproved: false,
+    noPendingDisputes: false,
+    checking: false,
+  });
   const fileInputRef = useRef(null);
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.nameid;
@@ -37,13 +45,54 @@ const ProjectsDatasetsPage = () => {
 
   const handleProjectClick = async (id) => {
     setLoading(true);
+    setExportCheck({
+      ready: false,
+      allApproved: false,
+      noPendingDisputes: false,
+      checking: true,
+    });
     try {
       const res = await projectService.getProjectById(id);
       setSelectedProject(res.data);
+      checkExportEligibility(id);
     } catch (error) {
       toast.error("Lỗi khi lấy chi tiết dự án", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkExportEligibility = async (projectId) => {
+    try {
+      const [statsRes, disputesRes] = await Promise.all([
+        analyticsService.getProjectStats(projectId),
+        disputeService.getDisputes(projectId),
+      ]);
+      const stats = statsRes.data;
+      const disputes = disputesRes.data || [];
+
+      const totalTasks = stats.totalAssignments ?? 0;
+      const approved = stats.approvedAssignments ?? 0;
+      const allApproved = totalTasks > 0 && approved === totalTasks;
+      const pendingDisputes = disputes.filter((d) => d.status === "Pending");
+      const noPendingDisputes = pendingDisputes.length === 0;
+
+      setExportCheck({
+        ready: allApproved && noPendingDisputes,
+        allApproved,
+        noPendingDisputes,
+        checking: false,
+        totalTasks,
+        approved,
+        pendingDisputeCount: pendingDisputes.length,
+      });
+    } catch {
+      setExportCheck({
+        ready: false,
+        allApproved: false,
+        noPendingDisputes: false,
+        checking: false,
+      });
     }
   };
 
@@ -65,6 +114,23 @@ const ProjectsDatasetsPage = () => {
 
   const handleExport = async () => {
     if (!selectedProject) return;
+
+    if (!exportCheck.ready) {
+      const reasons = [];
+      if (!exportCheck.allApproved)
+        reasons.push(
+          `Còn ${(exportCheck.totalTasks || 0) - (exportCheck.approved || 0)} task chưa Approved (${exportCheck.approved || 0}/${exportCheck.totalTasks || 0})`,
+        );
+      if (!exportCheck.noPendingDisputes)
+        reasons.push(
+          `Còn ${exportCheck.pendingDisputeCount || 0} dispute đang chờ xử lý`,
+        );
+      toast.error(`Không thể Export! ${reasons.join(". ")}.`, {
+        autoClose: 5000,
+      });
+      return;
+    }
+
     setExporting(true);
     try {
       const res = await datasetService.exportData(selectedProject.id);
@@ -168,16 +234,31 @@ const ProjectsDatasetsPage = () => {
               accept="image/*"
             />
             <button
-              className="btn btn-success btn-sm px-3"
-              disabled={!selectedProject || exporting}
+              className={`btn btn-sm px-3 ${exportCheck.ready ? "btn-success" : "btn-outline-secondary"}`}
+              disabled={!selectedProject || exporting || exportCheck.checking}
               onClick={handleExport}
+              title={
+                !exportCheck.ready && selectedProject
+                  ? `Chưa đủ điều kiện Export: ${!exportCheck.allApproved ? "Chưa Approved hết task" : ""} ${!exportCheck.noPendingDisputes ? "Còn Dispute pending" : ""}`
+                  : "Xuất dữ liệu JSON"
+              }
             >
               {exporting ? (
                 <span className="spinner-border spinner-border-sm me-1"></span>
+              ) : exportCheck.checking ? (
+                <span className="spinner-border spinner-border-sm me-1"></span>
+              ) : !exportCheck.ready && selectedProject ? (
+                <i className="ri-lock-line align-middle me-1" />
               ) : (
                 <i className="ri-file-download-line align-middle me-1" />
               )}
-              {exporting ? "Đang xuất..." : "Export JSON"}
+              {exporting
+                ? "Đang xuất..."
+                : exportCheck.checking
+                  ? "Đang kiểm tra..."
+                  : !exportCheck.ready && selectedProject
+                    ? "Export (Chưa đủ ĐK)"
+                    : "Export JSON"}
             </button>
             <button
               className="btn btn-primary btn-sm px-3"
@@ -390,6 +471,62 @@ const ProjectsDatasetsPage = () => {
                           style={{ width: `${selectedProject.progress}%` }}
                         ></div>
                       </div>
+                    </div>
+
+                    <div className="mt-4 border-top pt-3">
+                      <h6 className="mb-2 fw-bold text-uppercase fs-11 text-muted">
+                        <i className="ri-shield-check-line me-1"></i>
+                        Trạng thái Export (BR-MNG-21)
+                      </h6>
+                      {exportCheck.checking ? (
+                        <div className="text-center py-2">
+                          <span className="spinner-border spinner-border-sm text-primary"></span>
+                          <span className="ms-1 small text-muted">
+                            Đang kiểm tra...
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="vstack gap-2">
+                          <div className="d-flex align-items-center">
+                            <i
+                              className={`me-2 ${exportCheck.allApproved ? "ri-checkbox-circle-fill text-success" : "ri-close-circle-fill text-danger"}`}
+                            ></i>
+                            <small
+                              className={
+                                exportCheck.allApproved
+                                  ? "text-success"
+                                  : "text-danger"
+                              }
+                            >
+                              {exportCheck.allApproved
+                                ? "Tất cả task đã Approved"
+                                : `Còn ${(exportCheck.totalTasks || 0) - (exportCheck.approved || 0)} task chưa Approved`}
+                            </small>
+                          </div>
+                          <div className="d-flex align-items-center">
+                            <i
+                              className={`me-2 ${exportCheck.noPendingDisputes ? "ri-checkbox-circle-fill text-success" : "ri-close-circle-fill text-danger"}`}
+                            ></i>
+                            <small
+                              className={
+                                exportCheck.noPendingDisputes
+                                  ? "text-success"
+                                  : "text-danger"
+                              }
+                            >
+                              {exportCheck.noPendingDisputes
+                                ? "Không có Dispute pending"
+                                : `Còn ${exportCheck.pendingDisputeCount} Dispute đang chờ`}
+                            </small>
+                          </div>
+                          {exportCheck.ready && (
+                            <div className="alert alert-success py-1 px-2 mb-0 mt-1 small">
+                              <i className="ri-check-double-line me-1"></i>
+                              <strong>Sẵn sàng Export!</strong>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
