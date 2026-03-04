@@ -19,6 +19,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/auth/auth.slice";
 import { getUserProfile } from "../../services/admin/managementUsers/user.api";
 import { updateUser } from "../../store/auth/auth.slice";
+import { BACKEND_URL } from "../../services/axios.customize";
 
 const Header = ({ toggleSidebar, sidebarSize }) => {
   const dispatch = useDispatch();
@@ -270,8 +271,11 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     <div className="avatar-wrapper">
                       <img
                         src={
-                          user?.avatarUrl ||
-                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`
+                          user?.avatarUrl
+                            ? user.avatarUrl.startsWith("http")
+                              ? user.avatarUrl
+                              : `${BACKEND_URL}${user.avatarUrl}`
+                            : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`
                         }
                         className="rounded-circle shadow-sm border border-2 border-white"
                         width="36"

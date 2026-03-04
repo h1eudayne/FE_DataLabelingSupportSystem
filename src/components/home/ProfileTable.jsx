@@ -9,6 +9,7 @@ import {
   Button,
   Form,
 } from "react-bootstrap";
+import { BACKEND_URL } from "../../services/axios.customize";
 
 const ProfileTable = ({ userSelf, onEditProfile, onChangePass }) => {
   const [formData, setFormData] = useState({
@@ -62,7 +63,14 @@ const ProfileTable = ({ userSelf, onEditProfile, onChangePass }) => {
               <Card.Body className="text-center">
                 <div className="avatar-xl">
                   <img
-                    src={userSelf.avatarUrl}
+                    src={
+                      userSelf.avatarUrl
+                        ? userSelf.avatarUrl.startsWith("http") ||
+                          userSelf.avatarUrl.startsWith("blob:")
+                          ? userSelf.avatarUrl
+                          : `${BACKEND_URL}${userSelf.avatarUrl.startsWith("/") ? "" : "/"}${userSelf.avatarUrl}`
+                        : `https://api.dicebear.com/7.x/avataaars/svg?seed=${userSelf?.email}`
+                    }
                     alt="user-profile"
                     className="img-thumbnail rounded-circle shadow-sm"
                     style={{

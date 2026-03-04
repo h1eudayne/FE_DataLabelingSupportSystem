@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Modal, Form, Row, Col, Button, Badge } from "react-bootstrap";
+import { BACKEND_URL } from "../../services/axios.customize";
 
 const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
   const [formData, setFormData] = useState({
     fullName: "",
     avatarUrl: "",
   });
+  const [selectFile, setSelectFile] = useState(null);
 
   useEffect(() => {
     if (userSelf && isOpen) {
@@ -13,8 +15,45 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
         fullName: userSelf.fullName || "",
         avatarUrl: userSelf.avatarUrl || "",
       });
+      setSelectFile(null);
     }
   }, [userSelf, isOpen]);
+
+  const handleChangeAvatar = (e) => {
+    if (!e.target.files || e.target.files.length === 0) {
+      setSelectFile(null);
+      return;
+    }
+    const file = e.target.files[0];
+    if (file) {
+      setSelectFile(file);
+      const previewUrl = URL.createObjectURL(file);
+
+      setFormData((prev) => ({ ...prev, avatarUrl: previewUrl }));
+    }
+  };
+
+  const getAvatarDisplay = () => {
+    if (!formData.avatarUrl)
+      return `https://api.dicebear.com/7.x/avataaars/svg?seed=${userSelf?.email}`;
+
+    if (
+      formData.avatarUrl.startsWith("blob:") ||
+      formData.avatarUrl.startsWith("http")
+    ) {
+      return formData.avatarUrl;
+    }
+
+    // Xử lý để đảm bảo luôn có đúng 1 dấu gạch chéo ở giữa
+    const baseUrl = BACKEND_URL.endsWith("/")
+      ? BACKEND_URL.slice(0, -1)
+      : BACKEND_URL;
+    const path = formData.avatarUrl.startsWith("/")
+      ? formData.avatarUrl
+      : `/${formData.avatarUrl}`;
+
+    return `${baseUrl}${path}`;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,10 +71,7 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
             <div className="text-center mb-4">
               <div className="position-relative d-inline-block">
                 <img
-                  src={
-                    formData.avatarUrl ||
-                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${userSelf?.email}`
-                  }
+                  src={getAvatarDisplay()}
                   alt="avatar-preview"
                   className="rounded-circle img-thumbnail shadow-sm"
                   style={{
@@ -62,11 +98,9 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
                       Đường dẫn ảnh đại diện (URL)
                     </Form.Label>
                     <Form.Control
-                      type="text"
-                      name="avatarUrl"
-                      placeholder="Dán link ảnh tại đây..."
-                      value={formData.avatarUrl}
-                      onChange={handleChange}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleChangeAvatar}
                     />
                   </Form.Group>
                 </Col>
@@ -74,8 +108,9 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
                   <Form.Label className="fw-semibold">Họ và tên</Form.Label>
                   <Form.Control
                     type="text"
+                    name="fullName"
                     placeholder="Nhập họ tên đầy đủ"
-                    defaultValue={userSelf.fullName}
+                    value={formData.fullName}
                     onChange={handleChange}
                   />
                 </Form.Group>
@@ -120,8 +155,9 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
           </Button>
           <Button
             variant="primary"
-            onClick={() => {
-              handleSave(formData.fullName, formData.avatarUrl);
+            onClick={async () => {
+              const dataToSend = selectFile ? selectFile : formData.avatarUrl;
+              await handleSave(formData.fullName, dataToSend);
               toggleModal();
             }}
           >
