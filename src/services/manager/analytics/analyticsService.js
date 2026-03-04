@@ -5,7 +5,7 @@ const analyticsService = {
 
   getProjectStats: (projectId) => {
     if (!projectId) throw new Error("projectId is required");
-    return axios.get(`/api/Project/${projectId}/stats`);
+    return axios.get(`/api/ProjectStats/${projectId}`);
   },
 
   getDashboardStats: async (managerId) => {
@@ -20,7 +20,7 @@ const analyticsService = {
 
     for (const project of projects) {
       try {
-        const res = await axios.get(`/api/Project/${project.id}/stats`);
+        const res = await axios.get(`/api/ProjectStats/${project.id}`);
         const s = res.data;
 
         totalAssignments += s.totalAssignments ?? 0;
