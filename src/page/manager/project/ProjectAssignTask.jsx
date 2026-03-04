@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import projectService from "../../../services/manager/project/projectService";
 import { userService } from "../../../services/manager/project/userService";
 import taskService from "../../../services/manager/project/taskService";
@@ -8,6 +9,8 @@ import Swal from "sweetalert2";
 const ProjectAssignTask = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+  const managerId = user?.nameid;
   const [annotators, setAnnotators] = useState([]);
   const [reviewers, setReviewers] = useState([]);
   const [selectedAnnotator, setSelectedAnnotator] = useState("");
@@ -27,7 +30,7 @@ const ProjectAssignTask = () => {
 
     userService.getUsers().then((res) => {
       const annotatorList = res.data.filter(
-        (u) => u.role?.toLowerCase() === "annotator",
+        (u) => u.role?.toLowerCase() === "annotator" && u.id !== managerId,
       );
       const reviewerList = res.data.filter(
         (u) => u.role?.toLowerCase() === "reviewer",
@@ -40,6 +43,13 @@ const ProjectAssignTask = () => {
   const handleAssign = async () => {
     if (!selectedAnnotator) {
       return Swal.fire("Cảnh báo", "Vui lòng chọn Annotator!", "warning");
+    }
+    if (selectedAnnotator === managerId) {
+      return Swal.fire(
+        "Không được phép!",
+        "Manager không được tự assign task cho bản thân. Vai trò Manager chỉ tập trung vào quản lý và giám sát.",
+        "error",
+      );
     }
     if (!selectedReviewer) {
       return Swal.fire("Cảnh báo", "Vui lòng chọn Reviewer!", "warning");
@@ -188,7 +198,13 @@ const ProjectAssignTask = () => {
 
           <div className="card mt-3 shadow-sm border-0">
             <div className="card-body">
-              <h6 className="fw-bold mb-2">Hướng dẫn (Guideline):</h6>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <h6 className="fw-bold mb-0">Hướng dẫn (Guideline):</h6>
+                <span className="badge bg-soft-primary text-primary fs-12">
+                  v{projectInfo?.labels?.length || 0} —{" "}
+                  {projectInfo?.labels?.length || 0} nhãn
+                </span>
+              </div>
               <div className="p-3 bg-light rounded text-muted">
                 {projectInfo?.description || "Không có hướng dẫn."}
               </div>
@@ -206,6 +222,12 @@ const ProjectAssignTask = () => {
               <div className="alert alert-info py-2 small mb-3">
                 <i className="ri-shield-user-line me-1"></i>
                 Chỉ Manager mới có quyền phân công.
+              </div>
+
+              <div className="alert alert-danger py-2 small mb-3">
+                <i className="ri-forbid-line me-1"></i>
+                Manager không được tự assign task cho bản thân. Vai trò Manager
+                chỉ tập trung vào quản lý và giám sát.
               </div>
 
               <div className="alert alert-light border py-2 small mb-3">

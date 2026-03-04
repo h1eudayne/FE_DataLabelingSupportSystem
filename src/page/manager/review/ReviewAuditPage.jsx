@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
-  Container,
   Row,
   Col,
   Card,
@@ -18,6 +17,7 @@ import {
   FormGroup,
   Spinner,
   Alert,
+  Progress,
 } from "reactstrap";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
@@ -38,6 +38,17 @@ const ReviewAuditPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.nameid;
+
+  const samplingStats = useMemo(() => {
+    const total = tasks.length;
+    const audited = tasks.filter(
+      (t) =>
+        t.managerAuditDecision !== undefined && t.managerAuditDecision !== null,
+    ).length;
+    const notAudited = total - audited;
+    const samplingRate = total > 0 ? ((audited / total) * 100).toFixed(1) : 0;
+    return { total, audited, notAudited, samplingRate };
+  }, [tasks]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -80,6 +91,19 @@ const ReviewAuditPage = () => {
     setModalOpen(true);
   };
 
+  const handleRandomPick = () => {
+    const unaudited = tasks.filter(
+      (t) =>
+        t.managerAuditDecision === undefined || t.managerAuditDecision === null,
+    );
+    if (unaudited.length === 0) {
+      toast.info("Tất cả task đã được audit!");
+      return;
+    }
+    const randomTask = unaudited[Math.floor(Math.random() * unaudited.length)];
+    openAuditModal(randomTask);
+  };
+
   const handleAudit = async () => {
     if (!selectedTask) return;
     setSubmitting(true);
@@ -107,17 +131,47 @@ const ReviewAuditPage = () => {
     return <Badge color="warning">Pending</Badge>;
   };
 
+  const guidelineVersion = useMemo(() => {
+    if (!projectDetail) return null;
+    const labelCount = projectDetail.labels?.length || 0;
+    const updatedDate =
+      projectDetail.endDate ||
+      projectDetail.startDate ||
+      projectDetail.deadline;
+    return {
+      version: labelCount,
+      date: updatedDate
+        ? new Date(updatedDate).toLocaleDateString("vi-VN")
+        : "N/A",
+      labelCount,
+    };
+  }, [projectDetail]);
+
   return (
     <>
       <Row>
         <Col xs={12}>
           <div className="page-title-box d-sm-flex align-items-center justify-content-between">
             <h4 className="mb-sm-0 text-uppercase fw-bold text-primary">
+              <i className="ri-shield-check-line me-2"></i>
               Review Audit — Sampling
             </h4>
           </div>
         </Col>
       </Row>
+
+      <Alert color="info" className="border-0 shadow-sm mb-3">
+        <div className="d-flex align-items-center">
+          <i className="ri-information-line fs-4 me-2"></i>
+          <div>
+            <strong>Chế độ Sampling</strong> — Manager không chấm toàn bộ bài,
+            mà chỉ chấm <strong>xác suất (sampling)</strong> để đánh giá chất
+            lượng Reviewer. Kết quả audit được dùng để tính{" "}
+            <strong>Override Rate</strong> và{" "}
+            <strong>RQS (Reviewer Quality Score)</strong>.
+          </div>
+        </div>
+      </Alert>
 
       <Row className="mb-3">
         <Col md={4}>
@@ -135,7 +189,66 @@ const ReviewAuditPage = () => {
             ))}
           </Input>
         </Col>
+        {selectedProjectId && tasks.length > 0 && (
+          <Col md={8} className="d-flex align-items-end">
+            <Button
+              color="warning"
+              className="ms-auto"
+              onClick={handleRandomPick}
+            >
+              <i className="ri-shuffle-line me-1"></i>
+              Random Pick (Chọn ngẫu nhiên)
+            </Button>
+          </Col>
+        )}
       </Row>
+
+      {selectedProjectId && !loading && tasks.length > 0 && (
+        <Row className="mb-3">
+          <Col md={3}>
+            <Card className="shadow-sm border-0 text-center">
+              <CardBody className="py-3">
+                <div className="text-muted small mb-1">Tổng Reviewed</div>
+                <h4 className="mb-0 text-primary">{samplingStats.total}</h4>
+              </CardBody>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="shadow-sm border-0 text-center">
+              <CardBody className="py-3">
+                <div className="text-muted small mb-1">Đã Audit</div>
+                <h4 className="mb-0 text-success">{samplingStats.audited}</h4>
+              </CardBody>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="shadow-sm border-0 text-center">
+              <CardBody className="py-3">
+                <div className="text-muted small mb-1">Chưa Audit</div>
+                <h4 className="mb-0 text-warning">
+                  {samplingStats.notAudited}
+                </h4>
+              </CardBody>
+            </Card>
+          </Col>
+          <Col md={3}>
+            <Card className="shadow-sm border-0 text-center">
+              <CardBody className="py-3">
+                <div className="text-muted small mb-1">Tỷ lệ Sampling</div>
+                <h4 className="mb-0 text-info">
+                  {samplingStats.samplingRate}%
+                </h4>
+                <Progress
+                  value={samplingStats.samplingRate}
+                  color="info"
+                  className="mt-2"
+                  style={{ height: "4px" }}
+                />
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+      )}
 
       {loading ? (
         <div className="text-center py-5">
@@ -150,9 +263,10 @@ const ReviewAuditPage = () => {
                 <h5 className="mb-0">
                   Danh sách Reviewed Tasks ({tasks.length})
                 </h5>
-                <small className="text-muted">
-                  Manager chấm xác suất — không chấm toàn bộ
-                </small>
+                <Badge color="soft-info" className="fs-12">
+                  <i className="ri-bar-chart-line me-1"></i>
+                  Sampling: {samplingStats.audited}/{samplingStats.total}
+                </Badge>
               </CardHeader>
               <CardBody>
                 {tasks.length === 0 ? (
@@ -169,39 +283,57 @@ const ReviewAuditPage = () => {
                           <th>Annotator</th>
                           <th>Reviewer Decision</th>
                           <th>Comment</th>
+                          <th>Audit Status</th>
                           <th>Hành động</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {tasks.map((t, idx) => (
-                          <tr key={t.id || idx}>
-                            <td>{idx + 1}</td>
-                            <td>
-                              <Badge color="soft-primary" className="fs-12">
-                                #{t.assignmentId || t.id}
-                              </Badge>
-                            </td>
-                            <td>{t.annotatorName || t.annotatorId || "—"}</td>
-                            <td>{getDecisionBadge(t)}</td>
-                            <td
-                              className="text-truncate text-muted small"
-                              style={{ maxWidth: "200px" }}
-                            >
-                              {t.comment || "—"}
-                            </td>
-                            <td>
-                              <Button
-                                color="info"
-                                size="sm"
-                                outline
-                                onClick={() => openAuditModal(t)}
+                        {tasks.map((t, idx) => {
+                          const isAudited =
+                            t.managerAuditDecision !== undefined &&
+                            t.managerAuditDecision !== null;
+                          return (
+                            <tr key={t.id || idx}>
+                              <td>{idx + 1}</td>
+                              <td>
+                                <Badge color="soft-primary" className="fs-12">
+                                  #{t.assignmentId || t.id}
+                                </Badge>
+                              </td>
+                              <td>{t.annotatorName || t.annotatorId || "—"}</td>
+                              <td>{getDecisionBadge(t)}</td>
+                              <td
+                                className="text-truncate text-muted small"
+                                style={{ maxWidth: "200px" }}
                               >
-                                <i className="ri-shield-check-line me-1"></i>
-                                Audit
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
+                                {t.comment || "—"}
+                              </td>
+                              <td>
+                                {isAudited ? (
+                                  <Badge color="success">
+                                    <i className="ri-check-line me-1"></i>Đã
+                                    audit
+                                  </Badge>
+                                ) : (
+                                  <Badge color="light" className="text-muted">
+                                    Chưa audit
+                                  </Badge>
+                                )}
+                              </td>
+                              <td>
+                                <Button
+                                  color="info"
+                                  size="sm"
+                                  outline
+                                  onClick={() => openAuditModal(t)}
+                                >
+                                  <i className="ri-shield-check-line me-1"></i>
+                                  Audit
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </Table>
                   </div>
@@ -268,10 +400,19 @@ const ReviewAuditPage = () => {
 
               {projectDetail?.labels?.length > 0 && (
                 <div className="mb-3 p-3 border rounded">
-                  <h6 className="fw-bold mb-2 text-info">
-                    <i className="ri-book-read-line me-1"></i>
-                    Guideline tham khảo
-                  </h6>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <h6 className="fw-bold mb-0 text-info">
+                      <i className="ri-book-read-line me-1"></i>
+                      Guideline tham khảo
+                    </h6>
+                    {guidelineVersion && (
+                      <Badge color="soft-primary" className="fs-12">
+                        v{guidelineVersion.version} — Cập nhật:{" "}
+                        {guidelineVersion.date} — {guidelineVersion.labelCount}{" "}
+                        nhãn
+                      </Badge>
+                    )}
+                  </div>
                   <div className="table-responsive">
                     <Table size="sm" className="mb-0" bordered>
                       <thead className="table-light">
@@ -330,7 +471,7 @@ const ReviewAuditPage = () => {
                     />
                     <Label check className="text-danger fw-semibold">
                       <i className="ri-thumb-down-line me-1"></i>
-                      Không đồng ý (Incorrect)
+                      Không đồng ý (Incorrect — Override)
                     </Label>
                   </FormGroup>
                 </div>

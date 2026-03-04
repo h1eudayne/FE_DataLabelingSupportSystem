@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Container,
   Row,
   Col,
   Card,
@@ -10,6 +9,7 @@ import {
   Table,
   Badge,
   Progress,
+  Alert,
 } from "reactstrap";
 import {
   BarChart,
@@ -35,6 +35,8 @@ import {
 import StatCard from "../../../components/manager/analytics/StatCard";
 import { useSelector } from "react-redux";
 import analyticsService from "../../../services/manager/analytics/analyticsService";
+import reviewAuditService from "../../../services/manager/review/reviewAuditService";
+import disputeService from "../../../services/manager/dispute/disputeService";
 
 const COLORS = ["#0ab39c", "#f7b84b", "#405189", "#f06548", "#299cdb"];
 
@@ -57,6 +59,8 @@ const DashboardAnalytics = () => {
   const [errorBreakdown, setErrorBreakdown] = useState([]);
   const [annotatorPerformances, setAnnotatorPerformances] = useState([]);
   const [labelDistributions, setLabelDistributions] = useState([]);
+  const [reviewerEvaluations, setReviewerEvaluations] = useState([]);
+  const [qualityAlerts, setQualityAlerts] = useState([]);
 
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.nameid;
@@ -80,6 +84,9 @@ const DashboardAnalytics = () => {
         const allErrors = {};
         const allAnnotators = [];
         const allLabels = {};
+
+        const reviewerMap = {};
+        const alerts = [];
 
         for (const project of projects) {
           try {
@@ -113,22 +120,96 @@ const DashboardAnalytics = () => {
                   (allLabels[ld.className] || 0) + ld.count;
               });
             }
+
+            if (s.rejectionRate > 30) {
+              alerts.push({
+                type: "danger",
+                icon: "ri-error-warning-line",
+                message: `Dự án "${project.name}" có Rejection Rate ${s.rejectionRate.toFixed(1)}% (> 30%) — Cần xem xét lại quy trình.`,
+              });
+            }
+
+            const progressPct =
+              s.totalItems > 0 ? (s.completedItems / s.totalItems) * 100 : 0;
+            const daysLeft = project.deadline
+              ? Math.ceil(
+                  (new Date(project.deadline) - new Date()) /
+                    (1000 * 60 * 60 * 24),
+                )
+              : null;
+            if (daysLeft !== null && daysLeft < 7 && progressPct < 50) {
+              alerts.push({
+                type: "warning",
+                icon: "ri-time-line",
+                message: `Dự án "${project.name}" còn ${daysLeft} ngày nhưng tiến độ mới ${progressPct.toFixed(0)}% — Nguy cơ trễ deadline.`,
+              });
+            }
           } catch (err) {
             if (err.response?.status === 400) continue;
             throw err;
           }
+
+          try {
+            const [resReviews, resDisputes] = await Promise.all([
+              reviewAuditService.getTasksForReview(project.id),
+              disputeService.getDisputes(project.id),
+            ]);
+            const reviews = resReviews.data || [];
+            const disputes = resDisputes.data || [];
+
+            reviews.forEach((r) => {
+              const reviewerKey = r.reviewerName || r.reviewerId || "Unknown";
+              if (!reviewerMap[reviewerKey]) {
+                reviewerMap[reviewerKey] = {
+                  name: reviewerKey,
+                  totalReviews: 0,
+                  overridden: 0,
+                  disputeCount: 0,
+                };
+              }
+              reviewerMap[reviewerKey].totalReviews++;
+              if (
+                r.managerAuditDecision !== undefined &&
+                r.managerAuditDecision !== null &&
+                r.managerAuditDecision === false
+              ) {
+                reviewerMap[reviewerKey].overridden++;
+              }
+            });
+
+            disputes.forEach((d) => {
+              const reviewerKey = d.reviewerName || d.reviewerId || "Unknown";
+              if (!reviewerMap[reviewerKey]) {
+                reviewerMap[reviewerKey] = {
+                  name: reviewerKey,
+                  totalReviews: 0,
+                  overridden: 0,
+                  disputeCount: 0,
+                };
+              }
+              reviewerMap[reviewerKey].disputeCount++;
+            });
+          } catch {}
         }
 
         setStats({ totalAssigned, completed, pending, submitted, rejected });
-        setRejectionRate(
-          rejRateCount > 0 ? (totalRejRate / rejRateCount).toFixed(1) : 0,
-        );
+        const avgRejRate =
+          rejRateCount > 0 ? (totalRejRate / rejRateCount).toFixed(1) : 0;
+        setRejectionRate(avgRejRate);
         setErrorBreakdown(
           Object.entries(allErrors).map(([name, value]) => ({ name, value })),
         );
         setLabelDistributions(
           Object.entries(allLabels).map(([name, value]) => ({ name, value })),
         );
+
+        if (Number(avgRejRate) > 30) {
+          alerts.push({
+            type: "danger",
+            icon: "ri-error-warning-line",
+            message: `Tỷ lệ Reject trung bình ${avgRejRate}% vượt ngưỡng 30% — Cần điều chỉnh quy trình.`,
+          });
+        }
 
         const uniqueAnnotators = {};
         allAnnotators.forEach((a) => {
@@ -142,7 +223,33 @@ const DashboardAnalytics = () => {
             existing.totalCriticalErrors += a.totalCriticalErrors;
           }
         });
-        setAnnotatorPerformances(Object.values(uniqueAnnotators));
+        const annotatorsArr = Object.values(uniqueAnnotators);
+        setAnnotatorPerformances(annotatorsArr);
+
+        annotatorsArr.forEach((a) => {
+          if (a.totalCriticalErrors > 5) {
+            alerts.push({
+              type: "warning",
+              icon: "ri-alarm-warning-line",
+              message: `Annotator "${a.annotatorName || a.annotatorId}" có ${a.totalCriticalErrors} lỗi nghiêm trọng — Cần đào tạo lại.`,
+            });
+          }
+        });
+
+        setQualityAlerts(alerts);
+
+        const reviewerEvals = Object.values(reviewerMap).map((r) => ({
+          ...r,
+          overrideRate:
+            r.totalReviews > 0
+              ? ((r.overridden / r.totalReviews) * 100).toFixed(1)
+              : "0.0",
+          disputeRate:
+            r.totalReviews > 0
+              ? ((r.disputeCount / r.totalReviews) * 100).toFixed(1)
+              : "0.0",
+        }));
+        setReviewerEvaluations(reviewerEvals);
 
         setProjectChartData(
           projects.map((p) => ({
@@ -239,6 +346,29 @@ const DashboardAnalytics = () => {
           />
         </Col>
       </Row>
+
+      {qualityAlerts.length > 0 && (
+        <Row className="mt-3">
+          <Col xl={12}>
+            <Card className="shadow-sm border-0">
+              <CardHeader className="bg-white border-bottom">
+                <h5 className="mb-0">
+                  <i className="ri-alarm-warning-line me-2 text-danger"></i>
+                  Cảnh báo Chất lượng
+                </h5>
+              </CardHeader>
+              <CardBody>
+                {qualityAlerts.map((alert, idx) => (
+                  <Alert key={idx} color={alert.type} className="mb-2 py-2">
+                    <i className={`${alert.icon} me-2`}></i>
+                    {alert.message}
+                  </Alert>
+                ))}
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+      )}
 
       <Row className="mt-3">
         <Col xl={8}>
@@ -468,6 +598,103 @@ const DashboardAnalytics = () => {
                                   {completionRate}%
                                 </small>
                               </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </div>
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+      )}
+
+      {reviewerEvaluations.length > 0 && (
+        <Row className="mt-3">
+          <Col xl={12}>
+            <Card className="shadow-sm border-0">
+              <CardHeader className="bg-white border-bottom">
+                <h5 className="mb-0">
+                  <i className="ri-shield-star-line me-2 text-info"></i>
+                  Đánh giá Reviewer — Override Rate & Dispute Rate
+                </h5>
+              </CardHeader>
+              <CardBody>
+                <Alert color="light" className="border py-2 mb-3">
+                  <i className="ri-information-line me-1"></i>
+                  <strong>Override Rate</strong>: % reviews bị Manager đảo kết
+                  quả. <strong>Dispute Rate</strong>: % khiếu nại liên quan.
+                  Badge đỏ khi Override Rate &gt; 20% hoặc Dispute Rate &gt;
+                  15%.
+                </Alert>
+                <div className="table-responsive">
+                  <Table className="table-hover align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Reviewer</th>
+                        <th className="text-center">Tổng Review</th>
+                        <th className="text-center">Bị Override</th>
+                        <th className="text-center">Override Rate</th>
+                        <th className="text-center">Disputes</th>
+                        <th className="text-center">Dispute Rate</th>
+                        <th className="text-center">RQS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reviewerEvaluations.map((r, idx) => {
+                        const overrideHigh = parseFloat(r.overrideRate) > 20;
+                        const disputeHigh = parseFloat(r.disputeRate) > 15;
+                        const rqs = Math.max(
+                          0,
+                          100 -
+                            parseFloat(r.overrideRate) * 2 -
+                            parseFloat(r.disputeRate) * 3,
+                        ).toFixed(0);
+                        return (
+                          <tr key={idx}>
+                            <td className="fw-semibold">{r.name}</td>
+                            <td className="text-center">{r.totalReviews}</td>
+                            <td className="text-center">
+                              {r.overridden > 0 ? (
+                                <Badge color="danger">{r.overridden}</Badge>
+                              ) : (
+                                <span className="text-muted">0</span>
+                              )}
+                            </td>
+                            <td className="text-center">
+                              <Badge
+                                color={overrideHigh ? "danger" : "success"}
+                              >
+                                {r.overrideRate}%
+                              </Badge>
+                            </td>
+                            <td className="text-center">
+                              {r.disputeCount > 0 ? (
+                                <Badge color="warning">{r.disputeCount}</Badge>
+                              ) : (
+                                <span className="text-muted">0</span>
+                              )}
+                            </td>
+                            <td className="text-center">
+                              <Badge color={disputeHigh ? "danger" : "success"}>
+                                {r.disputeRate}%
+                              </Badge>
+                            </td>
+                            <td className="text-center">
+                              <Badge
+                                color={
+                                  rqs >= 80
+                                    ? "success"
+                                    : rqs >= 50
+                                      ? "warning"
+                                      : "danger"
+                                }
+                                className="fs-12"
+                              >
+                                {rqs}
+                              </Badge>
                             </td>
                           </tr>
                         );
