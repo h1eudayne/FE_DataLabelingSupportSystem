@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import projectService from "../../../services/manager/project/projectService";
 import datasetService from "../../../services/manager/dataset/datasetService";
@@ -10,6 +11,8 @@ const ProjectsDatasetsPage = () => {
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const fileInputRef = useRef(null);
+  const { user } = useSelector((state) => state.auth);
+  const managerId = user?.nameid;
 
   useEffect(() => {
     fetchList();
@@ -17,7 +20,7 @@ const ProjectsDatasetsPage = () => {
 
   const fetchList = async () => {
     try {
-      const res = await projectService.getManagerProjects();
+      const res = await projectService.getManagerProjects(managerId);
       setProjects(res.data || []);
     } catch (error) {
       toast.error("Không thể tải danh sách dự án", error);
@@ -57,9 +60,7 @@ const ProjectsDatasetsPage = () => {
     setExporting(true);
     try {
       const res = await datasetService.exportData(selectedProject.id);
-      const blob = new Blob([JSON.stringify(res.data, null, 2)], {
-        type: "application/json",
-      });
+      const blob = new Blob([res.data], { type: "application/json" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -208,6 +209,7 @@ const ProjectsDatasetsPage = () => {
                             <th>Tên Nhãn</th>
                             <th>Màu sắc</th>
                             <th>Hướng dẫn</th>
+                            <th>Checklist</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -225,6 +227,20 @@ const ProjectsDatasetsPage = () => {
                               <td className="text-muted small">
                                 {label.guideLine}
                               </td>
+                              <td>
+                                {label.checklist?.length > 0 ? (
+                                  <ul className="list-unstyled mb-0">
+                                    {label.checklist.map((item, idx) => (
+                                      <li key={idx} className="small">
+                                        <i className="ri-checkbox-circle-line text-success me-1"></i>
+                                        {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <span className="text-muted small">—</span>
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -236,29 +252,88 @@ const ProjectsDatasetsPage = () => {
                 <div className="card shadow-none border">
                   <div className="card-header bg-light-subtle">
                     <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted">
-                      Đội ngũ thực hiện
+                      <i className="ri-user-star-line me-1 text-success"></i>
+                      Annotators
+                      <span className="badge bg-success-subtle text-success ms-2">
+                        {selectedProject.members?.filter(
+                          (m) => m.role === "Annotator",
+                        ).length || 0}
+                      </span>
                     </h6>
                   </div>
                   <div className="card-body">
-                    <div className="d-flex flex-wrap gap-4">
-                      {selectedProject.members?.map((m) => (
-                        <div
-                          key={m.id}
-                          className="text-center"
-                          style={{ width: "80px" }}
-                        >
-                          <div className="avatar-sm mx-auto mb-2">
-                            <div className="avatar-title bg-soft-primary text-primary rounded-circle fw-bold">
-                              {m.fullName.charAt(0)}
+                    {selectedProject.members?.filter(
+                      (m) => m.role === "Annotator",
+                    ).length > 0 ? (
+                      <div className="d-flex flex-wrap gap-4">
+                        {selectedProject.members
+                          ?.filter((m) => m.role === "Annotator")
+                          .map((m) => (
+                            <div
+                              key={m.id}
+                              className="text-center"
+                              style={{ width: "80px" }}
+                            >
+                              <div className="avatar-sm mx-auto mb-2">
+                                <div className="avatar-title bg-soft-success text-success rounded-circle fw-bold">
+                                  {m.fullName?.charAt(0)}
+                                </div>
+                              </div>
+                              <p className="mb-0 fs-12 fw-bold text-truncate">
+                                {m.fullName}
+                              </p>
                             </div>
-                          </div>
-                          <p className="mb-0 fs-12 fw-bold text-truncate">
-                            {m.fullName}
-                          </p>
-                          <small className="text-muted fs-11">{m.role}</small>
-                        </div>
-                      ))}
-                    </div>
+                          ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted small mb-0">
+                        Chưa có annotator nào
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="card shadow-none border">
+                  <div className="card-header bg-light-subtle">
+                    <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted">
+                      <i className="ri-shield-star-line me-1 text-info"></i>
+                      Reviewers
+                      <span className="badge bg-info-subtle text-info ms-2">
+                        {selectedProject.members?.filter(
+                          (m) => m.role === "Reviewer",
+                        ).length || 0}
+                      </span>
+                    </h6>
+                  </div>
+                  <div className="card-body">
+                    {selectedProject.members?.filter(
+                      (m) => m.role === "Reviewer",
+                    ).length > 0 ? (
+                      <div className="d-flex flex-wrap gap-4">
+                        {selectedProject.members
+                          ?.filter((m) => m.role === "Reviewer")
+                          .map((m) => (
+                            <div
+                              key={m.id}
+                              className="text-center"
+                              style={{ width: "80px" }}
+                            >
+                              <div className="avatar-sm mx-auto mb-2">
+                                <div className="avatar-title bg-soft-info text-info rounded-circle fw-bold">
+                                  {m.fullName?.charAt(0)}
+                                </div>
+                              </div>
+                              <p className="mb-0 fs-12 fw-bold text-truncate">
+                                {m.fullName}
+                              </p>
+                            </div>
+                          ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted small mb-0">
+                        Chưa có reviewer nào
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

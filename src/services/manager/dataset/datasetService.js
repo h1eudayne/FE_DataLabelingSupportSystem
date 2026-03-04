@@ -13,7 +13,8 @@ const datasetService = {
 
   getStats: (id) => axios.get(`/api/Project/${id}/stats`),
 
-  exportData: (id) => axios.get(`/api/Project/${id}/export`),
+  exportData: (id) =>
+    axios.get(`/api/projects/${id}/export`, { responseType: "blob" }),
 };
 
 export default datasetService;

@@ -20,6 +20,7 @@ import {
   Alert,
 } from "reactstrap";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 import projectService from "../../../services/manager/project/projectService";
 import disputeService from "../../../services/manager/dispute/disputeService";
 
@@ -35,11 +36,13 @@ const DisputeManagementPage = () => {
   const [isAccepted, setIsAccepted] = useState(true);
   const [managerComment, setManagerComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { user } = useSelector((state) => state.auth);
+  const managerId = user?.nameid;
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await projectService.getManagerProjects("me");
+        const res = await projectService.getManagerProjects(managerId);
         setProjects(res.data || []);
       } catch {
         toast.error("Không thể tải danh sách dự án");

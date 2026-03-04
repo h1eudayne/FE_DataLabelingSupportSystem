@@ -41,6 +41,8 @@ describe("datasetService", () => {
     expect(axios.get).toHaveBeenCalledWith("/api/Project/P1/stats");
 
     await datasetService.exportData("P1");
-    expect(axios.get).toHaveBeenCalledWith("/api/Project/P1/export");
+    expect(axios.get).toHaveBeenCalledWith("/api/projects/P1/export", {
+      responseType: "blob",
+    });
   });
 });

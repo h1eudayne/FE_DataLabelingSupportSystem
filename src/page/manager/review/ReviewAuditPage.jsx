@@ -20,6 +20,7 @@ import {
   Alert,
 } from "reactstrap";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 import projectService from "../../../services/manager/project/projectService";
 import reviewAuditService from "../../../services/manager/review/reviewAuditService";
 
@@ -35,11 +36,13 @@ const ReviewAuditPage = () => {
   const [isCorrectDecision, setIsCorrectDecision] = useState(true);
   const [auditComment, setAuditComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { user } = useSelector((state) => state.auth);
+  const managerId = user?.nameid;
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await projectService.getManagerProjects("me");
+        const res = await projectService.getManagerProjects(managerId);
         setProjects(res.data || []);
       } catch {
         toast.error("Không thể tải danh sách dự án");
@@ -224,7 +227,8 @@ const ReviewAuditPage = () => {
         >
           <ModalHeader toggle={() => setModalOpen(false)}>
             <i className="ri-shield-check-line me-2 text-info"></i>
-            Audit Review — Assignment #{selectedTask?.assignmentId || selectedTask?.id}
+            Audit Review — Assignment #
+            {selectedTask?.assignmentId || selectedTask?.id}
           </ModalHeader>
           <ModalBody>
             {selectedTask && (
@@ -247,8 +251,7 @@ const ReviewAuditPage = () => {
                   </Row>
                   {selectedTask.comment && (
                     <p className="mb-0 mt-2">
-                      <strong>Reviewer Comment:</strong>{" "}
-                      {selectedTask.comment}
+                      <strong>Reviewer Comment:</strong> {selectedTask.comment}
                     </p>
                   )}
                 </div>
