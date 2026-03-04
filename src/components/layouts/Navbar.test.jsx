@@ -81,7 +81,7 @@ describe("Navbar Component Integration Tests", () => {
     );
 
     const dashboardLink = screen.getByText(/Dashboard/i).closest("a");
-    expect(dashboardLink).toHaveAttribute("href", "/dashboard-analytics");
+    expect(dashboardLink).toHaveAttribute("href", "/dashboard");
 
     const userMgmtLink = screen.getByText(/User Management/i).closest("a");
     expect(userMgmtLink).toHaveAttribute("href", "/settings-user-management");

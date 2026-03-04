@@ -25,7 +25,7 @@ import ProjectImportData from "./page/manager/project/ProjectImportData";
 import ProjectAssignTask from "./page/manager/project/ProjectAssignTask";
 import CreateProject from "./page/manager/project/CreateProject";
 import ProjectsDatasetsPage from "./page/manager/datasets/ProjectsDatasetsPage";
-import DashboardAnalytics from "./page/manager/analytics/DashboardAnalyticsPage";
+
 import DisputeManagementPage from "./page/manager/dispute/DisputeManagementPage";
 import ReviewAuditPage from "./page/manager/review/ReviewAuditPage";
 import LoginPage from "./page/auth/login/LoginPage";
@@ -79,10 +79,6 @@ function App() {
           <Route
             element={<RoleProtectedRoute allowRoles={["Admin", "Manager"]} />}
           >
-            <Route
-              path="dashboard-analytics"
-              element={<DashboardAnalytics />}
-            />
             <Route
               path="projects-all-projects"
               element={<ProjectsAllProjectPage />}
