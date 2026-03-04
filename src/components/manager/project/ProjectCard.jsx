@@ -6,9 +6,14 @@ const ProjectCard = ({ project, onDelete }) => {
   const isAssigned = annotatorCount > 0;
 
   const totalItems = project.totalDataItems ?? 0;
-  const progress = Number(project.progress ?? 0);
-
+  const progress = Math.round(Number(project.progress ?? 0));
   const safeProgress = progress === 0 ? 1 : progress;
+
+  const deadlineStr = project.deadline
+    ? new Date(project.deadline).toLocaleDateString("vi-VN")
+    : "N/A";
+
+  const isExpired = project.status === "Expired";
 
   return (
     <div className="col-xxl-3 col-sm-6 mb-4">
@@ -23,36 +28,42 @@ const ProjectCard = ({ project, onDelete }) => {
               </h5>
               <small className="text-muted d-flex align-items-center">
                 <i className="ri-stack-line me-1 text-primary"></i>
-                Object Detection
+                {totalItems} data items
               </small>
             </div>
             <div className="flex-shrink-0">
-              <span
-                className={`badge ${
-                  isAssigned
-                    ? "bg-success-subtle text-success"
-                    : "bg-warning-subtle text-warning"
-                }`}
-              >
-                {isAssigned ? "Đã giao việc" : "Chưa giao"}
-              </span>
+              {isExpired ? (
+                <span className="badge bg-danger-subtle text-danger">
+                  Hết hạn
+                </span>
+              ) : isAssigned ? (
+                <span className="badge bg-success-subtle text-success">
+                  Đã giao việc
+                </span>
+              ) : (
+                <span className="badge bg-warning-subtle text-warning">
+                  Chưa giao
+                </span>
+              )}
             </div>
           </div>
 
           <div className="row gy-3 mb-4">
             <div className="col-6">
-              <p className="text-muted mb-1 small">Ngân sách</p>
-              <h6 className="mb-0 text-primary">
-                <i className="ri-money-dollar-circle-line me-1"></i>$0
-              </h6>
-            </div>
-            <div className="col-6 text-end">
               <p className="text-muted mb-1 small">Hạn chót</p>
               <h6 className="mb-0">
                 <i className="ri-calendar-event-line me-1 text-muted"></i>
-                {project.deadline
-                  ? new Date(project.deadline).toLocaleDateString()
-                  : "N/A"}
+                {deadlineStr}
+              </h6>
+            </div>
+            <div className="col-6 text-end">
+              <p className="text-muted mb-1 small">Trạng thái</p>
+              <h6 className="mb-0">
+                <span
+                  className={`badge ${isExpired ? "bg-danger" : "bg-success"}`}
+                >
+                  {project.status || "Active"}
+                </span>
               </h6>
             </div>
           </div>

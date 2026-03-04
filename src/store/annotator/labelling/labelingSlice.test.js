@@ -16,6 +16,15 @@ describe("labelingSlice", () => {
   it("nên xử lý setSelectedLabel", () => {
     const label = { id: 1, name: "Dog" };
     const state = labelingReducer(initialState, setSelectedLabel(label));
+    /**
+      labelingReducer(
+        initialState,
+        { 
+          type: "labeling/setSelectedLabel", 
+          payload: label 
+        }
+      )
+     */
     expect(state.selectedLabel).toEqual(label);
   });
 
@@ -25,6 +34,26 @@ describe("labelingSlice", () => {
       annotations: [{ id: "ann1", label: "Cat" }],
     };
     const state = labelingReducer(initialState, setAnnotations(payload));
+    /*
+    setAnnotations trả về: 
+      {
+        type: "labeling/setAnnotations",
+        payload: {
+          assignmentId: "A1",
+          annotations: [{ id: "ann1", label: "Cat" }]
+        }
+      }
+    */
+    /*
+      {
+        selectedLabel: null,
+        annotationsByAssignment: {
+          A1: [
+            { id: "ann1", label: "Cat" }
+          ]
+        }
+      }
+    */
     expect(state.annotationsByAssignment["A1"]).toHaveLength(1);
     expect(state.annotationsByAssignment["A1"][0].id).toBe("ann1");
   });

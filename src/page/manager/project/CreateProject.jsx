@@ -27,40 +27,57 @@ const CreateProject = () => {
 
   const [loading, setLoading] = useState(false);
   const [annotatorOptions, setAnnotatorOptions] = useState([]);
+  const [reviewerOptions, setReviewerOptions] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [selectedAnnotators, setSelectedAnnotators] = useState([]);
+  const [selectedReviewer, setSelectedReviewer] = useState(null);
 
   const [projectInfo, setProjectInfo] = useState({
     name: "",
     description: "",
-    type: "Bounding Box",
+    type: "Rectangle",
     deadline: "",
+    pricePerLabel: "",
+    totalBudget: "",
+    maxTaskDurationHours: 24,
+    penaltyUnit: 10,
+    annotationGuide: "",
   });
 
   const [labels, setLabels] = useState([
-    { name: "", guideline: "", color: "#0ab39c" },
+    { name: "", guideLine: "", color: "#0ab39c", checklist: [""] },
   ]);
 
   useEffect(() => {
-    const fetchAnnotators = async () => {
+    const fetchUsers = async () => {
       try {
         const res = await userService.getUsers();
-        const filtered = res.data
-          .filter((u) => u.role === "Annotator" || u.roleId === 2)
+        const annotators = res.data
+          .filter((u) => u.role === "Annotator")
           .map((u) => ({
             value: u.id,
             label: `${u.fullName || u.userName} (Annotator)`,
           }));
-        setAnnotatorOptions(filtered);
+        const reviewers = res.data
+          .filter((u) => u.role === "Reviewer")
+          .map((u) => ({
+            value: u.id,
+            label: `${u.fullName || u.userName} (Reviewer)`,
+          }));
+        setAnnotatorOptions(annotators);
+        setReviewerOptions(reviewers);
       } catch {
         toast.error("Không thể tải danh sách nhân viên");
       }
     };
-    fetchAnnotators();
+    fetchUsers();
   }, []);
 
   const addLabel = () =>
-    setLabels([...labels, { name: "", guideline: "", color: "#0ab39c" }]);
+    setLabels([
+      ...labels,
+      { name: "", guideLine: "", color: "#0ab39c", checklist: [""] },
+    ]);
 
   const removeLabel = (index) => {
     if (labels.length === 1) return toast.info("Phải có ít nhất một nhãn");
@@ -73,19 +90,68 @@ const CreateProject = () => {
     setLabels(clone);
   };
 
+  const addChecklistItem = (labelIndex) => {
+    const clone = [...labels];
+    clone[labelIndex].checklist.push("");
+    setLabels(clone);
+  };
+
+  const removeChecklistItem = (labelIndex, itemIndex) => {
+    const clone = [...labels];
+    clone[labelIndex].checklist = clone[labelIndex].checklist.filter(
+      (_, i) => i !== itemIndex,
+    );
+    setLabels(clone);
+  };
+
+  const updateChecklistItem = (labelIndex, itemIndex, value) => {
+    const clone = [...labels];
+    clone[labelIndex].checklist[itemIndex] = value;
+    setLabels(clone);
+  };
+
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     setSelectedFiles((prev) => [...prev, ...files]);
   };
 
+  const validateForm = () => {
+    if (!projectInfo.name.trim()) {
+      toast.warning("Vui lòng nhập tên dự án!");
+      return false;
+    }
+    if (!projectInfo.pricePerLabel || Number(projectInfo.pricePerLabel) <= 0) {
+      toast.warning("Vui lòng nhập giá mỗi nhãn hợp lệ!");
+      return false;
+    }
+    if (!projectInfo.totalBudget || Number(projectInfo.totalBudget) <= 0) {
+      toast.warning("Vui lòng nhập ngân sách hợp lệ!");
+      return false;
+    }
+    const validLabels = labels.filter((l) => l.name.trim());
+    if (validLabels.length === 0) {
+      toast.warning("Phải có ít nhất một nhãn được định nghĩa!");
+      return false;
+    }
+    if (!selectedFiles.length) {
+      toast.warning("Vui lòng chọn file ảnh!");
+      return false;
+    }
+    if (!selectedAnnotators.length) {
+      toast.warning("Vui lòng chọn ít nhất một Annotator!");
+      return false;
+    }
+    if (!selectedReviewer) {
+      toast.warning("Vui lòng chọn Reviewer cho dự án!");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmittingRef.current) return;
-
-    if (!selectedFiles.length || !selectedAnnotators.length) {
-      toast.warning("Vui lòng kiểm tra lại file và nhân viên!");
-      return;
-    }
+    if (!validateForm()) return;
 
     isSubmittingRef.current = true;
     setLoading(true);
@@ -94,18 +160,22 @@ const CreateProject = () => {
       const resProj = await projectService.createProject({
         name: projectInfo.name,
         description: projectInfo.description,
-        pricePerLabel: 10,
-        totalBudget: 1000,
+        pricePerLabel: Number(projectInfo.pricePerLabel),
+        totalBudget: Number(projectInfo.totalBudget),
         deadline: projectInfo.deadline
           ? new Date(projectInfo.deadline).toISOString()
           : new Date().toISOString(),
         allowGeometryTypes: projectInfo.type,
+        maxTaskDurationHours: Number(projectInfo.maxTaskDurationHours) || 24,
+        penaltyUnit: Number(projectInfo.penaltyUnit) || 10,
+        annotationGuide: projectInfo.annotationGuide || null,
         labelClasses: labels
-          .filter((l) => l.name)
+          .filter((l) => l.name.trim())
           .map((l) => ({
             name: l.name,
             color: l.color,
-            guideline: l.guideline,
+            guideLine: l.guideLine,
+            checklist: l.checklist.filter((c) => c.trim()),
           })),
       });
 
@@ -134,6 +204,7 @@ const CreateProject = () => {
             projectId: Number(projectId),
             annotatorId: String(selectedAnnotators[i].value),
             quantity: Number(qty),
+            reviewerId: String(selectedReviewer.value),
           });
           remaining -= qty;
         }
@@ -165,10 +236,11 @@ const CreateProject = () => {
               <Card className="shadow-sm border-0 mb-4">
                 <CardBody>
                   <div className="mb-3">
-                    <Label className="fw-bold">Tên dự án</Label>
+                    <Label className="fw-bold">Tên dự án *</Label>
                     <Input
                       required
                       placeholder="VD: Nhận diện biển số xe..."
+                      value={projectInfo.name}
                       onChange={(e) =>
                         setProjectInfo({ ...projectInfo, name: e.target.value })
                       }
@@ -180,6 +252,7 @@ const CreateProject = () => {
                       type="textarea"
                       rows="2"
                       placeholder="Mục tiêu dự án..."
+                      value={projectInfo.description}
                       onChange={(e) =>
                         setProjectInfo({
                           ...projectInfo,
@@ -193,6 +266,7 @@ const CreateProject = () => {
                       <Label className="fw-bold">Loại Tool</Label>
                       <select
                         className="form-select"
+                        value={projectInfo.type}
                         onChange={(e) =>
                           setProjectInfo({
                             ...projectInfo,
@@ -200,7 +274,7 @@ const CreateProject = () => {
                           })
                         }
                       >
-                        <option value="Bounding Box">Bounding Box</option>
+                        <option value="Rectangle">Bounding Box</option>
                         <option value="Polygon">Polygon</option>
                       </select>
                     </Col>
@@ -208,6 +282,7 @@ const CreateProject = () => {
                       <Label className="fw-bold">Hạn chót</Label>
                       <Input
                         type="date"
+                        value={projectInfo.deadline}
                         onChange={(e) =>
                           setProjectInfo({
                             ...projectInfo,
@@ -218,9 +293,91 @@ const CreateProject = () => {
                     </Col>
                   </Row>
 
+                  <Row className="mt-3">
+                    <Col md={6}>
+                      <Label className="fw-bold">Giá mỗi nhãn (VNĐ) *</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="VD: 5000"
+                        value={projectInfo.pricePerLabel}
+                        onChange={(e) =>
+                          setProjectInfo({
+                            ...projectInfo,
+                            pricePerLabel: e.target.value,
+                          })
+                        }
+                      />
+                    </Col>
+                    <Col md={6}>
+                      <Label className="fw-bold">Tổng ngân sách (VNĐ) *</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="VD: 10000000"
+                        value={projectInfo.totalBudget}
+                        onChange={(e) =>
+                          setProjectInfo({
+                            ...projectInfo,
+                            totalBudget: e.target.value,
+                          })
+                        }
+                      />
+                    </Col>
+                  </Row>
+
+                  <Row className="mt-3">
+                    <Col md={6}>
+                      <Label className="fw-bold">Thời hạn mỗi task (giờ)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={projectInfo.maxTaskDurationHours}
+                        onChange={(e) =>
+                          setProjectInfo({
+                            ...projectInfo,
+                            maxTaskDurationHours: e.target.value,
+                          })
+                        }
+                      />
+                    </Col>
+                    <Col md={6}>
+                      <Label className="fw-bold">Đơn vị phạt (điểm)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={projectInfo.penaltyUnit}
+                        onChange={(e) =>
+                          setProjectInfo({
+                            ...projectInfo,
+                            penaltyUnit: e.target.value,
+                          })
+                        }
+                      />
+                    </Col>
+                  </Row>
+
+                  <div className="mt-3">
+                    <Label className="fw-bold">Hướng dẫn chung</Label>
+                    <Input
+                      type="textarea"
+                      rows="2"
+                      placeholder="Hướng dẫn annotation chung cho dự án..."
+                      value={projectInfo.annotationGuide}
+                      onChange={(e) =>
+                        setProjectInfo({
+                          ...projectInfo,
+                          annotationGuide: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
                   <div className="mt-4">
                     <Label className="fw-bold text-dark">
-                      Dữ liệu đầu vào ({selectedFiles.length} file)
+                      Dữ liệu đầu vào ({selectedFiles.length} file) *
                     </Label>
                     <div
                       className="dropzone border-2 border-dashed rounded-3 p-4 text-center bg-light"
@@ -277,13 +434,16 @@ const CreateProject = () => {
               <Card className="shadow-sm border-0 mb-3">
                 <div className="card-header bg-soft-info py-2">
                   <h6 className="card-title mb-0 fs-13 fw-bold">
-                    DANH SÁCH NHÃN (LABELS)
+                    DANH SÁCH NHÃN (LABELS) *
                   </h6>
+                  <small className="text-muted">
+                    Mỗi nhãn có checklist — tick đầy đủ mới được gán nhãn
+                  </small>
                 </div>
                 <CardBody className="p-0">
                   <div
                     className="p-3"
-                    style={{ maxHeight: "300px", overflowY: "auto" }}
+                    style={{ maxHeight: "400px", overflowY: "auto" }}
                   >
                     {labels.map((label, index) => (
                       <div
@@ -316,12 +476,58 @@ const CreateProject = () => {
                         </div>
                         <Input
                           size="sm"
-                          placeholder="Hướng dẫn cho nhãn này..."
-                          value={label.guideline}
+                          placeholder="Hướng dẫn chung cho nhãn này..."
+                          value={label.guideLine}
                           onChange={(e) =>
-                            updateLabel(index, "guideline", e.target.value)
+                            updateLabel(index, "guideLine", e.target.value)
                           }
+                          className="mb-2"
                         />
+
+                        <div className="mt-2 ps-2 border-start border-2 border-info">
+                          <small className="text-muted fw-bold d-block mb-1">
+                            <i className="ri-checkbox-multiple-line me-1"></i>
+                            Checklist (tick đầy đủ mới gán nhãn):
+                          </small>
+                          {label.checklist.map((item, itemIdx) => (
+                            <div
+                              key={itemIdx}
+                              className="d-flex gap-1 mb-1 align-items-center"
+                            >
+                              <Input
+                                bsSize="sm"
+                                placeholder={`Điều kiện ${itemIdx + 1}...`}
+                                value={item}
+                                onChange={(e) =>
+                                  updateChecklistItem(
+                                    index,
+                                    itemIdx,
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                              {label.checklist.length > 1 && (
+                                <i
+                                  className="ri-close-line text-danger"
+                                  style={{
+                                    cursor: "pointer",
+                                    fontSize: "16px",
+                                  }}
+                                  onClick={() =>
+                                    removeChecklistItem(index, itemIdx)
+                                  }
+                                ></i>
+                              )}
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            className="btn btn-link btn-sm p-0 text-info"
+                            onClick={() => addChecklistItem(index)}
+                          >
+                            + Thêm điều kiện
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -336,17 +542,34 @@ const CreateProject = () => {
               <Card className="shadow-sm border-0 mb-3">
                 <div className="card-header bg-soft-dark py-2">
                   <h6 className="card-title mb-0 fs-13 fw-bold">
-                    PHÂN CÔNG NHÂN VIÊN
+                    PHÂN CÔNG NHÂN VIÊN *
                   </h6>
                 </div>
                 <CardBody>
-                  <Select
-                    isMulti
-                    options={annotatorOptions}
-                    placeholder="Tìm kiếm Annotator..."
-                    onChange={setSelectedAnnotators}
-                    className="basic-multi-select"
-                  />
+                  <div className="mb-3">
+                    <Label className="fw-bold small">
+                      Annotator (người gán nhãn)
+                    </Label>
+                    <Select
+                      isMulti
+                      options={annotatorOptions}
+                      placeholder="Tìm kiếm Annotator..."
+                      onChange={setSelectedAnnotators}
+                      className="basic-multi-select"
+                    />
+                  </div>
+                  <div>
+                    <Label className="fw-bold small">
+                      Reviewer (người kiểm tra) *
+                    </Label>
+                    <Select
+                      options={reviewerOptions}
+                      placeholder="Chọn Reviewer..."
+                      onChange={setSelectedReviewer}
+                      className="basic-select"
+                      isClearable
+                    />
+                  </div>
                 </CardBody>
               </Card>
 

@@ -24,11 +24,9 @@ const ProjectsAllProjectsPage = () => {
     const matchesStatus =
       filterStatus === "All" ||
       (filterStatus === "Active" && project.status === "Active") ||
-      (filterStatus === "Completed" && project.status === "Completed");
+      (filterStatus === "Expired" && project.status === "Expired");
     return matchesSearch && matchesStatus;
   });
-
-  console.log("filteredProjects", filteredProjects);
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
@@ -126,7 +124,7 @@ const ProjectsAllProjectsPage = () => {
             >
               <option value="All">Tất cả trạng thái</option>
               <option value="Active">Đang hoạt động</option>
-              <option value="Completed">Đã hoàn thành</option>
+              <option value="Expired">Hết hạn</option>
             </select>
           </div>
         </div>

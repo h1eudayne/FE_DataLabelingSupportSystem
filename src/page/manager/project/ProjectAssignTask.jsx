@@ -8,10 +8,11 @@ import Swal from "sweetalert2";
 const ProjectAssignTask = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [dataItems, setDataItems] = useState([]);
   const [annotators, setAnnotators] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [selectedUser, setSelectedUser] = useState("");
+  const [reviewers, setReviewers] = useState([]);
+  const [selectedAnnotator, setSelectedAnnotator] = useState("");
+  const [selectedReviewer, setSelectedReviewer] = useState("");
+  const [quantity, setQuantity] = useState("");
   const [loading, setLoading] = useState(false);
   const [projectInfo, setProjectInfo] = useState(null);
 
@@ -21,56 +22,53 @@ const ProjectAssignTask = () => {
       .getProjectDetail(id)
       .then((res) => {
         setProjectInfo(res.data);
-        setDataItems(res.data.dataItems || []);
       })
       .finally(() => setLoading(false));
 
     userService.getUsers().then((res) => {
-      const list = res.data.filter(
+      const annotatorList = res.data.filter(
         (u) => u.role?.toLowerCase() === "annotator",
       );
-      setAnnotators(list);
+      const reviewerList = res.data.filter(
+        (u) => u.role?.toLowerCase() === "reviewer",
+      );
+      setAnnotators(annotatorList);
+      setReviewers(reviewerList);
     });
   }, [id]);
 
   const handleAssign = async () => {
-    console.log("Dữ liệu chuẩn bị gửi:", {
-      projectId: id,
-      userIds: [selectedUser],
-      dataItemIds: selectedItems,
-      deadline: new Date().toISOString(),
-    });
-
-    if (!selectedUser || selectedItems.length === 0)
-      return alert("Vui lòng chọn ảnh và người làm!");
-    const payload = {
-      projectId: id,
-      userIds: [selectedUser],
-      dataItemIds: selectedItems,
-      deadline: new Date().toISOString(),
-    };
-    console.log("Dữ liệu gửi đi:", payload);
+    if (!selectedAnnotator) {
+      return Swal.fire("Cảnh báo", "Vui lòng chọn Annotator!", "warning");
+    }
+    if (!selectedReviewer) {
+      return Swal.fire("Cảnh báo", "Vui lòng chọn Reviewer!", "warning");
+    }
+    if (!quantity || Number(quantity) <= 0) {
+      return Swal.fire(
+        "Cảnh báo",
+        "Vui lòng nhập số lượng ảnh hợp lệ!",
+        "warning",
+      );
+    }
 
     setLoading(true);
     try {
-      const response = await taskService.assignTask({
-        projectId: id,
-        userIds: [selectedUser],
-        dataItemIds: selectedItems,
-        deadline: new Date().toISOString(),
+      await taskService.assignTask({
+        projectId: Number(id),
+        annotatorId: String(selectedAnnotator),
+        quantity: Number(quantity),
+        reviewerId: String(selectedReviewer),
       });
 
-      if (response.data && response.data.isSuccess === false) {
-        alert("Lỗi từ hệ thống: " + response.data.message);
-        return;
-      }
-
-      alert("Giao việc thành công!");
+      Swal.fire("Thành công!", "Giao việc thành công!", "success");
       navigate("/projects-all-projects");
     } catch (error) {
       console.error("Chi tiết lỗi API:", error.response?.data);
-      alert(
-        "Lỗi giao việc: " + (error.response?.data?.message || "Không xác định"),
+      Swal.fire(
+        "Lỗi!",
+        error.response?.data?.message || "Không thể giao việc",
+        "error",
       );
     } finally {
       setLoading(false);
@@ -79,6 +77,12 @@ const ProjectAssignTask = () => {
 
   if (loading && !projectInfo)
     return <div className="p-5 text-center">Đang tải...</div>;
+
+  const totalItems = projectInfo?.totalDataItems ?? 0;
+  const assignedItems =
+    projectInfo?.members?.reduce((sum, m) => sum + (m.tasksAssigned || 0), 0) ??
+    0;
+  const availableItems = totalItems - assignedItems;
 
   return (
     <div className="page-content">
@@ -92,45 +96,75 @@ const ProjectAssignTask = () => {
         <div className="row">
           <div className="col-lg-8">
             <div className="card shadow-sm">
-              <div className="card-header bg-light d-flex justify-content-between">
-                <h6 className="card-title mb-0">
-                  Chọn dữ liệu ảnh ({selectedItems.length}/{dataItems.length})
-                </h6>
+              <div className="card-header bg-light">
+                <h6 className="card-title mb-0">Thông tin dự án</h6>
               </div>
-              <div
-                className="card-body"
-                style={{ maxHeight: "500px", overflowY: "auto" }}
-              >
-                <div className="d-flex flex-wrap gap-2">
-                  {dataItems.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() =>
-                        setSelectedItems((prev) =>
-                          prev.includes(item.id)
-                            ? prev.filter((i) => i !== item.id)
-                            : [...prev, item.id],
-                        )
-                      }
-                      className={`position-relative border rounded p-1 ${selectedItems.includes(item.id) ? "border-primary bg-soft-primary" : "border-transparent"}`}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <img
-                        src={item.storageUrl}
-                        alt="task"
-                        width="120"
-                        height="90"
-                        style={{ objectFit: "cover" }}
-                        className="rounded"
-                      />
-                      {selectedItems.includes(item.id) && (
-                        <div className="position-absolute top-0 end-0 p-1">
-                          <i className="ri-checkbox-circle-fill text-primary"></i>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+              <div className="card-body">
+                <div className="row mb-3">
+                  <div className="col-md-4">
+                    <p className="text-muted mb-1 small">Tổng ảnh</p>
+                    <h5 className="text-primary">{totalItems}</h5>
+                  </div>
+                  <div className="col-md-4">
+                    <p className="text-muted mb-1 small">Đã phân công</p>
+                    <h5 className="text-warning">{assignedItems}</h5>
+                  </div>
+                  <div className="col-md-4">
+                    <p className="text-muted mb-1 small">Còn trống</p>
+                    <h5 className="text-success">{availableItems}</h5>
+                  </div>
                 </div>
+
+                <div className="mb-3">
+                  <h6 className="fw-bold mb-2">Nhãn dự án:</h6>
+                  <div className="d-flex flex-wrap gap-2">
+                    {projectInfo?.labels?.map((l) => (
+                      <span
+                        key={l.id}
+                        className="badge"
+                        style={{
+                          backgroundColor: l.color + "20",
+                          color: l.color,
+                          border: `1px solid ${l.color}`,
+                        }}
+                      >
+                        {l.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {projectInfo?.members?.length > 0 && (
+                  <div>
+                    <h6 className="fw-bold mb-2">Đã phân công:</h6>
+                    <div className="table-responsive">
+                      <table className="table table-sm table-bordered">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Tên</th>
+                            <th>Vai trò</th>
+                            <th>Tasks</th>
+                            <th>Hoàn thành</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {projectInfo.members.map((m) => (
+                            <tr key={m.id}>
+                              <td>{m.fullName}</td>
+                              <td>
+                                <span className="badge bg-soft-info text-info">
+                                  {m.role}
+                                </span>
+                              </td>
+                              <td>{m.tasksAssigned}</td>
+                              <td>{m.tasksCompleted}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -148,35 +182,18 @@ const ProjectAssignTask = () => {
             <div className="card shadow-sm">
               <div className="card-body">
                 <h6 className="fw-bold mb-3 text-uppercase fs-12">
-                  Danh mục nhãn dự án
+                  Giao việc mới
                 </h6>
-                <div className="d-flex flex-wrap gap-2 mb-4">
-                  {projectInfo?.labelClasses?.map((l) => (
-                    <span
-                      key={l.id}
-                      className="badge"
-                      style={{
-                        backgroundColor: l.color + "20",
-                        color: l.color,
-                        border: `1px solid ${l.color}`,
-                      }}
-                    >
-                      {l.name}
-                    </span>
-                  ))}
-                </div>
 
-                <div className="mb-4">
-                  <label className="form-label fw-bold">
-                    Chọn Annotator thực hiện
-                  </label>
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Chọn Annotator *</label>
                   <select
                     className="form-select"
-                    value={selectedUser}
-                    onChange={(e) => setSelectedUser(e.target.value)}
+                    value={selectedAnnotator}
+                    onChange={(e) => setSelectedAnnotator(e.target.value)}
                   >
                     <option value="">
-                      -- Chọn nhân viên ({annotators.length}) --
+                      -- Chọn Annotator ({annotators.length}) --
                     </option>
                     {annotators.map((u) => (
                       <option key={u.id} value={u.id}>
@@ -186,10 +203,46 @@ const ProjectAssignTask = () => {
                   </select>
                 </div>
 
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Chọn Reviewer *</label>
+                  <select
+                    className="form-select"
+                    value={selectedReviewer}
+                    onChange={(e) => setSelectedReviewer(e.target.value)}
+                  >
+                    <option value="">
+                      -- Chọn Reviewer ({reviewers.length}) --
+                    </option>
+                    {reviewers.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.fullName} ({u.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="form-label fw-bold">
+                    Số lượng ảnh giao *
+                  </label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    min="1"
+                    max={availableItems}
+                    placeholder={`Tối đa: ${availableItems}`}
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                  />
+                  <small className="text-muted">
+                    Có {availableItems} ảnh chưa phân công
+                  </small>
+                </div>
+
                 <button
                   className="btn btn-success w-100 py-2 fw-bold"
                   onClick={handleAssign}
-                  disabled={loading || dataItems.length === 0}
+                  disabled={loading || availableItems === 0}
                 >
                   {loading ? "Đang xử lý..." : "XÁC NHẬN GIAO VIỆC"}
                 </button>

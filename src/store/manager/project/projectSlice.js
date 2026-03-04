@@ -1,42 +1,47 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import projectService from "../../../services/manager/project/projectService";
 
-export const createProjectWithLabels = createAsyncThunk(
-  "projects/createWithLabels",
-  async ({ projectData, labels }, { rejectWithValue }) => {
+export const fetchProjects = createAsyncThunk(
+  "projects/fetchAll",
+  async (_, { getState, rejectWithValue }) => {
     try {
-      const projectRes = await projectService.createProject(projectData);
-      const newProjectId = projectRes.data.id;
+      const state = getState();
+      const user = state.auth?.user;
+      const managerId = user?.nameid;
 
-      if (labels && labels.length > 0) {
-        const labelPromises = labels.map((label) =>
-          projectService.createLabel({ ...label, projectId: newProjectId }),
-        );
-        await Promise.all(labelPromises);
+      if (!managerId) {
+        throw new Error("Manager ID not found in token");
       }
-      return projectRes.data;
+
+      const response = await projectService.getManagerProjects(managerId);
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch projects",
+      );
     }
   },
 );
-
-export const fetchProjects = createAsyncThunk("projects/fetchAll", async () => {
-  const response = await projectService.getManagerProjects();
-  return response.data;
-});
 
 const projectSlice = createSlice({
   name: "projects",
   initialState: { items: [], loading: false, error: null },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchProjects.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchProjects.fulfilled, (state, action) => {
         state.items = action.payload;
         state.loading = false;
+        state.error = null;
       })
-      .addCase(createProjectWithLabels.fulfilled, (state, action) => {
-        state.items.unshift(action.payload);
+      .addCase(fetchProjects.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch projects";
       });
   },
 });

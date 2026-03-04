@@ -6,7 +6,7 @@ describe("Axios Customize Instance", () => {
   let mock;
 
   beforeEach(async () => {
-    vi.stubEnv("VITE_BACKEND_URL", "http://localhost:8080");
+    vi.stubEnv("VITE_BACKEND_URL", "http://localhost:7025");
 
     vi.resetModules();
 
@@ -20,7 +20,7 @@ describe("Axios Customize Instance", () => {
   });
 
   it("nên có cấu hình baseURL và timeout chính xác", () => {
-    expect(instance.defaults.baseURL).toBe("http://localhost:8080");
+    expect(instance.defaults.baseURL).toBe("http://localhost:7025");
     expect(instance.defaults.timeout).toBe(20000);
   });
 
@@ -31,8 +31,24 @@ describe("Axios Customize Instance", () => {
     mock.onGet("/test").reply((config) => {
       return [200, { auth: config.headers.Authorization }];
     });
-
+    /*
+      config = {
+        url: "/test",
+        method: "get",
+        headers: {
+          Authorization: "Bearer test-token-123"
+        }
+      }
+    */
     const response = await instance.get("/test");
+    /*
+      [
+        200,
+        {
+          auth: "Bearer test-token-123"
+        }
+      ]
+    */
     expect(response.data.auth).toBe(`Bearer ${testToken}`);
   });
 
