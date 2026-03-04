@@ -4,11 +4,87 @@ import { toast } from "react-toastify";
 import projectService from "../services/manager/project/projectService";
 import datasetService from "../services/manager/dataset/datasetService";
 
+const EXPORT_FORMATS = [
+  { value: "json", label: "JSON", mime: "application/json", ext: ".json" },
+  { value: "csv", label: "CSV", mime: "text/csv", ext: ".csv" },
+  { value: "xml", label: "XML", mime: "application/xml", ext: ".xml" },
+];
+
+const convertToCSV = (data) => {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    if (typeof data === "object" && !Array.isArray(data)) {
+      data = [data];
+    } else {
+      return "";
+    }
+  }
+  const flattenObj = (obj, prefix = "") => {
+    const result = {};
+    for (const key of Object.keys(obj)) {
+      const fullKey = prefix ? `${prefix}.${key}` : key;
+      if (
+        obj[key] !== null &&
+        typeof obj[key] === "object" &&
+        !Array.isArray(obj[key])
+      ) {
+        Object.assign(result, flattenObj(obj[key], fullKey));
+      } else {
+        result[fullKey] = Array.isArray(obj[key])
+          ? JSON.stringify(obj[key])
+          : obj[key];
+      }
+    }
+    return result;
+  };
+
+  const flatData = data.map((item) => flattenObj(item));
+  const headers = [...new Set(flatData.flatMap((d) => Object.keys(d)))];
+  const csvRows = [headers.join(",")];
+
+  for (const row of flatData) {
+    const values = headers.map((h) => {
+      const val = row[h] ?? "";
+      const str = String(val);
+      return str.includes(",") || str.includes('"') || str.includes("\n")
+        ? `"${str.replace(/"/g, '""')}"`
+        : str;
+    });
+    csvRows.push(values.join(","));
+  }
+  return csvRows.join("\n");
+};
+
+const convertToXML = (data, rootName = "export") => {
+  const escapeXml = (str) =>
+    String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const toXml = (obj, tag = "item") => {
+    if (Array.isArray(obj)) {
+      return obj.map((item) => toXml(item, tag)).join("\n");
+    }
+    if (typeof obj === "object" && obj !== null) {
+      const inner = Object.entries(obj)
+        .map(([key, val]) => toXml(val, key))
+        .join("\n");
+      return `<${tag}>\n${inner}\n</${tag}>`;
+    }
+    return `<${tag}>${escapeXml(obj)}</${tag}>`;
+  };
+
+  const items = Array.isArray(data) ? data : [data];
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<${rootName}>\n${items.map((item) => toXml(item, "item")).join("\n")}\n</${rootName}>`;
+};
+
 const ExportPage = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [exportingId, setExportingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFormat, setSelectedFormat] = useState("json");
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.nameid;
 
@@ -31,16 +107,44 @@ const ExportPage = () => {
     setExportingId(project.id);
     try {
       const res = await datasetService.exportData(project.id);
-      const blob = new Blob([res.data], { type: "application/json" });
+      const format = EXPORT_FORMATS.find((f) => f.value === selectedFormat);
+      let content;
+      let rawData = res.data;
+
+      if (typeof rawData === "string") {
+        try {
+          rawData = JSON.parse(rawData);
+        } catch {
+          // keep as string
+        }
+      }
+
+      switch (selectedFormat) {
+        case "csv":
+          content = convertToCSV(rawData);
+          break;
+        case "xml":
+          content = convertToXML(rawData, "projectExport");
+          break;
+        default:
+          content =
+            typeof rawData === "string"
+              ? rawData
+              : JSON.stringify(rawData, null, 2);
+      }
+
+      const blob = new Blob([content], { type: format.mime });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `project_${project.id}_export_${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `project_${project.id}_export_${new Date().toISOString().slice(0, 10)}${format.ext}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      toast.success(`Đã xuất dữ liệu "${project.name}" thành công!`);
+      toast.success(
+        `Đã xuất "${project.name}" dạng ${format.label} thành công!`,
+      );
     } catch {
       toast.error("Xuất dữ liệu thất bại.");
     } finally {
@@ -51,6 +155,8 @@ const ExportPage = () => {
   const filteredProjects = projects.filter((p) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const currentFormat = EXPORT_FORMATS.find((f) => f.value === selectedFormat);
 
   return (
     <>
@@ -81,7 +187,25 @@ const ExportPage = () => {
             <i className="ri-search-line search-icon"></i>
           </div>
         </div>
-        <div className="col-lg-8 text-end">
+        <div className="col-lg-4">
+          <div className="d-flex align-items-center gap-2">
+            <label className="form-label mb-0 fw-bold text-nowrap">
+              Định dạng:
+            </label>
+            <select
+              className="form-select"
+              value={selectedFormat}
+              onChange={(e) => setSelectedFormat(e.target.value)}
+            >
+              {EXPORT_FORMATS.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label} ({f.ext})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="col-lg-4 text-end d-flex align-items-center justify-content-end">
           <span className="text-muted">
             Tổng: <b>{filteredProjects.length}</b> dự án
           </span>
@@ -174,7 +298,7 @@ const ExportPage = () => {
                               ) : (
                                 <>
                                   <i className="ri-file-download-line me-1"></i>
-                                  Export JSON
+                                  Export {currentFormat?.label}
                                 </>
                               )}
                             </button>
