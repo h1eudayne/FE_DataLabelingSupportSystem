@@ -16,7 +16,7 @@ const Navbar = () => {
     // padding: "12px 20px",
     borderRadius: "8px",
     // margin: "4px 10px",
-    marginTop: "25px",
+    marginTop: "12px",
   };
 
   const iconStyle = {
@@ -86,21 +86,18 @@ const Navbar = () => {
         </Link>
       </div>
 
-      <SimpleBar style={{ maxHeight: "100%" }} className="h-100">
+      <div>
         <ul
           className="navbar-nav d-flex flex-column h-100"
           id="navbar-nav"
           style={{
             minHeight: "calc(100vh - 60px)",
-            gap: "50px",
+            gap: "8px",
           }}
         >
           <div className="flex-grow-1">
             {["Admin", "Manager"].includes(role) && (
               <>
-                <li className="menu-title">
-                  <span style={{ transition: "0.3s" }}>Main</span>
-                </li>
                 <li className="nav-item">
                   <Link
                     className="nav-link menu-link fs-18"
@@ -115,9 +112,6 @@ const Navbar = () => {
                   </Link>
                 </li>
 
-                <li className="menu-title">
-                  <span>Management</span>
-                </li>
                 <li className="nav-item">
                   <Link
                     className="nav-link menu-link fs-18"
@@ -188,9 +182,6 @@ const Navbar = () => {
 
             {["Annotator", "Reviewer"].includes(role) && (
               <>
-                {/* <li className="menu-title">
-                  <span>Workplace</span>
-                </li> */}
                 <li className="nav-item">
                   <Link
                     className="nav-link menu-link fs-18"
@@ -319,7 +310,7 @@ const Navbar = () => {
             )}
           </div>
         </ul>
-      </SimpleBar>
+      </div>
     </div>
   );
 };
