@@ -188,84 +188,148 @@ const DashboardAnalytics = () => {
   }
 
   return (
-    <div className="page-content">
-      <Container fluid>
-        <Row>
-          <Col md={2}>
-            <StatCard
-              title="Tổng Task"
-              value={stats.totalAssigned}
-              icon={Database}
-              color="primary"
-            />
-          </Col>
-          <Col md={2}>
-            <StatCard
-              title="Hoàn thành"
-              value={stats.completed}
-              icon={CheckCircle}
-              color="success"
-            />
-          </Col>
-          <Col md={2}>
-            <StatCard
-              title="Đang chờ"
-              value={stats.pending}
-              icon={Clock}
-              color="warning"
-            />
-          </Col>
-          <Col md={2}>
-            <StatCard
-              title="Bị từ chối"
-              value={stats.rejected}
-              icon={AlertTriangle}
-              color="danger"
-            />
-          </Col>
-          <Col md={2}>
-            <StatCard
-              title="Tỷ lệ Reject"
-              value={`${rejectionRate}%`}
-              icon={TrendingDown}
-              color="danger"
-            />
-          </Col>
-          <Col md={2}>
-            <StatCard
-              title="Nhân sự"
-              value={totalAnnotators}
-              icon={Users}
-              color="info"
-            />
-          </Col>
-        </Row>
+    <>
+      <Row>
+        <Col md={2}>
+          <StatCard
+            title="Tổng Task"
+            value={stats.totalAssigned}
+            icon={Database}
+            color="primary"
+          />
+        </Col>
+        <Col md={2}>
+          <StatCard
+            title="Hoàn thành"
+            value={stats.completed}
+            icon={CheckCircle}
+            color="success"
+          />
+        </Col>
+        <Col md={2}>
+          <StatCard
+            title="Đang chờ"
+            value={stats.pending}
+            icon={Clock}
+            color="warning"
+          />
+        </Col>
+        <Col md={2}>
+          <StatCard
+            title="Bị từ chối"
+            value={stats.rejected}
+            icon={AlertTriangle}
+            color="danger"
+          />
+        </Col>
+        <Col md={2}>
+          <StatCard
+            title="Tỷ lệ Reject"
+            value={`${rejectionRate}%`}
+            icon={TrendingDown}
+            color="danger"
+          />
+        </Col>
+        <Col md={2}>
+          <StatCard
+            title="Nhân sự"
+            value={totalAnnotators}
+            icon={Users}
+            color="info"
+          />
+        </Col>
+      </Row>
 
-        <Row className="mt-4">
-          <Col xl={8}>
+      <Row className="mt-3">
+        <Col xl={8}>
+          <Card className="shadow-sm border-0 h-100">
+            <CardHeader className="bg-white border-bottom">
+              <h5 className="mb-0">So sánh quy mô dữ liệu dự án</h5>
+            </CardHeader>
+            <CardBody>
+              <div style={{ width: "100%", height: 280 }}>
+                <ResponsiveContainer>
+                  <BarChart data={projectChartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" fontSize={12} />
+                    <YAxis allowDecimals={false} fontSize={12} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar
+                      dataKey="total"
+                      fill="#405189"
+                      name="Tổng dữ liệu"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="completed"
+                      fill="#0ab39c"
+                      name="Đã hoàn thành"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardBody>
+          </Card>
+        </Col>
+
+        <Col xl={4}>
+          <Card className="shadow-sm border-0 h-100">
+            <CardHeader className="bg-white border-bottom">
+              <h5 className="mb-0">Cơ cấu trạng thái Task</h5>
+            </CardHeader>
+            <CardBody>
+              <div style={{ width: "100%", height: 280 }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Hoàn thành", value: stats.completed },
+                        { name: "Đang chờ", value: stats.pending },
+                        { name: "Đã nộp", value: stats.submitted },
+                        { name: "Bị từ chối", value: stats.rejected },
+                      ]}
+                      innerRadius={70}
+                      outerRadius={100}
+                      dataKey="value"
+                    >
+                      {COLORS.map((color, index) => (
+                        <Cell key={index} fill={color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row className="mt-3">
+        {errorBreakdown.length > 0 && (
+          <Col xl={6}>
             <Card className="shadow-sm border-0 h-100">
               <CardHeader className="bg-white border-bottom">
-                <h5 className="mb-0">So sánh quy mô dữ liệu dự án</h5>
+                <h5 className="mb-0">
+                  <i className="ri-bug-line me-2 text-danger"></i>
+                  Phân loại lỗi (Error Breakdown)
+                </h5>
               </CardHeader>
               <CardBody>
-                <div style={{ width: "100%", height: 350 }}>
+                <div style={{ width: "100%", height: 250 }}>
                   <ResponsiveContainer>
-                    <BarChart data={projectChartData}>
+                    <BarChart data={errorBreakdown}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="name" fontSize={12} />
                       <YAxis allowDecimals={false} fontSize={12} />
                       <Tooltip />
-                      <Legend />
                       <Bar
-                        dataKey="total"
-                        fill="#405189"
-                        name="Tổng dữ liệu"
-                        radius={[4, 4, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="completed"
-                        fill="#0ab39c"
-                        name="Đã hoàn thành"
+                        dataKey="value"
+                        fill="#f06548"
+                        name="Số lỗi"
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
@@ -274,29 +338,35 @@ const DashboardAnalytics = () => {
               </CardBody>
             </Card>
           </Col>
+        )}
 
-          <Col xl={4}>
+        {labelDistributions.length > 0 && (
+          <Col xl={errorBreakdown.length > 0 ? 6 : 12}>
             <Card className="shadow-sm border-0 h-100">
               <CardHeader className="bg-white border-bottom">
-                <h5 className="mb-0">Cơ cấu trạng thái Task</h5>
+                <h5 className="mb-0">
+                  <i className="ri-price-tag-3-line me-2 text-primary"></i>
+                  Phân bố nhãn (Label Distribution)
+                </h5>
               </CardHeader>
               <CardBody>
-                <div style={{ width: "100%", height: 350 }}>
+                <div style={{ width: "100%", height: 250 }}>
                   <ResponsiveContainer>
                     <PieChart>
                       <Pie
-                        data={[
-                          { name: "Hoàn thành", value: stats.completed },
-                          { name: "Đang chờ", value: stats.pending },
-                          { name: "Đã nộp", value: stats.submitted },
-                          { name: "Bị từ chối", value: stats.rejected },
-                        ]}
-                        innerRadius={70}
-                        outerRadius={100}
+                        data={labelDistributions}
+                        innerRadius={60}
+                        outerRadius={90}
                         dataKey="value"
+                        label={({ name, percent }) =>
+                          `${name} ${(percent * 100).toFixed(0)}%`
+                        }
                       >
-                        {COLORS.map((color, index) => (
-                          <Cell key={index} fill={color} />
+                        {labelDistributions.map((_, index) => (
+                          <Cell
+                            key={index}
+                            fill={COLORS[index % COLORS.length]}
+                          />
                         ))}
                       </Pie>
                       <Tooltip />
@@ -307,223 +377,147 @@ const DashboardAnalytics = () => {
               </CardBody>
             </Card>
           </Col>
-        </Row>
-
-        <Row className="mt-4">
-          {errorBreakdown.length > 0 && (
-            <Col xl={6}>
-              <Card className="shadow-sm border-0 h-100">
-                <CardHeader className="bg-white border-bottom">
-                  <h5 className="mb-0">
-                    <i className="ri-bug-line me-2 text-danger"></i>
-                    Phân loại lỗi (Error Breakdown)
-                  </h5>
-                </CardHeader>
-                <CardBody>
-                  <div style={{ width: "100%", height: 300 }}>
-                    <ResponsiveContainer>
-                      <BarChart data={errorBreakdown}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="name" fontSize={12} />
-                        <YAxis allowDecimals={false} fontSize={12} />
-                        <Tooltip />
-                        <Bar
-                          dataKey="value"
-                          fill="#f06548"
-                          name="Số lỗi"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardBody>
-              </Card>
-            </Col>
-          )}
-
-          {labelDistributions.length > 0 && (
-            <Col xl={errorBreakdown.length > 0 ? 6 : 12}>
-              <Card className="shadow-sm border-0 h-100">
-                <CardHeader className="bg-white border-bottom">
-                  <h5 className="mb-0">
-                    <i className="ri-price-tag-3-line me-2 text-primary"></i>
-                    Phân bố nhãn (Label Distribution)
-                  </h5>
-                </CardHeader>
-                <CardBody>
-                  <div style={{ width: "100%", height: 300 }}>
-                    <ResponsiveContainer>
-                      <PieChart>
-                        <Pie
-                          data={labelDistributions}
-                          innerRadius={60}
-                          outerRadius={90}
-                          dataKey="value"
-                          label={({ name, percent }) =>
-                            `${name} ${(percent * 100).toFixed(0)}%`
-                          }
-                        >
-                          {labelDistributions.map((_, index) => (
-                            <Cell
-                              key={index}
-                              fill={COLORS[index % COLORS.length]}
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardBody>
-              </Card>
-            </Col>
-          )}
-        </Row>
-
-        {annotatorPerformances.length > 0 && (
-          <Row className="mt-4">
-            <Col xl={12}>
-              <Card className="shadow-sm border-0">
-                <CardHeader className="bg-white border-bottom">
-                  <h5 className="mb-0">
-                    <i className="ri-user-star-line me-2 text-success"></i>
-                    Hiệu suất Annotator
-                  </h5>
-                </CardHeader>
-                <CardBody>
-                  <div className="table-responsive">
-                    <Table className="table-hover align-middle mb-0">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Annotator</th>
-                          <th className="text-center">Được giao</th>
-                          <th className="text-center">Hoàn thành</th>
-                          <th className="text-center">Bị từ chối</th>
-                          <th className="text-center">Quality Score</th>
-                          <th className="text-center">Lỗi nghiêm trọng</th>
-                          <th>Tiến độ</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {annotatorPerformances.map((a) => {
-                          const completionRate =
-                            a.tasksAssigned > 0
-                              ? Math.round(
-                                  (a.tasksCompleted / a.tasksAssigned) * 100,
-                                )
-                              : 0;
-                          return (
-                            <tr key={a.annotatorId}>
-                              <td className="fw-semibold">
-                                {a.annotatorName || a.annotatorId}
-                              </td>
-                              <td className="text-center">{a.tasksAssigned}</td>
-                              <td className="text-center text-success fw-bold">
-                                {a.tasksCompleted}
-                              </td>
-                              <td className="text-center">
-                                {a.tasksRejected > 0 ? (
-                                  <Badge color="danger">
-                                    {a.tasksRejected}
-                                  </Badge>
-                                ) : (
-                                  <span className="text-muted">0</span>
-                                )}
-                              </td>
-                              <td className="text-center">
-                                <Badge
-                                  color={
-                                    a.averageQualityScore >= 80
-                                      ? "success"
-                                      : a.averageQualityScore >= 50
-                                        ? "warning"
-                                        : "danger"
-                                  }
-                                >
-                                  {(a.averageQualityScore ?? 0).toFixed(0)}
-                                </Badge>
-                              </td>
-                              <td className="text-center">
-                                {a.totalCriticalErrors > 0 ? (
-                                  <Badge color="danger">
-                                    {a.totalCriticalErrors}
-                                  </Badge>
-                                ) : (
-                                  <span className="text-muted">0</span>
-                                )}
-                              </td>
-                              <td style={{ minWidth: "150px" }}>
-                                <div className="d-flex align-items-center gap-2">
-                                  <Progress
-                                    value={completionRate}
-                                    color={
-                                      completionRate >= 80
-                                        ? "success"
-                                        : completionRate >= 50
-                                          ? "warning"
-                                          : "danger"
-                                    }
-                                    className="flex-grow-1"
-                                    style={{ height: "6px" }}
-                                  />
-                                  <small className="text-muted fw-bold">
-                                    {completionRate}%
-                                  </small>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </Table>
-                  </div>
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
         )}
+      </Row>
 
-        <Row className="mt-4">
+      {annotatorPerformances.length > 0 && (
+        <Row className="mt-3">
           <Col xl={12}>
             <Card className="shadow-sm border-0">
               <CardHeader className="bg-white border-bottom">
                 <h5 className="mb-0">
-                  Top 5 Annotators làm việc hiệu quả nhất
+                  <i className="ri-user-star-line me-2 text-success"></i>
+                  Hiệu suất Annotator
                 </h5>
               </CardHeader>
               <CardBody>
-                <div style={{ width: "100%", height: 300 }}>
-                  <ResponsiveContainer>
-                    <BarChart
-                      data={annotatorData}
-                      layout="vertical"
-                      margin={{ left: 60, right: 30 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        horizontal
-                        vertical={false}
-                      />
-                      <XAxis type="number" hide />
-                      <YAxis dataKey="name" type="category" width={120} />
-                      <Tooltip />
-                      <Bar
-                        dataKey="taskCount"
-                        fill="#4b38b3"
-                        name="Số task được giao"
-                        barSize={24}
-                        radius={[0, 4, 4, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className="table-responsive">
+                  <Table className="table-hover align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Annotator</th>
+                        <th className="text-center">Được giao</th>
+                        <th className="text-center">Hoàn thành</th>
+                        <th className="text-center">Bị từ chối</th>
+                        <th className="text-center">Quality Score</th>
+                        <th className="text-center">Lỗi nghiêm trọng</th>
+                        <th>Tiến độ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {annotatorPerformances.map((a) => {
+                        const completionRate =
+                          a.tasksAssigned > 0
+                            ? Math.round(
+                                (a.tasksCompleted / a.tasksAssigned) * 100,
+                              )
+                            : 0;
+                        return (
+                          <tr key={a.annotatorId}>
+                            <td className="fw-semibold">
+                              {a.annotatorName || a.annotatorId}
+                            </td>
+                            <td className="text-center">{a.tasksAssigned}</td>
+                            <td className="text-center text-success fw-bold">
+                              {a.tasksCompleted}
+                            </td>
+                            <td className="text-center">
+                              {a.tasksRejected > 0 ? (
+                                <Badge color="danger">{a.tasksRejected}</Badge>
+                              ) : (
+                                <span className="text-muted">0</span>
+                              )}
+                            </td>
+                            <td className="text-center">
+                              <Badge
+                                color={
+                                  a.averageQualityScore >= 80
+                                    ? "success"
+                                    : a.averageQualityScore >= 50
+                                      ? "warning"
+                                      : "danger"
+                                }
+                              >
+                                {(a.averageQualityScore ?? 0).toFixed(0)}
+                              </Badge>
+                            </td>
+                            <td className="text-center">
+                              {a.totalCriticalErrors > 0 ? (
+                                <Badge color="danger">
+                                  {a.totalCriticalErrors}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted">0</span>
+                              )}
+                            </td>
+                            <td style={{ minWidth: "150px" }}>
+                              <div className="d-flex align-items-center gap-2">
+                                <Progress
+                                  value={completionRate}
+                                  color={
+                                    completionRate >= 80
+                                      ? "success"
+                                      : completionRate >= 50
+                                        ? "warning"
+                                        : "danger"
+                                  }
+                                  className="flex-grow-1"
+                                  style={{ height: "6px" }}
+                                />
+                                <small className="text-muted fw-bold">
+                                  {completionRate}%
+                                </small>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
                 </div>
               </CardBody>
             </Card>
           </Col>
         </Row>
-      </Container>
-    </div>
+      )}
+
+      <Row className="mt-3">
+        <Col xl={12}>
+          <Card className="shadow-sm border-0">
+            <CardHeader className="bg-white border-bottom">
+              <h5 className="mb-0">Top 5 Annotators làm việc hiệu quả nhất</h5>
+            </CardHeader>
+            <CardBody>
+              <div style={{ width: "100%", height: 250 }}>
+                <ResponsiveContainer>
+                  <BarChart
+                    data={annotatorData}
+                    layout="vertical"
+                    margin={{ left: 60, right: 30 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      horizontal
+                      vertical={false}
+                    />
+                    <XAxis type="number" hide />
+                    <YAxis dataKey="name" type="category" width={120} />
+                    <Tooltip />
+                    <Bar
+                      dataKey="taskCount"
+                      fill="#4b38b3"
+                      name="Số task được giao"
+                      barSize={24}
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
+    </>
   );
 };
 
