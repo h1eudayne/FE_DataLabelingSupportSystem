@@ -3,6 +3,8 @@ import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import projectService from "../services/manager/project/projectService";
 import datasetService from "../services/manager/dataset/datasetService";
+import analyticsService from "../services/manager/analytics/analyticsService";
+import disputeService from "../services/manager/dispute/disputeService";
 
 const EXPORT_FORMATS = [
   { value: "json", label: "JSON", mime: "application/json", ext: ".json" },
@@ -85,6 +87,7 @@ const ExportPage = () => {
   const [exportingId, setExportingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFormat, setSelectedFormat] = useState("json");
+  const [eligibility, setEligibility] = useState({});
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.nameid;
 
@@ -93,7 +96,9 @@ const ExportPage = () => {
       setLoading(true);
       try {
         const res = await projectService.getManagerProjects(managerId);
-        setProjects(res.data || []);
+        const list = res.data || [];
+        setProjects(list);
+        checkAllEligibility(list);
       } catch {
         toast.error("Không thể tải danh sách dự án");
       } finally {
@@ -103,7 +108,67 @@ const ExportPage = () => {
     if (managerId) fetchProjects();
   }, [managerId]);
 
+  const checkAllEligibility = async (projectList) => {
+    const checks = {};
+    projectList.forEach((p) => {
+      checks[p.id] = { checking: true, ready: false };
+    });
+    setEligibility({ ...checks });
+
+    for (const project of projectList) {
+      try {
+        const [statsRes, disputesRes] = await Promise.all([
+          analyticsService.getProjectStats(project.id),
+          disputeService.getDisputes(project.id),
+        ]);
+        const stats = statsRes.data;
+        const disputes = disputesRes.data || [];
+        const totalTasks = stats.totalAssignments ?? 0;
+        const approved = stats.approvedAssignments ?? 0;
+        const allApproved = totalTasks > 0 && approved === totalTasks;
+        const pendingDisputes = disputes.filter((d) => d.status === "Pending");
+        const noPendingDisputes = pendingDisputes.length === 0;
+
+        checks[project.id] = {
+          checking: false,
+          ready: allApproved && noPendingDisputes,
+          allApproved,
+          noPendingDisputes,
+          totalTasks,
+          approved,
+          pendingDisputeCount: pendingDisputes.length,
+        };
+      } catch {
+        checks[project.id] = {
+          checking: false,
+          ready: false,
+          allApproved: false,
+          noPendingDisputes: false,
+        };
+      }
+      setEligibility({ ...checks });
+    }
+  };
+
   const handleExport = async (project) => {
+    const check = eligibility[project.id];
+    if (!check?.ready) {
+      const reasons = [];
+      if (!check?.allApproved)
+        reasons.push(
+          `Còn ${(check?.totalTasks || 0) - (check?.approved || 0)} task chưa Approved`,
+        );
+      if (!check?.noPendingDisputes)
+        reasons.push(
+          `Còn ${check?.pendingDisputeCount || 0} dispute đang chờ xử lý`,
+        );
+      toast.error(
+        `Không thể Export "${project.name}"! ${reasons.join(". ")}.`,
+        { autoClose: 5000 },
+      );
+      return;
+    }
+
     setExportingId(project.id);
     try {
       const res = await datasetService.exportData(project.id);
@@ -114,9 +179,7 @@ const ExportPage = () => {
       if (typeof rawData === "string") {
         try {
           rawData = JSON.parse(rawData);
-        } catch {
-          // keep as string
-        }
+        } catch {}
       }
 
       switch (selectedFormat) {
@@ -232,6 +295,7 @@ const ExportPage = () => {
                         <th>Tiến độ</th>
                         <th>Trạng thái</th>
                         <th>Hạn chót</th>
+                        <th>Export Eligibility</th>
                         <th className="text-center">Hành động</th>
                       </tr>
                     </thead>
@@ -281,19 +345,70 @@ const ExportPage = () => {
                                 )
                               : "N/A"}
                           </td>
+                          <td>
+                            {(() => {
+                              const check = eligibility[project.id];
+                              if (!check || check.checking) {
+                                return (
+                                  <span className="text-muted small">
+                                    <span className="spinner-border spinner-border-sm me-1"></span>
+                                    Đang kiểm tra...
+                                  </span>
+                                );
+                              }
+                              if (check.ready) {
+                                return (
+                                  <span className="badge bg-success-subtle text-success">
+                                    <i className="ri-checkbox-circle-fill me-1"></i>
+                                    Sẵn sàng
+                                  </span>
+                                );
+                              }
+                              return (
+                                <div className="vstack gap-1">
+                                  {!check.allApproved && (
+                                    <small className="text-danger">
+                                      <i className="ri-close-circle-fill me-1"></i>
+                                      {(check.totalTasks || 0) -
+                                        (check.approved || 0)}{" "}
+                                      task chưa Approved
+                                    </small>
+                                  )}
+                                  {!check.noPendingDisputes && (
+                                    <small className="text-danger">
+                                      <i className="ri-close-circle-fill me-1"></i>
+                                      {check.pendingDisputeCount} dispute
+                                      pending
+                                    </small>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </td>
                           <td className="text-center">
                             <button
-                              className="btn btn-soft-success btn-sm px-3"
+                              className={`btn btn-sm px-3 ${eligibility[project.id]?.ready ? "btn-soft-success" : "btn-soft-secondary"}`}
                               onClick={() => handleExport(project)}
                               disabled={
                                 exportingId === project.id ||
-                                (project.totalDataItems ?? 0) === 0
+                                (project.totalDataItems ?? 0) === 0 ||
+                                eligibility[project.id]?.checking
+                              }
+                              title={
+                                !eligibility[project.id]?.ready
+                                  ? "Chưa đủ điều kiện Export (BR-MNG-21)"
+                                  : `Export ${currentFormat?.label}`
                               }
                             >
                               {exportingId === project.id ? (
                                 <>
                                   <span className="spinner-border spinner-border-sm me-1"></span>
                                   Đang xuất...
+                                </>
+                              ) : !eligibility[project.id]?.ready ? (
+                                <>
+                                  <i className="ri-lock-line me-1"></i>
+                                  Locked
                                 </>
                               ) : (
                                 <>
