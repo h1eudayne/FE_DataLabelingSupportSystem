@@ -87,6 +87,11 @@ function App() {
               path="projects-datasets"
               element={<ProjectsDatasetsPage />}
             />
+            <Route
+              path="projects-datasets/:id"
+              element={<ProjectsDatasetsPage />}
+            />
+            <Route path="projects-assign/:id" element={<ProjectAssignTask />} />
             <Route path="projects-create" element={<CreateProject />} />
             <Route
               path="dispute-management"

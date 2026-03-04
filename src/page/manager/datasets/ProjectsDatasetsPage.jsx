@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import projectService from "../../../services/manager/project/projectService";
 import datasetService from "../../../services/manager/dataset/datasetService";
 
 const ProjectsDatasetsPage = () => {
+  const { id: paramId } = useParams();
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -17,6 +19,12 @@ const ProjectsDatasetsPage = () => {
   useEffect(() => {
     fetchList();
   }, []);
+
+  useEffect(() => {
+    if (paramId && projects.length > 0 && !selectedProject) {
+      handleProjectClick(Number(paramId));
+    }
+  }, [paramId, projects]);
 
   const fetchList = async () => {
     try {
