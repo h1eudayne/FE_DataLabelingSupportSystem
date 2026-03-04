@@ -16,9 +16,9 @@ vi.mock("@/services/axios.customize", () => ({
     },
   },
 }));
-vi.mock("react-apexcharts", () => ({
-  default: () => <div data-testid="chart">Chart</div>,
-}));
+// vi.mock("react-apexcharts", () => ({
+//   default: () => <div data-testid="chart">Chart</div>,
+// }));
 vi.mock("@vercel/speed-insights/react", () => ({ SpeedInsights: () => null }));
 vi.mock("simplebar-react", () => ({
   default: ({ children }) => <div>{children}</div>,
@@ -27,16 +27,16 @@ vi.mock("simplebar-react", () => ({
 beforeEach(() => {
   window.ResizeObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
+    // theo dõi e
     unobserve: vi.fn(),
+    //  ng theo dõi e
     disconnect: vi.fn(),
+    // clean
   }));
   window.scrollTo = vi.fn();
   vi.clearAllMocks();
 });
 
-/**
- * Tạo Mock Store phù hợp với cấu trúc Redux của ứng dụng
- */
 const createMockStore = (authData) => {
   return configureStore({
     reducer: {
@@ -120,7 +120,7 @@ describe("App Integration - Security & Roles", () => {
     expect(screen.getByPlaceholderText(/Tìm kiếm\.\.\./i)).toBeInTheDocument();
   });
 
-  it("nên tự động chuyển hướng về trang login/landing khi truy cập trang bảo mật mà chưa đăng nhập", async () => {
+  it("nên tự động chuyển hướng về trang landing khi truy cập trang bảo mật mà chưa đăng nhập", async () => {
     const store = createMockStore({
       user: null,
       isAuthenticated: false,

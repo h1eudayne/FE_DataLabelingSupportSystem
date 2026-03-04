@@ -14,16 +14,21 @@ describe("taskService", () => {
     vi.clearAllMocks();
   });
 
-  it("assignTask: nên gọi đúng API endpoint với data", async () => {
-    const mockData = { projectId: "P1", userIds: ["U1"] };
-    axios.post.mockResolvedValueOnce({ data: { success: true } });
+  it("assignTask: should POST with correct AssignTaskRequest format", async () => {
+    const mockData = {
+      projectId: 5,
+      annotatorId: "ann-123",
+      quantity: 10,
+      reviewerId: "rev-456",
+    };
+    axios.post.mockResolvedValueOnce({ data: { message: "OK" } });
 
     await taskService.assignTask(mockData);
 
     expect(axios.post).toHaveBeenCalledWith("/api/Task/assign", mockData);
   });
 
-  it("getMyTasks: nên gọi đúng API để lấy task của tôi", async () => {
+  it("getMyTasks: should GET /api/Task/my-tasks", async () => {
     axios.get.mockResolvedValueOnce({ data: [] });
 
     await taskService.getMyTasks();
@@ -31,7 +36,7 @@ describe("taskService", () => {
     expect(axios.get).toHaveBeenCalledWith("/api/Task/my-tasks");
   });
 
-  it("getTaskDetail: nên gọi đúng URL kèm assignmentId", async () => {
+  it("getTaskDetail: should GET correct URL with assignmentId", async () => {
     const assignmentId = "A_123";
     axios.get.mockResolvedValueOnce({ data: { id: assignmentId } });
 
@@ -40,8 +45,11 @@ describe("taskService", () => {
     expect(axios.get).toHaveBeenCalledWith(`/api/Task/detail/${assignmentId}`);
   });
 
-  it("submitTask: nên gọi đúng API nộp bài", async () => {
-    const submitData = { assignmentId: "A_1", annotations: [] };
+  it("submitTask: should POST to /api/Task/submit", async () => {
+    const submitData = {
+      assignmentId: 1,
+      dataJSON: '{"objects":[]}',
+    };
     axios.post.mockResolvedValueOnce({ data: "OK" });
 
     await taskService.submitTask(submitData);
