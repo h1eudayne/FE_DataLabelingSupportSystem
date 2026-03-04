@@ -93,6 +93,7 @@ function App() {
             />
             <Route path="projects-assign/:id" element={<ProjectAssignTask />} />
             <Route path="projects-create" element={<CreateProject />} />
+            <Route path="export" element={<ExportPage />} />
             <Route
               path="dispute-management"
               element={<DisputeManagementPage />}

@@ -1,412 +1,205 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import projectService from "../services/manager/project/projectService";
+import datasetService from "../services/manager/dataset/datasetService";
 
 const ExportPage = () => {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [exportingId, setExportingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useSelector((state) => state.auth);
+  const managerId = user?.nameid;
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoading(true);
+      try {
+        const res = await projectService.getManagerProjects(managerId);
+        setProjects(res.data || []);
+      } catch {
+        toast.error("Không thể tải danh sách dự án");
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (managerId) fetchProjects();
+  }, [managerId]);
+
+  const handleExport = async (project) => {
+    setExportingId(project.id);
+    try {
+      const res = await datasetService.exportData(project.id);
+      const blob = new Blob([res.data], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `project_${project.id}_export_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(`Đã xuất dữ liệu "${project.name}" thành công!`);
+    } catch {
+      toast.error("Xuất dữ liệu thất bại.");
+    } finally {
+      setExportingId(null);
+    }
+  };
+
+  const filteredProjects = projects.filter((p) =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
   return (
     <>
-      <div>
-        <div className="row">
+      <div className="row">
+        <div className="col-12">
+          <div className="page-title-box d-sm-flex align-items-center justify-content-between">
+            <h4 className="mb-sm-0">Xuất dữ liệu</h4>
+            <div className="page-title-right">
+              <ol className="breadcrumb m-0">
+                <li className="breadcrumb-item">Quản lý</li>
+                <li className="breadcrumb-item active">Export Data</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="row mb-3">
+        <div className="col-lg-4">
+          <div className="search-box">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Tìm tên dự án..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <i className="ri-search-line search-icon"></i>
+          </div>
+        </div>
+        <div className="col-lg-8 text-end">
+          <span className="text-muted">
+            Tổng: <b>{filteredProjects.length}</b> dự án
+          </span>
+        </div>
+      </div>
+
+      <div className="row">
+        {loading ? (
+          <div className="col-12 text-center p-5">
+            <div className="spinner-border text-primary" role="status"></div>
+            <div className="mt-2 text-muted">Đang tải danh sách...</div>
+          </div>
+        ) : filteredProjects.length > 0 ? (
           <div className="col-12">
-            <div className="page-title-box d-sm-flex align-items-center justify-content-between">
-              <h4 className="mb-sm-0">Invoice List</h4>
-              <div className="page-title-right">
-                <ol className="breadcrumb m-0">
-                  <li className="breadcrumb-item">
-                    <a href="javascript: void(0);">Invoices</a>
-                  </li>
-                  <li className="breadcrumb-item active">Invoice List</li>
-                </ol>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-xl-3 col-md-6">
-            <div className="card card-animate">
-              <div className="card-body">
-                <div className="d-flex align-items-center">
-                  <div className="flex-grow-1">
-                    <p className="text-uppercase fw-medium text-muted mb-0">
-                      Invoices Sent
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <h5 className="text-success fs-14 mb-0">
-                      <i className="ri-arrow-right-up-line fs-13 align-middle" />
-                      +89.24 %
-                    </h5>
-                  </div>
-                </div>
-                <div className="d-flex align-items-end justify-content-between mt-4">
-                  <div>
-                    <h4 className="fs-22 fw-semibold ff-secondary mb-4">
-                      $
-                      <span className="counter-value" data-target="559.25">
-                        0
-                      </span>
-                      k
-                    </h4>
-                    <span className="badge bg-warning me-1">2,258</span>
-                    <span className="text-muted">Invoices sent</span>
-                  </div>
-                  <div className="avatar-sm flex-shrink-0">
-                    <span className="avatar-title bg-light rounded fs-3">
-                      <i
-                        data-feather="file-text"
-                        className="text-success icon-dual-success"
-                      />
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-xl-3 col-md-6">
-            <div className="card card-animate">
-              <div className="card-body">
-                <div className="d-flex align-items-center">
-                  <div className="flex-grow-1">
-                    <p className="text-uppercase fw-medium text-muted mb-0">
-                      Paid Invoices
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <h5 className="text-danger fs-14 mb-0">
-                      <i className="ri-arrow-right-down-line fs-13 align-middle" />
-                      +8.09 %
-                    </h5>
-                  </div>
-                </div>
-                <div className="d-flex align-items-end justify-content-between mt-4">
-                  <div>
-                    <h4 className="fs-22 fw-semibold ff-secondary mb-4">
-                      $
-                      <span className="counter-value" data-target="409.66">
-                        0
-                      </span>
-                      k
-                    </h4>
-                    <span className="badge bg-warning me-1">1,958</span>
-                    <span className="text-muted">Paid by clients</span>
-                  </div>
-                  <div className="avatar-sm flex-shrink-0">
-                    <span className="avatar-title bg-light rounded fs-3">
-                      <i
-                        data-feather="check-square"
-                        className="text-success icon-dual-success"
-                      />
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-xl-3 col-md-6">
-            <div className="card card-animate">
-              <div className="card-body">
-                <div className="d-flex align-items-center">
-                  <div className="flex-grow-1">
-                    <p className="text-uppercase fw-medium text-muted mb-0">
-                      Unpaid Invoices
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <h5 className="text-danger fs-14 mb-0">
-                      <i className="ri-arrow-right-down-line fs-13 align-middle" />
-                      +9.01 %
-                    </h5>
-                  </div>
-                </div>
-                <div className="d-flex align-items-end justify-content-between mt-4">
-                  <div>
-                    <h4 className="fs-22 fw-semibold ff-secondary mb-4">
-                      $
-                      <span className="counter-value" data-target="136.98">
-                        0
-                      </span>
-                      k
-                    </h4>
-                    <span className="badge bg-warning me-1">338</span>
-                    <span className="text-muted">Unpaid by clients</span>
-                  </div>
-                  <div className="avatar-sm flex-shrink-0">
-                    <span className="avatar-title bg-light rounded fs-3">
-                      <i
-                        data-feather="clock"
-                        className="text-success icon-dual-success"
-                      />
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-xl-3 col-md-6">
-            <div className="card card-animate">
-              <div className="card-body">
-                <div className="d-flex align-items-center">
-                  <div className="flex-grow-1">
-                    <p className="text-uppercase fw-medium text-muted mb-0">
-                      Cancelled Invoices
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <h5 className="text-success fs-14 mb-0">
-                      <i className="ri-arrow-right-up-line fs-13 align-middle" />
-                      +7.55 %
-                    </h5>
-                  </div>
-                </div>
-                <div className="d-flex align-items-end justify-content-between mt-4">
-                  <div>
-                    <h4 className="fs-22 fw-semibold ff-secondary mb-4">
-                      $
-                      <span className="counter-value" data-target="84.20">
-                        0
-                      </span>
-                      k
-                    </h4>
-                    <span className="badge bg-warning me-1">502</span>
-                    <span className="text-muted">Cancelled by clients</span>
-                  </div>
-                  <div className="avatar-sm flex-shrink-0">
-                    <span className="avatar-title bg-light rounded fs-3">
-                      <i
-                        data-feather="x-octagon"
-                        className="text-success icon-dual-success"
-                      />
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-lg-12">
-            <div className="card" id="invoiceList">
-              <div className="card-header border-0">
-                <div className="d-flex align-items-center">
-                  <h5 className="card-title mb-0 flex-grow-1">Invoices</h5>
-                  <div className="flex-shrink-0">
-                    <div className="d-flex gap-2 flex-wrap">
-                      <button
-                        className="btn btn-primary"
-                        id="remove-actions"
-                        onclick="deleteMultiple()"
-                      >
-                        <i className="ri-delete-bin-2-line" />
-                      </button>
-                      <a
-                        href="apps-invoices-create.html"
-                        className="btn btn-danger"
-                      >
-                        <i className="ri-add-line align-bottom me-1" /> Create
-                        Invoice
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="card-body bg-light-subtle border border-dashed border-start-0 border-end-0">
-                <form>
-                  <div className="row g-3">
-                    <div className="col-xxl-5 col-sm-12">
-                      <div className="search-box">
-                        <input
-                          type="text"
-                          className="form-control search bg-light border-light"
-                          placeholder="Search for customer, email, country, status or something..."
-                        />
-                        <i className="ri-search-line search-icon" />
-                      </div>
-                    </div>
-                    <div className="col-xxl-3 col-sm-4">
-                      <input
-                        type="text"
-                        className="form-control bg-light border-light"
-                        id="datepicker-range"
-                        placeholder="Select date"
-                      />
-                    </div>
-                    <div className="col-xxl-3 col-sm-4">
-                      <div className="input-light">
-                        <select
-                          className="form-control"
-                          data-choices
-                          data-choices-search-false
-                          name="choices-single-default"
-                          id="idStatus"
-                        >
-                          <option value>Status</option>
-                          <option value="all" selected>
-                            All
-                          </option>
-                          <option value="Unpaid">Unpaid</option>
-                          <option value="Paid">Paid</option>
-                          <option value="Cancel">Cancel</option>
-                          <option value="Refund">Refund</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="col-xxl-1 col-sm-4">
-                      <button
-                        type="button"
-                        className="btn btn-primary w-100"
-                        onclick="SearchData();"
-                      >
-                        <i className="ri-equalizer-fill me-1 align-bottom" />
-                        Filters
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </div>
-              <div className="card-body">
-                <div>
-                  <div className="table-responsive table-card">
-                    <table
-                      className="table align-middle table-nowrap"
-                      id="invoiceTable"
-                    >
-                      <thead className="text-muted">
-                        <tr>
-                          <th scope="col" style={{ width: 50 }}>
-                            <div className="form-check">
-                              <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="checkAll"
-                                defaultValue="option"
-                              />
+            <div className="card shadow-sm border-0">
+              <div className="card-body p-0">
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>#</th>
+                        <th>Tên dự án</th>
+                        <th>Tổng Data</th>
+                        <th>Tiến độ</th>
+                        <th>Trạng thái</th>
+                        <th>Hạn chót</th>
+                        <th className="text-center">Hành động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProjects.map((project, index) => (
+                        <tr key={project.id}>
+                          <td className="fw-medium">{index + 1}</td>
+                          <td>
+                            <span className="fw-semibold text-dark">
+                              {project.name}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="badge bg-soft-info text-info">
+                              {project.totalDataItems ?? 0} items
+                            </span>
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center gap-2">
+                              <div
+                                className="progress progress-sm flex-grow-1"
+                                style={{ width: "80px" }}
+                              >
+                                <div
+                                  className="progress-bar bg-success"
+                                  style={{
+                                    width: `${Math.round(Number(project.progress ?? 0))}%`,
+                                  }}
+                                ></div>
+                              </div>
+                              <small className="text-muted fw-bold">
+                                {Math.round(Number(project.progress ?? 0))}%
+                              </small>
                             </div>
-                          </th>
-                          <th
-                            className="sort text-uppercase"
-                            data-sort="invoice_id"
-                          >
-                            ID
-                          </th>
-                          <th
-                            className="sort text-uppercase"
-                            data-sort="customer_name"
-                          >
-                            Customer
-                          </th>
-                          <th className="sort text-uppercase" data-sort="email">
-                            Email
-                          </th>
-                          <th
-                            className="sort text-uppercase"
-                            data-sort="country"
-                          >
-                            Country
-                          </th>
-                          <th className="sort text-uppercase" data-sort="date">
-                            Date
-                          </th>
-                          <th
-                            className="sort text-uppercase"
-                            data-sort="invoice_amount"
-                          >
-                            Amount
-                          </th>
-                          <th
-                            className="sort text-uppercase"
-                            data-sort="status"
-                          >
-                            Payment Status
-                          </th>
-                          <th
-                            className="sort text-uppercase"
-                            data-sort="action"
-                          >
-                            Action
-                          </th>
+                          </td>
+                          <td>
+                            <span
+                              className={`badge ${project.status === "Expired" ? "bg-danger" : "bg-success"}`}
+                            >
+                              {project.status || "Active"}
+                            </span>
+                          </td>
+                          <td className="text-muted small">
+                            {project.deadline
+                              ? new Date(project.deadline).toLocaleDateString(
+                                  "vi-VN",
+                                )
+                              : "N/A"}
+                          </td>
+                          <td className="text-center">
+                            <button
+                              className="btn btn-soft-success btn-sm px-3"
+                              onClick={() => handleExport(project)}
+                              disabled={
+                                exportingId === project.id ||
+                                (project.totalDataItems ?? 0) === 0
+                              }
+                            >
+                              {exportingId === project.id ? (
+                                <>
+                                  <span className="spinner-border spinner-border-sm me-1"></span>
+                                  Đang xuất...
+                                </>
+                              ) : (
+                                <>
+                                  <i className="ri-file-download-line me-1"></i>
+                                  Export JSON
+                                </>
+                              )}
+                            </button>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody
-                        className="list form-check-all"
-                        id="invoice-list-data"
-                      ></tbody>
-                    </table>
-                    <div className="noresult" style={{ display: "none" }}>
-                      <div className="text-center">
-                        <lord-icon
-                          src="https://cdn.lordicon.com/msoeawqm.json"
-                          trigger="loop"
-                          colors="primary:#121331,secondary:#08a88a"
-                          style={{ width: 75, height: 75 }}
-                        />
-                        <h5 className="mt-2">Sorry! No Result Found</h5>
-                        <p className="text-muted mb-0">
-                          We've searched more than 150+ invoices We did not find
-                          any invoices for you search.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="d-flex justify-content-end mt-3">
-                    <div className="pagination-wrap hstack gap-2">
-                      <a
-                        className="page-item pagination-prev disabled"
-                        href="#"
-                      >
-                        Previous
-                      </a>
-                      <ul className="pagination listjs-pagination mb-0" />
-                      <a className="page-item pagination-next" href="#">
-                        Next
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="modal fade flip"
-                  id="deleteOrder"
-                  tabIndex={-1}
-                  aria-labelledby="deleteOrderLabel"
-                  aria-hidden="true"
-                >
-                  <div className="modal-dialog modal-dialog-centered">
-                    <div className="modal-content">
-                      <div className="modal-body p-5 text-center">
-                        <lord-icon
-                          src="https://cdn.lordicon.com/gsqxdxog.json"
-                          trigger="loop"
-                          colors="primary:#405189,secondary:#f06548"
-                          style={{ width: 90, height: 90 }}
-                        />
-                        <div className="mt-4 text-center">
-                          <h4>You are about to delete a order ?</h4>
-                          <p className="text-muted fs-15 mb-4">
-                            Deleting your order will remove all of your
-                            information from our database.
-                          </p>
-                          <div className="hstack gap-2 justify-content-center remove">
-                            <button
-                              className="btn btn-link link-success fw-medium text-decoration-none"
-                              id="deleteRecord-close"
-                              data-bs-dismiss="modal"
-                            >
-                              <i className="ri-close-line me-1 align-middle" />
-                              Close
-                            </button>
-                            <button
-                              className="btn btn-danger"
-                              id="delete-record"
-                            >
-                              Yes, Delete It
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="col-12">
+            <div className="card py-5 text-center">
+              <div className="card-body">
+                <i className="ri-file-download-line display-4 text-muted"></i>
+                <h5 className="mt-3">Không có dự án nào</h5>
+                <p className="text-muted">
+                  Bạn chưa có dự án nào để xuất dữ liệu.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
