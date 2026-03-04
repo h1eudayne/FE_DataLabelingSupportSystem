@@ -157,6 +157,32 @@ const Navbar = () => {
                     <span>Export Data</span>
                   </Link>
                 </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/dispute-management"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-scales-3-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>Disputes</span>
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/review-audit"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-shield-check-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>Review Audit</span>
+                  </Link>
+                </li>
               </>
             )}
 
