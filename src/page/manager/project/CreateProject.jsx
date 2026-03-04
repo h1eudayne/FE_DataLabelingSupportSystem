@@ -30,7 +30,7 @@ const CreateProject = () => {
   const [reviewerOptions, setReviewerOptions] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [selectedAnnotators, setSelectedAnnotators] = useState([]);
-  const [selectedReviewer, setSelectedReviewer] = useState(null);
+  const [selectedReviewers, setSelectedReviewers] = useState([]);
 
   const [projectInfo, setProjectInfo] = useState({
     name: "",
@@ -133,6 +133,15 @@ const CreateProject = () => {
       toast.warning("Phải có ít nhất một nhãn được định nghĩa!");
       return false;
     }
+    for (let i = 0; i < validLabels.length; i++) {
+      const filledChecklist = validLabels[i].checklist.filter((c) => c.trim());
+      if (filledChecklist.length === 0) {
+        toast.warning(
+          `Nhãn "${validLabels[i].name}" phải có ít nhất 1 điều kiện checklist (BR-MNG-06)!`,
+        );
+        return false;
+      }
+    }
     if (!selectedFiles.length) {
       toast.warning("Vui lòng chọn file ảnh!");
       return false;
@@ -141,8 +150,8 @@ const CreateProject = () => {
       toast.warning("Vui lòng chọn ít nhất một Annotator!");
       return false;
     }
-    if (!selectedReviewer) {
-      toast.warning("Vui lòng chọn Reviewer cho dự án!");
+    if (!selectedReviewers.length) {
+      toast.warning("Vui lòng chọn ít nhất một Reviewer!");
       return false;
     }
     return true;
@@ -204,7 +213,9 @@ const CreateProject = () => {
             projectId: Number(projectId),
             annotatorId: String(selectedAnnotators[i].value),
             quantity: Number(qty),
-            reviewerId: String(selectedReviewer.value),
+            reviewerId: String(
+              selectedReviewers[i % selectedReviewers.length].value,
+            ),
           });
           remaining -= qty;
         }
@@ -485,9 +496,9 @@ const CreateProject = () => {
                         />
 
                         <div className="mt-2 ps-2 border-start border-2 border-info">
-                          <small className="text-muted fw-bold d-block mb-1">
+                          <small className="text-danger fw-bold d-block mb-1">
                             <i className="ri-checkbox-multiple-line me-1"></i>
-                            Checklist (tick đầy đủ mới gán nhãn):
+                            Checklist bắt buộc * (tick đầy đủ mới gán nhãn):
                           </small>
                           {label.checklist.map((item, itemIdx) => (
                             <div
@@ -563,11 +574,11 @@ const CreateProject = () => {
                       Reviewer (người kiểm tra) *
                     </Label>
                     <Select
+                      isMulti
                       options={reviewerOptions}
-                      placeholder="Chọn Reviewer..."
-                      onChange={setSelectedReviewer}
-                      className="basic-select"
-                      isClearable
+                      placeholder="Tìm kiếm Reviewer..."
+                      onChange={setSelectedReviewers}
+                      className="basic-multi-select"
                     />
                   </div>
                 </CardBody>

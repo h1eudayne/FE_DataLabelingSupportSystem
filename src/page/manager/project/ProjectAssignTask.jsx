@@ -82,6 +82,7 @@ const ProjectAssignTask = () => {
   const assignedItems =
     projectInfo?.members?.reduce((sum, m) => sum + (m.tasksAssigned || 0), 0) ??
     0;
+  const processedItems = projectInfo?.processedItems ?? 0;
   const availableItems = totalItems - assignedItems;
 
   return (
@@ -101,19 +102,37 @@ const ProjectAssignTask = () => {
               </div>
               <div className="card-body">
                 <div className="row mb-3">
-                  <div className="col-md-4">
+                  <div className="col-md-3">
                     <p className="text-muted mb-1 small">Tổng ảnh</p>
                     <h5 className="text-primary">{totalItems}</h5>
                   </div>
-                  <div className="col-md-4">
+                  <div className="col-md-3">
                     <p className="text-muted mb-1 small">Đã phân công</p>
                     <h5 className="text-warning">{assignedItems}</h5>
                   </div>
-                  <div className="col-md-4">
-                    <p className="text-muted mb-1 small">Còn trống</p>
-                    <h5 className="text-success">{availableItems}</h5>
+                  <div className="col-md-3">
+                    <p className="text-muted mb-1 small">Đã duyệt (Approved)</p>
+                    <h5 className="text-info">{processedItems}</h5>
+                  </div>
+                  <div className="col-md-3">
+                    <p className="text-muted mb-1 small">Còn trống (New)</p>
+                    <h5
+                      className={
+                        availableItems > 0 ? "text-success" : "text-danger"
+                      }
+                    >
+                      {availableItems}
+                    </h5>
                   </div>
                 </div>
+
+                {availableItems === 0 && totalItems > 0 && (
+                  <div className="alert alert-warning py-2 small mb-3">
+                    <i className="ri-information-line me-1"></i>
+                    <strong>BR-MNG-08:</strong> Tất cả ảnh đã được phân công
+                    hoặc duyệt. Dữ liệu đã duyệt (Approved) không thể giao lại.
+                  </div>
+                )}
 
                 <div className="mb-3">
                   <h6 className="fw-bold mb-2">Nhãn dự án:</h6>
@@ -184,6 +203,18 @@ const ProjectAssignTask = () => {
                 <h6 className="fw-bold mb-3 text-uppercase fs-12">
                   Giao việc mới
                 </h6>
+
+                <div className="alert alert-info py-2 small mb-3">
+                  <i className="ri-shield-user-line me-1"></i>
+                  <strong>BR-MNG-09:</strong> Chỉ Manager mới có quyền phân
+                  công.
+                </div>
+
+                <div className="alert alert-light border py-2 small mb-3">
+                  <i className="ri-group-line me-1"></i>
+                  <strong>BR-MNG-10:</strong> Cùng 1 ảnh có thể giao cho nhiều
+                  Annotator để đối chiếu chất lượng.
+                </div>
 
                 <div className="mb-3">
                   <label className="form-label fw-bold">Chọn Annotator *</label>
