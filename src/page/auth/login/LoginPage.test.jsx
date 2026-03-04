@@ -49,6 +49,12 @@ describe("LoginPage - Layout & UI Integration", () => {
     const emailInput = screen.getByPlaceholderText(/Nhập tài khoản|email/i);
     const passwordInput = screen.getByPlaceholderText(/••••••••|password/i);
 
+    expect(emailInput.value).toBe("");
+    expect(passwordInput.value).toBe("");
+
+    fireEvent.change(emailInput, { target: { value: "admin@test.com" } });
+    fireEvent.change(passwordInput, { target: { value: "123456" } });
+
     expect(emailInput.value).toBe("admin@test.com");
     expect(passwordInput.value).toBe("123456");
   });

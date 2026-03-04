@@ -9,7 +9,9 @@ const CreateProject = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [annotators, setAnnotators] = useState([]);
+  const [reviewers, setReviewers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedReviewer, setSelectedReviewer] = useState("");
 
   const [projectData, setProjectData] = useState({
     name: "",
@@ -17,9 +19,7 @@ const CreateProject = () => {
     allowGeometryTypes: "BoundingBox",
     deadline: "",
   });
-  const [labels] = useState([
-    { name: "", color: "#0ab39c", guideLine: "N/A" },
-  ]);
+  const [labels] = useState([{ name: "", color: "#0ab39c", guideLine: "N/A" }]);
   const [urlInput, setUrlInput] = useState("");
   const [selectedUsers, setSelectedUsers] = useState([]);
 
@@ -30,6 +30,7 @@ const CreateProject = () => {
         const rawData = res.data?.data || res.data || [];
         if (Array.isArray(rawData)) {
           setAnnotators(rawData.filter((u) => u.role === "Annotator"));
+          setReviewers(rawData.filter((u) => u.role === "Reviewer"));
         }
       } catch (err) {
         console.error("Lỗi lấy user:", err);
@@ -47,6 +48,8 @@ const CreateProject = () => {
 
     if (selectedUsers.length === 0)
       return Swal.fire("Lỗi", "Hãy chọn ít nhất 1 người làm.", "warning");
+    if (!selectedReviewer)
+      return Swal.fire("Lỗi", "Hãy chọn Reviewer.", "warning");
     if (urlArray.length === 0)
       return Swal.fire("Lỗi", "Hãy nhập danh sách URL ảnh.", "warning");
 
@@ -61,7 +64,7 @@ const CreateProject = () => {
       const projRes = await projectService.createProject(projectPayload);
       const projectId = projRes.data?.projectId;
 
-      await projectService.importData(projectId, { storageUrls: urlArray });
+      await projectService.importData(projectId, urlArray);
 
       const quantityPerPerson = Math.floor(
         urlArray.length / selectedUsers.length,
@@ -78,6 +81,7 @@ const CreateProject = () => {
           projectId: projectId,
           annotatorId: selectedUsers[i],
           quantity: finalQuantity,
+          reviewerId: selectedReviewer,
         });
       }
 
@@ -176,6 +180,23 @@ const CreateProject = () => {
                   <h6 className="mb-0 text-white">2. PHÂN CÔNG NHÂN SỰ</h6>
                 </div>
                 <div className="card-body d-flex flex-column text-start">
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">Reviewer *</label>
+                    <select
+                      className="form-select"
+                      value={selectedReviewer}
+                      onChange={(e) => setSelectedReviewer(e.target.value)}
+                    >
+                      <option value="">
+                        -- Chọn Reviewer ({reviewers.length}) --
+                      </option>
+                      {reviewers.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.fullName || u.userName} ({u.email})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <input
                     type="text"
                     className="form-control mb-3"
