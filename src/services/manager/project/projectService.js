@@ -20,16 +20,7 @@ const projectService = {
       storageUrls: urls,
     }),
 
-  uploadDirect: (projectId, formData) =>
-    axios.post(`/api/Project/${projectId}/upload-direct`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }),
-
   getProjectStats: (id) => axios.get(`/api/ProjectStats/${id}`),
-
-  getProjectDetail: (id) => axios.get(`/api/Project/${id}`),
 };
 
 export default projectService;
