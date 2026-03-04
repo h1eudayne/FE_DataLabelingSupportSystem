@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { Container, Row, Col, Spinner, Button } from "react-bootstrap";
 import { TrendingUp, Plus } from "lucide-react";
 import KpiCard from "../components/manager/home/KpiCard";
@@ -9,10 +10,14 @@ import analyticsService from "../services/manager/analytics/analyticsService";
 
 const ManagerContainer = () => {
   const [data, setData] = useState(null);
+  const { user } = useSelector((state) => state.auth);
+  const managerId = user?.nameid;
 
   useEffect(() => {
-    analyticsService.getDashboardStats().then(setData);
-  }, []);
+    if (managerId) {
+      analyticsService.getDashboardStats(managerId).then(setData);
+    }
+  }, [managerId]);
 
   if (!data)
     return (

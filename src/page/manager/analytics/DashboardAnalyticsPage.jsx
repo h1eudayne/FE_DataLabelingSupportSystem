@@ -33,6 +33,7 @@ import {
   TrendingDown,
 } from "lucide-react";
 import StatCard from "../../../components/manager/analytics/StatCard";
+import { useSelector } from "react-redux";
 import analyticsService from "../../../services/manager/analytics/analyticsService";
 
 const COLORS = ["#0ab39c", "#f7b84b", "#405189", "#f06548", "#299cdb"];
@@ -57,12 +58,15 @@ const DashboardAnalytics = () => {
   const [annotatorPerformances, setAnnotatorPerformances] = useState([]);
   const [labelDistributions, setLabelDistributions] = useState([]);
 
+  const { user } = useSelector((state) => state.auth);
+  const managerId = user?.nameid;
+
   useEffect(() => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
 
-        const resProjects = await analyticsService.getMyProjects();
+        const resProjects = await analyticsService.getMyProjects(managerId);
         const projects = resProjects.data || [];
 
         let totalAssigned = 0;
@@ -172,7 +176,7 @@ const DashboardAnalytics = () => {
     };
 
     fetchAllData();
-  }, []);
+  }, [managerId]);
 
   if (loading) {
     return (
