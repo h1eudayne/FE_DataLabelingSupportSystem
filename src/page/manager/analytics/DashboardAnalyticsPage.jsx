@@ -87,6 +87,7 @@ const DashboardAnalytics = () => {
 
         const reviewerMap = {};
         const alerts = [];
+        const chartStatsArr = [];
 
         for (const project of projects) {
           try {
@@ -131,6 +132,11 @@ const DashboardAnalytics = () => {
 
             const progressPct =
               s.totalItems > 0 ? (s.completedItems / s.totalItems) * 100 : 0;
+            chartStatsArr.push({
+              name: project.name,
+              total: Number(s.totalItems ?? project.totalDataItems ?? 0),
+              completed: Number(s.completedItems ?? 0),
+            });
             const daysLeft = project.deadline
               ? Math.ceil(
                   (new Date(project.deadline) - new Date()) /
@@ -145,7 +151,18 @@ const DashboardAnalytics = () => {
               });
             }
           } catch (err) {
-            if (err.response?.status === 400) continue;
+            if (err.response?.status === 400) {
+              chartStatsArr.push({
+                name: project.name,
+                total: Number(project.totalDataItems || 0),
+                completed: Math.round(
+                  (Number(project.totalDataItems || 0) *
+                    Number(project.progress || 0)) /
+                    100,
+                ),
+              });
+              continue;
+            }
             throw err;
           }
 
@@ -251,15 +268,7 @@ const DashboardAnalytics = () => {
         }));
         setReviewerEvaluations(reviewerEvals);
 
-        setProjectChartData(
-          projects.map((p) => ({
-            name: p.name,
-            total: Number(p.totalDataItems || 0),
-            completed: Math.round(
-              (Number(p.totalDataItems || 0) * Number(p.progress || 0)) / 100,
-            ),
-          })),
-        );
+        setProjectChartData(chartStatsArr);
 
         const resUsers = await analyticsService.getUsers();
         const users = resUsers.data || [];
