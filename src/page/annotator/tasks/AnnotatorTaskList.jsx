@@ -125,7 +125,7 @@ const AnnotatorTaskList = () => {
                   className="btn btn-primary w-100"
                   disabled={task.status === "Completed"}
                   onClick={() =>
-                    navigate(`/workplace-labeling-task/${task.assignmentId}`)
+                    navigate(`/annotator-project-packs/${task.assignmentId}`)
                   }
                 >
                   {task.status === "Completed" ? "Đã hoàn thành" : "Tiếp tục"}

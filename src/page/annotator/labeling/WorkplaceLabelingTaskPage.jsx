@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
@@ -25,6 +25,7 @@ const WorkplaceLabelingTaskPage = () => {
   const { assignmentId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [images, setImages] = useState([]);
   const [labels, setLabels] = useState([]);
@@ -85,7 +86,14 @@ const WorkplaceLabelingTaskPage = () => {
           return (priority[a.status] || 99) - (priority[b.status] || 99);
         });
 
-        setImages(sortedImages);
+        const packStart = parseInt(searchParams.get("packStart"), 10);
+        const packEnd = parseInt(searchParams.get("packEnd"), 10);
+        const sliced =
+          !isNaN(packStart) && !isNaN(packEnd)
+            ? sortedImages.slice(packStart, packEnd)
+            : sortedImages;
+
+        setImages(sliced);
 
         const sessionKey = `guideline_read_${assignmentId}`;
         if (sessionStorage.getItem(sessionKey)) {
@@ -243,7 +251,7 @@ const WorkplaceLabelingTaskPage = () => {
       );
 
       if (currentImgIndex === images.length - 1) {
-        navigate("/annotator-my-tasks");
+        navigate(`/annotator-project-packs/${assignmentId}`);
       } else {
         setCurrentImgIndex((prev) => prev + 1);
       }
