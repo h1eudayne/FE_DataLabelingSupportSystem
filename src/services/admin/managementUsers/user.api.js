@@ -40,3 +40,13 @@ export const uploadAvatar = (file) => {
 export const updateStatus = (id, isActive) => {
   return axios.patch(`/api/User/${id}/status?isActive=${isActive}`);
 };
+
+export const importUser = (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return axios.post(`/api/User/import`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};

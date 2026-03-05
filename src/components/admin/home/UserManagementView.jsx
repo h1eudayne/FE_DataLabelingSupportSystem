@@ -17,6 +17,7 @@ import {
   Edit2,
   CheckCircle,
   Power,
+  UserPlus,
 } from "lucide-react";
 
 const UserManagementView = ({
@@ -26,6 +27,7 @@ const UserManagementView = ({
   onActive,
   onEdit,
   currentRole,
+  openCreateModal,
 }) => (
   <>
     <Row className="mb-4 g-3">
@@ -59,6 +61,15 @@ const UserManagementView = ({
             Quản lý tài khoản và phân quyền hệ thống.
           </small>
         </div>
+        <Button
+          variant="primary"
+          className="d-flex align-items-center gap-2 shadow-sm px-3 py-2"
+          style={{ borderRadius: "10px" }}
+          onClick={() => openCreateModal(true)}
+        >
+          <UserPlus size={18} />
+          <span className="fw-semibold">Thêm nhân viên</span>
+        </Button>
       </Card.Header>
       <Card.Body className="px-4 pb-4">
         <InputGroup className="mb-3 border rounded-3 overflow-hidden">
