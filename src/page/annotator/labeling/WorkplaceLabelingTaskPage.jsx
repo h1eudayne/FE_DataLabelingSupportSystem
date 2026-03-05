@@ -244,16 +244,30 @@ const WorkplaceLabelingTaskPage = () => {
 
       toast.success("Nộp bài thành công!");
 
-      setImages((prev) =>
-        prev.map((img) =>
-          img.id === currentImage.id ? { ...img, status: "Submitted" } : img,
-        ),
+      const updatedImages = images.map((img) =>
+        img.id === currentImage.id ? { ...img, status: "Submitted" } : img,
+      );
+      setImages(updatedImages);
+
+      const nextUnsubmitted = updatedImages.findIndex(
+        (img, idx) =>
+          idx > currentImgIndex &&
+          img.status !== "Submitted" &&
+          img.status !== "Approved",
       );
 
-      if (currentImgIndex === images.length - 1) {
-        navigate(`/annotator-project-packs/${assignmentId}`);
+      if (nextUnsubmitted !== -1) {
+        setCurrentImgIndex(nextUnsubmitted);
       } else {
-        setCurrentImgIndex((prev) => prev + 1);
+        const allDone = updatedImages.every(
+          (img) => img.status === "Submitted" || img.status === "Approved",
+        );
+        if (allDone) {
+          toast.success("Tất cả ảnh trong pack đã được nộp!");
+          navigate(`/annotator-project-packs/${assignmentId}`);
+        } else if (currentImgIndex < images.length - 1) {
+          setCurrentImgIndex((prev) => prev + 1);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -356,7 +370,14 @@ const WorkplaceLabelingTaskPage = () => {
   if (!currentImage)
     return <div className="text-center mt-5">Dự án này chưa có ảnh nào.</div>;
 
-  const isLastImage = currentImgIndex === images.length - 1;
+  const isReadOnly =
+    currentImage.status === "Submitted" || currentImage.status === "Approved";
+
+  const doneCount = images.filter(
+    (img) => img.status === "Submitted" || img.status === "Approved",
+  ).length;
+  const progressPercent =
+    images.length > 0 ? Math.round((doneCount / images.length) * 100) : 0;
 
   return (
     <div className="row g-3">
@@ -366,35 +387,53 @@ const WorkplaceLabelingTaskPage = () => {
           status={currentImage.status}
           dueDate={currentImage.deadline}
         />
+
+        {/* Progress bar */}
         <div className="mt-3">
-          <h6 className="fw-bold">
-            Tiến độ: {currentImgIndex + 1} / {images.length}
-          </h6>
-          <div className="progress" style={{ height: "5px" }}>
+          <div className="d-flex justify-content-between small mb-1">
+            <span className="fw-bold">
+              Ảnh {currentImgIndex + 1} / {images.length}
+            </span>
+            <span className="fw-bold text-primary">
+              {doneCount}/{images.length} đã nộp ({progressPercent}%)
+            </span>
+          </div>
+          <div className="progress" style={{ height: 8 }}>
             <div
-              className="progress-bar bg-primary"
+              className={`progress-bar bg-${progressPercent === 100 ? "success" : "primary"}`}
               role="progressbar"
-              style={{
-                width: `${((currentImgIndex + 1) / images.length) * 100}%`,
-              }}
+              style={{ width: `${progressPercent}%` }}
             ></div>
           </div>
         </div>
+
         <hr />
-        <GuidelineChecklistPanel
-          labels={labels}
-          assignmentId={currentImage.id}
-        />
-        <LabelPicker labels={labels} unlockedLabelIds={unlockedLabelIds} />
+
+        {isReadOnly ? (
+          <div className="alert alert-info small py-2">
+            <i className="ri-lock-line me-1"></i>
+            Ảnh này đã được nộp. Chỉ xem, không chỉnh sửa.
+          </div>
+        ) : (
+          <>
+            <GuidelineChecklistPanel
+              labels={labels}
+              assignmentId={currentImage.id}
+            />
+            <LabelPicker labels={labels} unlockedLabelIds={unlockedLabelIds} />
+          </>
+        )}
       </div>
 
       <div className="col-lg-9">
         <LabelingWorkspace
           assignmentId={currentImage.id}
           imageUrl={currentImage.dataItemUrl}
+          readOnly={isReadOnly}
         />
 
-        <div className="d-flex justify-content-between mt-3 p-3 bg-light rounded shadow-sm">
+        {/* Navigation + action buttons */}
+        <div className="d-flex justify-content-between align-items-center mt-3 p-3 bg-light rounded shadow-sm">
           <button
             className="btn btn-secondary"
             disabled={currentImgIndex === 0}
@@ -403,24 +442,35 @@ const WorkplaceLabelingTaskPage = () => {
             <i className="bx bx-chevron-left"></i> Trước
           </button>
 
-          <div>
-            <button
-              className="btn btn-outline-primary me-2"
-              onClick={() => saveDraft(false)}
-            >
-              <i className="bx bx-save"></i> Lưu nháp
-            </button>
+          <div className="d-flex gap-2">
+            {!isReadOnly && (
+              <>
+                <button
+                  className="btn btn-outline-primary"
+                  onClick={() => saveDraft(false)}
+                >
+                  <i className="bx bx-save me-1"></i> Lưu nháp
+                </button>
+                <button className="btn btn-success" onClick={handleSubmit}>
+                  <i className="bx bx-check-circle me-1"></i> Nộp bài
+                </button>
+              </>
+            )}
 
-            {isLastImage ? (
-              <button className="btn btn-success" onClick={handleSubmit}>
-                <i className="bx bx-check-circle"></i> Nộp bài & Hoàn tất
-              </button>
-            ) : (
-              <button className="btn btn-primary" onClick={handleNext}>
-                Lưu & Tiếp <i className="bx bx-chevron-right"></i>
-              </button>
+            {isReadOnly && (
+              <span className="badge bg-success-subtle text-success fs-6 d-flex align-items-center">
+                <i className="ri-check-double-line me-1"></i> Đã nộp
+              </span>
             )}
           </div>
+
+          <button
+            className="btn btn-secondary"
+            disabled={currentImgIndex === images.length - 1}
+            onClick={handleNext}
+          >
+            Tiếp <i className="bx bx-chevron-right"></i>
+          </button>
         </div>
 
         {(currentImage.status === "Approved" ||
