@@ -1,7 +1,7 @@
 import axios from "../../axios.customize";
 
 export const getUsers = () => {
-  return axios.get("/api/User");
+  return axios.get("/api/users");
 };
 
 export const createUser = (data) => {
@@ -9,42 +9,40 @@ export const createUser = (data) => {
 };
 
 export const changePassword = (oldPassword, newPassword) => {
-  return axios.post("/api/User/change-password", { oldPassword, newPassword });
+  return axios.post("/api/users/me/password", { oldPassword, newPassword });
 };
 
 export const updateUser = (id, data) => {
-  return axios.put(`/api/User/${id}`, data);
+  return axios.put(`/api/users/${id}`, data);
 };
 
 export const getUserProfile = () => {
-  return axios.get("/api/User/profile");
+  return axios.get("/api/users/me");
 };
 
 export const updateUserProfile = (fullName, avatarUrl) => {
-  return axios.put(`/api/User/profile`, {
-    request: {
-      fullName: fullName,
-      avatarUrl: avatarUrl,
-    },
+  return axios.put(`/api/users/me`, {
+    fullName: fullName,
+    avatarUrl: avatarUrl,
   });
 };
 
 export const uploadAvatar = (file) => {
   const formData = new FormData();
   formData.append("file", file);
-  return axios.post("/api/User/upload-avatar", formData, {
+  return axios.post("/api/users/me/avatar", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
 
 export const updateStatus = (id, isActive) => {
-  return axios.patch(`/api/User/${id}/status?isActive=${isActive}`);
+  return axios.patch(`/api/users/${id}/status?isActive=${isActive}`);
 };
 
 export const importUser = (file) => {
   const formData = new FormData();
   formData.append("file", file);
-  return axios.post(`/api/User/import`, formData, {
+  return axios.post(`/api/users/import`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

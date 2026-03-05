@@ -107,7 +107,9 @@ const ProfileTable = ({ userSelf, onEditProfile, onChangePass }) => {
                       </p>
                       <p className="text-muted">Email: {userSelf.email}</p>
                       <p className="text-muted">Role: {userSelf.role}</p>
-                      <Button onClick={onEditProfile}>Change Profile</Button>
+                      <Button onClick={onEditProfile}>
+                        Thay đổi thông tin
+                      </Button>
                     </Tab.Pane>
                     <Tab.Pane eventKey="security">
                       <div className="mb-4">
