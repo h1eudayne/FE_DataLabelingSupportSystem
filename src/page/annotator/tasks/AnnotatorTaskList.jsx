@@ -123,12 +123,16 @@ const AnnotatorTaskList = () => {
 
                 <button
                   className="btn btn-primary w-100"
-                  disabled={task.status === "Completed"}
+                  disabled={task.status === "Completed" && task.progress >= 100}
                   onClick={() =>
                     navigate(`/annotator-project-packs/${task.assignmentId}`)
                   }
                 >
-                  {task.status === "Completed" ? "Đã hoàn thành" : "Tiếp tục"}
+                  {task.status === "Completed" && task.progress >= 100
+                    ? "Đã hoàn thành"
+                    : task.status === "Completed"
+                      ? "Xem lại"
+                      : "Tiếp tục"}
                 </button>
               </div>
             </div>

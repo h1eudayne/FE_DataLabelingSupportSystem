@@ -195,7 +195,7 @@ const AnnotatorProjectPacks = () => {
                   e.currentTarget.style.transform = "translateY(0)";
                   e.currentTarget.style.boxShadow = "";
                 }}
-                onClick={() => pack.progress < 100 && handleOpenPack(pack)}
+                onClick={() => handleOpenPack(pack)}
               >
                 <div
                   className={`card-header bg-${getPackStatusColor(pack)} bg-opacity-10 border-0`}
@@ -242,12 +242,10 @@ const AnnotatorProjectPacks = () => {
 
                   <button
                     className={`btn w-100 btn-${pack.progress === 100 ? "outline-success" : "primary"}`}
-                    disabled={pack.progress === 100}
                   >
                     {pack.progress === 100 ? (
                       <>
-                        <i className="ri-check-double-line me-1"></i> Đã hoàn
-                        thành
+                        <i className="ri-eye-line me-1"></i> Xem lại
                       </>
                     ) : pack.inProgress > 0 || pack.completed > 0 ? (
                       <>
