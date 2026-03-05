@@ -75,7 +75,16 @@ const WorkplaceLabelingTaskPage = () => {
         setProjectInfo(projectData);
         setLabels(projectData?.labels || []);
 
-        const sortedImages = (imgRes.data || imgRes || []).sort((a, b) => {
+        const allImages = imgRes.data || imgRes || [];
+
+        const packStart = parseInt(searchParams.get("packStart"), 10);
+        const packEnd = parseInt(searchParams.get("packEnd"), 10);
+        const sliced =
+          !isNaN(packStart) && !isNaN(packEnd)
+            ? allImages.slice(packStart, packEnd)
+            : allImages;
+
+        const sortedSlice = [...sliced].sort((a, b) => {
           const priority = {
             New: 1,
             InProgress: 2,
@@ -86,14 +95,7 @@ const WorkplaceLabelingTaskPage = () => {
           return (priority[a.status] || 99) - (priority[b.status] || 99);
         });
 
-        const packStart = parseInt(searchParams.get("packStart"), 10);
-        const packEnd = parseInt(searchParams.get("packEnd"), 10);
-        const sliced =
-          !isNaN(packStart) && !isNaN(packEnd)
-            ? sortedImages.slice(packStart, packEnd)
-            : sortedImages;
-
-        setImages(sliced);
+        setImages(sortedSlice);
 
         const sessionKey = `guideline_read_${assignmentId}`;
         if (sessionStorage.getItem(sessionKey)) {
@@ -196,14 +198,18 @@ const WorkplaceLabelingTaskPage = () => {
 
   const handlePrev = async () => {
     if (currentImgIndex > 0) {
-      await saveDraft(true);
+      const img = images[currentImgIndex];
+      const ro = img?.status === "Submitted" || img?.status === "Approved";
+      if (!ro) await saveDraft(true);
       setCurrentImgIndex((prev) => prev - 1);
     }
   };
 
   const handleNext = async () => {
-    const success = await saveDraft(true);
-    if (success && currentImgIndex < images.length - 1) {
+    const img = images[currentImgIndex];
+    const ro = img?.status === "Submitted" || img?.status === "Approved";
+    if (!ro) await saveDraft(true);
+    if (currentImgIndex < images.length - 1) {
       setCurrentImgIndex((prev) => prev + 1);
     }
   };
@@ -244,31 +250,11 @@ const WorkplaceLabelingTaskPage = () => {
 
       toast.success("Nộp bài thành công!");
 
-      const updatedImages = images.map((img) =>
-        img.id === currentImage.id ? { ...img, status: "Submitted" } : img,
+      setImages((prev) =>
+        prev.map((img) =>
+          img.id === currentImage.id ? { ...img, status: "Submitted" } : img,
+        ),
       );
-      setImages(updatedImages);
-
-      const nextUnsubmitted = updatedImages.findIndex(
-        (img, idx) =>
-          idx > currentImgIndex &&
-          img.status !== "Submitted" &&
-          img.status !== "Approved",
-      );
-
-      if (nextUnsubmitted !== -1) {
-        setCurrentImgIndex(nextUnsubmitted);
-      } else {
-        const allDone = updatedImages.every(
-          (img) => img.status === "Submitted" || img.status === "Approved",
-        );
-        if (allDone) {
-          toast.success("Tất cả ảnh trong pack đã được nộp!");
-          navigate(`/annotator-project-packs/${assignmentId}`);
-        } else if (currentImgIndex < images.length - 1) {
-          setCurrentImgIndex((prev) => prev + 1);
-        }
-      }
     } catch (err) {
       console.error(err);
       toast.error("Gửi bài thất bại");
