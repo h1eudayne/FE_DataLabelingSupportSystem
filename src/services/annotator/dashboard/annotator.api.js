@@ -6,7 +6,7 @@ export const getProfile = async () => {
 };
 
 export const getAssignedProjects = async () => {
-  const res = await axios.get("/api/Project/annotator/assigned");
+  const res = await axios.get("/api/tasks/projects");
   return res.data;
 };
 
@@ -37,7 +37,7 @@ export const getDashboardStats = async () => {
 
 export const getMyTasks = async (projectId) => {
   if (!projectId) return [];
-  const res = await axios.get(`/api/Task/project/${projectId}/images`);
+  const res = await axios.get(`/api/tasks/projects/${projectId}/images`);
   return res.data;
 };
 

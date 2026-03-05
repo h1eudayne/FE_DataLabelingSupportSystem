@@ -1,7 +1,7 @@
 import axios from "../../axios.customize";
 
 const projectService = {
-  getById: (id) => axios.get(`/api/Project/${id}`),
+  getById: (id) => axios.get(`/api/projects/${id}`),
 };
 
 export default projectService;
