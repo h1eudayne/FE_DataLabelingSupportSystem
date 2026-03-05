@@ -21,6 +21,7 @@ import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 import AccessDenied from "./routes/AccessDenied";
 import AnnotatorDashboard from "./page/annotator/dashboard/AnnotatorDashboard";
 import AnnotatorTaskList from "./page/annotator/tasks/AnnotatorTaskList";
+import AnnotatorProjectPacks from "./page/annotator/tasks/AnnotatorProjectPacks";
 import ProjectImportData from "./page/manager/project/ProjectImportData";
 import ProjectAssignTask from "./page/manager/project/ProjectAssignTask";
 import CreateProject from "./page/manager/project/CreateProject";
@@ -104,6 +105,10 @@ function App() {
           <Route element={<RoleProtectedRoute allowRoles={["Annotator"]} />}>
             <Route path="my-dashboard" element={<AnnotatorDashboard />} />
             <Route path="annotator-my-tasks" element={<AnnotatorTaskList />} />
+            <Route
+              path="annotator-project-packs/:assignmentId"
+              element={<AnnotatorProjectPacks />}
+            />
             <Route
               path="workplace-labeling-task/:assignmentId"
               element={<WorkplaceLabelingTaskPage />}
