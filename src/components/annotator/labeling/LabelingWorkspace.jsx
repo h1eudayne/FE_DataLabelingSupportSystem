@@ -22,7 +22,7 @@ const ZOOM_STEP = 1.1;
 const PAN_STEP = 30;
 const ZOOM_BTN_STEP = 1.25;
 
-const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
+const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
   const dispatch = useDispatch();
   const containerRef = useRef(null);
 
@@ -66,6 +66,8 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
 
   useEffect(() => {
     const onKeyDown = (e) => {
+      if (readOnly) return;
+
       if (e.ctrlKey && e.key === "z") {
         e.preventDefault();
         dispatch(undoLastAction(assignmentId));
@@ -73,7 +75,7 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
       }
 
       if (e.key === "Backspace" || e.key === "Delete") {
-        dispatch(removeLastAnnotation(assignmentId));
+        if (!readOnly) dispatch(removeLastAnnotation(assignmentId));
         return;
       }
 
@@ -144,7 +146,7 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
       return;
     }
 
-    if (!selectedLabel) {
+    if (readOnly || !selectedLabel) {
       setIsPanning(true);
       setPanStart({ x: pos.x - stagePos.x, y: pos.y - stagePos.y });
       return;
@@ -208,7 +210,11 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
 
   const handleMouseEnter = () => {
     if (!containerRef.current) return;
-    containerRef.current.style.cursor = selectedLabel ? "crosshair" : "grab";
+    containerRef.current.style.cursor = readOnly
+      ? "default"
+      : selectedLabel
+        ? "crosshair"
+        : "grab";
   };
 
   const handleMouseLeave = () => {
@@ -250,6 +256,7 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
   };
 
   const handleUndo = () => {
+    if (readOnly) return;
     dispatch(undoLastAction(assignmentId));
   };
 
@@ -301,14 +308,16 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
           <i className="ri-fullscreen-line me-1"></i>
           <span className="small">Reset</span>
         </button>
-        <button
-          className="btn btn-sm btn-outline-warning"
-          onClick={handleUndo}
-          title="Hoàn tác (Ctrl+Z)"
-        >
-          <i className="ri-arrow-go-back-line me-1"></i>
-          <span className="small">Undo</span>
-        </button>
+        {!readOnly && (
+          <button
+            className="btn btn-sm btn-outline-warning"
+            onClick={handleUndo}
+            title="Hoàn tác (Ctrl+Z)"
+          >
+            <i className="ri-arrow-go-back-line me-1"></i>
+            <span className="small">Undo</span>
+          </button>
+        )}
         <div className="ms-auto d-flex align-items-center gap-3 text-white small opacity-75">
           <span>
             <i className="ri-mouse-line me-1"></i>
@@ -345,9 +354,10 @@ const LabelingWorkspace = ({ imageUrl, assignmentId }) => {
                 stroke={a.color}
                 strokeWidth={2 / stageScale}
                 fill={a.color + "33"}
-                onDblClick={() =>
-                  dispatch(removeAnnotation({ assignmentId, id: a.id }))
-                }
+                onDblClick={() => {
+                  if (!readOnly)
+                    dispatch(removeAnnotation({ assignmentId, id: a.id }));
+                }}
               />
               <Text
                 x={a.x}
