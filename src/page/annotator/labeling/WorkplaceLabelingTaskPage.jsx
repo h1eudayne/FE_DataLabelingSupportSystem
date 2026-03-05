@@ -33,6 +33,7 @@ const WorkplaceLabelingTaskPage = () => {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [guidelineRead, setGuidelineRead] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const currentImage = images[currentImgIndex];
 
@@ -158,6 +159,27 @@ const WorkplaceLabelingTaskPage = () => {
     };
   }, [dispatch]);
 
+  useEffect(() => {
+    setIsInitialLoad(true);
+    const timer = setTimeout(() => setIsInitialLoad(false), 500);
+    return () => clearTimeout(timer);
+  }, [currentImgIndex]);
+
+  useEffect(() => {
+    if (isInitialLoad || !currentImage) return;
+    if (
+      currentImage.status === "Submitted" ||
+      currentImage.status === "Approved"
+    )
+      return;
+
+    const timer = setTimeout(() => {
+      saveDraft(true);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [annotations, checklistState]);
+
   const buildDataJSON = useCallback(() => {
     return JSON.stringify({
       annotations: annotations,
@@ -180,7 +202,11 @@ const WorkplaceLabelingTaskPage = () => {
         setImages((prev) =>
           prev.map((img) =>
             img.id === currentImage.id
-              ? { ...img, annotationData: dataJSON, status: "InProgress" }
+              ? {
+                  ...img,
+                  annotationData: dataJSON,
+                  status: img.status === "New" ? "InProgress" : img.status,
+                }
               : img,
           ),
         );
@@ -196,19 +222,13 @@ const WorkplaceLabelingTaskPage = () => {
     [currentImage, buildDataJSON],
   );
 
-  const handlePrev = async () => {
+  const handlePrev = () => {
     if (currentImgIndex > 0) {
-      const img = images[currentImgIndex];
-      const ro = img?.status === "Submitted" || img?.status === "Approved";
-      if (!ro) await saveDraft(true);
       setCurrentImgIndex((prev) => prev - 1);
     }
   };
 
-  const handleNext = async () => {
-    const img = images[currentImgIndex];
-    const ro = img?.status === "Submitted" || img?.status === "Approved";
-    if (!ro) await saveDraft(true);
+  const handleNext = () => {
     if (currentImgIndex < images.length - 1) {
       setCurrentImgIndex((prev) => prev + 1);
     }
@@ -237,9 +257,6 @@ const WorkplaceLabelingTaskPage = () => {
       if (!confirmed) return;
     }
 
-    const success = await saveDraft(true);
-    if (!success) return;
-
     try {
       const dataJSON = buildDataJSON();
 
@@ -248,13 +265,15 @@ const WorkplaceLabelingTaskPage = () => {
         dataJSON,
       });
 
-      toast.success("Nộp bài thành công!");
-
       setImages((prev) =>
         prev.map((img) =>
-          img.id === currentImage.id ? { ...img, status: "Submitted" } : img,
+          img.id === currentImage.id
+            ? { ...img, status: "Submitted", annotationData: dataJSON }
+            : img,
         ),
       );
+
+      toast.success("Nộp bài thành công!");
     } catch (err) {
       console.error(err);
       toast.error("Gửi bài thất bại");
