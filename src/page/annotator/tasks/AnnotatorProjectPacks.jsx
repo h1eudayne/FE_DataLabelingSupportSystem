@@ -131,9 +131,7 @@ const AnnotatorProjectPacks = () => {
             <div className="col-md-6">
               <div className="d-flex align-items-center gap-4 justify-content-md-end">
                 <div className="text-center">
-                  <h3 className="fw-bold text-primary mb-0">
-                    {images.length}
-                  </h3>
+                  <h3 className="fw-bold text-primary mb-0">{images.length}</h3>
                   <small className="text-muted">Tổng ảnh</small>
                 </div>
                 <div className="text-center">
@@ -197,7 +195,7 @@ const AnnotatorProjectPacks = () => {
                   e.currentTarget.style.transform = "translateY(0)";
                   e.currentTarget.style.boxShadow = "";
                 }}
-                onClick={() => handleOpenPack(pack)}
+                onClick={() => pack.progress < 100 && handleOpenPack(pack)}
               >
                 <div
                   className={`card-header bg-${getPackStatusColor(pack)} bg-opacity-10 border-0`}
@@ -207,9 +205,7 @@ const AnnotatorProjectPacks = () => {
                       <i className="ri-image-2-line me-2"></i>
                       Pack {pack.index + 1}
                     </h6>
-                    <span
-                      className={`badge bg-${getPackStatusColor(pack)}`}
-                    >
+                    <span className={`badge bg-${getPackStatusColor(pack)}`}>
                       {getPackStatusLabel(pack)}
                     </span>
                   </div>

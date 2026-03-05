@@ -105,6 +105,7 @@ function App() {
           <Route element={<RoleProtectedRoute allowRoles={["Annotator"]} />}>
             <Route path="my-dashboard" element={<AnnotatorDashboard />} />
             <Route path="annotator-my-tasks" element={<AnnotatorTaskList />} />
+            <Route path="annotator-projects" element={<AnnotatorTaskList />} />
             <Route
               path="annotator-project-packs/:assignmentId"
               element={<AnnotatorProjectPacks />}
@@ -112,6 +113,30 @@ function App() {
             <Route
               path="workplace-labeling-task/:assignmentId"
               element={<WorkplaceLabelingTaskPage />}
+            />
+            <Route
+              path="annotator-team"
+              element={
+                <div className="container-fluid">
+                  <h4 className="fw-bold mb-3">Team</h4>
+                  <div className="alert alert-info">
+                    <i className="ri-team-line me-2"></i>
+                    Tính năng đang được phát triển.
+                  </div>
+                </div>
+              }
+            />
+            <Route
+              path="annotator-settings"
+              element={
+                <div className="container-fluid">
+                  <h4 className="fw-bold mb-3">Cài đặt</h4>
+                  <div className="alert alert-info">
+                    <i className="ri-settings-3-line me-2"></i>
+                    Tính năng đang được phát triển.
+                  </div>
+                </div>
+              }
             />
           </Route>
         </Route>

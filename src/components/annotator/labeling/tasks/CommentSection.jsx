@@ -42,10 +42,6 @@ const CommentSection = ({ projectId, taskId }) => {
     }
   };
 
-  useEffect(() => {
-    loadComments();
-  }, [projectId, loadComments]);
-
   return (
     <div className="card mt-4 shadow-sm border-0">
       <div className="card-header align-items-center d-flex bg-white py-3">
