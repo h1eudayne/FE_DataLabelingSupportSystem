@@ -15,31 +15,34 @@ describe("labelService", () => {
     vi.clearAllMocks();
   });
 
-  it("createLabel: nên gọi API post tạo nhãn mới", async () => {
+  it("createLabel: should POST to /api/labels", async () => {
     const labelData = { name: "Dog", color: "#ff0000" };
     axios.post.mockResolvedValueOnce({ data: { id: "L1" } });
 
     await labelService.createLabel(labelData);
 
-    expect(axios.post).toHaveBeenCalledWith("/api/Label", labelData);
+    expect(axios.post).toHaveBeenCalledWith("/api/labels", labelData);
   });
 
-  it("updateLabel: nên gọi API put với đúng ID và data", async () => {
+  it("updateLabel: should PUT to /api/labels/{id}", async () => {
     const labelId = "L1";
     const updateData = { name: "Cat" };
     axios.put.mockResolvedValueOnce({ data: "Updated" });
 
     await labelService.updateLabel(labelId, updateData);
 
-    expect(axios.put).toHaveBeenCalledWith(`/api/Label/${labelId}`, updateData);
+    expect(axios.put).toHaveBeenCalledWith(
+      `/api/labels/${labelId}`,
+      updateData,
+    );
   });
 
-  it("deleteLabel: nên gọi API delete với đúng ID", async () => {
+  it("deleteLabel: should DELETE /api/labels/{id}", async () => {
     const labelId = "L1";
     axios.delete.mockResolvedValueOnce({ data: "Deleted" });
 
     await labelService.deleteLabel(labelId);
 
-    expect(axios.delete).toHaveBeenCalledWith(`/api/Label/${labelId}`);
+    expect(axios.delete).toHaveBeenCalledWith(`/api/labels/${labelId}`);
   });
 });
