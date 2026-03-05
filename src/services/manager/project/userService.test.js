@@ -9,9 +9,9 @@ vi.mock("../../axios.customize", () => ({
 }));
 
 describe("userService", () => {
-  it("getUsers: nên gọi đúng API /api/User", async () => {
+  it("getUsers: should call /api/users", async () => {
     axios.get.mockResolvedValueOnce({ data: [] });
     await userService.getUsers();
-    expect(axios.get).toHaveBeenCalledWith("/api/User");
+    expect(axios.get).toHaveBeenCalledWith("/api/users");
   });
 });

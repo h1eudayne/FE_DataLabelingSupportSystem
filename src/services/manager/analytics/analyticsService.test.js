@@ -14,21 +14,23 @@ describe("analyticsService - Full Coverage", () => {
   });
 
   describe("getProjectStats()", () => {
-    it("nên ném lỗi nếu không truyền projectId", () => {
+    it("should throw error if projectId is missing", () => {
       expect(() => analyticsService.getProjectStats(null)).toThrow(
         "projectId is required",
       );
     });
 
-    it("nên gọi đúng endpoint khi có projectId", async () => {
+    it("should call correct statistics endpoint", async () => {
       axios.get.mockResolvedValueOnce({ data: {} });
       await analyticsService.getProjectStats("PROJ_01");
-      expect(axios.get).toHaveBeenCalledWith("/api/Project/PROJ_01/stats");
+      expect(axios.get).toHaveBeenCalledWith(
+        "/api/projects/PROJ_01/statistics",
+      );
     });
   });
 
-  describe("getDashboardStats() - Logic tổng hợp", () => {
-    it("TH Thành công: Tổng hợp dữ liệu từ nhiều dự án", async () => {
+  describe("getDashboardStats() - Aggregation logic", () => {
+    it("Success: aggregate data from multiple projects", async () => {
       axios.get.mockResolvedValueOnce({
         data: [{ id: "P1" }, { id: "P2" }],
       });
@@ -48,8 +50,10 @@ describe("analyticsService - Full Coverage", () => {
       expect(stats.completed).toBe(15);
     });
 
-    it("TH Lỗi 400: Nên bỏ qua dự án bị lỗi và tiếp tục tính toán", async () => {
-      axios.get.mockResolvedValueOnce({ data: [{ id: "P1" }, { id: "P2" }] });
+    it("Error 400: skip errored projects and continue", async () => {
+      axios.get.mockResolvedValueOnce({
+        data: [{ id: "P1" }, { id: "P2" }],
+      });
 
       const error400 = { response: { status: 400 } };
       axios.get
@@ -62,7 +66,7 @@ describe("analyticsService - Full Coverage", () => {
       expect(stats.totalAssignments).toBe(5);
     });
 
-    it("TH Lỗi nghiêm trọng (500): Nên dừng lại và ném lỗi", async () => {
+    it("Critical error (500): stop and throw", async () => {
       axios.get.mockResolvedValueOnce({ data: [{ id: "P1" }] });
       axios.get.mockRejectedValueOnce(new Error("Database Crash"));
 
@@ -71,7 +75,7 @@ describe("analyticsService - Full Coverage", () => {
       ).rejects.toThrow("Database Crash");
     });
 
-    it("TH Không có dự án: Trả về object chứa các giá trị 0", async () => {
+    it("No projects: return zeroed object", async () => {
       axios.get.mockResolvedValueOnce({ data: [] });
 
       const stats = await analyticsService.getDashboardStats("test-manager-id");
@@ -82,10 +86,10 @@ describe("analyticsService - Full Coverage", () => {
   });
 
   describe("getUsers()", () => {
-    it("nên gọi đúng endpoint lấy danh sách user", async () => {
+    it("should call correct users endpoint", async () => {
       axios.get.mockResolvedValueOnce({ data: [] });
       await analyticsService.getUsers();
-      expect(axios.get).toHaveBeenCalledWith("/api/User");
+      expect(axios.get).toHaveBeenCalledWith("/api/users");
     });
   });
 });

@@ -25,27 +25,29 @@ describe("taskService", () => {
 
     await taskService.assignTask(mockData);
 
-    expect(axios.post).toHaveBeenCalledWith("/api/Task/assign", mockData);
+    expect(axios.post).toHaveBeenCalledWith("/api/tasks/assignments", mockData);
   });
 
-  it("getMyTasks: should GET /api/Task/my-tasks", async () => {
+  it("getMyTasks: should GET /api/tasks/projects", async () => {
     axios.get.mockResolvedValueOnce({ data: [] });
 
     await taskService.getMyTasks();
 
-    expect(axios.get).toHaveBeenCalledWith("/api/Task/my-tasks");
+    expect(axios.get).toHaveBeenCalledWith("/api/tasks/projects");
   });
 
   it("getTaskDetail: should GET correct URL with assignmentId", async () => {
-    const assignmentId = "A_123";
+    const assignmentId = 123;
     axios.get.mockResolvedValueOnce({ data: { id: assignmentId } });
 
     await taskService.getTaskDetail(assignmentId);
 
-    expect(axios.get).toHaveBeenCalledWith(`/api/Task/detail/${assignmentId}`);
+    expect(axios.get).toHaveBeenCalledWith(
+      `/api/tasks/assignments/${assignmentId}`,
+    );
   });
 
-  it("submitTask: should POST to /api/Task/submit", async () => {
+  it("submitTask: should POST to /api/tasks/submissions", async () => {
     const submitData = {
       assignmentId: 1,
       dataJSON: '{"objects":[]}',
@@ -54,6 +56,9 @@ describe("taskService", () => {
 
     await taskService.submitTask(submitData);
 
-    expect(axios.post).toHaveBeenCalledWith("/api/Task/submit", submitData);
+    expect(axios.post).toHaveBeenCalledWith(
+      "/api/tasks/submissions",
+      submitData,
+    );
   });
 });

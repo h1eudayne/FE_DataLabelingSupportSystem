@@ -2,25 +2,30 @@ import axios from "../../axios.customize";
 
 const projectService = {
   getManagerProjects: (managerId) =>
-    axios.get(`/api/Project/manager/${managerId}`),
+    axios.get(`/api/projects/managers/${managerId}`),
 
-  getProjectById: (id) => axios.get(`/api/Project/${id}`),
+  getProjectById: (id) => axios.get(`/api/projects/${id}`),
 
   createProject: async (data) => {
-    const response = await axios.post("/api/Project", data);
+    const response = await axios.post("/api/projects", data);
     return response;
   },
 
-  updateProject: (id, data) => axios.put(`/api/Project/${id}`, data),
+  updateProject: (id, data) => axios.put(`/api/projects/${id}`, data),
 
-  deleteProject: (id) => axios.delete(`/api/Project/${id}`),
+  deleteProject: (id) => axios.delete(`/api/projects/${id}`),
 
   importData: (projectId, urls) =>
-    axios.post(`/api/projects/${projectId}/import`, {
+    axios.post(`/api/projects/${projectId}/imports`, {
       storageUrls: urls,
     }),
 
-  getProjectStats: (id) => axios.get(`/api/ProjectStats/${id}`),
+  uploadDirect: (projectId, formData) =>
+    axios.post(`/api/projects/${projectId}/uploads/direct`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+
+  getProjectStats: (id) => axios.get(`/api/projects/${id}/statistics`),
 };
 
 export default projectService;

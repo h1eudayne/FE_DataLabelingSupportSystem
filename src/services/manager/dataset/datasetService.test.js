@@ -9,39 +9,50 @@ vi.mock("../../axios.customize", () => ({
   },
 }));
 
+vi.mock("../../cloudinary/cloudinaryService", () => ({
+  uploadToCloudinary: vi
+    .fn()
+    .mockResolvedValue("https://cloudinary.com/test.png"),
+}));
+
 describe("datasetService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("getProjectDetail: nên gọi đúng API với ID", async () => {
+  it("getProjectDetail: should call correct API with ID", async () => {
+    axios.get.mockResolvedValueOnce({ data: {} });
     await datasetService.getProjectDetail("123");
-    expect(axios.get).toHaveBeenCalledWith("/api/Project/123");
+    expect(axios.get).toHaveBeenCalledWith("/api/projects/123");
   });
 
-  it("uploadFiles: nên gửi FormData và đúng headers", async () => {
+  it("uploadFiles: should upload to cloudinary then POST imports", async () => {
     const mockFiles = [
       new File([""], "test1.png"),
       new File([""], "test2.png"),
     ];
 
+    axios.post.mockResolvedValueOnce({ data: {} });
     await datasetService.uploadFiles("PROJ_01", mockFiles);
 
     expect(axios.post).toHaveBeenCalledWith(
-      "/api/Project/PROJ_01/upload-direct",
-      expect.any(FormData),
+      "/api/projects/PROJ_01/imports",
       expect.objectContaining({
-        headers: { "Content-Type": "multipart/form-data" },
+        storageUrls: expect.any(Array),
       }),
     );
   });
 
-  it("getStats & exportData: nên gọi đúng endpoints", async () => {
+  it("getStats: should call correct statistics endpoint", async () => {
+    axios.get.mockResolvedValueOnce({ data: {} });
     await datasetService.getStats("P1");
-    expect(axios.get).toHaveBeenCalledWith("/api/Project/P1/stats");
+    expect(axios.get).toHaveBeenCalledWith("/api/projects/P1/statistics");
+  });
 
+  it("exportData: should call correct exports endpoint with blob", async () => {
+    axios.get.mockResolvedValueOnce({ data: new Blob() });
     await datasetService.exportData("P1");
-    expect(axios.get).toHaveBeenCalledWith("/api/projects/P1/export", {
+    expect(axios.get).toHaveBeenCalledWith("/api/projects/P1/exports", {
       responseType: "blob",
     });
   });
