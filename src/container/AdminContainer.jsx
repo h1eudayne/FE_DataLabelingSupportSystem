@@ -120,6 +120,7 @@ const AdminContainer = () => {
     try {
       const res = await importUser(file);
       if (res.data) {
+        await fetchUsers();
         console.log(res.data.successCount);
         console.log(res.data.failureCount);
       }
