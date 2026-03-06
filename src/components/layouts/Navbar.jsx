@@ -185,7 +185,7 @@ const Navbar = () => {
                 <li className="nav-item">
                   <Link
                     className="nav-link menu-link fs-18"
-                    to="/my-dashboard"
+                    to="/dashboard"
                     style={menuItemStyle}
                   >
                     <i

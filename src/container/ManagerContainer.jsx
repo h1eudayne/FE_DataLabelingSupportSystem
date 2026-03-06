@@ -61,7 +61,7 @@ const ManagerContainer = () => {
         </Col>
         <Col md={3}>
           <KpiCard
-            label="Phê duyệt"
+            label="Hoàn thành"
             value={data.completed}
             color="success"
             iconName="CheckCircle2"
@@ -69,8 +69,8 @@ const ManagerContainer = () => {
         </Col>
         <Col md={3}>
           <KpiCard
-            label="Đã nộp"
-            value={data.submitted}
+            label="Đang thực hiện"
+            value={data.inProgress}
             color="warning"
             iconName="BarChart3"
           />
@@ -88,7 +88,7 @@ const ManagerContainer = () => {
       <Row className="g-4">
         <Col lg={4}>
           <QualityDonutChart
-            data={[data.completed, data.pending, data.rejected]}
+            data={[data.completed, data.inProgress, data.rejected]}
           />
         </Col>
         <Col lg={8}>

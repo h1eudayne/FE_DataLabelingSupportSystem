@@ -41,9 +41,9 @@ import disputeService from "../../../services/manager/dispute/disputeService";
 const COLORS = ["#0ab39c", "#f7b84b", "#405189", "#f06548", "#299cdb"];
 
 const EMPTY_STATS = {
-  totalAssigned: 0,
+  totalProjects: 0,
   completed: 0,
-  pending: 0,
+  inProgress: 0,
   submitted: 0,
   rejected: 0,
 };
@@ -73,9 +73,8 @@ const DashboardAnalytics = () => {
         const resProjects = await analyticsService.getMyProjects(managerId);
         const projects = resProjects.data || [];
 
-        let totalAssigned = 0;
         let completed = 0;
-        let pending = 0;
+        let inProgress = 0;
         let submitted = 0;
         let rejected = 0;
 
@@ -94,11 +93,21 @@ const DashboardAnalytics = () => {
             const res = await analyticsService.getProjectStats(project.id);
             const s = res.data;
 
-            totalAssigned += s.totalAssignments ?? 0;
-            completed += s.approvedAssignments ?? 0;
-            pending += s.pendingAssignments ?? 0;
-            submitted += s.submittedAssignments ?? 0;
-            rejected += s.rejectedAssignments ?? 0;
+            const totalAsgn = s.totalAssignments ?? 0;
+            const approvedAsgn = s.approvedAssignments ?? 0;
+            const rejAsgn = s.rejectedAssignments ?? 0;
+            const subAsgn = s.submittedAssignments ?? 0;
+
+            if (totalAsgn === 0) {
+            } else if (approvedAsgn === totalAsgn) {
+              completed++;
+            } else if (rejAsgn > 0) {
+              rejected++;
+            } else if (subAsgn > 0) {
+              submitted++;
+            } else {
+              inProgress++;
+            }
 
             if (s.rejectionRate != null) {
               totalRejRate += s.rejectionRate;
@@ -209,7 +218,13 @@ const DashboardAnalytics = () => {
           } catch {}
         }
 
-        setStats({ totalAssigned, completed, pending, submitted, rejected });
+        setStats({
+          totalProjects: projects.length,
+          completed,
+          inProgress,
+          submitted,
+          rejected,
+        });
         const avgRejRate =
           rejRateCount > 0 ? (totalRejRate / rejRateCount).toFixed(1) : 0;
         setRejectionRate(avgRejRate);
@@ -270,15 +285,12 @@ const DashboardAnalytics = () => {
 
         setProjectChartData(chartStatsArr);
 
-        const resUsers = await analyticsService.getUsers();
-        const users = resUsers.data || [];
-        const annotators = users.filter((u) => u.role === "Annotator");
-        setTotalAnnotators(annotators.length);
+        setTotalAnnotators(annotatorsArr.length);
         setAnnotatorData(
-          annotators
-            .map((u) => ({
-              name: u.fullName || u.email?.split("@")[0],
-              taskCount: u.assignments?.length || 0,
+          annotatorsArr
+            .map((a) => ({
+              name: a.annotatorName || a.annotatorId,
+              taskCount: a.tasksCompleted || 0,
             }))
             .sort((a, b) => b.taskCount - a.taskCount)
             .slice(0, 5),
@@ -308,15 +320,15 @@ const DashboardAnalytics = () => {
       <Row>
         <Col md={2}>
           <StatCard
-            title="Tổng Task"
-            value={stats.totalAssigned}
+            title="Tổng Dự án"
+            value={stats.totalProjects}
             icon={Database}
             color="primary"
           />
         </Col>
         <Col md={2}>
           <StatCard
-            title="Hoàn thành"
+            title="Dự án hoàn thành"
             value={stats.completed}
             icon={CheckCircle}
             color="success"
@@ -324,15 +336,15 @@ const DashboardAnalytics = () => {
         </Col>
         <Col md={2}>
           <StatCard
-            title="Đang chờ"
-            value={stats.pending}
+            title="Đang thực hiện"
+            value={stats.inProgress}
             icon={Clock}
             color="warning"
           />
         </Col>
         <Col md={2}>
           <StatCard
-            title="Bị từ chối"
+            title="Dự án bị từ chối"
             value={stats.rejected}
             icon={AlertTriangle}
             color="danger"
@@ -416,7 +428,7 @@ const DashboardAnalytics = () => {
         <Col xl={4}>
           <Card className="shadow-sm border-0 h-100">
             <CardHeader className="bg-white border-bottom">
-              <h5 className="mb-0">Cơ cấu trạng thái Task</h5>
+              <h5 className="mb-0">Cơ cấu trạng thái Dự án</h5>
             </CardHeader>
             <CardBody>
               <div style={{ width: "100%", height: 280 }}>
@@ -425,7 +437,7 @@ const DashboardAnalytics = () => {
                     <Pie
                       data={[
                         { name: "Hoàn thành", value: stats.completed },
-                        { name: "Đang chờ", value: stats.pending },
+                        { name: "Đang thực hiện", value: stats.inProgress },
                         { name: "Đã nộp", value: stats.submitted },
                         { name: "Bị từ chối", value: stats.rejected },
                       ]}
@@ -479,16 +491,16 @@ const DashboardAnalytics = () => {
           </Col>
         )}
 
-        {labelDistributions.length > 0 && (
-          <Col xl={errorBreakdown.length > 0 ? 6 : 12}>
-            <Card className="shadow-sm border-0 h-100">
-              <CardHeader className="bg-white border-bottom">
-                <h5 className="mb-0">
-                  <i className="ri-price-tag-3-line me-2 text-primary"></i>
-                  Phân bố nhãn (Label Distribution)
-                </h5>
-              </CardHeader>
-              <CardBody>
+        <Col xl={errorBreakdown.length > 0 ? 6 : 12}>
+          <Card className="shadow-sm border-0 h-100">
+            <CardHeader className="bg-white border-bottom">
+              <h5 className="mb-0">
+                <i className="ri-price-tag-3-line me-2 text-primary"></i>
+                Phân bố nhãn (Label Distribution)
+              </h5>
+            </CardHeader>
+            <CardBody>
+              {labelDistributions.length > 0 ? (
                 <div style={{ width: "100%", height: 250 }}>
                   <ResponsiveContainer>
                     <PieChart>
@@ -513,23 +525,28 @@ const DashboardAnalytics = () => {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-              </CardBody>
-            </Card>
-          </Col>
-        )}
+              ) : (
+                <div className="text-center text-muted py-5">
+                  <i className="ri-price-tag-3-line display-5 mb-3 d-block"></i>
+                  <p>Chưa có dữ liệu nhãn. Hãy gán nhãn cho ảnh trong dự án.</p>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </Col>
       </Row>
 
-      {annotatorPerformances.length > 0 && (
-        <Row className="mt-3">
-          <Col xl={12}>
-            <Card className="shadow-sm border-0">
-              <CardHeader className="bg-white border-bottom">
-                <h5 className="mb-0">
-                  <i className="ri-user-star-line me-2 text-success"></i>
-                  Hiệu suất Annotator
-                </h5>
-              </CardHeader>
-              <CardBody>
+      <Row className="mt-3">
+        <Col xl={12}>
+          <Card className="shadow-sm border-0">
+            <CardHeader className="bg-white border-bottom">
+              <h5 className="mb-0">
+                <i className="ri-user-star-line me-2 text-success"></i>
+                Hiệu suất Annotator
+              </h5>
+            </CardHeader>
+            <CardBody>
+              {annotatorPerformances.length > 0 ? (
                 <div className="table-responsive">
                   <Table className="table-hover align-middle mb-0">
                     <thead className="table-light">
@@ -614,30 +631,34 @@ const DashboardAnalytics = () => {
                     </tbody>
                   </Table>
                 </div>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-      )}
+              ) : (
+                <div className="text-center text-muted py-5">
+                  <i className="ri-user-star-line display-5 mb-3 d-block"></i>
+                  <p>Chưa có annotator nào được giao việc.</p>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
 
-      {reviewerEvaluations.length > 0 && (
-        <Row className="mt-3">
-          <Col xl={12}>
-            <Card className="shadow-sm border-0">
-              <CardHeader className="bg-white border-bottom">
-                <h5 className="mb-0">
-                  <i className="ri-shield-star-line me-2 text-info"></i>
-                  Đánh giá Reviewer — Override Rate & Dispute Rate
-                </h5>
-              </CardHeader>
-              <CardBody>
-                <Alert color="light" className="border py-2 mb-3">
-                  <i className="ri-information-line me-1"></i>
-                  <strong>Override Rate</strong>: % reviews bị Manager đảo kết
-                  quả. <strong>Dispute Rate</strong>: % khiếu nại liên quan.
-                  Badge đỏ khi Override Rate &gt; 20% hoặc Dispute Rate &gt;
-                  15%.
-                </Alert>
+      <Row className="mt-3">
+        <Col xl={12}>
+          <Card className="shadow-sm border-0">
+            <CardHeader className="bg-white border-bottom">
+              <h5 className="mb-0">
+                <i className="ri-shield-star-line me-2 text-info"></i>
+                Đánh giá Reviewer — Override Rate & Dispute Rate
+              </h5>
+            </CardHeader>
+            <CardBody>
+              <Alert color="light" className="border py-2 mb-3">
+                <i className="ri-information-line me-1"></i>
+                <strong>Override Rate</strong>: % reviews bị Manager đảo kết
+                quả. <strong>Dispute Rate</strong>: % khiếu nại liên quan. Badge
+                đỏ khi Override Rate &gt; 20% hoặc Dispute Rate &gt; 15%.
+              </Alert>
+              {reviewerEvaluations.length > 0 ? (
                 <div className="table-responsive">
                   <Table className="table-hover align-middle mb-0">
                     <thead className="table-light">
@@ -648,14 +669,14 @@ const DashboardAnalytics = () => {
                         <th className="text-center">Override Rate</th>
                         <th className="text-center">Disputes</th>
                         <th className="text-center">Dispute Rate</th>
-                        <th className="text-center">RQS</th>
+                        <th className="text-center">KQS</th>
                       </tr>
                     </thead>
                     <tbody>
                       {reviewerEvaluations.map((r, idx) => {
                         const overrideHigh = parseFloat(r.overrideRate) > 20;
                         const disputeHigh = parseFloat(r.disputeRate) > 15;
-                        const rqs = Math.max(
+                        const kqsScore = Math.max(
                           0,
                           100 -
                             parseFloat(r.overrideRate) * 2 -
@@ -694,15 +715,15 @@ const DashboardAnalytics = () => {
                             <td className="text-center">
                               <Badge
                                 color={
-                                  rqs >= 80
+                                  kqsScore >= 80
                                     ? "success"
-                                    : rqs >= 50
+                                    : kqsScore >= 50
                                       ? "warning"
                                       : "danger"
                                 }
                                 className="fs-12"
                               >
-                                {rqs}
+                                {kqsScore}
                               </Badge>
                             </td>
                           </tr>
@@ -711,11 +732,16 @@ const DashboardAnalytics = () => {
                     </tbody>
                   </Table>
                 </div>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-      )}
+              ) : (
+                <div className="text-center text-muted py-5">
+                  <i className="ri-shield-star-line display-5 mb-3 d-block"></i>
+                  <p>Chưa có dữ liệu đánh giá reviewer.</p>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
 
       <Row className="mt-3">
         <Col xl={12}>
@@ -742,7 +768,7 @@ const DashboardAnalytics = () => {
                     <Bar
                       dataKey="taskCount"
                       fill="#4b38b3"
-                      name="Số task được giao"
+                      name="Số task hoàn thành"
                       barSize={24}
                       radius={[0, 4, 4, 0]}
                     />

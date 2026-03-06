@@ -17,43 +17,58 @@ const AnnotatorDashboard = () => {
     }
   }, [projects.data, projectId]);
 
+  // Stats based on PROJECTS (not individual images/tasks)
   const stats = useMemo(() => {
-    const tasks = tasksByProject.data || [];
+    const projectList = projects.data || [];
 
     return {
-      assigned: tasks.length,
-      inProgress: tasks.filter((t) => t.status === "InProgress").length,
-      submitted: tasks.filter((t) => t.status === "Submitted").length,
-      approved: tasks.filter((t) => t.status === "Approved").length,
-      rejected: tasks.filter((t) => t.status === "Rejected").length,
+      assigned: projectList.length,
+      completed: projectList.filter((p) => p.status === "Completed").length,
+      inProgress: projectList.filter(
+        (p) => p.status === "Active" || p.status === "InProgress",
+      ).length,
+      expired: projectList.filter((p) => p.status === "Expired").length,
     };
-  }, [tasksByProject.data]);
+  }, [projects.data]);
 
-  const isLoadingStats = tasksByProject.isLoading;
+  // KQS (Key Quality Score) calculated from reviewer feedback
+  const kqs = useMemo(() => {
+    const feedbackList = reviewerFeedback.data || [];
+    if (feedbackList.length === 0) return null;
+
+    const scores = feedbackList
+      .filter((f) => f.qualityScore != null)
+      .map((f) => f.qualityScore);
+
+    if (scores.length === 0) return null;
+    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  }, [reviewerFeedback.data]);
+
+  const isLoadingStats = projects.isLoading;
 
   return (
-    <DashboardLayout title="My Dashboard" className="page-content">
+    <DashboardLayout title="Dashboard" className="page-content">
       <h4>Welcome, {profile?.data?.fullName}</h4>
 
       <div className="row row-cols-1 row-cols-md-3 row-cols-xl-5 g-4 mt-3">
         <StatCard
-          title="Assigned"
+          title="Dự án được giao"
           value={stats.assigned}
-          icon="ri-task-line"
+          icon="ri-folder-line"
           color="primary"
           loading={isLoadingStats}
         />
 
         <StatCard
-          title="Submitted"
-          value={stats.submitted}
+          title="Đã hoàn thành"
+          value={stats.completed}
           icon="ri-checkbox-circle-line"
           color="success"
           loading={isLoadingStats}
         />
 
         <StatCard
-          title="In Progress"
+          title="Đang thực hiện"
           value={stats.inProgress}
           icon="ri-loader-4-line"
           color="warning"
@@ -61,19 +76,25 @@ const AnnotatorDashboard = () => {
         />
 
         <StatCard
-          title="Approved"
-          value={stats.approved}
-          icon="ri-check-double-line"
-          color="info"
+          title="Hết hạn"
+          value={stats.expired}
+          icon="ri-time-line"
+          color="danger"
           loading={isLoadingStats}
         />
 
         <StatCard
-          title="Rejected"
-          value={stats.rejected}
-          icon="ri-close-circle-line"
-          color="danger"
-          loading={isLoadingStats}
+          title="KQS"
+          value={kqs !== null ? kqs : "N/A"}
+          icon="ri-star-line"
+          color={
+            kqs !== null && kqs >= 80
+              ? "success"
+              : kqs !== null && kqs >= 50
+                ? "warning"
+                : "info"
+          }
+          loading={reviewerFeedback.isLoading}
         />
       </div>
 
@@ -81,12 +102,12 @@ const AnnotatorDashboard = () => {
         <div className="col-12">
           <div className="card">
             <div className="card-header">
-              <h5 className="mb-0">My Assigned Tasks</h5>
+              <h5 className="mb-0">Danh sách ảnh theo dự án</h5>
             </div>
 
             <div className="card-body">
               <div className="mb-4">
-                <label className="form-label fw-bold">Project</label>
+                <label className="form-label fw-bold">Dự án</label>
                 <select
                   className="form-select"
                   value={projectId || ""}
@@ -94,10 +115,10 @@ const AnnotatorDashboard = () => {
                     setProjectId(e.target.value ? Number(e.target.value) : null)
                   }
                 >
-                  <option value="">Select Project</option>
+                  <option value="">Chọn dự án</option>
                   {projects.data?.map((p) => (
                     <option key={p.projectId} value={p.projectId}>
-                      {p.projectName}
+                      {p.projectName} ({p.completedImages}/{p.totalImages} ảnh)
                     </option>
                   ))}
                 </select>

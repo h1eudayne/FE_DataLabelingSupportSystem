@@ -102,7 +102,6 @@ function App() {
           </Route>
 
           <Route element={<RoleProtectedRoute allowRoles={["Annotator"]} />}>
-            <Route path="my-dashboard" element={<AnnotatorDashboard />} />
             <Route path="annotator-my-tasks" element={<AnnotatorTaskList />} />
             <Route path="annotator-projects" element={<AnnotatorTaskList />} />
             <Route
