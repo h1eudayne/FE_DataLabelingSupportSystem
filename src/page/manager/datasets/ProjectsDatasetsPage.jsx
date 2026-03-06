@@ -11,6 +11,7 @@ const ProjectsDatasetsPage = () => {
   const { id: paramId } = useParams();
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [projectStats, setProjectStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -43,8 +44,18 @@ const ProjectsDatasetsPage = () => {
     }
   };
 
+  const fetchProjectStats = async (id) => {
+    try {
+      const statsRes = await analyticsService.getProjectStats(id);
+      setProjectStats(statsRes.data);
+    } catch {
+      setProjectStats(null);
+    }
+  };
+
   const handleProjectClick = async (id) => {
     setLoading(true);
+    setProjectStats(null);
     setExportCheck({
       ready: false,
       allApproved: false,
@@ -52,7 +63,10 @@ const ProjectsDatasetsPage = () => {
       checking: true,
     });
     try {
-      const res = await projectService.getProjectById(id);
+      const [res] = await Promise.all([
+        projectService.getProjectById(id),
+        fetchProjectStats(id),
+      ]);
       setSelectedProject(res.data);
       checkExportEligibility(id);
     } catch (error) {
@@ -103,7 +117,8 @@ const ProjectsDatasetsPage = () => {
     try {
       await datasetService.uploadFiles(selectedProject.id, files);
       toast.success(`Đã tải lên thành công ${files.length} tệp tin`);
-      handleProjectClick(selectedProject.id);
+      await handleProjectClick(selectedProject.id);
+      await fetchList();
     } catch (error) {
       toast.error("Tải lên thất bại.", error);
     } finally {
@@ -440,13 +455,27 @@ const ProjectsDatasetsPage = () => {
                       <div className="d-flex justify-content-between">
                         <span className="text-muted">Tổng Data:</span>
                         <span className="fw-bold text-dark">
-                          {selectedProject.totalDataItems}
+                          {projectStats?.totalItems ??
+                            selectedProject.totalDataItems}
                         </span>
                       </div>
                       <div className="d-flex justify-content-between">
-                        <span className="text-muted">Đã xong:</span>
+                        <span className="text-muted">Đã giao:</span>
+                        <span className="fw-bold text-info">
+                          {projectStats?.totalAssignments ?? 0}
+                        </span>
+                      </div>
+                      <div className="d-flex justify-content-between">
+                        <span className="text-muted">Đã duyệt:</span>
                         <span className="fw-bold text-success">
-                          {selectedProject.processedItems}
+                          {projectStats?.approvedAssignments ??
+                            selectedProject.processedItems}
+                        </span>
+                      </div>
+                      <div className="d-flex justify-content-between">
+                        <span className="text-muted">Chờ duyệt:</span>
+                        <span className="fw-bold text-warning">
+                          {projectStats?.submittedAssignments ?? 0}
                         </span>
                       </div>
                       <div className="d-flex justify-content-between">
@@ -458,20 +487,34 @@ const ProjectsDatasetsPage = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <div className="d-flex justify-content-between mb-2">
-                        <span>Hoàn thành</span>
-                        <span className="fw-bold text-success">
-                          {selectedProject.progress}%
-                        </span>
-                      </div>
-                      <div className="progress progress-sm">
-                        <div
-                          className="progress-bar bg-success"
-                          style={{ width: `${selectedProject.progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
+                    {(() => {
+                      const statsProgress =
+                        projectStats?.totalItems > 0
+                          ? Math.round(
+                              (projectStats.completedItems /
+                                projectStats.totalItems) *
+                                100,
+                            )
+                          : selectedProject.progress;
+                      return (
+                        <div className="mt-4">
+                          <div className="d-flex justify-content-between mb-2">
+                            <span>Hoàn thành</span>
+                            <span className="fw-bold text-success">
+                              {statsProgress ?? selectedProject.progress}%
+                            </span>
+                          </div>
+                          <div className="progress progress-sm">
+                            <div
+                              className="progress-bar bg-success"
+                              style={{
+                                width: `${statsProgress ?? selectedProject.progress}%`,
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     <div className="mt-4 border-top pt-3">
                       <h6 className="mb-2 fw-bold text-uppercase fs-11 text-muted">
