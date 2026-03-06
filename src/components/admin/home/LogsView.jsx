@@ -3,6 +3,7 @@ import { Card, Badge, InputGroup, Form, Button } from "react-bootstrap";
 import { History, Activity, Search, User, Filter } from "lucide-react";
 import { getSysLogs } from "../../../services/admin/managementSystem/systemLog.api";
 import SysLogsModal from "../managementSystem/SysLogsModal";
+import { BACKEND_URL } from "../../../services/axios.customize";
 
 const LogsView = () => {
   const [logData, setLogData] = useState(null);
@@ -23,7 +24,9 @@ const LogsView = () => {
           if (!acc[userId]) {
             acc[userId] = {
               id: userId,
+              avatar: currentLog.user.avatarUrl,
               email: currentLog.user.email,
+              role: currentLog.user.role,
               userInfo: currentLog.user,
               logs: [],
             };
@@ -34,6 +37,7 @@ const LogsView = () => {
             actionType: currentLog.actionType,
             timestamp: currentLog.timestamp,
             ipAddress: currentLog.ipAddress,
+            description: currentLog.description,
           });
 
           return acc;
@@ -68,9 +72,6 @@ const LogsView = () => {
                 Theo dõi mọi hoạt động của người dùng
               </small>
             </div>
-            <Badge bg="light" className="text-dark border p-2">
-              <Filter size={14} className="me-1" /> Lọc dữ liệu
-            </Badge>
           </div>
         </Card.Header>
 
@@ -80,7 +81,7 @@ const LogsView = () => {
               <Search size={18} className="text-muted" />
             </InputGroup.Text>
             <Form.Control
-              placeholder="Tìm kiếm log theo email hoặc hành động..."
+              placeholder="Tìm kiếm log theo email..."
               className="border-0 shadow-none"
             />
           </InputGroup>
@@ -94,25 +95,46 @@ const LogsView = () => {
               style={{ transition: "all 0.3s ease" }}
             >
               <div className="d-flex align-items-center gap-3">
-                <div
-                  className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    background: "linear-gradient(45deg, #007bff, #6610f2)",
-                    fontSize: "14px",
-                  }}
-                >
-                  {log.email?.charAt(0).toUpperCase() || "U"}
+                <div className="position-relative">
+                  <img
+                    src={
+                      log.avatar
+                        ? log.avatar.startsWith("http")
+                          ? log.avatar
+                          : `${BACKEND_URL}${log.avatar.startsWith("/") ? "" : "/"}${log.avatar}`
+                        : `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`
+                    }
+                    alt="avatar"
+                    className="rounded-circle shadow-sm border"
+                    style={{
+                      width: "45px",
+                      height: "45px",
+                      objectFit: "cover",
+                    }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`;
+                    }}
+                  />
                 </div>
 
                 <div className="d-flex flex-column">
-                  <span
-                    className="fw-bold text-dark mb-0"
-                    style={{ fontSize: "15px", letterSpacing: "-0.3px" }}
-                  >
-                    {log.email || "No Email"}
-                  </span>
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <span
+                      className="fw-bold text-dark mb-0"
+                      style={{ fontSize: "15px", letterSpacing: "-0.3px" }}
+                    >
+                      {log.email || "No Email"}
+                    </span>
+
+                    <Badge
+                      bg={log.role === "Admin" ? "danger" : "info"}
+                      className="text-uppercase"
+                      style={{ fontSize: "10px", padding: "3px 6px" }}
+                    >
+                      {log.role}
+                    </Badge>
+                  </div>
                   <div className="d-flex align-items-center gap-2">
                     <Badge
                       bg="light"
