@@ -126,7 +126,16 @@ const DashboardAnalytics = () => {
             }
 
             if (s.annotatorPerformances?.length) {
-              allAnnotators.push(...s.annotatorPerformances);
+              // Enrich each annotator with project-level submitted info
+              const enrichedPerfs = s.annotatorPerformances.map((ap) => {
+                // Calculate submitted share for this annotator proportionally
+                const annotatorSubmitted =
+                  totalAsgn > 0
+                    ? Math.round((ap.tasksAssigned / totalAsgn) * subAsgn)
+                    : 0;
+                return { ...ap, _projectSubmitted: annotatorSubmitted };
+              });
+              allAnnotators.push(...enrichedPerfs);
             }
 
             if (s.labelDistributions?.length) {
@@ -250,15 +259,9 @@ const DashboardAnalytics = () => {
 
         const uniqueAnnotators = {};
         allAnnotators.forEach((a) => {
-          // Estimate submitted tasks: assigned - completed(approved) - rejected = pending + submitted
-          // Since we know project-level data, submitted = assigned - completed - rejected - pending
-          const estimatedSubmitted = Math.max(
-            0,
-            (a.tasksAssigned || 0) -
-              (a.tasksCompleted || 0) -
-              (a.tasksRejected || 0),
-          );
-          const enriched = { ...a, tasksSubmitted: estimatedSubmitted };
+          // Use project-level submitted proportional share
+          const submitted = a._projectSubmitted ?? 0;
+          const enriched = { ...a, tasksSubmitted: submitted };
           if (!uniqueAnnotators[a.annotatorId]) {
             uniqueAnnotators[a.annotatorId] = enriched;
           } else {
@@ -267,12 +270,7 @@ const DashboardAnalytics = () => {
             existing.tasksCompleted += a.tasksCompleted;
             existing.tasksRejected += a.tasksRejected;
             existing.totalCriticalErrors += a.totalCriticalErrors;
-            existing.tasksSubmitted = Math.max(
-              0,
-              existing.tasksAssigned -
-                existing.tasksCompleted -
-                existing.tasksRejected,
-            );
+            existing.tasksSubmitted += submitted;
           }
         });
         const annotatorsArr = Object.values(uniqueAnnotators);
@@ -528,12 +526,13 @@ const DashboardAnalytics = () => {
               </h5>
             </CardHeader>
             <CardBody>
-              {labelDistributions.length > 0 ? (
+              {labelDistributions.length > 0 &&
+              labelDistributions.some((d) => d.value > 0) ? (
                 <div style={{ width: "100%", height: 250 }}>
                   <ResponsiveContainer>
                     <PieChart>
                       <Pie
-                        data={labelDistributions}
+                        data={labelDistributions.filter((d) => d.value > 0)}
                         innerRadius={60}
                         outerRadius={90}
                         dataKey="value"
@@ -541,12 +540,14 @@ const DashboardAnalytics = () => {
                           `${name} ${(percent * 100).toFixed(0)}%`
                         }
                       >
-                        {labelDistributions.map((_, index) => (
-                          <Cell
-                            key={index}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
+                        {labelDistributions
+                          .filter((d) => d.value > 0)
+                          .map((_, index) => (
+                            <Cell
+                              key={index}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
                       </Pie>
                       <Tooltip />
                       <Legend />
@@ -556,7 +557,11 @@ const DashboardAnalytics = () => {
               ) : (
                 <div className="text-center text-muted py-5">
                   <i className="ri-price-tag-3-line display-5 mb-3 d-block"></i>
-                  <p>Chưa có dữ liệu nhãn. Hãy gán nhãn cho ảnh trong dự án.</p>
+                  <p>Chưa có dữ liệu nhãn.</p>
+                  <small className="text-muted">
+                    Dữ liệu phân bố nhãn chỉ hiển thị sau khi ảnh được Reviewer
+                    duyệt (Approved).
+                  </small>
                 </div>
               )}
             </CardBody>
