@@ -285,7 +285,15 @@ const DashboardAnalytics = () => {
 
         setProjectChartData(chartStatsArr);
 
-        setTotalAnnotators(annotatorsArr.length);
+        const uniqueReviewerIds = new Set(Object.keys(reviewerMap));
+        const uniqueAnnotatorIds = new Set(
+          annotatorsArr.map((a) => a.annotatorId),
+        );
+        const allStaffIds = new Set([
+          ...uniqueAnnotatorIds,
+          ...uniqueReviewerIds,
+        ]);
+        setTotalAnnotators(allStaffIds.size);
         setAnnotatorData(
           annotatorsArr
             .map((a) => ({
