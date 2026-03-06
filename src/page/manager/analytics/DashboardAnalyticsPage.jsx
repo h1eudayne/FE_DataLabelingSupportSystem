@@ -97,15 +97,20 @@ const DashboardAnalytics = () => {
             const approvedAsgn = s.approvedAssignments ?? 0;
             const rejAsgn = s.rejectedAssignments ?? 0;
             const subAsgn = s.submittedAssignments ?? 0;
+            const pendAsgn = s.pendingAssignments ?? 0;
 
             if (totalAsgn === 0) {
+              // no assignments yet - skip
             } else if (approvedAsgn === totalAsgn) {
               completed++;
-            } else if (rejAsgn > 0) {
-              rejected++;
-            } else if (subAsgn > 0) {
+            } else if (subAsgn + approvedAsgn === totalAsgn) {
+              // ALL assignments are either submitted or approved
               submitted++;
+            } else if (rejAsgn > 0 && pendAsgn === 0 && subAsgn === 0) {
+              // only rejected + approved, no pending or submitted
+              rejected++;
             } else {
+              // any mix of statuses = in progress
               inProgress++;
             }
 
@@ -245,14 +250,29 @@ const DashboardAnalytics = () => {
 
         const uniqueAnnotators = {};
         allAnnotators.forEach((a) => {
+          // Estimate submitted tasks: assigned - completed(approved) - rejected = pending + submitted
+          // Since we know project-level data, submitted = assigned - completed - rejected - pending
+          const estimatedSubmitted = Math.max(
+            0,
+            (a.tasksAssigned || 0) -
+              (a.tasksCompleted || 0) -
+              (a.tasksRejected || 0),
+          );
+          const enriched = { ...a, tasksSubmitted: estimatedSubmitted };
           if (!uniqueAnnotators[a.annotatorId]) {
-            uniqueAnnotators[a.annotatorId] = { ...a };
+            uniqueAnnotators[a.annotatorId] = enriched;
           } else {
             const existing = uniqueAnnotators[a.annotatorId];
             existing.tasksAssigned += a.tasksAssigned;
             existing.tasksCompleted += a.tasksCompleted;
             existing.tasksRejected += a.tasksRejected;
             existing.totalCriticalErrors += a.totalCriticalErrors;
+            existing.tasksSubmitted = Math.max(
+              0,
+              existing.tasksAssigned -
+                existing.tasksCompleted -
+                existing.tasksRejected,
+            );
           }
         });
         const annotatorsArr = Object.values(uniqueAnnotators);
@@ -298,7 +318,7 @@ const DashboardAnalytics = () => {
           annotatorsArr
             .map((a) => ({
               name: a.annotatorName || a.annotatorId,
-              taskCount: a.tasksCompleted || 0,
+              taskCount: (a.tasksCompleted || 0) + (a.tasksSubmitted || 0),
             }))
             .sort((a, b) => b.taskCount - a.taskCount)
             .slice(0, 5),
@@ -570,10 +590,14 @@ const DashboardAnalytics = () => {
                     </thead>
                     <tbody>
                       {annotatorPerformances.map((a) => {
+                        // Include submitted + approved as "work done"
+                        const workDone =
+                          (a.tasksCompleted || 0) + (a.tasksSubmitted || 0);
                         const completionRate =
                           a.tasksAssigned > 0
-                            ? Math.round(
-                                (a.tasksCompleted / a.tasksAssigned) * 100,
+                            ? Math.min(
+                                100,
+                                Math.round((workDone / a.tasksAssigned) * 100),
                               )
                             : 0;
                         return (
@@ -583,7 +607,8 @@ const DashboardAnalytics = () => {
                             </td>
                             <td className="text-center">{a.tasksAssigned}</td>
                             <td className="text-center text-success fw-bold">
-                              {a.tasksCompleted}
+                              {(a.tasksCompleted || 0) +
+                                (a.tasksSubmitted || 0)}
                             </td>
                             <td className="text-center">
                               {a.tasksRejected > 0 ? (

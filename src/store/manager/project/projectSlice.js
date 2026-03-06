@@ -14,7 +14,31 @@ export const fetchProjects = createAsyncThunk(
       }
 
       const response = await projectService.getManagerProjects(managerId);
-      return response.data;
+      const projects = response.data || [];
+
+      // Enrich each project with statistics for accurate progress
+      const enrichedProjects = await Promise.all(
+        projects.map(async (project) => {
+          try {
+            const statsRes = await projectService.getProjectStats(project.id);
+            const s = statsRes.data;
+            const totalAsgn = s.totalAssignments ?? 0;
+            const approvedAsgn = s.approvedAssignments ?? 0;
+            const subAsgn = s.submittedAssignments ?? 0;
+            // Progress = (submitted + approved) / total
+            const realProgress =
+              totalAsgn > 0
+                ? Math.round(((subAsgn + approvedAsgn) / totalAsgn) * 100)
+                : Number(project.progress || 0);
+            return { ...project, progress: realProgress };
+          } catch {
+            // If stats call fails, keep original progress
+            return project;
+          }
+        }),
+      );
+
+      return enrichedProjects;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message ||
