@@ -35,6 +35,7 @@ const SysLogsModal = ({ isOpen, onClose, selectUserLogs }) => {
               <tr>
                 <th className="border-0 small text-muted">HÀNH ĐỘNG</th>
                 <th className="border-0 small text-muted">THỜI GIAN</th>
+                <th className="border-0 small text-muted">MÔ TẢ CHI TIẾT</th>
                 <th className="border-0 small text-muted">IP ADDRESS</th>
               </tr>
             </thead>
@@ -49,6 +50,9 @@ const SysLogsModal = ({ isOpen, onClose, selectUserLogs }) => {
                     </td>
                     <td className="small text-muted font-monospace">
                       {formatDateTime(log.timestamp)}
+                    </td>
+                    <td className="small text-muted font-monospace">
+                      {log.description}
                     </td>
                     <td className="small text-muted font-monospace">
                       {log.ipAddress}
