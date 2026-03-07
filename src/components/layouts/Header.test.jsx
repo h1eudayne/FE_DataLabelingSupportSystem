@@ -24,7 +24,7 @@ describe("Header Component - Comprehensive Suite", () => {
           state = {
             isAuthenticated: true,
             user: {
-              name: "Nguyễn Văn A",
+              fullName: "Nguyễn Văn A",
               role: "Manager",
               email: "staff1@gmail.com",
             },

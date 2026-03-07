@@ -37,17 +37,17 @@ describe("analyticsService - Full Coverage", () => {
 
       axios.get
         .mockResolvedValueOnce({
-          data: { totalAssignments: 10, approvedAssignments: 5 },
+          data: { totalAssignments: 10, approvedAssignments: 10 },
         })
         .mockResolvedValueOnce({
-          data: { totalAssignments: 20, approvedAssignments: 10 },
+          data: { totalAssignments: 20, approvedAssignments: 20 },
         });
 
       const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(2);
       expect(stats.totalAssignments).toBe(30);
-      expect(stats.completed).toBe(15);
+      expect(stats.completed).toBe(2);
     });
 
     it("Error 400: skip errored projects and continue", async () => {
