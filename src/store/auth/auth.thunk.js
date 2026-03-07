@@ -7,8 +7,9 @@ export const loginThunk = createAsyncThunk(
     try {
       const res = await loginAPI(email, password);
       console.log(res);
-      localStorage.setItem("access_token", res.accessToken);
-      localStorage.setItem("user", JSON.stringify(res.user));
+      // Giả sử API trả về { accessToken: "...", data: { fullName: "...", avatarUrl: "..." } }
+      // Lưu vào localStorage để khi F5 không bị mất
+
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || "Login failed");
