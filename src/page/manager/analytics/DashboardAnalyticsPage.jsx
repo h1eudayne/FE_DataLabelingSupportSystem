@@ -175,19 +175,30 @@ const DashboardAnalytics = () => {
             });
 
             // Collect per-project progress data for the new section
+            // Use pendingAssignments (New+Assigned+InProgress) from project-level
+            const pendingAsgn = s.pendingAssignments ?? 0;
             const projAnnotators = (s.annotatorPerformances || []).map((ap) => {
               const annTotal = ap.tasksAssigned || 0;
               const annApproved = ap.tasksCompleted || 0; // = Approved
-              const annSubmitted =
-                annTotal - annApproved - (ap.tasksRejected || 0);
-              // Annotator done = Submitted + Approved (items annotator has finished)
-              const annDone = Math.max(0, annTotal - (ap.tasksRejected || 0));
+              const annRejected = ap.tasksRejected || 0;
+              const annRemaining = annTotal - annApproved - annRejected; // = Submitted + Pending for this annotator
+              // Estimate pending per annotator proportionally
+              const annPendingEst =
+                totalAsgn > 0
+                  ? Math.round((pendingAsgn * annTotal) / totalAsgn)
+                  : 0;
+              // Submitted estimate = remaining - estimated pending
+              const annSubmittedEst = Math.max(0, annRemaining - annPendingEst);
+              // Annotator done = Submitted + Approved (items annotator has finished their part)
+              const annDone = annApproved + annSubmittedEst;
               return {
                 id: ap.annotatorId,
                 name: ap.annotatorName || ap.annotatorId,
                 role: "Annotator",
                 done: annDone,
                 total: annTotal,
+                approved: annApproved,
+                submitted: annSubmittedEst,
                 progress:
                   annTotal > 0 ? Math.round((annDone / annTotal) * 100) : 0,
               };
@@ -1200,8 +1211,9 @@ const DashboardAnalytics = () => {
                                     </td>
                                     <td className="text-center" colSpan={3}>
                                       <small className="text-muted">
-                                        Đã hoàn thành: {person.done}/
-                                        {person.total}
+                                        Submitted: {person.submitted} |
+                                        Approved: {person.approved} →{" "}
+                                        {person.done}/{person.total}
                                       </small>
                                     </td>
                                     <td style={{ minWidth: "180px" }}>
