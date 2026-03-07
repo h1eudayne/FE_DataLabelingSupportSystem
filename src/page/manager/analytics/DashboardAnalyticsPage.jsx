@@ -10,6 +10,7 @@ import {
   Badge,
   Progress,
   Alert,
+  Collapse,
 } from "reactstrap";
 import {
   BarChart,
@@ -61,6 +62,10 @@ const DashboardAnalytics = () => {
   const [labelDistributions, setLabelDistributions] = useState([]);
   const [reviewerEvaluations, setReviewerEvaluations] = useState([]);
   const [qualityAlerts, setQualityAlerts] = useState([]);
+  const [expandedAnnotators, setExpandedAnnotators] = useState({});
+  const [expandedReviewers, setExpandedReviewers] = useState({});
+  const [projectProgressData, setProjectProgressData] = useState([]);
+  const [expandedProjects, setExpandedProjects] = useState({});
 
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.nameid;
@@ -73,12 +78,14 @@ const DashboardAnalytics = () => {
         // Fetch projects and manager stats in parallel
         const [resProjects, resManagerStats] = await Promise.all([
           analyticsService.getMyProjects(managerId),
-          analyticsService
-            .getManagerStats(managerId)
-            .catch(() => ({ data: null })),
+          analyticsService.getManagerStats(managerId).catch((err) => {
+            console.warn("getManagerStats failed:", err?.message || err);
+            return { data: null };
+          }),
         ]);
         const projects = resProjects.data || [];
         const managerStats = resManagerStats.data;
+        console.log("Manager stats API response:", managerStats);
 
         let completed = 0;
         let inProgress = 0;
@@ -94,6 +101,7 @@ const DashboardAnalytics = () => {
         const reviewerMap = {};
         const alerts = [];
         const chartStatsArr = [];
+        const projectProgressArr = [];
 
         for (const project of projects) {
           try {
@@ -134,7 +142,13 @@ const DashboardAnalytics = () => {
             }
 
             if (s.annotatorPerformances?.length) {
-              allAnnotators.push(...s.annotatorPerformances);
+              s.annotatorPerformances.forEach((a) => {
+                allAnnotators.push({
+                  ...a,
+                  _projectName: project.name,
+                  _projectId: project.id,
+                });
+              });
             }
 
             if (s.labelDistributions?.length) {
@@ -158,6 +172,40 @@ const DashboardAnalytics = () => {
               name: project.name,
               total: Number(s.totalItems ?? project.totalDataItems ?? 0),
               completed: Number(s.completedItems ?? 0),
+            });
+
+            // Collect per-project progress data for the new section
+            const projAnnotators = (s.annotatorPerformances || []).map((ap) => {
+              const annTotal = ap.tasksAssigned || 0;
+              const annApproved = ap.tasksCompleted || 0; // = Approved
+              const annSubmitted =
+                annTotal - annApproved - (ap.tasksRejected || 0);
+              // Annotator done = Submitted + Approved (items annotator has finished)
+              const annDone = Math.max(0, annTotal - (ap.tasksRejected || 0));
+              return {
+                id: ap.annotatorId,
+                name: ap.annotatorName || ap.annotatorId,
+                role: "Annotator",
+                done: annDone,
+                total: annTotal,
+                progress:
+                  annTotal > 0 ? Math.round((annDone / annTotal) * 100) : 0,
+              };
+            });
+
+            projectProgressArr.push({
+              projectId: project.id,
+              projectName: project.name,
+              totalAssignments: totalAsgn,
+              approvedAssignments: approvedAsgn,
+              submittedAssignments: subAsgn,
+              rejectedAssignments: rejAsgn,
+              overallProgress:
+                totalAsgn > 0
+                  ? Math.round((approvedAsgn / totalAsgn) * 100)
+                  : 0,
+              annotators: projAnnotators,
+              reviewers: [], // will be filled after reviewer data is collected
             });
             const daysLeft = project.deadline
               ? Math.ceil(
@@ -204,15 +252,28 @@ const DashboardAnalytics = () => {
                   totalReviews: 0,
                   overridden: 0,
                   disputeCount: 0,
+                  projectDetails: {},
                 };
               }
               reviewerMap[reviewerKey].totalReviews++;
+              // Track per-project
+              if (!reviewerMap[reviewerKey].projectDetails[project.id]) {
+                reviewerMap[reviewerKey].projectDetails[project.id] = {
+                  projectName: project.name,
+                  reviews: 0,
+                  overridden: 0,
+                  disputes: 0,
+                };
+              }
+              reviewerMap[reviewerKey].projectDetails[project.id].reviews++;
               if (
                 r.managerAuditDecision !== undefined &&
                 r.managerAuditDecision !== null &&
                 r.managerAuditDecision === false
               ) {
                 reviewerMap[reviewerKey].overridden++;
+                reviewerMap[reviewerKey].projectDetails[project.id]
+                  .overridden++;
               }
             });
 
@@ -224,12 +285,44 @@ const DashboardAnalytics = () => {
                   totalReviews: 0,
                   overridden: 0,
                   disputeCount: 0,
+                  projectDetails: {},
                 };
               }
               reviewerMap[reviewerKey].disputeCount++;
+              if (!reviewerMap[reviewerKey].projectDetails[project.id]) {
+                reviewerMap[reviewerKey].projectDetails[project.id] = {
+                  projectName: project.name,
+                  reviews: 0,
+                  overridden: 0,
+                  disputes: 0,
+                };
+              }
+              reviewerMap[reviewerKey].projectDetails[project.id].disputes++;
             });
           } catch {}
         }
+
+        // Fill reviewer progress into projectProgressArr
+        projectProgressArr.forEach((pp) => {
+          const projectReviewers = [];
+          Object.values(reviewerMap).forEach((rev) => {
+            const pd = rev.projectDetails[pp.projectId];
+            if (pd) {
+              const revTotal = pp.totalAssignments;
+              const revDone = pd.reviews || 0; // = Approved + Rejected reviewed
+              projectReviewers.push({
+                id: rev.name,
+                name: rev.name,
+                role: "Reviewer",
+                done: revDone,
+                total: revTotal,
+                progress:
+                  revTotal > 0 ? Math.round((revDone / revTotal) * 100) : 0,
+              });
+            }
+          });
+          pp.reviewers = projectReviewers;
+        });
 
         setStats({
           totalProjects: projects.length,
@@ -256,32 +349,50 @@ const DashboardAnalytics = () => {
           });
         }
 
+        // TASK-BASED aggregation:
+        // Each entry in allAnnotators = 1 annotator in 1 project = 1 TASK
         const uniqueAnnotators = {};
         allAnnotators.forEach((a) => {
+          const isTaskCompleted =
+            (a.tasksAssigned || 0) > 0 &&
+            (a.tasksCompleted || 0) === (a.tasksAssigned || 0);
+
+          const projectDetail = {
+            projectId: a._projectId,
+            projectName: a._projectName,
+            totalImages: a.tasksAssigned || 0,
+            completedImages: a.tasksCompleted || 0,
+            rejectedImages: a.tasksRejected || 0,
+            isCompleted: isTaskCompleted,
+          };
+
           if (!uniqueAnnotators[a.annotatorId]) {
             uniqueAnnotators[a.annotatorId] = {
-              ...a,
-              // Calculate submitted from backend data
-              tasksSubmitted: Math.max(
-                0,
-                (a.tasksAssigned || 0) -
-                  (a.tasksCompleted || 0) -
-                  (a.tasksRejected || 0),
-              ),
+              annotatorId: a.annotatorId,
+              annotatorName: a.annotatorName,
+              totalTasks: 1,
+              completedTasks: isTaskCompleted ? 1 : 0,
+              totalImages: a.tasksAssigned || 0,
+              completedImages: a.tasksCompleted || 0,
+              rejectedImages: a.tasksRejected || 0,
+              averageQualityScore: a.averageQualityScore ?? 100,
+              totalCriticalErrors: a.totalCriticalErrors || 0,
+              _qualityScores: [a.averageQualityScore ?? 100],
+              projectDetails: [projectDetail],
             };
           } else {
             const existing = uniqueAnnotators[a.annotatorId];
-            existing.tasksAssigned += a.tasksAssigned;
-            existing.tasksCompleted += a.tasksCompleted;
-            existing.tasksRejected += a.tasksRejected;
-            existing.totalCriticalErrors += a.totalCriticalErrors;
-            // Recalculate submitted after aggregation
-            existing.tasksSubmitted = Math.max(
-              0,
-              existing.tasksAssigned -
-                existing.tasksCompleted -
-                existing.tasksRejected,
-            );
+            existing.totalTasks += 1;
+            existing.completedTasks += isTaskCompleted ? 1 : 0;
+            existing.totalImages += a.tasksAssigned || 0;
+            existing.completedImages += a.tasksCompleted || 0;
+            existing.rejectedImages += a.tasksRejected || 0;
+            existing.totalCriticalErrors += a.totalCriticalErrors || 0;
+            existing._qualityScores.push(a.averageQualityScore ?? 100);
+            existing.averageQualityScore =
+              existing._qualityScores.reduce((s, v) => s + v, 0) /
+              existing._qualityScores.length;
+            existing.projectDetails.push(projectDetail);
           }
         });
         const annotatorsArr = Object.values(uniqueAnnotators);
@@ -309,20 +420,30 @@ const DashboardAnalytics = () => {
             r.totalReviews > 0
               ? ((r.disputeCount / r.totalReviews) * 100).toFixed(1)
               : "0.0",
+          totalProjects: Object.keys(r.projectDetails || {}).length,
+          projectDetailsList: Object.values(r.projectDetails || {}),
         }));
         setReviewerEvaluations(reviewerEvals);
 
         setProjectChartData(chartStatsArr);
+        setProjectProgressData(projectProgressArr);
 
-        // Use TotalMembers from manager stats API (includes annotators + reviewers + subordinates)
-        setTotalMembers(managerStats?.totalMembers ?? annotatorsArr.length);
+        // Count all unique staff: annotators + reviewers from already-fetched data
+        const allStaffIds = new Set([
+          ...annotatorsArr.map((a) => a.annotatorId),
+          ...Object.keys(reviewerMap),
+        ]);
+        const frontendStaffCount = allStaffIds.size;
+        // Use API totalMembers if higher, otherwise use our count
+        const apiMembers = managerStats?.totalMembers || 0;
+        setTotalMembers(Math.max(apiMembers, frontendStaffCount));
 
-        // Top 5 annotators: count submitted + completed tasks
+        // Top 5 annotators: count completed IMAGES as work metric
         setAnnotatorData(
           annotatorsArr
             .map((a) => ({
               name: a.annotatorName || a.annotatorId,
-              taskCount: (a.tasksCompleted || 0) + (a.tasksSubmitted || 0),
+              taskCount: a.completedImages || 0,
             }))
             .sort((a, b) => b.taskCount - a.taskCount)
             .slice(0, 5),
@@ -592,88 +713,160 @@ const DashboardAnalytics = () => {
             <CardBody>
               {annotatorPerformances.length > 0 ? (
                 <div className="table-responsive">
+                  <p className="text-muted small mb-2">
+                    <i className="ri-information-line me-1"></i>
+                    Bấm vào tên annotator để xem chi tiết theo dự án
+                  </p>
                   <Table className="table-hover align-middle mb-0">
                     <thead className="table-light">
                       <tr>
                         <th>Annotator</th>
-                        <th className="text-center">Được giao</th>
-                        <th className="text-center">Đã nộp</th>
-                        <th className="text-center">Hoàn thành</th>
-                        <th className="text-center">Bị từ chối</th>
+                        <th className="text-center">Được giao (task)</th>
+                        <th className="text-center">Hoàn thành (task)</th>
+                        <th className="text-center">Tổng ảnh</th>
+                        <th className="text-center">Ảnh đã xong</th>
                         <th className="text-center">Quality Score</th>
-                        <th className="text-center">Lỗi nghiêm trọng</th>
-                        <th>Tiến độ</th>
+                        <th>Tiến độ (ảnh)</th>
                       </tr>
                     </thead>
                     <tbody>
                       {annotatorPerformances.map((a) => {
-                        const totalDone =
-                          (a.tasksCompleted || 0) + (a.tasksSubmitted || 0);
                         const completionRate =
-                          a.tasksAssigned > 0
-                            ? Math.round((totalDone / a.tasksAssigned) * 100)
+                          a.totalImages > 0
+                            ? Math.round(
+                                (a.completedImages / a.totalImages) * 100,
+                              )
                             : 0;
+                        const isExpanded = expandedAnnotators[a.annotatorId];
                         return (
-                          <tr key={a.annotatorId}>
-                            <td className="fw-semibold">
-                              {a.annotatorName || a.annotatorId}
-                            </td>
-                            <td className="text-center">{a.tasksAssigned}</td>
-                            <td className="text-center text-info fw-bold">
-                              {a.tasksSubmitted || 0}
-                            </td>
-                            <td className="text-center text-success fw-bold">
-                              {a.tasksCompleted}
-                            </td>
-                            <td className="text-center">
-                              {a.tasksRejected > 0 ? (
-                                <Badge color="danger">{a.tasksRejected}</Badge>
-                              ) : (
-                                <span className="text-muted">0</span>
-                              )}
-                            </td>
-                            <td className="text-center">
-                              <Badge
-                                color={
-                                  a.averageQualityScore >= 80
-                                    ? "success"
-                                    : a.averageQualityScore >= 50
-                                      ? "warning"
-                                      : "danger"
-                                }
-                              >
-                                {(a.averageQualityScore ?? 0).toFixed(0)}
-                              </Badge>
-                            </td>
-                            <td className="text-center">
-                              {a.totalCriticalErrors > 0 ? (
-                                <Badge color="danger">
-                                  {a.totalCriticalErrors}
-                                </Badge>
-                              ) : (
-                                <span className="text-muted">0</span>
-                              )}
-                            </td>
-                            <td style={{ minWidth: "150px" }}>
-                              <div className="d-flex align-items-center gap-2">
-                                <Progress
-                                  value={completionRate}
+                          <React.Fragment key={a.annotatorId}>
+                            {/* Summary row - per person */}
+                            <tr
+                              style={{ cursor: "pointer" }}
+                              onClick={() =>
+                                setExpandedAnnotators((prev) => ({
+                                  ...prev,
+                                  [a.annotatorId]: !prev[a.annotatorId],
+                                }))
+                              }
+                              className={isExpanded ? "table-active" : ""}
+                            >
+                              <td className="fw-semibold">
+                                <i
+                                  className={`ri-arrow-${isExpanded ? "down" : "right"}-s-line me-1`}
+                                ></i>
+                                {a.annotatorName || a.annotatorId}
+                              </td>
+                              <td className="text-center">{a.totalTasks}</td>
+                              <td className="text-center text-success fw-bold">
+                                {a.completedTasks}
+                              </td>
+                              <td className="text-center">{a.totalImages}</td>
+                              <td className="text-center text-info fw-bold">
+                                {a.completedImages}
+                              </td>
+                              <td className="text-center">
+                                <Badge
                                   color={
-                                    completionRate >= 80
+                                    a.averageQualityScore >= 80
                                       ? "success"
-                                      : completionRate >= 50
+                                      : a.averageQualityScore >= 50
                                         ? "warning"
                                         : "danger"
                                   }
-                                  className="flex-grow-1"
-                                  style={{ height: "6px" }}
-                                />
-                                <small className="text-muted fw-bold">
-                                  {completionRate}%
-                                </small>
-                              </div>
-                            </td>
-                          </tr>
+                                >
+                                  {(a.averageQualityScore ?? 0).toFixed(0)}
+                                </Badge>
+                              </td>
+                              <td style={{ minWidth: "150px" }}>
+                                <div className="d-flex align-items-center gap-2">
+                                  <Progress
+                                    value={completionRate}
+                                    color={
+                                      completionRate >= 80
+                                        ? "success"
+                                        : completionRate >= 50
+                                          ? "warning"
+                                          : "danger"
+                                    }
+                                    className="flex-grow-1"
+                                    style={{ height: "6px" }}
+                                  />
+                                  <small className="text-muted fw-bold">
+                                    {completionRate}%
+                                  </small>
+                                </div>
+                              </td>
+                            </tr>
+                            {/* Expanded: per-project detail rows */}
+                            {isExpanded &&
+                              a.projectDetails?.map((pd) => {
+                                const pdRate =
+                                  pd.totalImages > 0
+                                    ? Math.round(
+                                        (pd.completedImages / pd.totalImages) *
+                                          100,
+                                      )
+                                    : 0;
+                                return (
+                                  <tr
+                                    key={pd.projectId}
+                                    className="bg-light"
+                                    style={{ fontSize: "0.85em" }}
+                                  >
+                                    <td className="ps-4 text-muted" colSpan={3}>
+                                      <i className="ri-folder-line me-1"></i>
+                                      {pd.projectName}
+                                      {pd.isCompleted ? (
+                                        <Badge
+                                          color="success"
+                                          pill
+                                          className="ms-2"
+                                        >
+                                          Xong
+                                        </Badge>
+                                      ) : (
+                                        <Badge
+                                          color="warning"
+                                          pill
+                                          className="ms-2"
+                                        >
+                                          Đang làm
+                                        </Badge>
+                                      )}
+                                    </td>
+                                    <td className="text-center text-muted">
+                                      {pd.totalImages} ảnh
+                                    </td>
+                                    <td className="text-center text-muted">
+                                      {pd.completedImages} xong
+                                    </td>
+                                    <td className="text-center text-muted">
+                                      —
+                                    </td>
+                                    <td style={{ minWidth: "150px" }}>
+                                      <div className="d-flex align-items-center gap-2">
+                                        <Progress
+                                          value={pdRate}
+                                          color={
+                                            pdRate >= 80
+                                              ? "success"
+                                              : pdRate >= 50
+                                                ? "warning"
+                                                : "danger"
+                                          }
+                                          className="flex-grow-1"
+                                          style={{ height: "5px" }}
+                                        />
+                                        <small className="text-muted">
+                                          {pd.completedImages}/{pd.totalImages}
+                                        </small>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </React.Fragment>
                         );
                       })}
                     </tbody>
@@ -730,51 +923,114 @@ const DashboardAnalytics = () => {
                             parseFloat(r.overrideRate) * 2 -
                             parseFloat(r.disputeRate) * 3,
                         ).toFixed(0);
+                        const isExpanded = expandedReviewers[r.name];
                         return (
-                          <tr key={idx}>
-                            <td className="fw-semibold">{r.name}</td>
-                            <td className="text-center">{r.totalReviews}</td>
-                            <td className="text-center">
-                              {r.overridden > 0 ? (
-                                <Badge color="danger">{r.overridden}</Badge>
-                              ) : (
-                                <span className="text-muted">0</span>
-                              )}
-                            </td>
-                            <td className="text-center">
-                              <Badge
-                                color={overrideHigh ? "danger" : "success"}
-                              >
-                                {r.overrideRate}%
-                              </Badge>
-                            </td>
-                            <td className="text-center">
-                              {r.disputeCount > 0 ? (
-                                <Badge color="warning">{r.disputeCount}</Badge>
-                              ) : (
-                                <span className="text-muted">0</span>
-                              )}
-                            </td>
-                            <td className="text-center">
-                              <Badge color={disputeHigh ? "danger" : "success"}>
-                                {r.disputeRate}%
-                              </Badge>
-                            </td>
-                            <td className="text-center">
-                              <Badge
-                                color={
-                                  kqsScore >= 80
-                                    ? "success"
-                                    : kqsScore >= 50
-                                      ? "warning"
-                                      : "danger"
-                                }
-                                className="fs-12"
-                              >
-                                {kqsScore}
-                              </Badge>
-                            </td>
-                          </tr>
+                          <React.Fragment key={idx}>
+                            {/* Summary row */}
+                            <tr
+                              style={{ cursor: "pointer" }}
+                              onClick={() =>
+                                setExpandedReviewers((prev) => ({
+                                  ...prev,
+                                  [r.name]: !prev[r.name],
+                                }))
+                              }
+                              className={isExpanded ? "table-active" : ""}
+                            >
+                              <td className="fw-semibold">
+                                <i
+                                  className={`ri-arrow-${isExpanded ? "down" : "right"}-s-line me-1`}
+                                ></i>
+                                {r.name}
+                                <small className="text-muted ms-1">
+                                  ({r.totalProjects} dự án)
+                                </small>
+                              </td>
+                              <td className="text-center">{r.totalReviews}</td>
+                              <td className="text-center">
+                                {r.overridden > 0 ? (
+                                  <Badge color="danger">{r.overridden}</Badge>
+                                ) : (
+                                  <span className="text-muted">0</span>
+                                )}
+                              </td>
+                              <td className="text-center">
+                                <Badge
+                                  color={overrideHigh ? "danger" : "success"}
+                                >
+                                  {r.overrideRate}%
+                                </Badge>
+                              </td>
+                              <td className="text-center">
+                                {r.disputeCount > 0 ? (
+                                  <Badge color="warning">
+                                    {r.disputeCount}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted">0</span>
+                                )}
+                              </td>
+                              <td className="text-center">
+                                <Badge
+                                  color={disputeHigh ? "danger" : "success"}
+                                >
+                                  {r.disputeRate}%
+                                </Badge>
+                              </td>
+                              <td className="text-center">
+                                <Badge
+                                  color={
+                                    kqsScore >= 80
+                                      ? "success"
+                                      : kqsScore >= 50
+                                        ? "warning"
+                                        : "danger"
+                                  }
+                                  className="fs-12"
+                                >
+                                  {kqsScore}
+                                </Badge>
+                              </td>
+                            </tr>
+                            {/* Expanded: per-project detail */}
+                            {isExpanded &&
+                              r.projectDetailsList?.map((pd, pdIdx) => (
+                                <tr
+                                  key={pdIdx}
+                                  className="bg-light"
+                                  style={{ fontSize: "0.85em" }}
+                                >
+                                  <td className="ps-4 text-muted">
+                                    <i className="ri-folder-line me-1"></i>
+                                    {pd.projectName}
+                                  </td>
+                                  <td className="text-center">{pd.reviews}</td>
+                                  <td className="text-center">
+                                    {pd.overridden > 0 ? pd.overridden : "—"}
+                                  </td>
+                                  <td className="text-center">
+                                    {pd.reviews > 0
+                                      ? (
+                                          (pd.overridden / pd.reviews) *
+                                          100
+                                        ).toFixed(1) + "%"
+                                      : "—"}
+                                  </td>
+                                  <td className="text-center">
+                                    {pd.disputes > 0 ? pd.disputes : "—"}
+                                  </td>
+                                  <td className="text-center">
+                                    {pd.reviews > 0
+                                      ? (
+                                          (pd.disputes / pd.reviews) *
+                                          100
+                                        ).toFixed(1) + "%"
+                                      : "—"}
+                                  </td>
+                                  <td className="text-center text-muted">—</td>
+                                </tr>
+                              ))}
+                          </React.Fragment>
                         );
                       })}
                     </tbody>
@@ -816,13 +1072,256 @@ const DashboardAnalytics = () => {
                     <Bar
                       dataKey="taskCount"
                       fill="#4b38b3"
-                      name="Số task hoàn thành"
+                      name="Số ảnh hoàn thành"
                       barSize={24}
                       radius={[0, 4, 4, 0]}
                     />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Section: Tiến độ cá nhân theo dự án */}
+      <Row className="mt-3">
+        <Col xl={12}>
+          <Card className="shadow-sm border-0">
+            <CardHeader className="bg-white border-bottom">
+              <h5 className="mb-0">
+                <i className="ri-bar-chart-grouped-line me-2 text-primary"></i>
+                Tiến độ cá nhân theo dự án
+              </h5>
+            </CardHeader>
+            <CardBody>
+              {projectProgressData.length > 0 ? (
+                <div className="table-responsive">
+                  <p className="text-muted small mb-2">
+                    <i className="ri-information-line me-1"></i>
+                    Bấm vào tên dự án để xem tiến độ từng annotator / reviewer.
+                    <strong className="ms-2">Overall</strong> = Approved / Total
+                    Assignments.
+                  </p>
+                  <Table className="table-hover align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Dự án</th>
+                        <th className="text-center">Total</th>
+                        <th className="text-center">Approved</th>
+                        <th className="text-center">Submitted</th>
+                        <th className="text-center">Rejected</th>
+                        <th>Overall Progress</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {projectProgressData.map((pp) => {
+                        const isExpanded = expandedProjects[pp.projectId];
+                        return (
+                          <React.Fragment key={pp.projectId}>
+                            {/* Project summary row */}
+                            <tr
+                              style={{ cursor: "pointer" }}
+                              onClick={() =>
+                                setExpandedProjects((prev) => ({
+                                  ...prev,
+                                  [pp.projectId]: !prev[pp.projectId],
+                                }))
+                              }
+                              className={isExpanded ? "table-active" : ""}
+                            >
+                              <td className="fw-semibold">
+                                <i
+                                  className={`ri-arrow-${isExpanded ? "down" : "right"}-s-line me-1`}
+                                ></i>
+                                {pp.projectName}
+                                <small className="text-muted ms-1">
+                                  ({pp.annotators.length} annotator,{" "}
+                                  {pp.reviewers.length} reviewer)
+                                </small>
+                              </td>
+                              <td className="text-center">
+                                {pp.totalAssignments}
+                              </td>
+                              <td className="text-center text-success fw-bold">
+                                {pp.approvedAssignments}
+                              </td>
+                              <td className="text-center text-info">
+                                {pp.submittedAssignments}
+                              </td>
+                              <td className="text-center text-danger">
+                                {pp.rejectedAssignments}
+                              </td>
+                              <td style={{ minWidth: "180px" }}>
+                                <div className="d-flex align-items-center gap-2">
+                                  <Progress
+                                    value={pp.overallProgress}
+                                    color={
+                                      pp.overallProgress >= 80
+                                        ? "success"
+                                        : pp.overallProgress >= 50
+                                          ? "warning"
+                                          : "danger"
+                                    }
+                                    className="flex-grow-1"
+                                    style={{ height: "8px" }}
+                                  />
+                                  <small
+                                    className="fw-bold"
+                                    style={{ minWidth: "40px" }}
+                                  >
+                                    {pp.overallProgress}%
+                                  </small>
+                                </div>
+                              </td>
+                            </tr>
+                            {/* Expanded: per-person rows */}
+                            {isExpanded && (
+                              <>
+                                {pp.annotators.map((person) => (
+                                  <tr
+                                    key={`a-${person.id}`}
+                                    className="bg-light"
+                                    style={{ fontSize: "0.85em" }}
+                                  >
+                                    <td className="ps-4">
+                                      <Badge
+                                        color="primary"
+                                        pill
+                                        className="me-1"
+                                        style={{ fontSize: "0.7em" }}
+                                      >
+                                        Annotator
+                                      </Badge>
+                                      {person.name}
+                                    </td>
+                                    <td className="text-center text-muted">
+                                      {person.total}
+                                    </td>
+                                    <td className="text-center" colSpan={3}>
+                                      <small className="text-muted">
+                                        Đã hoàn thành: {person.done}/
+                                        {person.total}
+                                      </small>
+                                    </td>
+                                    <td style={{ minWidth: "180px" }}>
+                                      <div className="d-flex align-items-center gap-2">
+                                        <Progress
+                                          value={person.progress}
+                                          color="primary"
+                                          className="flex-grow-1"
+                                          style={{ height: "5px" }}
+                                        />
+                                        <small
+                                          className="text-muted"
+                                          style={{ minWidth: "40px" }}
+                                        >
+                                          {person.progress}%
+                                        </small>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                                {pp.reviewers.map((person) => (
+                                  <tr
+                                    key={`r-${person.id}`}
+                                    className="bg-light"
+                                    style={{ fontSize: "0.85em" }}
+                                  >
+                                    <td className="ps-4">
+                                      <Badge
+                                        color="info"
+                                        pill
+                                        className="me-1"
+                                        style={{ fontSize: "0.7em" }}
+                                      >
+                                        Reviewer
+                                      </Badge>
+                                      {person.name}
+                                    </td>
+                                    <td className="text-center text-muted">
+                                      {person.total}
+                                    </td>
+                                    <td className="text-center" colSpan={3}>
+                                      <small className="text-muted">
+                                        Đã review: {person.done}/{person.total}
+                                      </small>
+                                    </td>
+                                    <td style={{ minWidth: "180px" }}>
+                                      <div className="d-flex align-items-center gap-2">
+                                        <Progress
+                                          value={person.progress}
+                                          color="info"
+                                          className="flex-grow-1"
+                                          style={{ height: "5px" }}
+                                        />
+                                        <small
+                                          className="text-muted"
+                                          style={{ minWidth: "40px" }}
+                                        >
+                                          {person.progress}%
+                                        </small>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                                {/* Overall row */}
+                                <tr
+                                  className="bg-light border-bottom"
+                                  style={{ fontSize: "0.85em" }}
+                                >
+                                  <td className="ps-4 fw-semibold">
+                                    <Badge
+                                      color="success"
+                                      pill
+                                      className="me-1"
+                                      style={{ fontSize: "0.7em" }}
+                                    >
+                                      Overall
+                                    </Badge>
+                                    Tổng dự án
+                                  </td>
+                                  <td className="text-center text-muted">
+                                    {pp.totalAssignments}
+                                  </td>
+                                  <td
+                                    className="text-center fw-bold text-success"
+                                    colSpan={3}
+                                  >
+                                    Approved: {pp.approvedAssignments}/
+                                    {pp.totalAssignments}
+                                  </td>
+                                  <td style={{ minWidth: "180px" }}>
+                                    <div className="d-flex align-items-center gap-2">
+                                      <Progress
+                                        value={pp.overallProgress}
+                                        color="success"
+                                        className="flex-grow-1"
+                                        style={{ height: "5px" }}
+                                      />
+                                      <small
+                                        className="fw-bold text-success"
+                                        style={{ minWidth: "40px" }}
+                                      >
+                                        {pp.overallProgress}%
+                                      </small>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center text-muted py-5">
+                  <i className="ri-bar-chart-grouped-line display-5 mb-3 d-block"></i>
+                  <p>Chưa có dữ liệu tiến độ dự án.</p>
+                </div>
+              )}
             </CardBody>
           </Card>
         </Col>
