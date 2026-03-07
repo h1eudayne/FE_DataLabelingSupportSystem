@@ -17,7 +17,6 @@ const AnnotatorDashboard = () => {
     }
   }, [projects.data, projectId]);
 
-  // Stats based on PROJECTS (not individual images/tasks)
   const stats = useMemo(() => {
     const projectList = projects.data || [];
 
@@ -31,7 +30,6 @@ const AnnotatorDashboard = () => {
     };
   }, [projects.data]);
 
-  // KQS (Key Quality Score) calculated from reviewer feedback
   const kqs = useMemo(() => {
     const feedbackList = reviewerFeedback.data || [];
     if (feedbackList.length === 0) return null;

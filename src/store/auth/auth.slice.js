@@ -35,7 +35,6 @@ const authSlice = createSlice({
         const payload = action.payload;
         const token = payload?.accessToken || payload?.data?.accessToken;
 
-        // Dữ liệu User trả về từ API lúc Login (nếu có)
         const userDataFromApi =
           payload?.user || payload?.data?.user || payload?.data;
 
@@ -48,8 +47,6 @@ const authSlice = createSlice({
           try {
             const decoded = jwtDecode(token);
 
-            // QUAN TRỌNG: Hợp nhất và ưu tiên dữ liệu thực tế (userDataFromApi)
-            // Nếu login không trả về user đầy đủ, userDataFromApi sẽ được lấp đầy sau bởi fetchSelf ở Header
             const finalUser = { ...decoded, ...userDataFromApi };
 
             state.user = finalUser;

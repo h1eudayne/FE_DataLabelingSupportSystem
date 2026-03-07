@@ -44,8 +44,6 @@ const ProfileContainer = () => {
         const uploadRes = await uploadAvatar(avatarData);
         const relativePath = uploadRes.data?.avatarUrl || uploadRes.avatarUrl;
 
-        // Nối URL động: lấy từ cấu hình Axios
-        // Xử lý dấu "/" dư thừa nếu có để tránh lỗi link dạng //avatars/...
         const cleanPath = relativePath.startsWith("/")
           ? relativePath
           : `/${relativePath}`;
@@ -58,7 +56,6 @@ const ProfileContainer = () => {
         finalAvatarUrl = avatarData;
       }
 
-      // Sau đó gọi API lưu profile bình thường
       await updateUserProfile(fullName, finalAvatarUrl);
 
       dispatch(

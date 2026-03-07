@@ -44,7 +44,6 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
       return formData.avatarUrl;
     }
 
-    // Xử lý để đảm bảo luôn có đúng 1 dấu gạch chéo ở giữa
     const baseUrl = BACKEND_URL.endsWith("/")
       ? BACKEND_URL.slice(0, -1)
       : BACKEND_URL;
