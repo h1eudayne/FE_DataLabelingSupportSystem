@@ -175,19 +175,30 @@ const DashboardAnalytics = () => {
             });
 
             // Collect per-project progress data for the new section
+            // Use pendingAssignments (New+Assigned+InProgress) from project-level
+            const pendingAsgn = s.pendingAssignments ?? 0;
             const projAnnotators = (s.annotatorPerformances || []).map((ap) => {
               const annTotal = ap.tasksAssigned || 0;
               const annApproved = ap.tasksCompleted || 0; // = Approved
-              const annSubmitted =
-                annTotal - annApproved - (ap.tasksRejected || 0);
-              // Annotator done = Submitted + Approved (items annotator has finished)
-              const annDone = Math.max(0, annTotal - (ap.tasksRejected || 0));
+              const annRejected = ap.tasksRejected || 0;
+              const annRemaining = annTotal - annApproved - annRejected; // = Submitted + Pending for this annotator
+              // Estimate pending per annotator proportionally
+              const annPendingEst =
+                totalAsgn > 0
+                  ? Math.round((pendingAsgn * annTotal) / totalAsgn)
+                  : 0;
+              // Submitted estimate = remaining - estimated pending
+              const annSubmittedEst = Math.max(0, annRemaining - annPendingEst);
+              // Annotator done = Submitted + Approved (items annotator has finished their part)
+              const annDone = annApproved + annSubmittedEst;
               return {
                 id: ap.annotatorId,
                 name: ap.annotatorName || ap.annotatorId,
                 role: "Annotator",
                 done: annDone,
                 total: annTotal,
+                approved: annApproved,
+                submitted: annSubmittedEst,
                 progress:
                   annTotal > 0 ? Math.round((annDone / annTotal) * 100) : 0,
               };
@@ -246,34 +257,44 @@ const DashboardAnalytics = () => {
 
             reviews.forEach((r) => {
               const reviewerKey = r.reviewerName || r.reviewerId || "Unknown";
+              // Always register reviewer so they appear in the table
               if (!reviewerMap[reviewerKey]) {
                 reviewerMap[reviewerKey] = {
                   name: reviewerKey,
                   totalReviews: 0,
+                  totalAssigned: 0,
                   overridden: 0,
                   disputeCount: 0,
                   projectDetails: {},
                 };
               }
-              reviewerMap[reviewerKey].totalReviews++;
-              // Track per-project
               if (!reviewerMap[reviewerKey].projectDetails[project.id]) {
                 reviewerMap[reviewerKey].projectDetails[project.id] = {
                   projectName: project.name,
                   reviews: 0,
+                  assigned: 0,
                   overridden: 0,
                   disputes: 0,
                 };
               }
-              reviewerMap[reviewerKey].projectDetails[project.id].reviews++;
-              if (
-                r.managerAuditDecision !== undefined &&
-                r.managerAuditDecision !== null &&
-                r.managerAuditDecision === false
-              ) {
-                reviewerMap[reviewerKey].overridden++;
-                reviewerMap[reviewerKey].projectDetails[project.id]
-                  .overridden++;
+              // Count total assigned for this reviewer in this project
+              reviewerMap[reviewerKey].totalAssigned++;
+              reviewerMap[reviewerKey].projectDetails[project.id].assigned++;
+
+              // Only count as "reviewed" if actually Approved or Rejected
+              const reviewStatus = r.status || "";
+              if (reviewStatus === "Approved" || reviewStatus === "Rejected") {
+                reviewerMap[reviewerKey].totalReviews++;
+                reviewerMap[reviewerKey].projectDetails[project.id].reviews++;
+                if (
+                  r.managerAuditDecision !== undefined &&
+                  r.managerAuditDecision !== null &&
+                  r.managerAuditDecision === false
+                ) {
+                  reviewerMap[reviewerKey].overridden++;
+                  reviewerMap[reviewerKey].projectDetails[project.id]
+                    .overridden++;
+                }
               }
             });
 
@@ -308,8 +329,8 @@ const DashboardAnalytics = () => {
           Object.values(reviewerMap).forEach((rev) => {
             const pd = rev.projectDetails[pp.projectId];
             if (pd) {
-              const revTotal = pp.totalAssignments;
-              const revDone = pd.reviews || 0; // = Approved + Rejected reviewed
+              const revTotal = pd.assigned || 0;
+              const revDone = pd.reviews || 0;
               projectReviewers.push({
                 id: rev.name,
                 name: rev.name,
@@ -349,8 +370,6 @@ const DashboardAnalytics = () => {
           });
         }
 
-        // TASK-BASED aggregation:
-        // Each entry in allAnnotators = 1 annotator in 1 project = 1 TASK
         const uniqueAnnotators = {};
         allAnnotators.forEach((a) => {
           const isTaskCompleted =
@@ -428,17 +447,14 @@ const DashboardAnalytics = () => {
         setProjectChartData(chartStatsArr);
         setProjectProgressData(projectProgressArr);
 
-        // Count all unique staff: annotators + reviewers from already-fetched data
         const allStaffIds = new Set([
           ...annotatorsArr.map((a) => a.annotatorId),
           ...Object.keys(reviewerMap),
         ]);
         const frontendStaffCount = allStaffIds.size;
-        // Use API totalMembers if higher, otherwise use our count
         const apiMembers = managerStats?.totalMembers || 0;
         setTotalMembers(Math.max(apiMembers, frontendStaffCount));
 
-        // Top 5 annotators: count completed IMAGES as work metric
         setAnnotatorData(
           annotatorsArr
             .map((a) => ({
@@ -1200,8 +1216,9 @@ const DashboardAnalytics = () => {
                                     </td>
                                     <td className="text-center" colSpan={3}>
                                       <small className="text-muted">
-                                        Đã hoàn thành: {person.done}/
-                                        {person.total}
+                                        Submitted: {person.submitted} |
+                                        Approved: {person.approved} →{" "}
+                                        {person.done}/{person.total}
                                       </small>
                                     </td>
                                     <td style={{ minWidth: "180px" }}>

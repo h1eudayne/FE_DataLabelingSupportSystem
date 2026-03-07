@@ -4,6 +4,7 @@ import {
   getAssignedProjects,
   getMyTasks,
   getAllReviewerFeedback,
+  getProjectProgressDetails,
 } from "../../../services/annotator/dashboard/annotator.api";
 
 const useAnnotatorDashboard = (projectId) => {
@@ -31,11 +32,19 @@ const useAnnotatorDashboard = (projectId) => {
     retry: false,
   });
 
+  const projectProgress = useQuery({
+    queryKey: ["project-progress-details"],
+    queryFn: getProjectProgressDetails,
+    retry: false,
+    staleTime: 1000 * 60,
+  });
+
   return {
     profile,
     projects,
     tasksByProject,
     reviewerFeedback,
+    projectProgress,
   };
 };
 

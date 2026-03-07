@@ -8,8 +8,13 @@ import StatCard from "../../../components/annotator/dashboard/StatCard";
 const AnnotatorDashboard = () => {
   const [projectId, setProjectId] = useState(null);
 
-  const { profile, projects, tasksByProject, reviewerFeedback } =
-    useAnnotatorDashboard(projectId);
+  const {
+    profile,
+    projects,
+    tasksByProject,
+    reviewerFeedback,
+    projectProgress,
+  } = useAnnotatorDashboard(projectId);
 
   useEffect(() => {
     if (projects.data?.length > 0 && projectId !== projects.data[0].projectId) {
@@ -43,6 +48,13 @@ const AnnotatorDashboard = () => {
   }, [reviewerFeedback.data]);
 
   const isLoadingStats = projects.isLoading;
+  const progressData = projectProgress.data || [];
+
+  const getProgressColor = (value) => {
+    if (value >= 80) return "#0ab39c";
+    if (value >= 50) return "#f7b84b";
+    return "#f06548";
+  };
 
   return (
     <DashboardLayout title="Dashboard" className="page-content">
@@ -94,6 +106,172 @@ const AnnotatorDashboard = () => {
           }
           loading={reviewerFeedback.isLoading}
         />
+      </div>
+
+      {/* Project Progress Section */}
+      <div className="row mt-4">
+        <div className="col-12">
+          <div className="card shadow-sm border-0">
+            <div className="card-header bg-white border-bottom">
+              <h5 className="mb-0">
+                <i className="ri-bar-chart-grouped-line me-2 text-primary"></i>
+                Tiến độ dự án
+              </h5>
+            </div>
+            <div className="card-body">
+              {projectProgress.isLoading ? (
+                <div className="text-center py-4">
+                  <div
+                    className="spinner-border spinner-border-sm text-primary me-2"
+                    role="status"
+                  ></div>
+                  Đang tải tiến độ...
+                </div>
+              ) : progressData.length > 0 ? (
+                <div className="table-responsive">
+                  <p className="text-muted small mb-3">
+                    <i className="ri-information-line me-1"></i>
+                    <strong>Annotator</strong> = (Submitted + Approved) / Total
+                    |<strong className="ms-1">Reviewer</strong> = (Approved +
+                    Rejected) / Total |<strong className="ms-1">Overall</strong>{" "}
+                    = Approved / Total
+                  </p>
+                  {progressData.map((pp) => (
+                    <div
+                      key={pp.projectId}
+                      className="mb-4 p-3 border rounded bg-light"
+                    >
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <h6 className="mb-0 fw-semibold">
+                          <i className="ri-folder-line me-1 text-primary"></i>
+                          {pp.projectName}
+                        </h6>
+                        <span
+                          className={`badge bg-${
+                            pp.status === "Completed"
+                              ? "success"
+                              : pp.status === "Expired"
+                                ? "danger"
+                                : "warning"
+                          }`}
+                        >
+                          {pp.status}
+                        </span>
+                      </div>
+
+                      {/* Annotator Progress */}
+                      <div className="mb-2">
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <small className="fw-semibold">
+                            <span
+                              className="badge bg-primary me-1"
+                              style={{ fontSize: "0.65em" }}
+                            >
+                              Annotator
+                            </span>
+                            Submitted + Approved
+                          </small>
+                          <small
+                            className="fw-bold"
+                            style={{
+                              color: getProgressColor(pp.annotator.progress),
+                            }}
+                          >
+                            {pp.annotator.done}/{pp.annotator.total} (
+                            {pp.annotator.progress}%)
+                          </small>
+                        </div>
+                        <div className="progress" style={{ height: "8px" }}>
+                          <div
+                            className="progress-bar"
+                            role="progressbar"
+                            style={{
+                              width: `${pp.annotator.progress}%`,
+                              backgroundColor: "#405189",
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Reviewer Progress */}
+                      <div className="mb-2">
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <small className="fw-semibold">
+                            <span
+                              className="badge bg-info me-1"
+                              style={{ fontSize: "0.65em" }}
+                            >
+                              Reviewer
+                            </span>
+                            Approved + Rejected
+                          </small>
+                          <small
+                            className="fw-bold"
+                            style={{
+                              color: getProgressColor(pp.reviewer.progress),
+                            }}
+                          >
+                            {pp.reviewer.done}/{pp.reviewer.total} (
+                            {pp.reviewer.progress}%)
+                          </small>
+                        </div>
+                        <div className="progress" style={{ height: "8px" }}>
+                          <div
+                            className="progress-bar"
+                            role="progressbar"
+                            style={{
+                              width: `${pp.reviewer.progress}%`,
+                              backgroundColor: "#299cdb",
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Overall Progress */}
+                      <div>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <small className="fw-semibold">
+                            <span
+                              className="badge bg-success me-1"
+                              style={{ fontSize: "0.65em" }}
+                            >
+                              Overall
+                            </span>
+                            Approved / Total
+                          </small>
+                          <small
+                            className="fw-bold"
+                            style={{
+                              color: getProgressColor(pp.overall.progress),
+                            }}
+                          >
+                            {pp.overall.done}/{pp.overall.total} (
+                            {pp.overall.progress}%)
+                          </small>
+                        </div>
+                        <div className="progress" style={{ height: "8px" }}>
+                          <div
+                            className="progress-bar"
+                            role="progressbar"
+                            style={{
+                              width: `${pp.overall.progress}%`,
+                              backgroundColor: "#0ab39c",
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-muted py-4">
+                  <i className="ri-bar-chart-grouped-line display-5 mb-3 d-block"></i>
+                  <p>Chưa có dữ liệu tiến độ dự án.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="row mt-4">

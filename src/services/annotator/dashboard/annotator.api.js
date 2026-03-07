@@ -72,3 +72,60 @@ export const getAllReviewerFeedback = async () => {
   const responses = await Promise.all(requests);
   return responses.flat();
 };
+
+export const getProjectProgressDetails = async () => {
+  const projects = await getAssignedProjects();
+  if (!projects || projects.length === 0) return [];
+
+  const results = await Promise.all(
+    projects.map(async (p) => {
+      const projectId = p.projectId;
+      const annDone = p.completedImages || 0;
+      const annTotal = p.totalImages || 0;
+      const annProgress =
+        annTotal > 0 ? Math.round((annDone / annTotal) * 100) : 0;
+
+      let revProgress = 0;
+      let overallProgress = 0;
+      let revDone = 0;
+      let revTotal = 0;
+      let approvedCount = 0;
+      let totalAssignments = 0;
+
+      try {
+        const statsRes = await axios.get(
+          `/api/projects/${projectId}/statistics`,
+        );
+        const s = statsRes.data;
+        totalAssignments = s.totalAssignments ?? 0;
+        approvedCount = s.approvedAssignments ?? 0;
+        const rejectedCount = s.rejectedAssignments ?? 0;
+        revDone = approvedCount + rejectedCount;
+        revTotal = totalAssignments;
+        revProgress = revTotal > 0 ? Math.round((revDone / revTotal) * 100) : 0;
+        overallProgress =
+          totalAssignments > 0
+            ? Math.round((approvedCount / totalAssignments) * 100)
+            : 0;
+      } catch {
+        overallProgress = 0;
+      }
+
+      return {
+        projectId,
+        projectName: p.projectName,
+        status: p.status,
+        deadline: p.deadline,
+        annotator: { done: annDone, total: annTotal, progress: annProgress },
+        reviewer: { done: revDone, total: revTotal, progress: revProgress },
+        overall: {
+          done: approvedCount,
+          total: totalAssignments,
+          progress: overallProgress,
+        },
+      };
+    }),
+  );
+
+  return results;
+};
