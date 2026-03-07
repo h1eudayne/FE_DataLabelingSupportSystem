@@ -47,7 +47,16 @@ const WorkplaceLabelingTaskPage = () => {
   const [showBatchPanel, setShowBatchPanel] = useState(false);
   const [batchSubmitting, setBatchSubmitting] = useState(false);
 
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [disputeSubmitting, setDisputeSubmitting] = useState(false);
+  const [disputeStatus, setDisputeStatus] = useState(null);
+
   const currentImage = images[currentImgIndex];
+
+  const allAnnotations = useSelector(
+    (state) => state.labeling.annotationsByAssignment || {},
+  );
 
   const annotations = useSelector(
     (state) => state.labeling.annotationsByAssignment[currentImage?.id] || [],
@@ -91,13 +100,14 @@ const WorkplaceLabelingTaskPage = () => {
   }, []);
 
   const eligibleForSubmit = useMemo(() => {
-    return images.filter(
-      (img) =>
-        img.status !== "Submitted" &&
-        img.status !== "Approved" &&
-        hasValidAnnotations(img.annotationData),
-    );
-  }, [images, hasValidAnnotations]);
+    return images.filter((img) => {
+      if (img.status === "Submitted" || img.status === "Approved") return false;
+      if (hasValidAnnotations(img.annotationData)) return true;
+      const reduxAnns = allAnnotations[img.id];
+      if (reduxAnns && reduxAnns.length > 0) return true;
+      return false;
+    });
+  }, [images, hasValidAnnotations, allAnnotations]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -438,6 +448,54 @@ const WorkplaceLabelingTaskPage = () => {
     sessionStorage.setItem(sessionKey, "true");
   };
 
+  const handleCreateDispute = async () => {
+    if (!currentImage || !disputeReason.trim()) {
+      toast.warning("Vui lòng nhập lý do khiếu nại.");
+      return;
+    }
+
+    setDisputeSubmitting(true);
+    try {
+      await taskService.createDispute({
+        assignmentId: currentImage.id,
+        reason: disputeReason.trim(),
+      });
+      toast.success("Khiếu nại đã được gửi thành công! Manager sẽ xem xét.");
+      setDisputeStatus("Pending");
+      setShowDisputeForm(false);
+      setDisputeReason("");
+    } catch (err) {
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data ||
+        "Gửi khiếu nại thất bại.";
+      toast.error(typeof msg === "string" ? msg : "Gửi khiếu nại thất bại.");
+    } finally {
+      setDisputeSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!currentImage || currentImage.status !== "Rejected") {
+      setDisputeStatus(null);
+      setShowDisputeForm(false);
+      return;
+    }
+    const checkDispute = async () => {
+      try {
+        const res = await taskService.getMyDisputes(assignmentId);
+        const disputes = res.data || res || [];
+        const existing = disputes.find(
+          (d) => d.assignmentId === currentImage.id && d.status === "Pending",
+        );
+        setDisputeStatus(existing ? "Pending" : null);
+      } catch {
+        setDisputeStatus(null);
+      }
+    };
+    checkDispute();
+  }, [currentImage, assignmentId]);
+
   if (loading)
     return <div className="text-center mt-5">Đang tải dữ liệu...</div>;
 
@@ -574,7 +632,7 @@ const WorkplaceLabelingTaskPage = () => {
           <div className="alert alert-danger small py-2 mb-3">
             <div className="d-flex align-items-start">
               <i className="ri-error-warning-fill me-2 fs-5 text-danger"></i>
-              <div>
+              <div className="flex-grow-1">
                 <strong className="d-block mb-1">
                   Ảnh bị từ chối bởi Reviewer
                 </strong>
@@ -582,6 +640,23 @@ const WorkplaceLabelingTaskPage = () => {
                   Vui lòng đọc comment bên dưới và sửa lại bản vẽ. Nếu ảnh
                   mờ/thiếu thông tin, hãy làm theo Guideline.
                 </span>
+
+                {disputeStatus === "Pending" ? (
+                  <div className="mt-2 p-2 bg-warning bg-opacity-10 rounded border border-warning">
+                    <i className="ri-time-line me-1 text-warning"></i>
+                    <span className="text-warning fw-bold">
+                      Đã gửi khiếu nại — đang chờ Manager xử lý
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    className="btn btn-outline-danger btn-sm mt-2"
+                    onClick={() => setShowDisputeForm(true)}
+                  >
+                    <i className="ri-questionnaire-line me-1"></i>
+                    Khiếu nại (Dispute)
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -606,7 +681,12 @@ const WorkplaceLabelingTaskPage = () => {
         <div className="mt-3">
           <button
             className={`btn btn-sm w-100 ${showBatchPanel ? "btn-outline-secondary" : "btn-outline-primary"}`}
-            onClick={() => setShowBatchPanel(!showBatchPanel)}
+            onClick={async () => {
+              if (!showBatchPanel) {
+                await saveDraft(true);
+              }
+              setShowBatchPanel(!showBatchPanel);
+            }}
           >
             <i
               className={`ri-${showBatchPanel ? "close" : "stack"}-line me-1`}
@@ -659,7 +739,10 @@ const WorkplaceLabelingTaskPage = () => {
                 const config = STATUS_CONFIG[img.status] || STATUS_CONFIG.New;
                 const isEligible =
                   img.status !== "Submitted" && img.status !== "Approved";
-                const hasData = hasValidAnnotations(img.annotationData);
+                const reduxAnns = allAnnotations[img.id];
+                const hasData =
+                  hasValidAnnotations(img.annotationData) ||
+                  (reduxAnns && reduxAnns.length > 0);
 
                 return (
                   <div
@@ -785,6 +868,68 @@ const WorkplaceLabelingTaskPage = () => {
           currentImage.status === "Rejected") && (
           <div className="mt-4">
             <CommentSection projectId={assignmentId} taskId={currentImage.id} />
+          </div>
+        )}
+
+        {showDisputeForm && isRejected && (
+          <div className="mt-3">
+            <div className="card border-danger shadow-sm">
+              <div className="card-header bg-danger bg-opacity-10 d-flex justify-content-between align-items-center">
+                <h6 className="mb-0 text-danger fw-bold">
+                  <i className="ri-questionnaire-line me-1"></i>
+                  Tạo khiếu nại (Dispute)
+                </h6>
+                <button
+                  className="btn-close btn-close-sm"
+                  onClick={() => {
+                    setShowDisputeForm(false);
+                    setDisputeReason("");
+                  }}
+                ></button>
+              </div>
+              <div className="card-body">
+                <p className="text-muted small mb-2">
+                  Nếu bạn cho rằng Reviewer đã chấm sai bài của mình, hãy nhập
+                  lý do bên dưới. Manager sẽ xem xét và phân xử.
+                </p>
+                <textarea
+                  className="form-control mb-3"
+                  rows={3}
+                  placeholder="Nhập lý do khiếu nại... (ví dụ: Annotation đã đúng theo guideline, Reviewer nhầm lẫn...)"
+                  value={disputeReason}
+                  onChange={(e) => setDisputeReason(e.target.value)}
+                  disabled={disputeSubmitting}
+                />
+                <div className="d-flex justify-content-end gap-2">
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => {
+                      setShowDisputeForm(false);
+                      setDisputeReason("");
+                    }}
+                    disabled={disputeSubmitting}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={handleCreateDispute}
+                    disabled={!disputeReason.trim() || disputeSubmitting}
+                  >
+                    {disputeSubmitting ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-1"></span>
+                        Đang gửi...
+                      </>
+                    ) : (
+                      <>
+                        <i className="ri-send-plane-fill me-1"></i>Gửi khiếu nại
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
