@@ -298,10 +298,11 @@ const WorkplaceLabelingTaskPage = () => {
 
     if (unusedLabels.length > 0) {
       const names = unusedLabels.map((l) => l.name).join(", ");
-      const confirmed = window.confirm(
-        `⚠️ Các nhãn đã mở khóa nhưng chưa được dùng: ${names}.\n\nTheo quy định BR-ANN-10, Annotator không được bỏ sót các đối tượng hợp lệ.\nBạn có chắc muốn nộp bài không?`,
+      toast.error(
+        `Chưa gán đủ nhãn! Các nhãn bắt buộc chưa dùng: ${names}. Bạn phải gán nhãn cho TẤT CẢ đối tượng yêu cầu trong ảnh.`,
+        { autoClose: 8000 },
       );
-      if (!confirmed) return;
+      return;
     }
 
     try {
@@ -399,7 +400,7 @@ const WorkplaceLabelingTaskPage = () => {
     }
 
     const confirmed = window.confirm(
-      `Bạn sắp nộp ${selectedIds.size} ảnh cùng lúc.\n\n⚠️ Các ảnh chưa có dữ liệu gán nhãn sẽ bị từ chối bởi hệ thống.\nBạn có chắc chắn muốn nộp?`,
+      `Bạn sắp nộp ${selectedIds.size} ảnh cùng lúc.\n\n Các ảnh chưa có dữ liệu gán nhãn sẽ bị từ chối bởi hệ thống.\nBạn có chắc chắn muốn nộp?`,
     );
     if (!confirmed) return;
 
@@ -586,7 +587,9 @@ const WorkplaceLabelingTaskPage = () => {
     return <div className="text-center mt-5">Dự án này chưa có ảnh nào.</div>;
 
   const isReadOnly =
-    currentImage.status === "Submitted" || currentImage.status === "Approved";
+    currentImage.status === "Submitted" ||
+    currentImage.status === "Approved" ||
+    (currentImage.status === "Rejected" && disputeStatus === "Pending");
 
   const isRejected = currentImage.status === "Rejected";
 
@@ -662,7 +665,15 @@ const WorkplaceLabelingTaskPage = () => {
           </div>
         )}
 
-        {isReadOnly ? (
+        {currentImage.status === "Rejected" && disputeStatus === "Pending" && (
+          <div className="alert alert-warning small py-2">
+            <i className="ri-lock-line me-1"></i>
+            Đang chờ xử lý khiếu nại. Bạn không thể chỉnh sửa cho đến khi
+            Manager phân xử.
+          </div>
+        )}
+
+        {isReadOnly && currentImage.status !== "Rejected" ? (
           <div className="alert alert-info small py-2">
             <i className="ri-lock-line me-1"></i>
             Ảnh này đã được nộp. Chỉ xem, không chỉnh sửa.
@@ -865,7 +876,8 @@ const WorkplaceLabelingTaskPage = () => {
 
         {/* BR-ANN-09: Show comment section for Rejected images + Approved */}
         {(currentImage.status === "Approved" ||
-          currentImage.status === "Rejected") && (
+          currentImage.status === "Rejected" ||
+          currentImage.status === "Submitted") && (
           <div className="mt-4">
             <CommentSection projectId={assignmentId} taskId={currentImage.id} />
           </div>
