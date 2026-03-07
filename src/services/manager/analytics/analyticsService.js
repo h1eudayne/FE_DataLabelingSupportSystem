@@ -18,6 +18,7 @@ const analyticsService = {
     let submitted = 0;
     let rejected = 0;
     let newProjects = 0;
+    let totalAssignments = 0;
 
     const activeProjects = [];
 
@@ -31,6 +32,8 @@ const analyticsService = {
         const rej = s.rejectedAssignments ?? 0;
         const sub = s.submittedAssignments ?? 0;
         const pend = s.pendingAssignments ?? 0;
+
+        totalAssignments += total;
 
         let projectStatus = "New";
         if (total === 0) {
@@ -83,6 +86,7 @@ const analyticsService = {
     return {
       total: projects.length,
       totalProjects: projects.length,
+      totalAssignments,
       completed,
       inProgress,
       submitted,

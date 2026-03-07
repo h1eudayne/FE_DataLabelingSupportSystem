@@ -5,7 +5,7 @@ export const getUsers = () => {
 };
 
 export const createUser = (data) => {
-  return axios.post("/api/User", data);
+  return axios.post("/api/users", data);
 };
 
 export const changePassword = (oldPassword, newPassword) => {
