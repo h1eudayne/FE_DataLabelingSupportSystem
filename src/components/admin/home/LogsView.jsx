@@ -1,130 +1,178 @@
-import React from "react";
-import { Card, Badge, InputGroup, Form } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import { Card, Badge, InputGroup, Form, Button } from "react-bootstrap";
 import { History, Activity, Search, User, Filter } from "lucide-react";
+import { getSysLogs } from "../../../services/admin/managementSystem/systemLog.api";
+import SysLogsModal from "../managementSystem/SysLogsModal";
+import { BACKEND_URL } from "../../../services/axios.customize";
 
 const LogsView = () => {
-  const logData = [
-    {
-      id: 1,
-      action: "Cập nhật nhãn",
-      user: "admin@gmail.com",
-      time: "2024-05-20 14:00",
-      type: "update",
-      ip: "192.168.1.1",
-    },
-    {
-      id: 2,
-      action: "Xóa dự án ID: 12",
-      user: "manager_01",
-      time: "2024-05-20 13:45",
-      type: "delete",
-      ip: "113.161.5.2",
-    },
-    {
-      id: 3,
-      action: "Đăng nhập hệ thống",
-      user: "annotator_05",
-      time: "2024-05-20 12:30",
-      type: "auth",
-      ip: "172.16.0.45",
-    },
-  ];
+  const [logData, setLogData] = useState(null);
+  const [isOpenModal, setIsOpenModal] = useState(false);
+  const [selectUserLogs, setSelectUserLogs] = useState(null);
 
-  const getBadgeType = (type) => {
-    switch (type) {
-      case "update":
-        return "primary";
-      case "delete":
-        return "danger";
-      case "auth":
-        return "success";
-      default:
-        return "secondary";
+  useEffect(() => {
+    fetchLog();
+  }, []);
+
+  const fetchLog = async () => {
+    try {
+      const res = await getSysLogs();
+      if (res.data) {
+        const groupedData = res.data.reduce((acc, currentLog) => {
+          const userId = currentLog.userId;
+
+          if (!acc[userId]) {
+            acc[userId] = {
+              id: userId,
+              avatar: currentLog.user.avatarUrl,
+              email: currentLog.user.email,
+              role: currentLog.user.role,
+              userInfo: currentLog.user,
+              logs: [],
+            };
+          }
+
+          acc[userId].logs.push({
+            id: currentLog.id,
+            actionType: currentLog.actionType,
+            timestamp: currentLog.timestamp,
+            ipAddress: currentLog.ipAddress,
+            description: currentLog.description,
+          });
+
+          return acc;
+        }, {});
+
+        setLogData(Object.values(groupedData));
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
+  const onCloseModal = () => {
+    setSelectUserLogs(null);
+    setIsOpenModal(false);
+  };
+
   return (
-    <Card
-      className="border-0 shadow-sm overflow-hidden"
-      style={{ borderRadius: "15px" }}
-    >
-      <Card.Header className="bg-white border-bottom py-4 px-4">
-        <div className="d-flex justify-content-between align-items-center">
-          <div>
-            <h5 className="fw-bold mb-0">
-              <History className="me-2 text-primary" /> Nhật ký hệ thống (System
-              Logs)
-            </h5>
-            <small className="text-muted">
-              Theo dõi mọi thay đổi từ API và người dùng.
-            </small>
+    <>
+      <Card
+        className="border-0 shadow-sm overflow-hidden"
+        style={{ borderRadius: "15px" }}
+      >
+        <Card.Header className="bg-white border-bottom py-4 px-4">
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 className="fw-bold mb-0">
+                <History className="me-2 text-primary" /> Nhật ký hệ thống
+                (System Logs)
+              </h5>
+              <small className="text-muted">
+                Theo dõi mọi hoạt động của người dùng
+              </small>
+            </div>
           </div>
-          <Badge bg="light" className="text-dark border p-2">
-            <Filter size={14} className="me-1" /> Lọc dữ liệu
-          </Badge>
+        </Card.Header>
+
+        <div className="p-4 bg-light bg-opacity-50">
+          <InputGroup className="border rounded-3 overflow-hidden bg-white">
+            <InputGroup.Text className="bg-white border-0">
+              <Search size={18} className="text-muted" />
+            </InputGroup.Text>
+            <Form.Control
+              placeholder="Tìm kiếm log theo email..."
+              className="border-0 shadow-none"
+            />
+          </InputGroup>
         </div>
-      </Card.Header>
 
-      <div className="p-4 bg-light bg-opacity-50">
-        <InputGroup className="border rounded-3 overflow-hidden bg-white">
-          <InputGroup.Text className="bg-white border-0">
-            <Search size={18} className="text-muted" />
-          </InputGroup.Text>
-          <Form.Control
-            placeholder="Tìm kiếm log theo email hoặc hành động..."
-            className="border-0 shadow-none"
-          />
-        </InputGroup>
-      </div>
-
-      <div className="list-group list-group-flush">
-        {logData.map((log) => (
-          <div
-            key={log.id}
-            className="list-group-item p-3 d-flex gap-3 align-items-start border-0 border-bottom"
-          >
+        <div className="list-group list-group-flush">
+          {logData?.map((log) => (
             <div
-              className={`p-2 rounded bg-opacity-10 bg-${getBadgeType(log.type)} text-${getBadgeType(log.type)}`}
+              key={log.id}
+              className="list-group-item p-3 d-flex justify-content-between align-items-center border-0 border-bottom bg-transparent main-log-item"
+              style={{ transition: "all 0.3s ease" }}
             >
-              <Activity size={20} />
-            </div>
-            <div className="flex-grow-1">
-              <div className="d-flex justify-content-between">
-                <p className="mb-1 fw-bold small text-slate-800">
-                  {log.action}
-                </p>
-                <Badge
-                  bg={getBadgeType(log.type)}
-                  className="text-uppercase"
-                  style={{ fontSize: "10px" }}
-                >
-                  {log.type}
-                </Badge>
-              </div>
-              <div
-                className="d-flex align-items-center gap-3 text-muted"
-                style={{ fontSize: "12px" }}
-              >
-                <span className="d-flex align-items-center gap-1">
-                  <User size={12} /> {log.user}
-                </span>
-                <span className="font-monospace">| Time: {log.time}</span>
-                <span className="font-monospace">| IP: {log.ip}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+              <div className="d-flex align-items-center gap-3">
+                <div className="position-relative">
+                  <img
+                    src={
+                      log.avatar
+                        ? log.avatar.startsWith("http")
+                          ? log.avatar
+                          : `${BACKEND_URL}${log.avatar.startsWith("/") ? "" : "/"}${log.avatar}`
+                        : `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`
+                    }
+                    alt="avatar"
+                    className="rounded-circle shadow-sm border"
+                    style={{
+                      width: "45px",
+                      height: "45px",
+                      objectFit: "cover",
+                    }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`;
+                    }}
+                  />
+                </div>
 
-      <Card.Footer className="bg-white text-center py-3">
-        <Button
-          variant="link"
-          className="text-primary fw-bold text-decoration-none small"
-        >
-          Xem tất cả lịch sử hoạt động
-        </Button>
-      </Card.Footer>
-    </Card>
+                <div className="d-flex flex-column">
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <span
+                      className="fw-bold text-dark mb-0"
+                      style={{ fontSize: "15px", letterSpacing: "-0.3px" }}
+                    >
+                      {log.email || "No Email"}
+                    </span>
+
+                    <Badge
+                      bg={log.role === "Admin" ? "danger" : "info"}
+                      className="text-uppercase"
+                      style={{ fontSize: "10px", padding: "3px 6px" }}
+                    >
+                      {log.role}
+                    </Badge>
+                  </div>
+                  <div className="d-flex align-items-center gap-2">
+                    <Badge
+                      bg="light"
+                      className="text-muted border-0 fw-normal p-0"
+                      style={{ fontSize: "11px" }}
+                    >
+                      <Activity size={10} className="me-1" />
+                      {log.logs?.length} hoạt động ghi nhận
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                variant="primary"
+                size="sm"
+                style={{
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  padding: "5px 15px",
+                }}
+                onClick={() => {
+                  setIsOpenModal(true);
+                  setSelectUserLogs(log);
+                }}
+              >
+                Chi tiết
+              </Button>
+            </div>
+          ))}
+        </div>
+      </Card>
+      <SysLogsModal
+        isOpen={isOpenModal}
+        onClose={onCloseModal}
+        selectUserLogs={selectUserLogs}
+      />
+    </>
   );
 };
 

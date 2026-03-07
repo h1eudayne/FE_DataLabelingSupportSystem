@@ -97,20 +97,15 @@ const DashboardAnalytics = () => {
             const approvedAsgn = s.approvedAssignments ?? 0;
             const rejAsgn = s.rejectedAssignments ?? 0;
             const subAsgn = s.submittedAssignments ?? 0;
-            const pendAsgn = s.pendingAssignments ?? 0;
 
             if (totalAsgn === 0) {
-              // no assignments yet - skip
             } else if (approvedAsgn === totalAsgn) {
               completed++;
-            } else if (subAsgn + approvedAsgn === totalAsgn) {
-              // ALL assignments are either submitted or approved
-              submitted++;
-            } else if (rejAsgn > 0 && pendAsgn === 0 && subAsgn === 0) {
-              // only rejected + approved, no pending or submitted
+            } else if (rejAsgn > 0) {
               rejected++;
+            } else if (subAsgn > 0) {
+              submitted++;
             } else {
-              // any mix of statuses = in progress
               inProgress++;
             }
 
@@ -126,16 +121,7 @@ const DashboardAnalytics = () => {
             }
 
             if (s.annotatorPerformances?.length) {
-              // Enrich each annotator with project-level submitted info
-              const enrichedPerfs = s.annotatorPerformances.map((ap) => {
-                // Calculate submitted share for this annotator proportionally
-                const annotatorSubmitted =
-                  totalAsgn > 0
-                    ? Math.round((ap.tasksAssigned / totalAsgn) * subAsgn)
-                    : 0;
-                return { ...ap, _projectSubmitted: annotatorSubmitted };
-              });
-              allAnnotators.push(...enrichedPerfs);
+              allAnnotators.push(...s.annotatorPerformances);
             }
 
             if (s.labelDistributions?.length) {
@@ -259,18 +245,14 @@ const DashboardAnalytics = () => {
 
         const uniqueAnnotators = {};
         allAnnotators.forEach((a) => {
-          // Use project-level submitted proportional share
-          const submitted = a._projectSubmitted ?? 0;
-          const enriched = { ...a, tasksSubmitted: submitted };
           if (!uniqueAnnotators[a.annotatorId]) {
-            uniqueAnnotators[a.annotatorId] = enriched;
+            uniqueAnnotators[a.annotatorId] = { ...a };
           } else {
             const existing = uniqueAnnotators[a.annotatorId];
             existing.tasksAssigned += a.tasksAssigned;
             existing.tasksCompleted += a.tasksCompleted;
             existing.tasksRejected += a.tasksRejected;
             existing.totalCriticalErrors += a.totalCriticalErrors;
-            existing.tasksSubmitted += submitted;
           }
         });
         const annotatorsArr = Object.values(uniqueAnnotators);
@@ -303,20 +285,12 @@ const DashboardAnalytics = () => {
 
         setProjectChartData(chartStatsArr);
 
-        const uniqueReviewerIds = new Set(Object.keys(reviewerMap));
-        const uniqueAnnotatorIds = new Set(
-          annotatorsArr.map((a) => a.annotatorId),
-        );
-        const allStaffIds = new Set([
-          ...uniqueAnnotatorIds,
-          ...uniqueReviewerIds,
-        ]);
-        setTotalAnnotators(allStaffIds.size);
+        setTotalAnnotators(annotatorsArr.length);
         setAnnotatorData(
           annotatorsArr
             .map((a) => ({
               name: a.annotatorName || a.annotatorId,
-              taskCount: (a.tasksCompleted || 0) + (a.tasksSubmitted || 0),
+              taskCount: a.tasksCompleted || 0,
             }))
             .sort((a, b) => b.taskCount - a.taskCount)
             .slice(0, 5),
@@ -526,13 +500,12 @@ const DashboardAnalytics = () => {
               </h5>
             </CardHeader>
             <CardBody>
-              {labelDistributions.length > 0 &&
-              labelDistributions.some((d) => d.value > 0) ? (
+              {labelDistributions.length > 0 ? (
                 <div style={{ width: "100%", height: 250 }}>
                   <ResponsiveContainer>
                     <PieChart>
                       <Pie
-                        data={labelDistributions.filter((d) => d.value > 0)}
+                        data={labelDistributions}
                         innerRadius={60}
                         outerRadius={90}
                         dataKey="value"
@@ -540,14 +513,12 @@ const DashboardAnalytics = () => {
                           `${name} ${(percent * 100).toFixed(0)}%`
                         }
                       >
-                        {labelDistributions
-                          .filter((d) => d.value > 0)
-                          .map((_, index) => (
-                            <Cell
-                              key={index}
-                              fill={COLORS[index % COLORS.length]}
-                            />
-                          ))}
+                        {labelDistributions.map((_, index) => (
+                          <Cell
+                            key={index}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
                       </Pie>
                       <Tooltip />
                       <Legend />
@@ -557,11 +528,7 @@ const DashboardAnalytics = () => {
               ) : (
                 <div className="text-center text-muted py-5">
                   <i className="ri-price-tag-3-line display-5 mb-3 d-block"></i>
-                  <p>Chưa có dữ liệu nhãn.</p>
-                  <small className="text-muted">
-                    Dữ liệu phân bố nhãn chỉ hiển thị sau khi ảnh được Reviewer
-                    duyệt (Approved).
-                  </small>
+                  <p>Chưa có dữ liệu nhãn. Hãy gán nhãn cho ảnh trong dự án.</p>
                 </div>
               )}
             </CardBody>
@@ -595,14 +562,10 @@ const DashboardAnalytics = () => {
                     </thead>
                     <tbody>
                       {annotatorPerformances.map((a) => {
-                        // Include submitted + approved as "work done"
-                        const workDone =
-                          (a.tasksCompleted || 0) + (a.tasksSubmitted || 0);
                         const completionRate =
                           a.tasksAssigned > 0
-                            ? Math.min(
-                                100,
-                                Math.round((workDone / a.tasksAssigned) * 100),
+                            ? Math.round(
+                                (a.tasksCompleted / a.tasksAssigned) * 100,
                               )
                             : 0;
                         return (
@@ -612,8 +575,7 @@ const DashboardAnalytics = () => {
                             </td>
                             <td className="text-center">{a.tasksAssigned}</td>
                             <td className="text-center text-success fw-bold">
-                              {(a.tasksCompleted || 0) +
-                                (a.tasksSubmitted || 0)}
+                              {a.tasksCompleted}
                             </td>
                             <td className="text-center">
                               {a.tasksRejected > 0 ? (

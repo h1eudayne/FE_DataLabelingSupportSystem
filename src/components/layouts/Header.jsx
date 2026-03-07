@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Container, Dropdown, Form, InputGroup, Button } from "react-bootstrap";
 import {
   LogOut,
@@ -17,12 +17,16 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/auth/auth.slice";
+import { getUserProfile } from "../../services/admin/managementUsers/user.api";
+import { updateUser } from "../../store/auth/auth.slice";
+import { BACKEND_URL } from "../../services/axios.customize";
 
 const Header = ({ toggleSidebar, sidebarSize }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
 
+  const [userData, setUserData] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -35,6 +39,21 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
   };
+
+  const fetchSelf = async () => {
+    try {
+      const res = await getUserProfile();
+      dispatch(updateUser(res.data));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchSelf();
+    }
+  }, [isAuthenticated]);
 
   const handleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -252,8 +271,11 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     <div className="avatar-wrapper">
                       <img
                         src={
-                          user?.avatar ||
-                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`
+                          user?.avatarUrl
+                            ? user.avatarUrl.startsWith("http")
+                              ? user.avatarUrl
+                              : `${BACKEND_URL}${user.avatarUrl}`
+                            : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`
                         }
                         className="rounded-circle shadow-sm border border-2 border-white"
                         width="36"
@@ -264,7 +286,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     </div>
                     <div className="d-none d-lg-block text-start">
                       <div className="fw-bold text-dark small lh-1 mb-1">
-                        {user?.name || "Người dùng"}
+                        {user?.fullName || "Người dùng"}
                       </div>
                       <small
                         className="text-muted"

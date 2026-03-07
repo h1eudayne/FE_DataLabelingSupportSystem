@@ -7,13 +7,12 @@ import { LogOut } from "lucide-react";
 import LandingNavbar from "../components/landing/LandingNavbar";
 import HeroSection from "../components/landing/HeroSection";
 import FeaturesSection from "../components/landing/FeaturesSection";
-import AdminContainer from "../container/AdminContainer";
 import ManagerContainer from "../container/ManagerContainer";
 import AnnotatorContainer from "../container/AnnotatorContainer";
 import ReviewerContainer from "../container/ReviewerContainer";
 import AnnotatorDashboard from "./annotator/dashboard/AnnotatorDashboard";
-import SettingUserManagement from "./admin/SettingUserManagement";
 import DashboardAnalytics from "./manager/analytics/DashboardAnalyticsPage";
+import AdminDashboard from "./home/AdminDashboard";
 
 const HomePage = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -45,7 +44,7 @@ const RoleBasedRenderer = ({ role }) => {
   switch (role) {
     case "Admin":
       // return <AdminContainer />;
-      return <SettingUserManagement />;
+      return <AdminDashboard />;
     case "Manager":
       // return <ManagerContainer />;
       return <DashboardAnalytics />;

@@ -32,6 +32,7 @@ import ReviewAuditPage from "./page/manager/review/ReviewAuditPage";
 import LoginPage from "./page/auth/login/LoginPage";
 import { ROLES } from "./constants/roles";
 import LandingPage from "./page/LandingPage";
+import Profile from "./page/Profile";
 
 function App() {
   const isLoggedIn = !!localStorage.getItem("accessToken");
@@ -64,7 +65,7 @@ function App() {
 
         <Route element={<MainLayouts />}>
           <Route path="dashboard" element={<HomePage />} />
-
+          <Route path="profile" element={<Profile />} />
           <Route element={<RoleProtectedRoute allowRoles={["Admin"]} />}>
             <Route
               path="settings-user-management"

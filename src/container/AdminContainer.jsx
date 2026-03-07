@@ -1,57 +1,134 @@
 import React, { useEffect, useState } from "react";
 import NavigationTabs from "../components/admin/home/NavigationTabs";
 import { Container } from "react-bootstrap";
-import { userService } from "../services/manager/project/userService";
+import {
+  getUsers,
+  getUserProfile,
+  updateUser,
+  updateStatus,
+  importUser,
+} from "../services/admin/managementUsers/user.api";
 import UserManagementView from "../components/admin/home/UserManagementView";
 import AdminHeader from "../components/admin/home/AdminHeader";
 import LogsView from "../components/admin/home/LogsView";
-import SettingsView from "../components/admin/home/SettingsView";
+import UserModal from "../components/admin/managementUser/UserModal";
+import AddUser from "../components/admin/home/AddUser";
 
 const AdminContainer = () => {
   const [activeTab, setActiveTab] = useState("users");
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [, setIsModalOpen] = useState(false);
+  const [selectUser, setSelectUser] = useState(null);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [currentRole, setCurrentRole] = useState(null);
+  const [currentName, setCurrentName] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [file, setFile] = useState(null);
 
-  const fetchUsers = async () => {
-    setLoading(true);
+  const fetchSelf = async () => {
     try {
-      const res = await userService.getUsers();
-      setUsers(res.data || []);
-    } catch (err) {
-      console.error("Lỗi fetch users:", err);
-    } finally {
-      setLoading(false);
+      const res = await getUserProfile();
+      setCurrentRole(res.data.role);
+      setCurrentName(res.data.fullName);
+    } catch (error) {
+      console.error(error);
     }
   };
 
-  const handleDeleteUser = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa?")) {
-      try {
-        await userService.deleteUser(id);
-        fetchUsers();
-      } catch (err) {
-        console.error("Lỗi xóa:", err);
-      }
+  const fetchUsers = async () => {
+    try {
+      const res = await getUsers();
+      setUsers(res.data);
+      setFilteredUsers(res.data);
+    } catch (error) {
+      console.error(error);
     }
+  };
+
+  const handleEdit = (user) => {
+    setSelectUser(user);
+    setIsUserModalOpen(true);
   };
 
   useEffect(() => {
-    if (activeTab === "users") fetchUsers();
+    if (activeTab === "users") {
+      fetchUsers();
+      fetchSelf();
+    }
   }, [activeTab]);
 
   const stats = {
     total: users.length,
-    admins: users.filter((u) => u.role === "Admin").length,
+    admins: users.filter((user) => user.role === "Admin").length,
     workers: users.filter(
-      (u) => u.role === "Annotator" || u.role === "Reviewer",
+      (user) =>
+        user.role === "Annotator" ||
+        user.role === "Reviewer" ||
+        user.role === "Manager",
     ).length,
   };
 
-  const filteredUsers = users.filter((u) =>
-    u.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const handleSearch = (searchTerm) => {
+    if (!searchTerm) {
+      setFilteredUsers(users);
+      return;
+    }
+    const filtered = users.filter(
+      (user) =>
+        user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+
+    setFilteredUsers(filtered);
+  };
+
+  const toggleModal = () => {
+    setIsUserModalOpen(!isUserModalOpen);
+    if (isUserModalOpen) setSelectUser(null);
+  };
+
+  const handleSave = async (userData) => {
+    try {
+      if (selectUser) {
+        await updateUser(selectUser.id, userData);
+        console.log("Updated Successfully");
+      }
+      await fetchUsers();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleActive = async (userId, isActive) => {
+    try {
+      if (userId) {
+        await updateStatus(userId, isActive);
+        console.log("Updated Successfully");
+      }
+      await fetchUsers();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const onCloseCreateModal = () => {
+    setFile(null);
+    setIsCreateModalOpen(false);
+  };
+
+  const uploadUser = async (file) => {
+    try {
+      const res = await importUser(file);
+      if (res.data) {
+        await fetchUsers();
+        console.log(res.data.successCount);
+        console.log(res.data.failureCount);
+      }
+      onCloseCreateModal();
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <Container
@@ -59,19 +136,35 @@ const AdminContainer = () => {
       className="p-4"
       style={{ backgroundColor: "#f3f3f9", minHeight: "100vh" }}
     >
-      <AdminHeader email="Admin@gmail.com" />
+      <AdminHeader fullName={currentName} />
 
       <NavigationTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {activeTab === "users" && (
-        <UserManagementView
-          stats={stats}
-          users={filteredUsers}
-          loading={loading}
-          onSearch={setSearchTerm}
-          onAddClick={() => setIsModalOpen(true)}
-          onDelete={handleDeleteUser}
-        />
+        <>
+          <UserManagementView
+            stats={stats}
+            users={filteredUsers}
+            onSearch={handleSearch}
+            onActive={handleActive}
+            onEdit={handleEdit}
+            currentRole={currentRole}
+            openCreateModal={setIsCreateModalOpen}
+          />
+          <UserModal
+            isOpen={isUserModalOpen}
+            toggle={toggleModal}
+            user={selectUser}
+            handleSave={handleSave}
+          />
+          <AddUser
+            isOpen={isCreateModalOpen}
+            onClose={onCloseCreateModal}
+            uploadUser={uploadUser}
+            file={file}
+            setFile={setFile}
+          />
+        </>
       )}
 
       {activeTab === "settings" && <SettingsView />}
