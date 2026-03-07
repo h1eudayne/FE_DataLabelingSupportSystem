@@ -257,34 +257,44 @@ const DashboardAnalytics = () => {
 
             reviews.forEach((r) => {
               const reviewerKey = r.reviewerName || r.reviewerId || "Unknown";
+              // Always register reviewer so they appear in the table
               if (!reviewerMap[reviewerKey]) {
                 reviewerMap[reviewerKey] = {
                   name: reviewerKey,
                   totalReviews: 0,
+                  totalAssigned: 0,
                   overridden: 0,
                   disputeCount: 0,
                   projectDetails: {},
                 };
               }
-              reviewerMap[reviewerKey].totalReviews++;
-              // Track per-project
               if (!reviewerMap[reviewerKey].projectDetails[project.id]) {
                 reviewerMap[reviewerKey].projectDetails[project.id] = {
                   projectName: project.name,
                   reviews: 0,
+                  assigned: 0,
                   overridden: 0,
                   disputes: 0,
                 };
               }
-              reviewerMap[reviewerKey].projectDetails[project.id].reviews++;
-              if (
-                r.managerAuditDecision !== undefined &&
-                r.managerAuditDecision !== null &&
-                r.managerAuditDecision === false
-              ) {
-                reviewerMap[reviewerKey].overridden++;
-                reviewerMap[reviewerKey].projectDetails[project.id]
-                  .overridden++;
+              // Count total assigned for this reviewer in this project
+              reviewerMap[reviewerKey].totalAssigned++;
+              reviewerMap[reviewerKey].projectDetails[project.id].assigned++;
+
+              // Only count as "reviewed" if actually Approved or Rejected
+              const reviewStatus = r.status || "";
+              if (reviewStatus === "Approved" || reviewStatus === "Rejected") {
+                reviewerMap[reviewerKey].totalReviews++;
+                reviewerMap[reviewerKey].projectDetails[project.id].reviews++;
+                if (
+                  r.managerAuditDecision !== undefined &&
+                  r.managerAuditDecision !== null &&
+                  r.managerAuditDecision === false
+                ) {
+                  reviewerMap[reviewerKey].overridden++;
+                  reviewerMap[reviewerKey].projectDetails[project.id]
+                    .overridden++;
+                }
               }
             });
 
@@ -319,8 +329,8 @@ const DashboardAnalytics = () => {
           Object.values(reviewerMap).forEach((rev) => {
             const pd = rev.projectDetails[pp.projectId];
             if (pd) {
-              const revTotal = pp.totalAssignments;
-              const revDone = pd.reviews || 0; // = Approved + Rejected reviewed
+              const revTotal = pd.assigned || 0;
+              const revDone = pd.reviews || 0;
               projectReviewers.push({
                 id: rev.name,
                 name: rev.name,
@@ -360,8 +370,6 @@ const DashboardAnalytics = () => {
           });
         }
 
-        // TASK-BASED aggregation:
-        // Each entry in allAnnotators = 1 annotator in 1 project = 1 TASK
         const uniqueAnnotators = {};
         allAnnotators.forEach((a) => {
           const isTaskCompleted =
@@ -439,17 +447,14 @@ const DashboardAnalytics = () => {
         setProjectChartData(chartStatsArr);
         setProjectProgressData(projectProgressArr);
 
-        // Count all unique staff: annotators + reviewers from already-fetched data
         const allStaffIds = new Set([
           ...annotatorsArr.map((a) => a.annotatorId),
           ...Object.keys(reviewerMap),
         ]);
         const frontendStaffCount = allStaffIds.size;
-        // Use API totalMembers if higher, otherwise use our count
         const apiMembers = managerStats?.totalMembers || 0;
         setTotalMembers(Math.max(apiMembers, frontendStaffCount));
 
-        // Top 5 annotators: count completed IMAGES as work metric
         setAnnotatorData(
           annotatorsArr
             .map((a) => ({
