@@ -41,9 +41,18 @@ const ProjectAssignTask = () => {
   }, [id]);
 
   const handleAssign = async () => {
+    // BR-MNG-03: Must define labels before assigning
+    if (!projectInfo?.labels || projectInfo.labels.length === 0) {
+      return Swal.fire(
+        "Chưa đủ điều kiện!",
+        "Dự án chưa định nghĩa nhãn (Label Classes). Vui lòng thêm nhãn trước khi phân công công việc (BR-MNG-03).",
+        "error",
+      );
+    }
     if (!selectedAnnotator) {
       return Swal.fire("Cảnh báo", "Vui lòng chọn Annotator!", "warning");
     }
+    // BR-MNG-20: Manager must not self-assign
     if (selectedAnnotator === managerId) {
       return Swal.fire(
         "Không được phép!",
@@ -135,11 +144,29 @@ const ProjectAssignTask = () => {
                 </div>
               </div>
 
+              {/* BR-MNG-03: Warning if no labels defined */}
+              {(!projectInfo?.labels || projectInfo.labels.length === 0) && (
+                <div className="alert alert-danger py-2 small mb-3">
+                  <i className="ri-error-warning-line me-1"></i>
+                  <strong>BR-MNG-03:</strong> Dự án chưa định nghĩa nhãn (Label
+                  Classes). Không thể phân công công việc khi chưa có nhãn.
+                </div>
+              )}
+
+              {/* BR-MNG-08: Warning if all items approved or assigned */}
               {availableItems === 0 && totalItems > 0 && (
                 <div className="alert alert-warning py-2 small mb-3">
                   <i className="ri-information-line me-1"></i>
                   Tất cả ảnh đã được phân công hoặc duyệt. Dữ liệu đã duyệt
-                  (Approved) không thể giao lại.
+                  (Approved) không thể giao lại <strong>(BR-MNG-08)</strong>.
+                </div>
+              )}
+              {processedItems > 0 && availableItems > 0 && (
+                <div className="alert alert-info py-2 small mb-3">
+                  <i className="ri-shield-check-line me-1"></i>
+                  <strong>{processedItems}</strong> ảnh đã được Approved và
+                  không thể phân công lại. Còn <strong>{availableItems}</strong>{" "}
+                  ảnh có thể giao.
                 </div>
               )}
 
@@ -293,7 +320,11 @@ const ProjectAssignTask = () => {
               <button
                 className="btn btn-success w-100 py-2 fw-bold"
                 onClick={handleAssign}
-                disabled={loading || availableItems === 0}
+                disabled={
+                  loading ||
+                  availableItems === 0 ||
+                  !projectInfo?.labels?.length
+                }
               >
                 {loading ? "Đang xử lý..." : "XÁC NHẬN GIAO VIỆC"}
               </button>

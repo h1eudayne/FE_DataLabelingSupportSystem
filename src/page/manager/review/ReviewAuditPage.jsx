@@ -50,6 +50,21 @@ const ReviewAuditPage = () => {
     return { total, audited, notAudited, samplingRate };
   }, [tasks]);
 
+  // BR-MNG-17: Calculate Override Rate for Reviewer evaluation
+  const reviewerStats = useMemo(() => {
+    const auditedTasks = tasks.filter(
+      (t) =>
+        t.managerAuditDecision !== undefined && t.managerAuditDecision !== null,
+    );
+    const totalAudited = auditedTasks.length;
+    const overridden = auditedTasks.filter(
+      (t) => t.managerAuditDecision === false,
+    ).length;
+    const overrideRate =
+      totalAudited > 0 ? ((overridden / totalAudited) * 100).toFixed(1) : 0;
+    return { totalAudited, overridden, overrideRate };
+  }, [tasks]);
+
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -106,12 +121,19 @@ const ReviewAuditPage = () => {
 
   const handleAudit = async () => {
     if (!selectedTask) return;
+    // BR-MNG-15: Comment is mandatory, must reference guideline
+    if (!auditComment.trim()) {
+      toast.warning(
+        "Vui lòng nhập nhận xét audit dựa trên Guideline (BR-MNG-15). Không được để trống.",
+      );
+      return;
+    }
     setSubmitting(true);
     try {
       await reviewAuditService.auditReview({
         reviewLogId: selectedTask.reviewLogId || selectedTask.id,
         isCorrectDecision,
-        auditComment: auditComment || null,
+        auditComment,
       });
       toast.success("Audit đã được ghi nhận thành công!");
       setModalOpen(false);
@@ -244,6 +266,78 @@ const ReviewAuditPage = () => {
                   className="mt-2"
                   style={{ height: "4px" }}
                 />
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+      )}
+
+      {/* BR-MNG-17: Override Rate for Reviewer evaluation */}
+      {selectedProjectId && !loading && reviewerStats.totalAudited > 0 && (
+        <Row className="mb-3">
+          <Col md={4}>
+            <Card className="shadow-sm border-0">
+              <CardBody className="py-3">
+                <div className="d-flex align-items-center mb-2">
+                  <i className="ri-bar-chart-grouped-line fs-4 text-warning me-2"></i>
+                  <h6 className="mb-0 fw-bold">Override Rate (BR-MNG-17)</h6>
+                </div>
+                <div className="d-flex align-items-baseline gap-2">
+                  <h3
+                    className={`mb-0 ${Number(reviewerStats.overrideRate) > 30 ? "text-danger" : Number(reviewerStats.overrideRate) > 15 ? "text-warning" : "text-success"}`}
+                  >
+                    {reviewerStats.overrideRate}%
+                  </h3>
+                  <small className="text-muted">
+                    ({reviewerStats.overridden}/{reviewerStats.totalAudited} bị
+                    lật)
+                  </small>
+                </div>
+                <Progress
+                  value={reviewerStats.overrideRate}
+                  color={
+                    Number(reviewerStats.overrideRate) > 30
+                      ? "danger"
+                      : Number(reviewerStats.overrideRate) > 15
+                        ? "warning"
+                        : "success"
+                  }
+                  className="mt-2"
+                  style={{ height: "6px" }}
+                />
+                <small className="text-muted d-block mt-2">
+                  {Number(reviewerStats.overrideRate) > 30
+                    ? "⚠️ Tỷ lệ Override cao — Cần đánh giá lại Reviewer"
+                    : Number(reviewerStats.overrideRate) > 15
+                      ? "⚠ Tỷ lệ Override trung bình — Cần theo dõi thêm"
+                      : "✅ Tỷ lệ Override thấp — Reviewer đang làm tốt"}
+                </small>
+              </CardBody>
+            </Card>
+          </Col>
+          <Col md={4}>
+            <Card className="shadow-sm border-0">
+              <CardBody className="py-3">
+                <div className="d-flex align-items-center mb-2">
+                  <i className="ri-thumb-up-line fs-4 text-success me-2"></i>
+                  <h6 className="mb-0 fw-bold">Đồng ý (Correct)</h6>
+                </div>
+                <h3 className="mb-0 text-success">
+                  {reviewerStats.totalAudited - reviewerStats.overridden}
+                </h3>
+                <small className="text-muted">Reviewer đánh giá đúng</small>
+              </CardBody>
+            </Card>
+          </Col>
+          <Col md={4}>
+            <Card className="shadow-sm border-0">
+              <CardBody className="py-3">
+                <div className="d-flex align-items-center mb-2">
+                  <i className="ri-thumb-down-line fs-4 text-danger me-2"></i>
+                  <h6 className="mb-0 fw-bold">Bị Lật (Override)</h6>
+                </div>
+                <h3 className="mb-0 text-danger">{reviewerStats.overridden}</h3>
+                <small className="text-muted">Manager không đồng ý</small>
               </CardBody>
             </Card>
           </Col>
@@ -479,15 +573,25 @@ const ReviewAuditPage = () => {
 
               <FormGroup>
                 <Label className="fw-semibold">
-                  Nhận xét Audit (dựa trên Guideline)
+                  Nhận xét Audit (dựa trên Guideline) *
+                  <small className="text-danger ms-1">
+                    (Bắt buộc - BR-MNG-15)
+                  </small>
                 </Label>
                 <Input
                   type="textarea"
                   rows="3"
                   value={auditComment}
                   onChange={(e) => setAuditComment(e.target.value)}
-                  placeholder="Nhập nhận xét audit (tham khảo Guideline ở trên)..."
+                  placeholder="Nhập nhận xét audit (THAM KHẢO Guideline ở trên). Mọi quyết định phải dựa trên Guideline chính thức..."
+                  className={!auditComment.trim() ? "border-danger" : ""}
                 />
+                {!auditComment.trim() && (
+                  <small className="text-danger">
+                    <i className="ri-error-warning-line me-1"></i>
+                    Bắt buộc phải nhập nhận xét dựa trên Guideline.
+                  </small>
+                )}
               </FormGroup>
             </>
           )}
@@ -496,7 +600,11 @@ const ReviewAuditPage = () => {
           <Button color="light" onClick={() => setModalOpen(false)}>
             Hủy
           </Button>
-          <Button color="info" onClick={handleAudit} disabled={submitting}>
+          <Button
+            color="info"
+            onClick={handleAudit}
+            disabled={submitting || !auditComment.trim()}
+          >
             {submitting ? (
               <Spinner size="sm" className="me-1" />
             ) : (
