@@ -21,6 +21,14 @@ import { setCurrentTask } from "../../../store/annotator/labelling/taskSlice";
 import taskService from "../../../services/annotator/labeling/taskService";
 import projectService from "../../../services/annotator/labeling/projectService";
 
+const STATUS_CONFIG = {
+  New: { bg: "bg-secondary-subtle", text: "text-secondary", label: "Mới" },
+  InProgress: { bg: "bg-info-subtle", text: "text-info", label: "Đang làm" },
+  Rejected: { bg: "bg-danger-subtle", text: "text-danger", label: "Từ chối" },
+  Submitted: { bg: "bg-warning-subtle", text: "text-warning", label: "Đã nộp" },
+  Approved: { bg: "bg-success-subtle", text: "text-success", label: "Duyệt" },
+};
+
 const WorkplaceLabelingTaskPage = () => {
   const { assignmentId } = useParams();
   const dispatch = useDispatch();
@@ -35,7 +43,20 @@ const WorkplaceLabelingTaskPage = () => {
   const [guidelineRead, setGuidelineRead] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [showBatchPanel, setShowBatchPanel] = useState(false);
+  const [batchSubmitting, setBatchSubmitting] = useState(false);
+
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [disputeSubmitting, setDisputeSubmitting] = useState(false);
+  const [disputeStatus, setDisputeStatus] = useState(null);
+
   const currentImage = images[currentImgIndex];
+
+  const allAnnotations = useSelector(
+    (state) => state.labeling.annotationsByAssignment || {},
+  );
 
   const annotations = useSelector(
     (state) => state.labeling.annotationsByAssignment[currentImage?.id] || [],
@@ -61,6 +82,32 @@ const WorkplaceLabelingTaskPage = () => {
     });
     return ids;
   }, [labels, checklistState]);
+
+  const hasValidAnnotations = useCallback((annotationData) => {
+    if (!annotationData) return false;
+    try {
+      const parsed = JSON.parse(annotationData);
+      if (parsed && parsed.annotations) {
+        return parsed.annotations.length > 0;
+      }
+      if (Array.isArray(parsed)) {
+        return parsed.length > 0;
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  }, []);
+
+  const eligibleForSubmit = useMemo(() => {
+    return images.filter((img) => {
+      if (img.status === "Submitted" || img.status === "Approved") return false;
+      if (hasValidAnnotations(img.annotationData)) return true;
+      const reduxAnns = allAnnotations[img.id];
+      if (reduxAnns && reduxAnns.length > 0) return true;
+      return false;
+    });
+  }, [images, hasValidAnnotations, allAnnotations]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -251,13 +298,20 @@ const WorkplaceLabelingTaskPage = () => {
 
     if (unusedLabels.length > 0) {
       const names = unusedLabels.map((l) => l.name).join(", ");
-      const confirmed = window.confirm(
-        `Các nhãn đã mở khóa nhưng chưa dùng: ${names}.\nBạn có chắc muốn nộp bài không?`,
+      toast.error(
+        `Chưa gán đủ nhãn! Các nhãn bắt buộc chưa dùng: ${names}. Bạn phải gán nhãn cho TẤT CẢ đối tượng yêu cầu trong ảnh.`,
+        { autoClose: 8000 },
       );
-      if (!confirmed) return;
+      return;
     }
 
     try {
+      const draftSaved = await saveDraft(true);
+      if (!draftSaved) {
+        toast.error("Lưu bản nháp thất bại. Vui lòng thử lại trước khi nộp.");
+        return;
+      }
+
       const dataJSON = buildDataJSON();
 
       await taskService.submitTask({
@@ -273,10 +327,119 @@ const WorkplaceLabelingTaskPage = () => {
         ),
       );
 
-      toast.success("Nộp bài thành công!");
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(currentImage.id);
+        return next;
+      });
+
+      const isResubmit = currentImage.status === "Rejected";
+      toast.success(isResubmit ? "Nộp lại thành công!" : "Nộp bài thành công!");
     } catch (err) {
       console.error(err);
       toast.error("Gửi bài thất bại");
+    }
+  };
+
+  const handleToggleSelect = (imgId) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(imgId)) {
+        next.delete(imgId);
+      } else {
+        next.add(imgId);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllEligible = () => {
+    const allEligibleIds = eligibleForSubmit.map((img) => img.id);
+    const allSelected = allEligibleIds.every((id) => selectedIds.has(id));
+
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allEligibleIds));
+    }
+  };
+
+  const refetchImages = useCallback(async () => {
+    try {
+      const imgRes = await taskService.getProjectImages(assignmentId);
+      const allImages = imgRes.data || imgRes || [];
+
+      const packStart = parseInt(searchParams.get("packStart"), 10);
+      const packEnd = parseInt(searchParams.get("packEnd"), 10);
+      const sliced =
+        !isNaN(packStart) && !isNaN(packEnd)
+          ? allImages.slice(packStart, packEnd)
+          : allImages;
+
+      const sortedSlice = [...sliced].sort((a, b) => {
+        const priority = {
+          New: 1,
+          InProgress: 2,
+          Rejected: 3,
+          Submitted: 4,
+          Approved: 5,
+        };
+        return (priority[a.status] || 99) - (priority[b.status] || 99);
+      });
+
+      setImages(sortedSlice);
+    } catch (err) {
+      console.error("Refetch images failed:", err);
+    }
+  }, [assignmentId, searchParams]);
+
+  const handleBatchSubmit = async () => {
+    if (selectedIds.size === 0) {
+      toast.warning("Chưa chọn ảnh nào để nộp.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Bạn sắp nộp ${selectedIds.size} ảnh cùng lúc.\n\n Các ảnh chưa có dữ liệu gán nhãn sẽ bị từ chối bởi hệ thống.\nBạn có chắc chắn muốn nộp?`,
+    );
+    if (!confirmed) return;
+
+    setBatchSubmitting(true);
+    try {
+      const res = await taskService.submitMultiple({
+        assignmentIds: [...selectedIds],
+      });
+
+      const result = res.data || res;
+
+      if (result.successCount > 0 && result.failureCount === 0) {
+        toast.success(`Đã nộp thành công ${result.successCount} ảnh!`);
+      } else if (result.successCount > 0 && result.failureCount > 0) {
+        toast.warning(
+          `Nộp thành công ${result.successCount}/${selectedIds.size} ảnh. ${result.failureCount} ảnh thất bại.`,
+        );
+        if (result.errors && result.errors.length > 0) {
+          result.errors.forEach((errMsg) =>
+            toast.error(errMsg, { autoClose: 5000 }),
+          );
+        }
+      } else {
+        toast.error("Nộp bài thất bại. Vui lòng kiểm tra lại dữ liệu.");
+        if (result.errors && result.errors.length > 0) {
+          result.errors.forEach((errMsg) =>
+            toast.error(errMsg, { autoClose: 5000 }),
+          );
+        }
+      }
+
+      await refetchImages();
+      setSelectedIds(new Set());
+      setShowBatchPanel(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Lỗi khi nộp hàng loạt. Vui lòng thử lại.");
+    } finally {
+      setBatchSubmitting(false);
     }
   };
 
@@ -285,6 +448,54 @@ const WorkplaceLabelingTaskPage = () => {
     const sessionKey = `guideline_read_${assignmentId}`;
     sessionStorage.setItem(sessionKey, "true");
   };
+
+  const handleCreateDispute = async () => {
+    if (!currentImage || !disputeReason.trim()) {
+      toast.warning("Vui lòng nhập lý do khiếu nại.");
+      return;
+    }
+
+    setDisputeSubmitting(true);
+    try {
+      await taskService.createDispute({
+        assignmentId: currentImage.id,
+        reason: disputeReason.trim(),
+      });
+      toast.success("Khiếu nại đã được gửi thành công! Manager sẽ xem xét.");
+      setDisputeStatus("Pending");
+      setShowDisputeForm(false);
+      setDisputeReason("");
+    } catch (err) {
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data ||
+        "Gửi khiếu nại thất bại.";
+      toast.error(typeof msg === "string" ? msg : "Gửi khiếu nại thất bại.");
+    } finally {
+      setDisputeSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!currentImage || currentImage.status !== "Rejected") {
+      setDisputeStatus(null);
+      setShowDisputeForm(false);
+      return;
+    }
+    const checkDispute = async () => {
+      try {
+        const res = await taskService.getMyDisputes(assignmentId);
+        const disputes = res.data || res || [];
+        const existing = disputes.find(
+          (d) => d.assignmentId === currentImage.id && d.status === "Pending",
+        );
+        setDisputeStatus(existing ? "Pending" : null);
+      } catch {
+        setDisputeStatus(null);
+      }
+    };
+    checkDispute();
+  }, [currentImage, assignmentId]);
 
   if (loading)
     return <div className="text-center mt-5">Đang tải dữ liệu...</div>;
@@ -376,7 +587,11 @@ const WorkplaceLabelingTaskPage = () => {
     return <div className="text-center mt-5">Dự án này chưa có ảnh nào.</div>;
 
   const isReadOnly =
-    currentImage.status === "Submitted" || currentImage.status === "Approved";
+    currentImage.status === "Submitted" ||
+    currentImage.status === "Approved" ||
+    (currentImage.status === "Rejected" && disputeStatus === "Pending");
+
+  const isRejected = currentImage.status === "Rejected";
 
   const doneCount = images.filter(
     (img) => img.status === "Submitted" || img.status === "Approved",
@@ -386,6 +601,7 @@ const WorkplaceLabelingTaskPage = () => {
 
   return (
     <div className="row g-3">
+      {/* Left sidebar */}
       <div className="col-lg-3">
         <TaskInfoTable
           taskId={currentImage.id}
@@ -414,7 +630,50 @@ const WorkplaceLabelingTaskPage = () => {
 
         <hr />
 
-        {isReadOnly ? (
+        {/* BR-ANN-09: Rejected banner */}
+        {isRejected && (
+          <div className="alert alert-danger small py-2 mb-3">
+            <div className="d-flex align-items-start">
+              <i className="ri-error-warning-fill me-2 fs-5 text-danger"></i>
+              <div className="flex-grow-1">
+                <strong className="d-block mb-1">
+                  Ảnh bị từ chối bởi Reviewer
+                </strong>
+                <span>
+                  Vui lòng đọc comment bên dưới và sửa lại bản vẽ. Nếu ảnh
+                  mờ/thiếu thông tin, hãy làm theo Guideline.
+                </span>
+
+                {disputeStatus === "Pending" ? (
+                  <div className="mt-2 p-2 bg-warning bg-opacity-10 rounded border border-warning">
+                    <i className="ri-time-line me-1 text-warning"></i>
+                    <span className="text-warning fw-bold">
+                      Đã gửi khiếu nại — đang chờ Manager xử lý
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    className="btn btn-outline-danger btn-sm mt-2"
+                    onClick={() => setShowDisputeForm(true)}
+                  >
+                    <i className="ri-questionnaire-line me-1"></i>
+                    Khiếu nại (Dispute)
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentImage.status === "Rejected" && disputeStatus === "Pending" && (
+          <div className="alert alert-warning small py-2">
+            <i className="ri-lock-line me-1"></i>
+            Đang chờ xử lý khiếu nại. Bạn không thể chỉnh sửa cho đến khi
+            Manager phân xử.
+          </div>
+        )}
+
+        {isReadOnly && currentImage.status !== "Rejected" ? (
           <div className="alert alert-info small py-2">
             <i className="ri-lock-line me-1"></i>
             Ảnh này đã được nộp. Chỉ xem, không chỉnh sửa.
@@ -428,8 +687,139 @@ const WorkplaceLabelingTaskPage = () => {
             <LabelPicker labels={labels} unlockedLabelIds={unlockedLabelIds} />
           </>
         )}
+
+        {/* BR-ANN-07: Batch Submit Panel Toggle */}
+        <div className="mt-3">
+          <button
+            className={`btn btn-sm w-100 ${showBatchPanel ? "btn-outline-secondary" : "btn-outline-primary"}`}
+            onClick={async () => {
+              if (!showBatchPanel) {
+                await saveDraft(true);
+              }
+              setShowBatchPanel(!showBatchPanel);
+            }}
+          >
+            <i
+              className={`ri-${showBatchPanel ? "close" : "stack"}-line me-1`}
+            ></i>
+            {showBatchPanel ? "Ẩn danh sách ảnh" : "Nộp hàng loạt"}
+          </button>
+        </div>
+
+        {/* BR-ANN-07: Batch Submit Panel */}
+        {showBatchPanel && (
+          <div className="card mt-2 border shadow-sm">
+            <div className="card-header bg-primary bg-opacity-10 py-2 d-flex justify-content-between align-items-center">
+              <small className="fw-bold text-primary">
+                <i className="ri-checkbox-multiple-line me-1"></i>
+                Chọn ảnh để nộp
+              </small>
+              <span className="badge bg-primary">
+                {selectedIds.size} đã chọn
+              </span>
+            </div>
+            <div
+              className="card-body p-0"
+              style={{ maxHeight: "300px", overflowY: "auto" }}
+            >
+              {/* Select all / deselect all */}
+              <div className="px-3 py-2 border-bottom bg-light">
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="selectAllEligible"
+                    checked={
+                      eligibleForSubmit.length > 0 &&
+                      eligibleForSubmit.every((img) => selectedIds.has(img.id))
+                    }
+                    onChange={handleSelectAllEligible}
+                    disabled={eligibleForSubmit.length === 0}
+                  />
+                  <label
+                    className="form-check-label small fw-bold"
+                    htmlFor="selectAllEligible"
+                  >
+                    Chọn tất cả chưa nộp ({eligibleForSubmit.length} ảnh)
+                  </label>
+                </div>
+              </div>
+
+              {/* Image list */}
+              {images.map((img, idx) => {
+                const config = STATUS_CONFIG[img.status] || STATUS_CONFIG.New;
+                const isEligible =
+                  img.status !== "Submitted" && img.status !== "Approved";
+                const reduxAnns = allAnnotations[img.id];
+                const hasData =
+                  hasValidAnnotations(img.annotationData) ||
+                  (reduxAnns && reduxAnns.length > 0);
+
+                return (
+                  <div
+                    key={img.id}
+                    className={`d-flex align-items-center px-3 py-2 border-bottom ${
+                      idx === currentImgIndex ? "bg-primary bg-opacity-10" : ""
+                    }`}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => setCurrentImgIndex(idx)}
+                  >
+                    {isEligible && (
+                      <input
+                        className="form-check-input me-2 flex-shrink-0"
+                        type="checkbox"
+                        checked={selectedIds.has(img.id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleToggleSelect(img.id);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={!hasData}
+                        title={!hasData ? "Ảnh chưa có dữ liệu gán nhãn" : ""}
+                      />
+                    )}
+                    {!isEligible && (
+                      <div style={{ width: "22px" }} className="me-2"></div>
+                    )}
+                    <small className="flex-grow-1 text-truncate">
+                      Ảnh {idx + 1}
+                    </small>
+                    <span
+                      className={`badge ${config.bg} ${config.text} ms-1`}
+                      style={{ fontSize: "10px" }}
+                    >
+                      {config.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Batch submit button */}
+            <div className="card-footer bg-white py-2 text-center">
+              <button
+                className="btn btn-success btn-sm w-100"
+                disabled={selectedIds.size === 0 || batchSubmitting}
+                onClick={handleBatchSubmit}
+              >
+                {batchSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-1"></span>
+                    Đang nộp...
+                  </>
+                ) : (
+                  <>
+                    <i className="ri-send-plane-fill me-1"></i>
+                    Nộp {selectedIds.size} ảnh đã chọn
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Main content area */}
       <div className="col-lg-9">
         <LabelingWorkspace
           assignmentId={currentImage.id}
@@ -456,8 +846,14 @@ const WorkplaceLabelingTaskPage = () => {
                 >
                   <i className="bx bx-save me-1"></i> Lưu nháp
                 </button>
-                <button className="btn btn-success" onClick={handleSubmit}>
-                  <i className="bx bx-check-circle me-1"></i> Nộp bài
+                <button
+                  className={`btn ${isRejected ? "btn-warning" : "btn-success"}`}
+                  onClick={handleSubmit}
+                >
+                  <i
+                    className={`bx ${isRejected ? "bx-revision" : "bx-check-circle"} me-1`}
+                  ></i>
+                  {isRejected ? "Nộp lại" : "Nộp bài"}
                 </button>
               </>
             )}
@@ -478,10 +874,74 @@ const WorkplaceLabelingTaskPage = () => {
           </button>
         </div>
 
+        {/* BR-ANN-09: Show comment section for Rejected images + Approved */}
         {(currentImage.status === "Approved" ||
-          currentImage.status === "Rejected") && (
+          currentImage.status === "Rejected" ||
+          currentImage.status === "Submitted") && (
           <div className="mt-4">
             <CommentSection projectId={assignmentId} taskId={currentImage.id} />
+          </div>
+        )}
+
+        {showDisputeForm && isRejected && (
+          <div className="mt-3">
+            <div className="card border-danger shadow-sm">
+              <div className="card-header bg-danger bg-opacity-10 d-flex justify-content-between align-items-center">
+                <h6 className="mb-0 text-danger fw-bold">
+                  <i className="ri-questionnaire-line me-1"></i>
+                  Tạo khiếu nại (Dispute)
+                </h6>
+                <button
+                  className="btn-close btn-close-sm"
+                  onClick={() => {
+                    setShowDisputeForm(false);
+                    setDisputeReason("");
+                  }}
+                ></button>
+              </div>
+              <div className="card-body">
+                <p className="text-muted small mb-2">
+                  Nếu bạn cho rằng Reviewer đã chấm sai bài của mình, hãy nhập
+                  lý do bên dưới. Manager sẽ xem xét và phân xử.
+                </p>
+                <textarea
+                  className="form-control mb-3"
+                  rows={3}
+                  placeholder="Nhập lý do khiếu nại... (ví dụ: Annotation đã đúng theo guideline, Reviewer nhầm lẫn...)"
+                  value={disputeReason}
+                  onChange={(e) => setDisputeReason(e.target.value)}
+                  disabled={disputeSubmitting}
+                />
+                <div className="d-flex justify-content-end gap-2">
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => {
+                      setShowDisputeForm(false);
+                      setDisputeReason("");
+                    }}
+                    disabled={disputeSubmitting}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={handleCreateDispute}
+                    disabled={!disputeReason.trim() || disputeSubmitting}
+                  >
+                    {disputeSubmitting ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-1"></span>
+                        Đang gửi...
+                      </>
+                    ) : (
+                      <>
+                        <i className="ri-send-plane-fill me-1"></i>Gửi khiếu nại
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

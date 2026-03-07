@@ -51,7 +51,7 @@ const ManagerContainer = () => {
       </div>
 
       <Row className="g-3 mb-4">
-        <Col md={3}>
+        <Col>
           <KpiCard
             label="Tổng dự án"
             value={data.total}
@@ -59,7 +59,7 @@ const ManagerContainer = () => {
             iconName="Layers"
           />
         </Col>
-        <Col md={3}>
+        <Col>
           <KpiCard
             label="Hoàn thành"
             value={data.completed}
@@ -67,7 +67,7 @@ const ManagerContainer = () => {
             iconName="CheckCircle2"
           />
         </Col>
-        <Col md={3}>
+        <Col>
           <KpiCard
             label="Đang thực hiện"
             value={data.inProgress}
@@ -75,12 +75,20 @@ const ManagerContainer = () => {
             iconName="BarChart3"
           />
         </Col>
-        <Col md={3}>
+        <Col>
           <KpiCard
             label="Bị từ chối"
             value={data.rejected}
             color="danger"
             iconName="AlertCircle"
+          />
+        </Col>
+        <Col>
+          <KpiCard
+            label="Nhân sự"
+            value={data.totalMembers || 0}
+            color="info"
+            iconName="Users"
           />
         </Col>
       </Row>

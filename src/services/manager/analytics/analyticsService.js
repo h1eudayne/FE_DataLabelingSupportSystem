@@ -10,8 +10,14 @@ const analyticsService = {
   },
 
   getDashboardStats: async (managerId) => {
-    const resProjects = await axios.get(`/api/projects/managers/${managerId}`);
+    const [resProjects, resManagerStats] = await Promise.all([
+      axios.get(`/api/projects/managers/${managerId}`),
+      axios
+        .get(`/api/projects/managers/${managerId}/statistics`)
+        .catch(() => ({ data: null })),
+    ]);
     const projects = resProjects.data || [];
+    const managerStats = resManagerStats.data;
 
     let completed = 0;
     let inProgress = 0;
@@ -39,12 +45,9 @@ const analyticsService = {
         } else if (approved === total) {
           completed++;
           projectStatus = "Completed";
-        } else if (rej > 0) {
+        } else if (approved === 0 && sub === 0 && rej > 0) {
           rejected++;
           projectStatus = "Rejected";
-        } else if (sub > 0) {
-          submitted++;
-          projectStatus = "Submitted";
         } else {
           inProgress++;
           projectStatus = "InProgress";
@@ -88,9 +91,13 @@ const analyticsService = {
       submitted,
       rejected,
       pending: inProgress + newProjects,
+      totalMembers: managerStats?.totalMembers || 0,
       activeProjects,
     };
   },
+  getManagerStats: (managerId) =>
+    axios.get(`/api/projects/managers/${managerId}/statistics`),
+
   getUsers: () => axios.get("/api/users"),
 };
 

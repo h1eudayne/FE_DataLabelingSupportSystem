@@ -82,12 +82,19 @@ const DisputeManagementPage = () => {
 
   const handleResolve = async () => {
     if (!selectedDispute) return;
+    // BR-MNG-15: Comment is mandatory, must reference guideline
+    if (!managerComment.trim()) {
+      toast.warning(
+        "Vui lòng nhập nhận xét dựa trên Guideline (BR-MNG-15). Không được để trống.",
+      );
+      return;
+    }
     setSubmitting(true);
     try {
       await disputeService.resolveDispute({
         disputeId: selectedDispute.id,
         isAccepted,
-        managerComment: managerComment || null,
+        managerComment,
       });
       toast.success("Dispute đã được xử lý thành công!");
       setModalOpen(false);
@@ -320,15 +327,25 @@ const DisputeManagementPage = () => {
 
               <FormGroup>
                 <Label className="fw-semibold">
-                  Nhận xét của Manager (dựa trên Guideline)
+                  Nhận xét của Manager (dựa trên Guideline) *
+                  <small className="text-danger ms-1">
+                    (Bắt buộc - BR-MNG-15)
+                  </small>
                 </Label>
                 <Input
                   type="textarea"
                   rows="3"
                   value={managerComment}
                   onChange={(e) => setManagerComment(e.target.value)}
-                  placeholder="Nhập lý do quyết định (tham khảo Guideline ở trên)..."
+                  placeholder="Nhập lý do quyết định (THAM KHẢO Guideline ở trên). Mọi quyết định phải dựa trên Guideline chính thức..."
+                  className={!managerComment.trim() ? "border-danger" : ""}
                 />
+                {!managerComment.trim() && (
+                  <small className="text-danger">
+                    <i className="ri-error-warning-line me-1"></i>
+                    Bắt buộc phải nhập nhận xét dựa trên Guideline.
+                  </small>
+                )}
               </FormGroup>
             </>
           )}
@@ -337,7 +354,11 @@ const DisputeManagementPage = () => {
           <Button color="light" onClick={() => setModalOpen(false)}>
             Hủy
           </Button>
-          <Button color="primary" onClick={handleResolve} disabled={submitting}>
+          <Button
+            color="primary"
+            onClick={handleResolve}
+            disabled={submitting || !managerComment.trim()}
+          >
             {submitting ? (
               <Spinner size="sm" className="me-1" />
             ) : (
