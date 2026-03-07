@@ -39,13 +39,12 @@ const analyticsService = {
         } else if (approved === total) {
           completed++;
           projectStatus = "Completed";
-        } else if (rej > 0) {
+        } else if (approved === 0 && sub === 0 && rej > 0) {
+          // Only has rejections, nothing submitted or approved
           rejected++;
           projectStatus = "Rejected";
-        } else if (sub > 0) {
-          submitted++;
-          projectStatus = "Submitted";
         } else {
+          // Any other state = work in progress
           inProgress++;
           projectStatus = "InProgress";
         }
@@ -91,6 +90,9 @@ const analyticsService = {
       activeProjects,
     };
   },
+  getManagerStats: (managerId) =>
+    axios.get(`/api/projects/managers/${managerId}/statistics`),
+
   getUsers: () => axios.get("/api/users"),
 };
 

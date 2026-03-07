@@ -52,7 +52,7 @@ const DashboardAnalytics = () => {
   const [stats, setStats] = useState(EMPTY_STATS);
   const [projectChartData, setProjectChartData] = useState([]);
   const [annotatorData, setAnnotatorData] = useState([]);
-  const [totalAnnotators, setTotalAnnotators] = useState(0);
+  const [totalMembers, setTotalMembers] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const [rejectionRate, setRejectionRate] = useState(0);
@@ -70,8 +70,15 @@ const DashboardAnalytics = () => {
       try {
         setLoading(true);
 
-        const resProjects = await analyticsService.getMyProjects(managerId);
+        // Fetch projects and manager stats in parallel
+        const [resProjects, resManagerStats] = await Promise.all([
+          analyticsService.getMyProjects(managerId),
+          analyticsService
+            .getManagerStats(managerId)
+            .catch(() => ({ data: null })),
+        ]);
         const projects = resProjects.data || [];
+        const managerStats = resManagerStats.data;
 
         let completed = 0;
         let inProgress = 0;
@@ -98,14 +105,20 @@ const DashboardAnalytics = () => {
             const rejAsgn = s.rejectedAssignments ?? 0;
             const subAsgn = s.submittedAssignments ?? 0;
 
+            // Project status logic:
+            // - Completed: ALL assignments approved
+            // - Rejected: Has rejections but no submissions and no approvals
+            // - InProgress: Any work is happening (submitted, approved partially, etc.)
+            // - New: No assignments at all
             if (totalAsgn === 0) {
+              // New project, no assignments
             } else if (approvedAsgn === totalAsgn) {
               completed++;
-            } else if (rejAsgn > 0) {
+            } else if (approvedAsgn === 0 && subAsgn === 0 && rejAsgn > 0) {
+              // Only has rejections, nothing submitted or approved
               rejected++;
-            } else if (subAsgn > 0) {
-              submitted++;
             } else {
+              // Any other state = work in progress
               inProgress++;
             }
 
@@ -246,13 +259,29 @@ const DashboardAnalytics = () => {
         const uniqueAnnotators = {};
         allAnnotators.forEach((a) => {
           if (!uniqueAnnotators[a.annotatorId]) {
-            uniqueAnnotators[a.annotatorId] = { ...a };
+            uniqueAnnotators[a.annotatorId] = {
+              ...a,
+              // Calculate submitted from backend data
+              tasksSubmitted: Math.max(
+                0,
+                (a.tasksAssigned || 0) -
+                  (a.tasksCompleted || 0) -
+                  (a.tasksRejected || 0),
+              ),
+            };
           } else {
             const existing = uniqueAnnotators[a.annotatorId];
             existing.tasksAssigned += a.tasksAssigned;
             existing.tasksCompleted += a.tasksCompleted;
             existing.tasksRejected += a.tasksRejected;
             existing.totalCriticalErrors += a.totalCriticalErrors;
+            // Recalculate submitted after aggregation
+            existing.tasksSubmitted = Math.max(
+              0,
+              existing.tasksAssigned -
+                existing.tasksCompleted -
+                existing.tasksRejected,
+            );
           }
         });
         const annotatorsArr = Object.values(uniqueAnnotators);
@@ -285,12 +314,15 @@ const DashboardAnalytics = () => {
 
         setProjectChartData(chartStatsArr);
 
-        setTotalAnnotators(annotatorsArr.length);
+        // Use TotalMembers from manager stats API (includes annotators + reviewers + subordinates)
+        setTotalMembers(managerStats?.totalMembers ?? annotatorsArr.length);
+
+        // Top 5 annotators: count submitted + completed tasks
         setAnnotatorData(
           annotatorsArr
             .map((a) => ({
               name: a.annotatorName || a.annotatorId,
-              taskCount: a.tasksCompleted || 0,
+              taskCount: (a.tasksCompleted || 0) + (a.tasksSubmitted || 0),
             }))
             .sort((a, b) => b.taskCount - a.taskCount)
             .slice(0, 5),
@@ -350,6 +382,7 @@ const DashboardAnalytics = () => {
             color="danger"
           />
         </Col>
+
         <Col md={2}>
           <StatCard
             title="Tỷ lệ Reject"
@@ -361,7 +394,7 @@ const DashboardAnalytics = () => {
         <Col md={2}>
           <StatCard
             title="Nhân sự"
-            value={totalAnnotators}
+            value={totalMembers}
             icon={Users}
             color="info"
           />
@@ -438,9 +471,8 @@ const DashboardAnalytics = () => {
                       data={[
                         { name: "Hoàn thành", value: stats.completed },
                         { name: "Đang thực hiện", value: stats.inProgress },
-                        { name: "Đã nộp", value: stats.submitted },
                         { name: "Bị từ chối", value: stats.rejected },
-                      ]}
+                      ].filter((d) => d.value > 0)}
                       innerRadius={70}
                       outerRadius={100}
                       dataKey="value"
@@ -500,37 +532,49 @@ const DashboardAnalytics = () => {
               </h5>
             </CardHeader>
             <CardBody>
-              {labelDistributions.length > 0 ? (
-                <div style={{ width: "100%", height: 250 }}>
-                  <ResponsiveContainer>
-                    <PieChart>
-                      <Pie
-                        data={labelDistributions}
-                        innerRadius={60}
-                        outerRadius={90}
-                        dataKey="value"
-                        label={({ name, percent }) =>
-                          `${name} ${(percent * 100).toFixed(0)}%`
-                        }
-                      >
-                        {labelDistributions.map((_, index) => (
-                          <Cell
-                            key={index}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="text-center text-muted py-5">
-                  <i className="ri-price-tag-3-line display-5 mb-3 d-block"></i>
-                  <p>Chưa có dữ liệu nhãn. Hãy gán nhãn cho ảnh trong dự án.</p>
-                </div>
-              )}
+              {(() => {
+                const nonZeroLabels = labelDistributions.filter(
+                  (l) => l.value > 0,
+                );
+                if (nonZeroLabels.length > 0) {
+                  return (
+                    <div style={{ width: "100%", height: 250 }}>
+                      <ResponsiveContainer>
+                        <PieChart>
+                          <Pie
+                            data={nonZeroLabels}
+                            innerRadius={60}
+                            outerRadius={90}
+                            dataKey="value"
+                            label={({ name, percent }) =>
+                              `${name} ${(percent * 100).toFixed(0)}%`
+                            }
+                          >
+                            {nonZeroLabels.map((_, index) => (
+                              <Cell
+                                key={index}
+                                fill={COLORS[index % COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="text-center text-muted py-5">
+                    <i className="ri-price-tag-3-line display-5 mb-3 d-block"></i>
+                    <p>
+                      {labelDistributions.length > 0
+                        ? "Có nhãn nhưng chưa có annotation nào. Hãy gán nhãn cho ảnh trong dự án."
+                        : "Chưa có dữ liệu nhãn. Hãy tạo nhãn và gán cho ảnh trong dự án."}
+                    </p>
+                  </div>
+                );
+              })()}
             </CardBody>
           </Card>
         </Col>
@@ -553,6 +597,7 @@ const DashboardAnalytics = () => {
                       <tr>
                         <th>Annotator</th>
                         <th className="text-center">Được giao</th>
+                        <th className="text-center">Đã nộp</th>
                         <th className="text-center">Hoàn thành</th>
                         <th className="text-center">Bị từ chối</th>
                         <th className="text-center">Quality Score</th>
@@ -562,11 +607,11 @@ const DashboardAnalytics = () => {
                     </thead>
                     <tbody>
                       {annotatorPerformances.map((a) => {
+                        const totalDone =
+                          (a.tasksCompleted || 0) + (a.tasksSubmitted || 0);
                         const completionRate =
                           a.tasksAssigned > 0
-                            ? Math.round(
-                                (a.tasksCompleted / a.tasksAssigned) * 100,
-                              )
+                            ? Math.round((totalDone / a.tasksAssigned) * 100)
                             : 0;
                         return (
                           <tr key={a.annotatorId}>
@@ -574,6 +619,9 @@ const DashboardAnalytics = () => {
                               {a.annotatorName || a.annotatorId}
                             </td>
                             <td className="text-center">{a.tasksAssigned}</td>
+                            <td className="text-center text-info fw-bold">
+                              {a.tasksSubmitted || 0}
+                            </td>
                             <td className="text-center text-success fw-bold">
                               {a.tasksCompleted}
                             </td>
