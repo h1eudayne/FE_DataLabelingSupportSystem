@@ -22,10 +22,11 @@ describe("authThunk - Synced with Backend API Contract", () => {
     };
     loginAPI.mockResolvedValue(mockRes);
 
-    const result = await loginThunk({
-      email: "staff@test.com",
-      password: "123",
-    })(dispatch, getState, undefined);
+    const result = await loginThunk({ email: "staff@test.com", password: "123" })(
+      dispatch,
+      getState,
+      undefined,
+    );
 
     expect(localStorage.getItem("access_token")).toBe("jwt_token_xyz");
     expect(result.payload).toEqual({ token: "jwt_token_xyz" });
