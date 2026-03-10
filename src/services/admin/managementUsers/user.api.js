@@ -1,7 +1,9 @@
 import axios from "../../axios.customize";
 
-export const getUsers = () => {
-  return axios.get("/api/users");
+export const getUsers = (page = 1, pageSize = 10) => {
+  return axios.get(`/api/users`, {
+    params: { page, pageSize },
+  });
 };
 
 export const createUser = (data) => {
