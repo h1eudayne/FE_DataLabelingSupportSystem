@@ -8,7 +8,12 @@ import "@testing-library/jest-dom";
 
 vi.mock("@/services/axios.customize", () => ({
   default: {
-    get: vi.fn().mockResolvedValue({ data: [] }),
+    get: vi.fn().mockImplementation((url) => {
+      if (url === "/api/users/me") {
+        return Promise.resolve({ data: { fullName: "Anna", email: "admin@test.com", role: "Admin" } });
+      }
+      return Promise.resolve({ data: [] });
+    }),
     post: vi.fn().mockResolvedValue({ data: {} }),
     interceptors: {
       request: { use: vi.fn() },

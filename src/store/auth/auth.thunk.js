@@ -9,6 +9,12 @@ export const loginThunk = createAsyncThunk(
       console.log(res);
       // Giả sử API trả về { accessToken: "...", data: { fullName: "...", avatarUrl: "..." } }
       // Lưu vào localStorage để khi F5 không bị mất
+      if (res.accessToken) {
+        localStorage.setItem("access_token", res.accessToken);
+      }
+      if (res.user) {
+        localStorage.setItem("user", JSON.stringify(res.user));
+      }
 
       return res.data;
     } catch (err) {

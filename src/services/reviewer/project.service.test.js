@@ -22,7 +22,7 @@ describe("projectService (Reviewer)", () => {
 
     const result = await projectService.getReviewProjects();
 
-    expect(axios.get).toHaveBeenCalledWith("/api/Project/reviewer/me");
+    expect(axios.get).toHaveBeenCalledWith("/api/reviews/projects");
 
     expect(result.data).toEqual(mockData);
   });
