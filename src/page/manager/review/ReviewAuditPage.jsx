@@ -37,7 +37,7 @@ const ReviewAuditPage = () => {
   const [auditComment, setAuditComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { user } = useSelector((state) => state.auth);
-  const managerId = user?.nameid;
+  const managerId = user?.id;
 
   const samplingStats = useMemo(() => {
     const total = tasks.length;

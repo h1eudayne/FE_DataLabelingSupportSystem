@@ -89,7 +89,7 @@ const ExportPage = () => {
   const [selectedFormat, setSelectedFormat] = useState("json");
   const [eligibility, setEligibility] = useState({});
   const { user } = useSelector((state) => state.auth);
-  const managerId = user?.nameid;
+  const managerId = user?.id;
 
   useEffect(() => {
     const fetchProjects = async () => {

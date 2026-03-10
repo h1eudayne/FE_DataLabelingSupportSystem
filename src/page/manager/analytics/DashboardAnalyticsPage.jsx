@@ -68,7 +68,7 @@ const DashboardAnalytics = () => {
   const [expandedProjects, setExpandedProjects] = useState({});
 
   const { user } = useSelector((state) => state.auth);
-  const managerId = user?.nameid;
+  const managerId = user?.id;
 
   useEffect(() => {
     const fetchAllData = async () => {

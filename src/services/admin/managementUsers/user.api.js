@@ -1,15 +1,15 @@
 import axios from "../../axios.customize";
 
-export const getUsers = () => {
-  return axios.get("/api/users");
+export const getUsers = (page = 1, pageSize = 100) => {
+  return axios.get(`/api/users?page=${page}&pageSize=${pageSize}`);
 };
 
 export const createUser = (data) => {
-  return axios.post("/api/User", data);
+  return axios.post("/api/users", data);
 };
 
 export const changePassword = (oldPassword, newPassword) => {
-  return axios.post("/api/users/me/password", { oldPassword, newPassword });
+  return axios.put("/api/users/me/password", { oldPassword, newPassword });
 };
 
 export const updateUser = (id, data) => {
@@ -47,4 +47,8 @@ export const importUser = (file) => {
       "Content-Type": "multipart/form-data",
     },
   });
+};
+
+export const deleteUser = (id) => {
+  return axios.delete(`/api/users/${id}`);
 };
