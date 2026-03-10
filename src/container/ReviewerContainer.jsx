@@ -142,7 +142,7 @@ const ProjectCardItem = ({ project, onReview }) => {
                 <h5 className="fw-bold mb-1">{project.projectName}</h5>
                 <small className="text-muted">
                   Giao ngày:{" "}
-                  {new Date(project.assignedDate).toLocaleDateString()}
+                  {new Date(project.assignedDate).toLocaleDateString("vi-VN")}
                 </small>
               </div>
             </div>
