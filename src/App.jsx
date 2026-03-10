@@ -18,6 +18,7 @@ import DashboardProjectStatus from "./page/manager/status/DashboardProjectStatus
 import SettingUserManagement from "./page/admin/SettingUserManagement";
 import SettingsSystemLogs from "./page/SettingsSystemLogs";
 import RoleProtectedRoute from "./routes/RoleProtectedRoute";
+import PrivateRoute from "./routes/PrivateRoute";
 import AccessDenied from "./routes/AccessDenied";
 import AnnotatorDashboard from "./page/annotator/dashboard/AnnotatorDashboard";
 import AnnotatorTaskList from "./page/annotator/tasks/AnnotatorTaskList";
@@ -35,7 +36,7 @@ import LandingPage from "./page/LandingPage";
 import Profile from "./page/Profile";
 
 function App() {
-  const isLoggedIn = !!localStorage.getItem("accessToken");
+  const isLoggedIn = !!localStorage.getItem("access_token");
 
   return (
     <>
@@ -63,6 +64,7 @@ function App() {
 
         <Route path="/access-denied" element={<AccessDenied />} />
 
+        <Route element={<PrivateRoute />}>
         <Route element={<MainLayouts />}>
           <Route path="dashboard" element={<HomePage />} />
           <Route path="profile" element={<Profile />} />
@@ -138,6 +140,7 @@ function App() {
               }
             />
           </Route>
+        </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -37,7 +37,7 @@ const DisputeManagementPage = () => {
   const [managerComment, setManagerComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { user } = useSelector((state) => state.auth);
-  const managerId = user?.nameid;
+  const managerId = user?.id;
 
   useEffect(() => {
     const fetchProjects = async () => {

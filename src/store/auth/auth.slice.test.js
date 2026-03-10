@@ -6,7 +6,7 @@ vi.mock("jwt-decode", () => ({
   jwtDecode: vi.fn(),
 }));
 
-describe("authSlice - Comprehensive & Edge Case Tests", () => {
+describe("authSlice - Synced with Backend JWT Contract", () => {
   let authReducer;
   let logout;
 
@@ -30,7 +30,7 @@ describe("authSlice - Comprehensive & Edge Case Tests", () => {
     logout = module.logout;
   });
 
-  it("nên khôi phục trạng thái từ localStorage khi khởi tạo", async () => {
+  it("should restore state from localStorage on init", async () => {
     const mockUser = { id: "99", email: "persist@test.com" };
     localStorage.setItem("user", JSON.stringify(mockUser));
     localStorage.setItem("access_token", "persisted-token");
@@ -44,14 +44,14 @@ describe("authSlice - Comprehensive & Edge Case Tests", () => {
     expect(state.isAuthenticated).toBe(true);
   });
 
-  it("nên đặt user thành null nhưng vẫn giữ token nếu jwtDecode bị lỗi", () => {
+  it("should set user to null but keep token if jwtDecode throws", () => {
     vi.mocked(jwtDecode).mockImplementation(() => {
       throw new Error("Invalid");
     });
 
     const action = {
       type: loginThunk.fulfilled.type,
-      payload: { accessToken: "bad-token" },
+      payload: { token: "bad-token" },
     };
     const state = authReducer(initialStateStatic, action);
 
@@ -60,7 +60,7 @@ describe("authSlice - Comprehensive & Edge Case Tests", () => {
     expect(state.isAuthenticated).toBe(true);
   });
 
-  it("nên quản lý trạng thái loading qua một chu kỳ thất bại", () => {
+  it("should manage loading state through a failure cycle", () => {
     let state = authReducer(initialStateStatic, {
       type: loginThunk.pending.type,
     });
@@ -74,21 +74,35 @@ describe("authSlice - Comprehensive & Edge Case Tests", () => {
     expect(state.error).toBe("Error Message");
   });
 
-  it("nên cập nhật user và lưu vào localStorage khi login thành công", () => {
-    const mockUser = { id: "1", role: "Admin" };
-    vi.mocked(jwtDecode).mockReturnValue(mockUser);
+  it("should map .NET JWT claims to camelCase user object on login success", () => {
+    // Mock .NET ClaimTypes URI-based keys as they appear in decoded JWT
+    const mockDecoded = {
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier": "user-123",
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": "admin@system.com",
+      "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Manager",
+      "FullName": "Admin User",
+      "AvatarUrl": "https://example.com/avatar.png",
+    };
+    vi.mocked(jwtDecode).mockReturnValue(mockDecoded);
 
     const action = {
       type: loginThunk.fulfilled.type,
-      payload: { accessToken: "valid-token" },
+      payload: { token: "valid-jwt-token" },
     };
     const state = authReducer(initialStateStatic, action);
 
-    expect(state.user).toEqual(mockUser);
-    expect(localStorage.getItem("access_token")).toBe("valid-token");
+    expect(state.user).toEqual({
+      id: "user-123",
+      email: "admin@system.com",
+      role: "Manager",
+      fullName: "Admin User",
+      avatarUrl: "https://example.com/avatar.png",
+    });
+    expect(localStorage.getItem("access_token")).toBe("valid-jwt-token");
+    expect(state.isAuthenticated).toBe(true);
   });
 
-  it("nên xóa sạch state và storage khi logout", () => {
+  it("should clear all state and storage on logout", () => {
     const loggedState = { user: { id: 1 }, token: "tk", isAuthenticated: true };
     localStorage.setItem("access_token", "tk");
 

@@ -66,10 +66,8 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
   };
 
   const handleLogout = () => {
-    if (window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
-      dispatch(logout());
-      navigate("/", { replace: true });
-    }
+    dispatch(logout());
+    navigate("/login", { replace: true });
   };
 
   const popperConfig = {

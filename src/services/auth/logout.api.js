@@ -1,8 +1,7 @@
-import axios from "../axios.customize";
-
+// Logout is client-side only - no backend endpoint exists.
+// Token invalidation is handled by clearing localStorage in auth.slice.js
 const logoutApi = () => {
-  const URL_BACKEND = "/api/v1/auth/logout";
-  return axios.post(URL_BACKEND);
+  return Promise.resolve({ success: true });
 };
 
 export default logoutApi;

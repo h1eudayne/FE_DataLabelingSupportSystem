@@ -2,15 +2,16 @@ import React from "react";
 import { Container, Badge, Dropdown } from "react-bootstrap";
 import { LogOut, User, Settings, Bell } from "lucide-react";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { logout } from "../../store/auth/auth.slice";
 
 const UserHeader = ({ user, role }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    if (window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
-      dispatch(logout());
-    }
+    dispatch(logout());
+    navigate("/login", { replace: true });
   };
 
   return (

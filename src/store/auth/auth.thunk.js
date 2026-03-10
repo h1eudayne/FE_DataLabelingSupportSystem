@@ -6,10 +6,13 @@ export const loginThunk = createAsyncThunk(
   async ({ email, password }, { rejectWithValue }) => {
     try {
       const res = await loginAPI(email, password);
-      console.log(res);
-      localStorage.setItem("access_token", res.accessToken);
-      localStorage.setItem("user", JSON.stringify(res.user));
-      return res.data;
+      // Backend returns { token: "jwt_string" } wrapped in Axios response.data
+      const token = res.data.token;
+      if (!token) {
+        return rejectWithValue("Invalid response from server");
+      }
+      localStorage.setItem("access_token", token);
+      return { token };
     } catch (err) {
       return rejectWithValue(err.response?.data || "Login failed");
     }

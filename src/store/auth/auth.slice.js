@@ -33,10 +33,7 @@ const authSlice = createSlice({
       })
       .addCase(loginThunk.fulfilled, (state, action) => {
         const payload = action.payload;
-        const token = payload?.accessToken || payload?.data?.accessToken;
-
-        const userDataFromApi =
-          payload?.user || payload?.data?.user || payload?.data;
+        const token = payload?.token;
 
         if (token && typeof token === "string") {
           state.loading = false;
@@ -47,12 +44,19 @@ const authSlice = createSlice({
           try {
             const decoded = jwtDecode(token);
 
-            const finalUser = { ...decoded, ...userDataFromApi };
+            // Map .NET ClaimTypes URI keys to camelCase for frontend usage
+            const finalUser = {
+              id: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"],
+              email: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"],
+              role: decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"],
+              fullName: decoded["FullName"] || "",
+              avatarUrl: decoded["AvatarUrl"] || "",
+            };
 
             state.user = finalUser;
             localStorage.setItem("user", JSON.stringify(finalUser));
           } catch (err) {
-            state.user = userDataFromApi || null;
+            state.user = null;
           }
         }
       })
