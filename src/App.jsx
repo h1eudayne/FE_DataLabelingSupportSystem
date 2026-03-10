@@ -35,7 +35,7 @@ import LandingPage from "./page/LandingPage";
 import Profile from "./page/Profile";
 
 function App() {
-  const isLoggedIn = !!localStorage.getItem("accessToken");
+  const isLoggedIn = !!localStorage.getItem("access_token");
 
   return (
     <>
