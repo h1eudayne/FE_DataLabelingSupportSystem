@@ -7,7 +7,7 @@ export const fetchProjects = createAsyncThunk(
     try {
       const state = getState();
       const user = state.auth?.user;
-      const managerId = user?.nameid;
+      const managerId = user?.id;
 
       if (!managerId) {
         throw new Error("Manager ID not found in token");

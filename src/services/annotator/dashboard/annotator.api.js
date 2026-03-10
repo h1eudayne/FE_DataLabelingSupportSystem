@@ -1,7 +1,7 @@
 import axios from "/src/services/axios.customize.js";
 
 export const getProfile = async () => {
-  const res = await axios.get("/api/User/profile");
+  const res = await axios.get("/api/users/me");
   return res.data;
 };
 
@@ -45,7 +45,7 @@ export const getReviewerFeedbackByProject = async (projectId) => {
   if (!projectId) return [];
 
   try {
-    const res = await axios.get(`/api/Review/project/${projectId}`);
+    const res = await axios.get(`/api/reviews/projects/${projectId}/tasks`);
     return res.data;
   } catch {
     return [];
