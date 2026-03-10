@@ -52,7 +52,6 @@ const CreateProject = () => {
     const fetchUsers = async () => {
       try {
         const res = await userService.getUsers();
-        // Backend returns PagedResponse: { totalCount, page, pageSize, stats, items[] }
         const userList = res.data.items || res.data;
         const annotators = userList
           .filter((u) => u.role === "Annotator")

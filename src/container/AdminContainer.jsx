@@ -38,7 +38,6 @@ const AdminContainer = () => {
   const fetchUsers = async () => {
     try {
       const res = await getUsers();
-      // Backend returns PagedResponse: { totalCount, page, pageSize, stats, items[] }
       const data = res.data;
       const userList = data.items || data;
       setUsers(userList);

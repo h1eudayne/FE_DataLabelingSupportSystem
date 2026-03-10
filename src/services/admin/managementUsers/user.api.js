@@ -1,7 +1,5 @@
 import axios from "../../axios.customize";
 
-// GET /api/users?page=1&pageSize=10
-// Backend returns: PagedResponse<UserResponse> { totalCount, page, pageSize, stats, items[] }
 export const getUsers = (page = 1, pageSize = 100) => {
   return axios.get(`/api/users?page=${page}&pageSize=${pageSize}`);
 };
@@ -59,7 +57,6 @@ export const importUser = (file) => {
   });
 };
 
-// DELETE /api/users/:id
 export const deleteUser = (id) => {
   return axios.delete(`/api/users/${id}`);
 };
