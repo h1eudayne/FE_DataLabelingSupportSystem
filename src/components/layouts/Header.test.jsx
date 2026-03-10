@@ -12,6 +12,16 @@ vi.mock("react-router-dom", async () => {
   return { ...actual, useNavigate: () => mockedNavigate };
 });
 
+vi.mock("../../services/admin/managementUsers/user.api", () => ({
+  getUserProfile: vi.fn().mockResolvedValue({
+    data: {
+      fullName: "Nguyễn Văn A",
+      email: "staff1@gmail.com",
+      role: "Manager",
+    },
+  }),
+}));
+
 describe("Header Component - Comprehensive Suite", () => {
   let store;
 
@@ -24,7 +34,7 @@ describe("Header Component - Comprehensive Suite", () => {
           state = {
             isAuthenticated: true,
             user: {
-              name: "Nguyễn Văn A",
+              fullName: "Nguyễn Văn A",
               role: "Manager",
               email: "staff1@gmail.com",
             },

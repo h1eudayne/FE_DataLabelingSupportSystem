@@ -34,40 +34,49 @@ describe("analyticsService - Full Coverage", () => {
       axios.get.mockResolvedValueOnce({
         data: [{ id: "P1" }, { id: "P2" }],
       });
+      axios.get.mockResolvedValueOnce({
+        data: { totalMembers: 5 },
+      });
 
       axios.get
         .mockResolvedValueOnce({
-          data: { totalAssignments: 10, approvedAssignments: 5 },
+          data: { totalAssignments: 10, approvedAssignments: 10 }, // P1 completed
         })
         .mockResolvedValueOnce({
-          data: { totalAssignments: 20, approvedAssignments: 10 },
+          data: { totalAssignments: 20, approvedAssignments: 10 }, // P2 in progress
         });
 
       const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(2);
-      expect(stats.totalAssignments).toBe(30);
-      expect(stats.completed).toBe(15);
+      expect(stats.totalMembers).toBe(5);
+      expect(stats.completed).toBe(1);
+      expect(stats.inProgress).toBe(1);
     });
 
     it("Error 400: skip errored projects and continue", async () => {
       axios.get.mockResolvedValueOnce({
         data: [{ id: "P1" }, { id: "P2" }],
       });
+      axios.get.mockResolvedValueOnce({
+        data: { totalMembers: 5 },
+      });
 
       const error400 = { response: { status: 400 } };
       axios.get
         .mockRejectedValueOnce(error400)
-        .mockResolvedValueOnce({ data: { totalAssignments: 5 } });
+        .mockResolvedValueOnce({ data: { totalAssignments: 5, approvedAssignments: 5 } });
 
       const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(2);
-      expect(stats.totalAssignments).toBe(5);
+      expect(stats.completed).toBe(1);
+      expect(stats.pending).toBe(1);
     });
 
     it("Critical error (500): stop and throw", async () => {
       axios.get.mockResolvedValueOnce({ data: [{ id: "P1" }] });
+      axios.get.mockResolvedValueOnce({ data: { totalMembers: 5 } });
       axios.get.mockRejectedValueOnce(new Error("Database Crash"));
 
       await expect(
@@ -77,11 +86,12 @@ describe("analyticsService - Full Coverage", () => {
 
     it("No projects: return zeroed object", async () => {
       axios.get.mockResolvedValueOnce({ data: [] });
+      axios.get.mockResolvedValueOnce({ data: { totalMembers: 0 } });
 
       const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(0);
-      expect(stats.totalAssignments).toBe(0);
+      expect(stats.totalMembers).toBe(0);
     });
   });
 
