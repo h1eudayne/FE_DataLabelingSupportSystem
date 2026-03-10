@@ -1,20 +1,33 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Spinner } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Spinner,
+  Badge,
+  Card,
+  ProgressBar,
+  Button,
+} from "react-bootstrap";
+import { CheckCircle, Clock, AlertCircle, ArrowRight } from "lucide-react";
 import ReviewerActionBar from "../components/reviewer/home/ReviewerActionBar";
 import ShortcutSidebar from "../components/reviewer/home/ShortcutSidebar";
-import ProjectCard from "../components/reviewer/home/ProjectCard";
 import CommonHeader from "../components/home/CommonHeader";
 import projectService from "../services/reviewer/project.service";
+import { useNavigate } from "react-router-dom";
 
 const ReviewerContainer = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const navigate = useNavigate();
+
   const fetchProjects = async () => {
     setLoading(true);
     try {
       const res = await projectService.getReviewProjects();
+
       setProjects(res.data || []);
     } catch (err) {
       console.error("Lỗi tải dự án:", err);
@@ -29,19 +42,57 @@ const ReviewerContainer = () => {
 
   const filteredProjects = projects.filter(
     (p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.id.toString().includes(searchTerm),
+      p.projectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.projectId?.toString().includes(searchTerm),
   );
 
+  const getReviewWorkspace = async (projectId) => {
+    try {
+      const res = await projectService.getReviewWorkspace(projectId);
+      if (res.data) {
+        const data = res.data[0];
+        console.log(data);
+
+        navigate(`/reviewer/review-workspace/${data.assignmentId}`, {
+          state: { workspaceData: data },
+        });
+      } else {
+        alert(
+          "Hiện tại không còn mục dữ liệu nào cần kiểm duyệt trong dự án này!",
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
-    <div className="dashboard-wrapper p-4 bg-light min-vh-100">
+    <div className="dashboard-wrapper p-4 bg-body-tertiary min-vh-100 transition-all">
       <Container fluid>
         <CommonHeader
           role="Reviewer"
-          title="Trung tâm Kiểm duyệt"
-          subtitle="Quản lý và phê duyệt chất lượng dữ liệu từ Annotators."
+          title="Bảng điều khiển Kiểm duyệt"
+          subtitle="Theo dõi tiến độ và đảm bảo chất lượng gán nhãn dữ liệu."
         />
+
+        <Row className="mb-4 g-3">
+          <Col md={4}>
+            <Card className="border-0 shadow-sm rounded-4">
+              <Card.Body className="d-flex align-items-center gap-3">
+                <div className="p-3 bg-primary-subtle rounded-3 text-primary">
+                  <Clock size={24} />
+                </div>
+                <div>
+                  <div className="text-muted small fw-bold">DỰ ÁN ĐANG CHỜ</div>
+                  <h4 className="fw-bold mb-0">{projects.length}</h4>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+
         <ReviewerActionBar onSearchChange={setSearchTerm} />
+
         <Row>
           <Col xl={9} lg={8}>
             {loading ? (
@@ -49,18 +100,19 @@ const ReviewerContainer = () => {
                 <Spinner animation="border" variant="primary" />
               </div>
             ) : filteredProjects.length > 0 ? (
-              filteredProjects.map((item) => (
-                <ProjectCard
-                  key={item.id}
-                  project={item}
-                  onReview={() => {}}
-                />
-              ))
+              <div className="d-flex flex-column gap-3">
+                {filteredProjects.map((item) => (
+                  <ProjectCardItem
+                    key={item.projectId}
+                    project={item}
+                    onReview={getReviewWorkspace}
+                  />
+                ))}
+              </div>
             ) : (
-              <div className="text-center py-5 bg-white rounded-4 shadow-sm">
-                <p className="text-muted mb-0">
-                  Không tìm thấy dự án nào cần kiểm duyệt.
-                </p>
+              <div className="text-center py-5 bg-card rounded-4 shadow-sm border">
+                <AlertCircle className="text-muted mb-2" size={40} />
+                <p className="text-muted">Không có nhiệm vụ nào cần xử lý.</p>
               </div>
             )}
           </Col>
@@ -70,6 +122,61 @@ const ReviewerContainer = () => {
         </Row>
       </Container>
     </div>
+  );
+};
+
+const ProjectCardItem = ({ project, onReview }) => {
+  return (
+    <Card className="border-0 shadow-sm rounded-4 overflow-hidden project-card-hover">
+      <Card.Body className="p-4">
+        <Row className="align-items-center">
+          <Col md={5}>
+            <div className="d-flex align-items-center gap-3">
+              <div
+                className="project-icon bg-light rounded-3 d-flex align-items-center justify-content-center"
+                style={{ width: 50, height: 50 }}
+              >
+                <Badge bg="primary">{project.projectId}</Badge>
+              </div>
+              <div>
+                <h5 className="fw-bold mb-1">{project.projectName}</h5>
+                <small className="text-muted">
+                  Giao ngày:{" "}
+                  {new Date(project.assignedDate).toLocaleDateString("vi-VN")}
+                </small>
+              </div>
+            </div>
+          </Col>
+
+          <Col md={4}>
+            <div className="mb-1 d-flex justify-content-between small">
+              <span className="text-muted">Tiến độ gán nhãn</span>
+              <span className="fw-bold">{project.progressPercent}%</span>
+            </div>
+            <ProgressBar
+              now={project.progressPercent}
+              variant="success"
+              style={{ height: 8 }}
+            />
+            <small className="text-muted mt-1 d-block">
+              {project.completedImages}/{project.totalImages} ảnh hoàn tất
+            </small>
+          </Col>
+
+          <Col md={3} className="text-end">
+            <Button
+              variant="outline-primary"
+              className="rounded-pill px-4 d-inline-flex align-items-center gap-2"
+              onClick={() => {
+                onReview(project.projectId);
+              }}
+            >
+              Bắt đầu Review <ArrowRight size={16} />
+            </Button>
+          </Col>
+        </Row>
+      </Card.Body>
+    </Card>
   );
 };
 
