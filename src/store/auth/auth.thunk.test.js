@@ -6,7 +6,7 @@ vi.mock("../../services/auth", () => ({
   loginAPI: vi.fn(),
 }));
 
-describe("authThunk - Advanced Test Cases", () => {
+describe("authThunk - Synced with Backend API Contract", () => {
   const dispatch = vi.fn();
   const getState = vi.fn();
 
@@ -15,26 +15,23 @@ describe("authThunk - Advanced Test Cases", () => {
     localStorage.clear();
   });
 
-  it("nên lưu đúng định dạng JSON cho user vào localStorage khi thành công", async () => {
+  it("should extract token from res.data.token and save to localStorage", async () => {
+    // Backend returns { token: "jwt_string" } wrapped in Axios response
     const mockRes = {
-      accessToken: "token_xyz",
-      user: { id: 99, role: "Staff" },
-      data: { accessToken: "token_xyz" },
+      data: { token: "jwt_token_xyz" },
     };
     loginAPI.mockResolvedValue(mockRes);
 
-    await loginThunk({ email: "staff@test.com", password: "123" })(
-      dispatch,
-      getState,
-      undefined,
-    );
+    const result = await loginThunk({
+      email: "staff@test.com",
+      password: "123",
+    })(dispatch, getState, undefined);
 
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    expect(storedUser).toEqual({ id: 99, role: "Staff" });
-    expect(localStorage.getItem("access_token")).toBe("token_xyz");
+    expect(localStorage.getItem("access_token")).toBe("jwt_token_xyz");
+    expect(result.payload).toEqual({ token: "jwt_token_xyz" });
   });
 
-  it("nên trả về 'Login failed' khi server trả về lỗi 500 mà không có message", async () => {
+  it("should reject when server returns error 500 without message", async () => {
     const mockError = {
       response: {
         status: 500,
@@ -51,10 +48,9 @@ describe("authThunk - Advanced Test Cases", () => {
     expect(result.payload).toBe("Login failed");
   });
 
-  it("vẫn phải hoạt động nếu res.user bị undefined (kiểm tra tính an toàn)", async () => {
+  it("should reject with 'Invalid response from server' when token is missing", async () => {
     const mockRes = {
-      accessToken: "token_only",
-      data: { accessToken: "token_only" },
+      data: { message: "OK but no token" },
     };
     loginAPI.mockResolvedValue(mockRes);
 
@@ -64,11 +60,11 @@ describe("authThunk - Advanced Test Cases", () => {
       undefined,
     );
 
-    expect(result.type).toBe("auth/login/fulfilled");
+    expect(result.payload).toBe("Invalid response from server");
   });
 
-  it("phải gọi API với đúng thông tin email và password được cung cấp", async () => {
-    loginAPI.mockResolvedValue({ data: {} });
+  it("should call API with correct email and password", async () => {
+    loginAPI.mockResolvedValue({ data: { token: "t" } });
     const credentials = {
       email: "special_user@gmail.com",
       password: "SpecialPassword!@#",
@@ -82,7 +78,7 @@ describe("authThunk - Advanced Test Cases", () => {
     );
   });
 
-  it("nên trả về object lỗi nếu server trả về cấu trúc lỗi phức tạp", async () => {
+  it("should return complex error object from server response", async () => {
     const complexError = {
       response: {
         data: {
@@ -104,11 +100,9 @@ describe("authThunk - Advanced Test Cases", () => {
     expect(result.payload.code).toBe("AUTH_001");
   });
 
-  it("phải lưu vào localStorage TRƯỚC KHI kết thúc action fulfilled", async () => {
+  it("should save token to localStorage BEFORE action completes", async () => {
     const mockRes = {
-      accessToken: "final_token",
-      user: { id: 1 },
-      data: { success: true },
+      data: { token: "final_token" },
     };
     loginAPI.mockResolvedValue(mockRes);
 
@@ -119,6 +113,6 @@ describe("authThunk - Advanced Test Cases", () => {
     );
 
     expect(localStorage.getItem("access_token")).toBe("final_token");
-    expect(result.payload).toEqual(mockRes.data);
+    expect(result.payload).toEqual({ token: "final_token" });
   });
 });

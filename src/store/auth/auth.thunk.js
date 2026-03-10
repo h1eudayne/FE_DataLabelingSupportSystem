@@ -6,11 +6,12 @@ export const loginThunk = createAsyncThunk(
   async ({ email, password }, { rejectWithValue }) => {
     try {
       const res = await loginAPI(email, password);
-      console.log(res);
-      // Giả sử API trả về { accessToken: "...", data: { fullName: "...", avatarUrl: "..." } }
-      // Lưu vào localStorage để khi F5 không bị mất
-
-      return res.data;
+      const token = res.data.token;
+      if (!token) {
+        return rejectWithValue("Invalid response from server");
+      }
+      localStorage.setItem("access_token", token);
+      return { token };
     } catch (err) {
       return rejectWithValue(err.response?.data || "Login failed");
     }

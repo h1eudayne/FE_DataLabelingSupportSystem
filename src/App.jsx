@@ -36,7 +36,7 @@ import Profile from "./page/Profile";
 import ReviewWorkspace from "./components/reviewer/home/ReviewWorkspace";
 
 function App() {
-  const isLoggedIn = !!localStorage.getItem("accessToken");
+  const isLoggedIn = !!localStorage.getItem("access_token");
 
   return (
     <>
