@@ -16,9 +16,7 @@ vi.mock("@/services/axios.customize", () => ({
     },
   },
 }));
-// vi.mock("react-apexcharts", () => ({
-//   default: () => <div data-testid="chart">Chart</div>,
-// }));
+
 vi.mock("@vercel/speed-insights/react", () => ({ SpeedInsights: () => null }));
 vi.mock("simplebar-react", () => ({
   default: ({ children }) => <div>{children}</div>,

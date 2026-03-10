@@ -51,7 +51,6 @@ describe("authSlice - Comprehensive Testing", () => {
     const action = { type: loginThunk.fulfilled.type, payload: fakePayload };
 
     const state = authReducer(initialStateStatic, action);
-    // tương tự dispatch(loginThunk.fulfilled(fakePayload));
 
     expect(state.token).toBe("valid_token");
     expect(state.isAuthenticated).toBe(true);

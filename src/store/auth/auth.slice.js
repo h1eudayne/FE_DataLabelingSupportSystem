@@ -44,7 +44,6 @@ const authSlice = createSlice({
           try {
             const decoded = jwtDecode(token);
 
-            // Map .NET ClaimTypes URI keys to camelCase for frontend usage
             const finalUser = {
               id: decoded[
                 "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
@@ -69,7 +68,8 @@ const authSlice = createSlice({
       })
       .addCase(loginThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Login failed";
+        state.error =
+          action.payload?.message || action.payload || "Login failed";
       });
   },
 });

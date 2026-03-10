@@ -75,7 +75,6 @@ const DashboardAnalytics = () => {
       try {
         setLoading(true);
 
-        // Fetch projects and manager stats in parallel
         const [resProjects, resManagerStats] = await Promise.all([
           analyticsService.getMyProjects(managerId),
           analyticsService.getManagerStats(managerId).catch((err) => {
@@ -113,20 +112,12 @@ const DashboardAnalytics = () => {
             const rejAsgn = s.rejectedAssignments ?? 0;
             const subAsgn = s.submittedAssignments ?? 0;
 
-            // Project status logic:
-            // - Completed: ALL assignments approved
-            // - Rejected: Has rejections but no submissions and no approvals
-            // - InProgress: Any work is happening (submitted, approved partially, etc.)
-            // - New: No assignments at all
             if (totalAsgn === 0) {
-              // New project, no assignments
             } else if (approvedAsgn === totalAsgn) {
               completed++;
             } else if (approvedAsgn === 0 && subAsgn === 0 && rejAsgn > 0) {
-              // Only has rejections, nothing submitted or approved
               rejected++;
             } else {
-              // Any other state = work in progress
               inProgress++;
             }
 
@@ -174,22 +165,15 @@ const DashboardAnalytics = () => {
               completed: Number(s.completedItems ?? 0),
             });
 
-            // Collect per-project progress data for the new section
-            // Use pendingAssignments (New+Assigned+InProgress) from project-level
             const pendingAsgn = s.pendingAssignments ?? 0;
             const projAnnotators = (s.annotatorPerformances || []).map((ap) => {
               const annTotal = ap.tasksAssigned || 0;
-              const annApproved = ap.tasksCompleted || 0; // = Approved
               const annRejected = ap.tasksRejected || 0;
-              const annRemaining = annTotal - annApproved - annRejected; // = Submitted + Pending for this annotator
-              // Estimate pending per annotator proportionally
               const annPendingEst =
                 totalAsgn > 0
                   ? Math.round((pendingAsgn * annTotal) / totalAsgn)
                   : 0;
-              // Submitted estimate = remaining - estimated pending
               const annSubmittedEst = Math.max(0, annRemaining - annPendingEst);
-              // Annotator done = Submitted + Approved (items annotator has finished their part)
               const annDone = annApproved + annSubmittedEst;
               return {
                 id: ap.annotatorId,
@@ -216,7 +200,6 @@ const DashboardAnalytics = () => {
                   ? Math.round((approvedAsgn / totalAsgn) * 100)
                   : 0,
               annotators: projAnnotators,
-              reviewers: [], // will be filled after reviewer data is collected
             });
             const daysLeft = project.deadline
               ? Math.ceil(
@@ -257,7 +240,6 @@ const DashboardAnalytics = () => {
 
             reviews.forEach((r) => {
               const reviewerKey = r.reviewerName || r.reviewerId || "Unknown";
-              // Always register reviewer so they appear in the table
               if (!reviewerMap[reviewerKey]) {
                 reviewerMap[reviewerKey] = {
                   name: reviewerKey,
@@ -277,11 +259,9 @@ const DashboardAnalytics = () => {
                   disputes: 0,
                 };
               }
-              // Count total assigned for this reviewer in this project
               reviewerMap[reviewerKey].totalAssigned++;
               reviewerMap[reviewerKey].projectDetails[project.id].assigned++;
 
-              // Only count as "reviewed" if actually Approved or Rejected
               const reviewStatus = r.status || "";
               if (reviewStatus === "Approved" || reviewStatus === "Rejected") {
                 reviewerMap[reviewerKey].totalReviews++;
@@ -323,7 +303,6 @@ const DashboardAnalytics = () => {
           } catch {}
         }
 
-        // Fill reviewer progress into projectProgressArr
         projectProgressArr.forEach((pp) => {
           const projectReviewers = [];
           Object.values(reviewerMap).forEach((rev) => {

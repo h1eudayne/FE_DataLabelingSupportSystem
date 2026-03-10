@@ -42,7 +42,6 @@ const ProjectAssignTask = () => {
   }, [id]);
 
   const handleAssign = async () => {
-    // BR-MNG-03: Must define labels before assigning
     if (!projectInfo?.labels || projectInfo.labels.length === 0) {
       return Swal.fire(
         "Chưa đủ điều kiện!",
@@ -53,7 +52,6 @@ const ProjectAssignTask = () => {
     if (!selectedAnnotator) {
       return Swal.fire("Cảnh báo", "Vui lòng chọn Annotator!", "warning");
     }
-    // BR-MNG-20: Manager must not self-assign
     if (selectedAnnotator === managerId) {
       return Swal.fire(
         "Không được phép!",
