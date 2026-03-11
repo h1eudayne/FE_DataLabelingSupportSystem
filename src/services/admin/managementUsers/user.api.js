@@ -1,7 +1,9 @@
 import axios from "../../axios.customize";
 
-export const getUsers = (page = 1, pageSize = 100) => {
-  return axios.get(`/api/users?page=${page}&pageSize=${pageSize}`);
+export const getUsers = (page = 1, pageSize = 10) => {
+  return axios.get(`/api/users`, {
+    params: { page, pageSize },
+  });
 };
 
 // POST /api/users
