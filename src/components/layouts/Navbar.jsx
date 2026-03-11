@@ -243,7 +243,7 @@ const Navbar = () => {
                   <li className="nav-item">
                     <Link
                       className="nav-link menu-link fs-18"
-                      to="/workplace-review-task"
+                      to="/reviewer/review-task/"
                       style={menuItemStyle}
                     >
                       <i

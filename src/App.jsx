@@ -36,6 +36,7 @@ import { ROLES } from "./constants/roles";
 import LandingPage from "./page/LandingPage";
 import Profile from "./page/Profile";
 import ReviewWorkspace from "./components/reviewer/home/ReviewWorkspace";
+import WorkplaceReviewTask from "./components/reviewer/home/WorkplaceReviewTask";
 
 function App() {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -110,13 +111,6 @@ function App() {
               <Route path="review-audit" element={<ReviewAuditPage />} />
             </Route>
 
-            <Route element={<RoleProtectedRoute allowRoles={["Reviewer"]} />}>
-              <Route
-                path="/reviewer/review-workspace/:assignmentId"
-                element={<ReviewWorkspace />}
-              />
-            </Route>
-
             <Route element={<RoleProtectedRoute allowRoles={["Annotator"]} />}>
               <Route
                 path="annotator-my-tasks"
@@ -161,8 +155,12 @@ function App() {
             </Route>
             <Route element={<RoleProtectedRoute allowRoles={["Reviewer"]} />}>
               <Route
-                path="/reviewer/review-workspace/:assignmentId"
+                path="/reviewer/review-workspace/:projectId/:assignmentId"
                 element={<ReviewWorkspace />}
+              />
+              <Route
+                path="/reviewer/review-task/"
+                element={<WorkplaceReviewTask />}
               />
             </Route>
           </Route>
