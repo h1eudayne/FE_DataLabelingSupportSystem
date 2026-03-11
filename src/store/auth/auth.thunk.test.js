@@ -15,17 +15,21 @@ describe("authThunk - Synced with Backend API Contract", () => {
     localStorage.clear();
   });
 
-  it("should extract token from res.data.token and save to localStorage", async () => {
-    // Backend returns { token: "jwt_string" } wrapped in Axios response
+  it("should extract accessToken from response and save to localStorage", async () => {
     const mockRes = {
-      data: { token: "jwt_token_xyz" },
+      data: {
+        message: "Login successful.",
+        accessToken: "jwt_token_xyz",
+        tokenType: "Bearer",
+      },
     };
     loginAPI.mockResolvedValue(mockRes);
 
-    const result = await loginThunk({
-      email: "staff@test.com",
-      password: "123",
-    })(dispatch, getState, undefined);
+    const result = await loginThunk({ email: "staff@test.com", password: "123" })(
+      dispatch,
+      getState,
+      undefined,
+    );
 
     expect(localStorage.getItem("access_token")).toBe("jwt_token_xyz");
     expect(result.payload).toEqual({ token: "jwt_token_xyz" });
@@ -48,7 +52,7 @@ describe("authThunk - Synced with Backend API Contract", () => {
     expect(result.payload).toBe("Login failed");
   });
 
-  it("should reject with 'Invalid response from server' when token is missing", async () => {
+  it("should reject with 'Invalid response from server' when accessToken is missing", async () => {
     const mockRes = {
       data: { message: "OK but no token" },
     };
@@ -64,7 +68,13 @@ describe("authThunk - Synced with Backend API Contract", () => {
   });
 
   it("should call API with correct email and password", async () => {
-    loginAPI.mockResolvedValue({ data: { token: "t" } });
+    loginAPI.mockResolvedValue({
+      data: {
+        message: "Login successful.",
+        accessToken: "t",
+        tokenType: "Bearer",
+      },
+    });
     const credentials = {
       email: "special_user@gmail.com",
       password: "SpecialPassword!@#",
@@ -82,9 +92,7 @@ describe("authThunk - Synced with Backend API Contract", () => {
     const complexError = {
       response: {
         data: {
-          code: "AUTH_001",
-          message: "Account is locked",
-          details: "Too many failed attempts",
+          message: "Account is deactivated or banned.",
         },
       },
     };
@@ -97,12 +105,16 @@ describe("authThunk - Synced with Backend API Contract", () => {
     );
 
     expect(result.payload).toEqual(complexError.response.data);
-    expect(result.payload.code).toBe("AUTH_001");
+    expect(result.payload.message).toBe("Account is deactivated or banned.");
   });
 
   it("should save token to localStorage BEFORE action completes", async () => {
     const mockRes = {
-      data: { token: "final_token" },
+      data: {
+        message: "Login successful.",
+        accessToken: "final_token",
+        tokenType: "Bearer",
+      },
     };
     loginAPI.mockResolvedValue(mockRes);
 

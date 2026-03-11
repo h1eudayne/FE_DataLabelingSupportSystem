@@ -11,7 +11,7 @@ const DashboardProjectStatus = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useSelector((state) => state.auth);
-  const managerId = user?.nameid;
+  const managerId = user?.id;
 
   const fetchDashboardData = async () => {
     try {

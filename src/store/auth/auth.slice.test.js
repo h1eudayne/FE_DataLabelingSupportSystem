@@ -75,15 +75,12 @@ describe("authSlice - Synced with Backend JWT Contract", () => {
   });
 
   it("should map .NET JWT claims to camelCase user object on login success", () => {
-    // Mock .NET ClaimTypes URI-based keys as they appear in decoded JWT
     const mockDecoded = {
-      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier":
-        "user-123",
-      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress":
-        "admin@system.com",
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier": "user-123",
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": "admin@system.com",
       "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Manager",
-      FullName: "Admin User",
-      AvatarUrl: "https://example.com/avatar.png",
+      "FullName": "Admin User",
+      "AvatarUrl": "https://example.com/avatar.png",
     };
     vi.mocked(jwtDecode).mockReturnValue(mockDecoded);
 

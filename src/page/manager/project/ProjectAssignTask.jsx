@@ -10,7 +10,7 @@ const ProjectAssignTask = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const managerId = user?.nameid;
+  const managerId = user?.id;
   const [annotators, setAnnotators] = useState([]);
   const [reviewers, setReviewers] = useState([]);
   const [selectedAnnotator, setSelectedAnnotator] = useState("");
@@ -29,10 +29,11 @@ const ProjectAssignTask = () => {
       .finally(() => setLoading(false));
 
     userService.getUsers().then((res) => {
-      const annotatorList = res.data.filter(
+      const userList = res.data?.items || res.data || [];
+      const annotatorList = (Array.isArray(userList) ? userList : []).filter(
         (u) => u.role?.toLowerCase() === "annotator" && u.id !== managerId,
       );
-      const reviewerList = res.data.filter(
+      const reviewerList = (Array.isArray(userList) ? userList : []).filter(
         (u) => u.role?.toLowerCase() === "reviewer",
       );
       setAnnotators(annotatorList);
@@ -41,7 +42,6 @@ const ProjectAssignTask = () => {
   }, [id]);
 
   const handleAssign = async () => {
-    // BR-MNG-03: Must define labels before assigning
     if (!projectInfo?.labels || projectInfo.labels.length === 0) {
       return Swal.fire(
         "Chưa đủ điều kiện!",
@@ -52,7 +52,6 @@ const ProjectAssignTask = () => {
     if (!selectedAnnotator) {
       return Swal.fire("Cảnh báo", "Vui lòng chọn Annotator!", "warning");
     }
-    // BR-MNG-20: Manager must not self-assign
     if (selectedAnnotator === managerId) {
       return Swal.fire(
         "Không được phép!",

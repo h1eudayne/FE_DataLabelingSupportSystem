@@ -52,13 +52,14 @@ const CreateProject = () => {
     const fetchUsers = async () => {
       try {
         const res = await userService.getUsers();
-        const annotators = res.data
+        const userList = res.data.items || res.data;
+        const annotators = userList
           .filter((u) => u.role === "Annotator")
           .map((u) => ({
             value: u.id,
             label: `${u.fullName || u.userName} (Annotator)`,
           }));
-        const reviewers = res.data
+        const reviewers = userList
           .filter((u) => u.role === "Reviewer")
           .map((u) => ({
             value: u.id,

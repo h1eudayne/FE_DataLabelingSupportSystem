@@ -11,7 +11,7 @@ import analyticsService from "../services/manager/analytics/analyticsService";
 const ManagerContainer = () => {
   const [data, setData] = useState(null);
   const { user } = useSelector((state) => state.auth);
-  const managerId = user?.nameid;
+  const managerId = user?.id;
 
   useEffect(() => {
     if (managerId) {

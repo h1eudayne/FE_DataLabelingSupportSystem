@@ -37,7 +37,7 @@ const DisputeManagementPage = () => {
   const [managerComment, setManagerComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { user } = useSelector((state) => state.auth);
-  const managerId = user?.nameid;
+  const managerId = user?.id;
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -82,7 +82,6 @@ const DisputeManagementPage = () => {
 
   const handleResolve = async () => {
     if (!selectedDispute) return;
-    // BR-MNG-15: Comment is mandatory, must reference guideline
     if (!managerComment.trim()) {
       toast.warning(
         "Vui lòng nhập nhận xét dựa trên Guideline (BR-MNG-15). Không được để trống.",

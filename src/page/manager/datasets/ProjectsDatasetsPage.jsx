@@ -23,7 +23,7 @@ const ProjectsDatasetsPage = () => {
   });
   const fileInputRef = useRef(null);
   const { user } = useSelector((state) => state.auth);
-  const managerId = user?.nameid;
+  const managerId = user?.id;
 
   useEffect(() => {
     fetchList();

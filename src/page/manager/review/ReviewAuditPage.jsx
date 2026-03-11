@@ -37,7 +37,7 @@ const ReviewAuditPage = () => {
   const [auditComment, setAuditComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { user } = useSelector((state) => state.auth);
-  const managerId = user?.nameid;
+  const managerId = user?.id;
 
   const samplingStats = useMemo(() => {
     const total = tasks.length;
@@ -50,7 +50,6 @@ const ReviewAuditPage = () => {
     return { total, audited, notAudited, samplingRate };
   }, [tasks]);
 
-  // BR-MNG-17: Calculate Override Rate for Reviewer evaluation
   const reviewerStats = useMemo(() => {
     const auditedTasks = tasks.filter(
       (t) =>
@@ -121,7 +120,6 @@ const ReviewAuditPage = () => {
 
   const handleAudit = async () => {
     if (!selectedTask) return;
-    // BR-MNG-15: Comment is mandatory, must reference guideline
     if (!auditComment.trim()) {
       toast.warning(
         "Vui lòng nhập nhận xét audit dựa trên Guideline (BR-MNG-15). Không được để trống.",

@@ -98,7 +98,8 @@ const analyticsService = {
   getManagerStats: (managerId) =>
     axios.get(`/api/projects/managers/${managerId}/statistics`),
 
-  getUsers: () => axios.get("/api/users"),
+  getUsers: (page = 1, pageSize = 100) =>
+    axios.get(`/api/users?page=${page}&pageSize=${pageSize}`),
 };
 
 export default analyticsService;

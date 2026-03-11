@@ -6,22 +6,27 @@ export const getUsers = (page = 1, pageSize = 10) => {
   });
 };
 
+// POST /api/users
 export const createUser = (data) => {
-  return axios.post("/api/User", data);
+  return axios.post("/api/users", data);
 };
 
+// PUT /api/users/me/password
 export const changePassword = (oldPassword, newPassword) => {
-  return axios.post("/api/users/me/password", { oldPassword, newPassword });
+  return axios.put("/api/users/me/password", { oldPassword, newPassword });
 };
 
+// PUT /api/users/:id
 export const updateUser = (id, data) => {
   return axios.put(`/api/users/${id}`, data);
 };
 
+// GET /api/users/me
 export const getUserProfile = () => {
   return axios.get("/api/users/me");
 };
 
+// PUT /api/users/me
 export const updateUserProfile = (fullName, avatarUrl) => {
   return axios.put(`/api/users/me`, {
     fullName: fullName,
@@ -29,6 +34,7 @@ export const updateUserProfile = (fullName, avatarUrl) => {
   });
 };
 
+// POST /api/users/me/avatar
 export const uploadAvatar = (file) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -37,10 +43,12 @@ export const uploadAvatar = (file) => {
   });
 };
 
+// PATCH /api/users/:id/status?isActive=true
 export const updateStatus = (id, isActive) => {
   return axios.patch(`/api/users/${id}/status?isActive=${isActive}`);
 };
 
+// POST /api/users/import
 export const importUser = (file) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -49,4 +57,8 @@ export const importUser = (file) => {
       "Content-Type": "multipart/form-data",
     },
   });
+};
+
+export const deleteUser = (id) => {
+  return axios.delete(`/api/users/${id}`);
 };

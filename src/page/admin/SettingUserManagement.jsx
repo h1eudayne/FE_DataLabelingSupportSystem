@@ -29,8 +29,10 @@ const SettingUserManagement = () => {
   const fetchUsers = async () => {
     try {
       const res = await getUsers();
-      setUsers(res.data);
-      setFilteredUsers(res.data);
+      const data = res.data;
+      const userList = data.items || data;
+      setUsers(userList);
+      setFilteredUsers(userList);
     } catch (error) {
       console.error(error);
     }

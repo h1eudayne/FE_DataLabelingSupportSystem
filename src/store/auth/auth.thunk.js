@@ -6,7 +6,7 @@ export const loginThunk = createAsyncThunk(
   async ({ email, password }, { rejectWithValue }) => {
     try {
       const res = await loginAPI(email, password);
-      const token = res.data.token;
+      const token = res.data.accessToken;
       if (!token) {
         return rejectWithValue("Invalid response from server");
       }
