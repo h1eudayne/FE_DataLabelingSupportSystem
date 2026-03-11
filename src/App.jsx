@@ -1,3 +1,4 @@
+// import "./App.css";
 import "./assets/css/app.min.css";
 import "./assets/css/bootstrap.min.css";
 import "./assets/css/custom.min.css";
@@ -5,33 +6,40 @@ import "./assets/css/icons.min.css";
 import "./assets/css/usertable.min.css";
 
 import { SpeedInsights } from "@vercel/speed-insights/react";
-import { Routes, Route, Navigate } from "react-router-dom";
-
 import MainLayouts from "./components/layouts/MainLayouts";
 import HomePage from "./page/HomePage";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import RegisterPage from "./page/auth/RegisterPage";
 import WorkplaceLabelingTaskPage from "./page/annotator/labeling/WorkplaceLabelingTaskPage";
 import ProjectsAllProjectPage from "./page/manager/project/ProjectsAllProjectsPage";
+import WorkplaceReviewTaskPage from "./page/WorkplaceReviewTaskPage";
 import ExportPage from "./page/ExportPage";
+import DashboardProjectStatus from "./page/manager/status/DashboardProjectStatus";
 import SettingUserManagement from "./page/admin/SettingUserManagement";
 import SettingsSystemLogs from "./page/SettingsSystemLogs";
 import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 import PrivateRoute from "./routes/PrivateRoute";
 import AccessDenied from "./routes/AccessDenied";
+import AnnotatorDashboard from "./page/annotator/dashboard/AnnotatorDashboard";
 import AnnotatorTaskList from "./page/annotator/tasks/AnnotatorTaskList";
 import AnnotatorProjectPacks from "./page/annotator/tasks/AnnotatorProjectPacks";
+import ProjectImportData from "./page/manager/project/ProjectImportData";
 import ProjectAssignTask from "./page/manager/project/ProjectAssignTask";
 import CreateProject from "./page/manager/project/CreateProject";
 import ProjectsDatasetsPage from "./page/manager/datasets/ProjectsDatasetsPage";
+
 import DisputeManagementPage from "./page/manager/dispute/DisputeManagementPage";
 import ReviewAuditPage from "./page/manager/review/ReviewAuditPage";
 import LoginPage from "./page/auth/login/LoginPage";
+import { ROLES } from "./constants/roles";
 import LandingPage from "./page/LandingPage";
 import Profile from "./page/Profile";
 import ReviewWorkspace from "./components/reviewer/home/ReviewWorkspace";
 
 function App() {
-  const isLoggedIn = !!localStorage.getItem("access_token");
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const isLoggedIn = isAuthenticated;
 
   return (
     <>
@@ -63,7 +71,6 @@ function App() {
           <Route element={<MainLayouts />}>
             <Route path="dashboard" element={<HomePage />} />
             <Route path="profile" element={<Profile />} />
-
             <Route element={<RoleProtectedRoute allowRoles={["Admin"]} />}>
               <Route
                 path="settings-user-management"
@@ -103,6 +110,13 @@ function App() {
               <Route path="review-audit" element={<ReviewAuditPage />} />
             </Route>
 
+            <Route element={<RoleProtectedRoute allowRoles={["Reviewer"]} />}>
+              <Route
+                path="/reviewer/review-workspace/:assignmentId"
+                element={<ReviewWorkspace />}
+              />
+            </Route>
+
             <Route element={<RoleProtectedRoute allowRoles={["Annotator"]} />}>
               <Route
                 path="annotator-my-tasks"
@@ -120,7 +134,6 @@ function App() {
                 path="workplace-labeling-task/:assignmentId"
                 element={<WorkplaceLabelingTaskPage />}
               />
-
               <Route
                 path="annotator-team"
                 element={
@@ -133,7 +146,6 @@ function App() {
                   </div>
                 }
               />
-
               <Route
                 path="annotator-settings"
                 element={

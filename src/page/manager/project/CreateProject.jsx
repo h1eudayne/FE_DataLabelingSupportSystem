@@ -167,14 +167,18 @@ const CreateProject = () => {
     setLoading(true);
 
     try {
+      const deadlineISO = projectInfo.deadline
+        ? new Date(projectInfo.deadline).toISOString()
+        : new Date().toISOString();
+
       const resProj = await projectService.createProject({
         name: projectInfo.name,
         description: projectInfo.description,
         pricePerLabel: Number(projectInfo.pricePerLabel),
         totalBudget: Number(projectInfo.totalBudget),
-        deadline: projectInfo.deadline
-          ? new Date(projectInfo.deadline).toISOString()
-          : new Date().toISOString(),
+        deadline: deadlineISO,
+        startDate: new Date().toISOString(),
+        endDate: deadlineISO,
         allowGeometryTypes: projectInfo.type,
         maxTaskDurationHours: Number(projectInfo.maxTaskDurationHours) || 24,
         penaltyUnit: Number(projectInfo.penaltyUnit) || 10,
