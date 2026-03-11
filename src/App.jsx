@@ -34,6 +34,7 @@ import LoginPage from "./page/auth/login/LoginPage";
 import { ROLES } from "./constants/roles";
 import LandingPage from "./page/LandingPage";
 import Profile from "./page/Profile";
+import ReviewWorkspace from "./components/reviewer/home/ReviewWorkspace";
 
 function App() {
   const isLoggedIn = !!localStorage.getItem("access_token");
@@ -149,8 +150,13 @@ function App() {
                 }
               />
             </Route>
+            <Route element={<RoleProtectedRoute allowRoles={["Reviewer"]} />}>
+              <Route
+                path="/reviewer/review-workspace/:assignmentId"
+                element={<ReviewWorkspace />}
+              />
+            </Route>
           </Route>
-        </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

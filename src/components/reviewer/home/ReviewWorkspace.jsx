@@ -55,6 +55,7 @@ const ReviewWorkspace = () => {
     setLoading(true);
     try {
       const res = await projectService.getReviewWorkspace(assignmentId);
+
       setData(res.data[0]);
     } catch (error) {
       console.error("Lỗi lấy dữ liệu:", error);
