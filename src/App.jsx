@@ -110,6 +110,13 @@ function App() {
               <Route path="review-audit" element={<ReviewAuditPage />} />
             </Route>
 
+            <Route element={<RoleProtectedRoute allowRoles={["Reviewer"]} />}>
+              <Route
+                path="/reviewer/review-workspace/:assignmentId"
+                element={<ReviewWorkspace />}
+              />
+            </Route>
+
             <Route element={<RoleProtectedRoute allowRoles={["Annotator"]} />}>
               <Route
                 path="annotator-my-tasks"
