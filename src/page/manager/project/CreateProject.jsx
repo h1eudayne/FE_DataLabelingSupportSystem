@@ -167,15 +167,17 @@ const CreateProject = () => {
     setLoading(true);
 
     try {
-      const resProj = await projectService.createProject({
+      const deadlineDate = projectInfo.deadline
+        ? new Date(projectInfo.deadline).toISOString()
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      const payload = {
         name: projectInfo.name,
-        description: projectInfo.description,
+        description: projectInfo.description || "",
         pricePerLabel: Number(projectInfo.pricePerLabel),
         totalBudget: Number(projectInfo.totalBudget),
-        deadline: projectInfo.deadline
-          ? new Date(projectInfo.deadline).toISOString()
-          : new Date().toISOString(),
-        allowGeometryTypes: projectInfo.type,
+        deadline: deadlineDate,
+        allowGeometryTypes: projectInfo.type || "Rectangle",
         maxTaskDurationHours: Number(projectInfo.maxTaskDurationHours) || 24,
         penaltyUnit: Number(projectInfo.penaltyUnit) || 10,
         annotationGuide: projectInfo.annotationGuide || null,
@@ -183,11 +185,14 @@ const CreateProject = () => {
           .filter((l) => l.name.trim())
           .map((l) => ({
             name: l.name,
-            color: l.color,
-            guideLine: l.guideLine,
+            color: l.color || "#000000",
+            guideLine: l.guideLine || "",
             checklist: l.checklist.filter((c) => c.trim()),
           })),
-      });
+      };
+      console.log("CreateProject payload:", JSON.stringify(payload, null, 2));
+
+      const resProj = await projectService.createProject(payload);
 
       const projectId = resProj.data?.id || resProj.data?.projectId;
       if (!projectId) throw new Error("Không lấy được projectId");
@@ -225,8 +230,19 @@ const CreateProject = () => {
       toast.success("Tạo dự án thành công!");
       navigate("/projects-all-projects");
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Lỗi hệ thống");
+      console.error("CreateProject error:", err);
+      console.error("Response data:", err.response?.data);
+      const errData = err.response?.data;
+      const errMsg =
+        errData?.message ||
+        errData?.Message ||
+        errData?.title ||
+        (errData?.errors
+          ? Object.values(errData.errors).flat().join("; ")
+          : null) ||
+        err.message ||
+        "Lỗi hệ thống";
+      toast.error(errMsg);
     } finally {
       isSubmittingRef.current = false;
       setLoading(false);

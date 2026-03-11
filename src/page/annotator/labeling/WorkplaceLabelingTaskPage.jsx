@@ -643,6 +643,7 @@ const WorkplaceLabelingTaskPage = () => {
                   Vui lòng đọc comment bên dưới và sửa lại bản vẽ. Nếu ảnh
                   mờ/thiếu thông tin, hãy làm theo Guideline.
                 </span>
+                <br />
 
                 {disputeStatus === "Pending" ? (
                   <div className="mt-2 p-2 bg-warning bg-opacity-10 rounded border border-warning">

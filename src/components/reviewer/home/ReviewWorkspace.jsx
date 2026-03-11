@@ -7,22 +7,13 @@ import {
   Col,
   Button,
   Badge,
-  Card,
-  ListGroup,
   Form,
 } from "react-bootstrap";
 import projectService from "../../../services/reviewer/project.service";
 import { useDispatch } from "react-redux";
 import { setAnnotations } from "../../../store/annotator/labelling/labelingSlice";
 import LabelingWorkspace from "../../annotator/labeling/LabelingWorkspace";
-import {
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  FileSignature,
-  ArrowLeft,
-  Clock,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, Clock } from "lucide-react";
 
 const ReviewWorkspace = () => {
   const { assignmentId } = useParams();
@@ -33,22 +24,30 @@ const ReviewWorkspace = () => {
   const [data, setData] = useState(location.state?.workspaceData || null);
   const [loading, setLoading] = useState(!data);
   const [rejectComment, setRejectComment] = useState("");
+  const [errorCategory, setErrorCategory] = useState("");
+  const [checkedItems, setCheckedItems] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!data) {
-      fetchWorkspaceData();
-    }
+    if (!data) fetchWorkspaceData();
   }, [assignmentId]);
 
   useEffect(() => {
-    if (data && data.existingAnnotations) {
+    if (data?.existingAnnotations) {
       const annotations = data.existingAnnotations[0]?.annotations || [];
       dispatch(
-        setAnnotations({
-          assignmentId: data.assignmentId,
-          annotations: annotations,
-        }),
+        setAnnotations({ assignmentId: data.assignmentId, annotations }),
       );
+
+      const initialChecks = {};
+      data.labels?.forEach((label) => {
+        const annotatorChecks =
+          data.existingAnnotations[0]?.__checklist?.[label.id] || [];
+        annotatorChecks.forEach((val, idx) => {
+          if (val) initialChecks[`${label.id}-${idx}`] = true;
+        });
+      });
+      setCheckedItems(initialChecks);
     }
   }, [data, dispatch]);
 
@@ -56,11 +55,69 @@ const ReviewWorkspace = () => {
     setLoading(true);
     try {
       const res = await projectService.getReviewWorkspace(assignmentId);
+
       setData(res.data[0]);
     } catch (error) {
       console.error("Lỗi lấy dữ liệu:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCheckChange = (labelId, idx) => {
+    const key = `${labelId}-${idx}`;
+    setCheckedItems((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const submitReview = async (isApproved) => {
+    if (!isApproved) {
+      if (!errorCategory)
+        return alert("Quy định: Phải chọn Phân loại lỗi khi Reject!");
+      if (!rejectComment.trim())
+        return alert("Quy định: Phải ghi rõ lý do để Annotator sửa bài!");
+    }
+
+    if (isApproved) {
+      const totalChecklistItems = data.labels?.reduce((acc, label) => {
+        const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
+          label.id
+        ]?.some((v) => v === true);
+        return isLabelUsed ? acc + (label.checklist?.length || 0) : acc;
+      }, 0);
+      const checkedCount = Object.values(checkedItems).filter(Boolean).length;
+
+      if (checkedCount < totalChecklistItems) {
+        if (
+          !window.confirm(
+            "Bạn chưa đối chiếu hết Guideline (Checklist). Vẫn muốn Approve?",
+          )
+        )
+          return;
+      }
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        assignmentId: parseInt(assignmentId),
+        isApproved,
+        comment: rejectComment,
+        errorCategory: isApproved ? "" : errorCategory,
+      };
+
+      await projectService.submitReview(payload);
+      console.log("Submit Payload:", payload);
+
+      alert(
+        isApproved
+          ? "Phán quyết: DUYỆT thành công!"
+          : "Phán quyết: TỪ CHỐI bài làm.",
+      );
+      navigate("/reviewer/tasks");
+    } catch (error) {
+      alert("Lỗi hệ thống, không thể lưu phán quyết.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -77,7 +134,6 @@ const ReviewWorkspace = () => {
       </div>
     );
 
-  const annotations = data.existingAnnotations[0] || [];
   const isOverdue = new Date(data.deadline) < new Date();
 
   return (
@@ -88,13 +144,12 @@ const ReviewWorkspace = () => {
       <Container fluid className="p-0 d-flex flex-column vh-100">
         <div
           className="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white shadow-sm"
-          style={{ borderColor: "#dee2e6", zIndex: 10 }}
+          style={{ zIndex: 10 }}
         >
           <div className="d-flex align-items-center gap-2">
             <Button
               variant="outline-secondary"
               size="sm"
-              className="border-1 px-3 d-flex align-items-center gap-1"
               onClick={() => navigate(-1)}
             >
               <ArrowLeft size={14} /> Quay lại
@@ -102,20 +157,20 @@ const ReviewWorkspace = () => {
             <div className="ms-2 border-start ps-3">
               <span
                 className="text-muted small d-block"
-                style={{ fontSize: "10px", fontWeight: "600" }}
+                style={{ fontSize: "10px" }}
               >
                 PROJECT
               </span>
-              <span className="fw-bold text-dark">{data.projectName}</span>
+              <span className="fw-bold">{data.projectName}</span>
             </div>
           </div>
-
           <div className="d-flex gap-2">
-            <div className="vr mx-2 opacity-25"></div>
             <Button
               variant="danger"
               size="sm"
               className="px-4 fw-bold shadow-sm"
+              disabled={submitting}
+              onClick={() => submitReview(false)}
             >
               Reject
             </Button>
@@ -123,6 +178,8 @@ const ReviewWorkspace = () => {
               variant="success"
               size="sm"
               className="px-4 fw-bold shadow-sm"
+              disabled={submitting}
+              onClick={() => submitReview(true)}
             >
               Approve
             </Button>
@@ -132,8 +189,7 @@ const ReviewWorkspace = () => {
         <Row className="g-0 flex-grow-1 overflow-hidden">
           <Col
             lg={9}
-            className="position-relative d-flex flex-column"
-            style={{ backgroundColor: "#e9ecef" }}
+            className="position-relative d-flex flex-column bg-secondary bg-opacity-10"
           >
             <LabelingWorkspace
               imageUrl={data.storageUrl}
@@ -145,37 +201,27 @@ const ReviewWorkspace = () => {
           <Col
             lg={3}
             className="border-start d-flex flex-column bg-white shadow-sm"
-            style={{ borderColor: "#dee2e6", height: "calc(100vh - 57px)" }}
+            style={{ height: "calc(100vh - 57px)" }}
           >
-            <div
-              className="p-3 border-bottom"
-              style={{ backgroundColor: "#fdfdfd" }}
-            >
+            <div className="p-3 border-bottom bg-light bg-opacity-50">
               <h6
                 className="text-uppercase text-muted fw-bold mb-3"
-                style={{ fontSize: "11px", letterSpacing: "1px" }}
+                style={{ fontSize: "11px" }}
               >
                 Thông tin nhiệm vụ
               </h6>
               <div className="d-flex justify-content-between mb-2">
                 <span className="text-muted">Người gán:</span>
-                <span className="fw-semibold text-dark">
-                  {data.reviewerName}
-                </span>
+                <span className="fw-semibold">{data.reviewerName}</span>
               </div>
               <div className="d-flex justify-content-between align-items-center">
                 <span className="text-muted">Hạn chót:</span>
                 <Badge
                   bg={isOverdue ? "danger" : "light"}
-                  className={`border ${isOverdue ? "text-white" : "text-primary"} fw-bold px-2 d-flex align-items-center`}
+                  className={`border ${isOverdue ? "text-white" : "text-primary"} fw-bold px-2`}
                 >
-                  <Clock size={12} className="me-1" />
+                  <Clock size={12} className="me-1" />{" "}
                   {new Date(data.deadline).toLocaleDateString("vi-VN")}
-                  {isOverdue && (
-                    <span className="ms-1" style={{ fontSize: "9px" }}>
-                      (Quá hạn)
-                    </span>
-                  )}
                 </Badge>
               </div>
             </div>
@@ -183,87 +229,101 @@ const ReviewWorkspace = () => {
             <div className="p-3 flex-grow-1 overflow-auto bg-white">
               <h6
                 className="text-uppercase text-muted fw-bold mb-3"
-                style={{ fontSize: "11px", letterSpacing: "1px" }}
+                style={{ fontSize: "11px" }}
               >
-                Quy định gán nhãn
+                Đối chiếu Quy định
               </h6>
-              {data.labels?.map((label) => (
-                <div
-                  key={label.id}
-                  className="mb-3 p-3 rounded-3 border shadow-sm"
-                  style={{
-                    backgroundColor: "#fff",
-                    borderLeft: `4px solid ${label.color}`,
-                  }}
-                >
-                  <div
-                    className="fw-bold mb-1"
-                    style={{ color: label.color, fontSize: "13px" }}
-                  >
-                    {label.name}
-                  </div>
-                  <div className="text-muted mb-2" style={{ fontSize: "11px" }}>
-                    {label.guideLine}
-                  </div>
+              {data.labels?.map((label) => {
+                const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
+                  label.id
+                ]?.some((val) => val === true);
+                if (!isLabelUsed) return null;
 
-                  {label.checklist?.length > 0 && (
+                return (
+                  <div
+                    key={label.id}
+                    className="mb-3 p-3 rounded-3 border shadow-sm"
+                    style={{ borderLeft: `4px solid ${label.color}` }}
+                  >
                     <div
-                      className="mt-2 pt-2 border-top"
-                      style={{ borderColor: "#f1f3f5" }}
+                      className="fw-bold mb-1"
+                      style={{ color: label.color }}
                     >
-                      {label.checklist.map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="d-flex align-items-center gap-2 mb-1"
-                        >
-                          <CheckCircle size={12} className="text-success" />
-                          <span
-                            className="text-dark"
-                            style={{ fontSize: "11px" }}
-                          >
-                            {item}
-                          </span>
-                        </div>
-                      ))}
+                      {label.name}
                     </div>
-                  )}
-                </div>
-              ))}
+                    <div className="text-muted mb-2 small">
+                      {label.guideLine}
+                    </div>
+                    {label.checklist?.length > 0 && (
+                      <div className="mt-2 pt-2 border-top">
+                        {label.checklist.map((item, idx) => (
+                          <Form.Check
+                            key={idx}
+                            type="checkbox"
+                            id={`check-${label.id}-${idx}`}
+                            className="small mb-1"
+                            checked={!!checkedItems[`${label.id}-${idx}`]}
+                            onChange={() => handleCheckChange(label.id, idx)}
+                            label={
+                              <span style={{ fontSize: "11px" }}>{item}</span>
+                            }
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            <div
-              className="p-3 border-top bg-light shadow-lg"
-              style={{ zIndex: 5 }}
-            >
+            <div className="p-3 border-top bg-light shadow-lg">
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-bold text-danger">
+                  <AlertTriangle size={14} /> PHÂN LOẠI LỖI
+                </Form.Label>
+                <Form.Select
+                  size="sm"
+                  className="border-2 shadow-sm"
+                  value={errorCategory}
+                  onChange={(e) => setErrorCategory(e.target.value)}
+                >
+                  <option value="">-- Chọn loại lỗi --</option>
+                  <option value="missing">Vẽ thiếu nhãn (Missing)</option>
+                  <option value="extra">Vẽ thừa nhãn (Extra)</option>
+                  <option value="wrong_label">
+                    Sai loại nhãn (Wrong Label)
+                  </option>
+                  <option value="poor_quality">Vẽ lệch/Xấu (Poor Box)</option>
+                  <option value="guideline_violation">Vi phạm Guideline</option>
+                </Form.Select>
+              </Form.Group>
+
               <Form.Group>
-                <Form.Label className="small fw-bold text-muted d-flex justify-content-between">
-                  <span>PHẢN HỒI KIỂM DUYỆT</span>
-                  <span className="text-primary" style={{ cursor: "pointer" }}>
-                    Mẫu phản hồi?
-                  </span>
+                <Form.Label className="small fw-bold text-muted">
+                  LÝ DO CHI TIẾT
                 </Form.Label>
                 <Form.Control
                   as="textarea"
-                  rows={4}
-                  placeholder="Nhập lý do nếu từ chối hoặc yêu cầu sửa..."
-                  className="border-2 shadow-sm"
-                  style={{
-                    fontSize: "12px",
-                    borderColor: "#ced4da",
-                    resize: "none",
-                  }}
+                  rows={3}
+                  placeholder="Mô tả lỗi cụ thể..."
+                  className="border-2 shadow-sm small"
                   value={rejectComment}
                   onChange={(e) => setRejectComment(e.target.value)}
+                  style={{ resize: "none" }}
                 />
-                <div className="mt-2 d-grid">
-                  <small
-                    className="text-muted mb-2"
-                    style={{ fontSize: "10px" }}
-                  >
-                    * Phản hồi sẽ được gửi trực tiếp đến người gán nhãn.
-                  </small>
-                </div>
               </Form.Group>
+
+              <div className="mt-3 d-grid gap-2">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="fw-bold"
+                  disabled={submitting}
+                  onClick={() => submitReview(false)}
+                >
+                  Xác nhận Reject
+                </Button>
+              </div>
             </div>
           </Col>
         </Row>
