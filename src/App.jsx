@@ -37,17 +37,23 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={isLoggedIn ? <Navigate to="/" replace /> : <LandingPage />}
+          element={
+            isLoggedIn ? <Navigate to="/dashboard" replace /> : <LandingPage />
+          }
         />
 
         <Route
           path="/login"
-          element={isLoggedIn ? <Navigate to="/" replace /> : <LoginPage />}
+          element={
+            isLoggedIn ? <Navigate to="/dashboard" replace /> : <LoginPage />
+          }
         />
 
         <Route
           path="/register"
-          element={isLoggedIn ? <Navigate to="/" replace /> : <RegisterPage />}
+          element={
+            isLoggedIn ? <Navigate to="/dashboard" replace /> : <RegisterPage />
+          }
         />
 
         <Route path="/access-denied" element={<AccessDenied />} />
