@@ -148,7 +148,6 @@ function App() {
             </Route>
           </Route>
         </Route>
-        </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
