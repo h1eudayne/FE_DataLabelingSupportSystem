@@ -23,6 +23,13 @@ const ReviewerContainer = () => {
 
   const navigate = useNavigate();
 
+  const pendingProjectsCount = projects.filter(
+    (p) => p.progressPercent < 100,
+  ).length;
+  const completedProjectsCount = projects.filter(
+    (p) => p.progressPercent >= 100,
+  ).length;
+
   const fetchProjects = async () => {
     setLoading(true);
     try {
@@ -79,15 +86,43 @@ const ReviewerContainer = () => {
         />
 
         <Row className="mb-4 g-3">
-          <Col md={4}>
-            <Card className="border-0 shadow-sm rounded-4">
+          <Col md={4} sm={6}>
+            <Card className="border-0 shadow-sm rounded-4 h-100">
               <Card.Body className="d-flex align-items-center gap-3">
                 <div className="p-3 bg-primary-subtle rounded-3 text-primary">
                   <Clock size={24} />
                 </div>
                 <div>
-                  <div className="text-muted small fw-bold">DỰ ÁN ĐANG CHỜ</div>
-                  <h4 className="fw-bold mb-0">{projects.length}</h4>
+                  <div
+                    className="text-muted small fw-bold text-uppercase"
+                    style={{ fontSize: "10px" }}
+                  >
+                    Dự án đang chờ
+                  </div>
+                  <h4 className="fw-bold mb-0 text-primary">
+                    {pendingProjectsCount}
+                  </h4>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          <Col md={4} sm={6}>
+            <Card className="border-0 shadow-sm rounded-4 h-100">
+              <Card.Body className="d-flex align-items-center gap-3">
+                <div className="p-3 bg-success-subtle rounded-3 text-success">
+                  <CheckCircle size={24} />
+                </div>
+                <div>
+                  <div
+                    className="text-muted small fw-bold text-uppercase"
+                    style={{ fontSize: "10px" }}
+                  >
+                    Dự án hoàn thành
+                  </div>
+                  <h4 className="fw-bold mb-0 text-success">
+                    {completedProjectsCount}
+                  </h4>
                 </div>
               </Card.Body>
             </Card>
