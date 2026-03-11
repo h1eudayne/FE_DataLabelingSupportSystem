@@ -35,6 +35,7 @@ import LoginPage from "./page/auth/login/LoginPage";
 import { ROLES } from "./constants/roles";
 import LandingPage from "./page/LandingPage";
 import Profile from "./page/Profile";
+import ReviewWorkspace from "./components/reviewer/home/ReviewWorkspace";
 
 function App() {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -107,6 +108,13 @@ function App() {
                 element={<DisputeManagementPage />}
               />
               <Route path="review-audit" element={<ReviewAuditPage />} />
+            </Route>
+
+            <Route element={<RoleProtectedRoute allowRoles={["Reviewer"]} />}>
+              <Route
+                path="/reviewer/review-workspace/:assignmentId"
+                element={<ReviewWorkspace />}
+              />
             </Route>
 
             <Route element={<RoleProtectedRoute allowRoles={["Annotator"]} />}>

@@ -1,21 +1,22 @@
 import React, { useEffect, useState, useCallback } from "react";
 import commentService from "../../../../services/annotator/labeling/commentService";
-import { toast } from "react-toastify";
 
 const CommentSection = ({ projectId, taskId }) => {
   const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const loadComments = useCallback(async () => {
     if (!projectId) return;
     try {
       const res = await commentService.getCommentsByProject(projectId);
-      setComments(res.data || []);
+      const allComments = res.data || [];
+      const taskComments = allComments.filter(
+        (item) => item.assignmentId === taskId,
+      );
+      setComments(taskComments);
     } catch (error) {
       console.error("Lỗi tải bình luận:", error);
     }
-  }, [projectId]);
+  }, [projectId, taskId]);
 
   useEffect(() => {
     if (taskId) {
@@ -23,47 +24,27 @@ const CommentSection = ({ projectId, taskId }) => {
     }
   }, [taskId, loadComments]);
 
-  const handlePostComment = async () => {
-    setLoading(true);
-    try {
-      const data = {
-        projectId: projectId,
-        taskId: taskId,
-        comment: newComment,
-      };
-      await commentService.postComment(data);
-      setNewComment("");
-      loadComments();
-      toast.success("Đã gửi phản hồi");
-    } catch {
-      toast.error("Gửi thất bại");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="card mt-4 shadow-sm border-0">
       <div className="card-header align-items-center d-flex bg-white py-3">
         <h4 className="card-title mb-0 flex-grow-1 fw-bold">
           <i className="ri-discuss-line me-2 text-success"></i>
-          Thảo luận & Phản hồi
+          Phản hồi từ Reviewer
         </h4>
       </div>
 
       <div className="card-body">
         <div
-          className="px-3 mb-3"
+          className="px-3"
           style={{
-            height: "300px",
+            maxHeight: "300px",
             overflowY: "auto",
-            borderBottom: "1px solid #eee",
           }}
         >
           {comments.length === 0 ? (
-            <div className="text-center mt-5 text-muted">
+            <div className="text-center py-4 text-muted">
               <i className="ri-chat-history-line fs-24"></i>
-              <p>Chưa có thảo luận nào cho nhiệm vụ này.</p>
+              <p>Chưa có phản hồi nào cho ảnh này.</p>
             </div>
           ) : (
             comments.map((item, index) => (
@@ -77,10 +58,17 @@ const CommentSection = ({ projectId, taskId }) => {
                 </div>
                 <div className="flex-grow-1 ms-3">
                   <h5 className="fs-13 mb-1">
-                    {item.userName || "User"}
+                    {item.userName || "Reviewer"}
                     <small className="text-muted ms-2">
                       {new Date(item.createdAt).toLocaleString()}
                     </small>
+                    {item.isApproved !== undefined && (
+                      <span
+                        className={`badge ms-2 ${item.isApproved ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"}`}
+                      >
+                        {item.isApproved ? "Approved" : "Rejected"}
+                      </span>
+                    )}
                     {item.errorCategory && item.errorCategory !== "General" && (
                       <span className="badge bg-danger-subtle text-danger ms-2">
                         Lỗi: {item.errorCategory}
@@ -94,33 +82,6 @@ const CommentSection = ({ projectId, taskId }) => {
               </div>
             ))
           )}
-        </div>
-
-        <div className="mt-3">
-          <div className="row g-3">
-            <div className="col-12">
-              <label className="form-label fw-medium text-muted">
-                Gửi phản hồi cho Reviewer / Manager
-              </label>
-              <textarea
-                className="form-control bg-light border-light"
-                rows="3"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Nhập nội dung thắc mắc hoặc giải trình về các nhãn đã sửa..."
-              ></textarea>
-            </div>
-            <div className="col-12 text-end">
-              <button
-                type="button"
-                className="btn btn-success px-4"
-                onClick={handlePostComment}
-                disabled={loading || !newComment.trim()}
-              >
-                {loading ? "Đang gửi..." : "Gửi bình luận"}
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
