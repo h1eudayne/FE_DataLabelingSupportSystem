@@ -8,19 +8,27 @@ import {
   Button,
   Badge,
   Form,
+  Card,
 } from "react-bootstrap";
 import projectService from "../../../services/reviewer/project.service";
 import { useDispatch } from "react-redux";
 import { setAnnotations } from "../../../store/annotator/labelling/labelingSlice";
 import LabelingWorkspace from "../../annotator/labeling/LabelingWorkspace";
-import { AlertTriangle, ArrowLeft, Clock } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+} from "lucide-react";
 
 const ReviewWorkspace = () => {
-  const { assignmentId } = useParams();
+  const { assignmentId, projectId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const [taskList, setTaskList] = useState(location.state?.taskList || []);
   const [data, setData] = useState(location.state?.workspaceData || null);
   const [loading, setLoading] = useState(!data);
   const [rejectComment, setRejectComment] = useState("");
@@ -28,8 +36,13 @@ const ReviewWorkspace = () => {
   const [checkedItems, setCheckedItems] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  const currentIndex = taskList.findIndex(
+    (t) => t.assignmentId.toString() === assignmentId,
+  );
+
   useEffect(() => {
-    if (!data) fetchWorkspaceData();
+    setData(null);
+    fetchWorkspaceData();
   }, [assignmentId]);
 
   useEffect(() => {
@@ -54,19 +67,37 @@ const ReviewWorkspace = () => {
   const fetchWorkspaceData = async () => {
     setLoading(true);
     try {
-      const res = await projectService.getReviewWorkspace(assignmentId);
+      const res = await projectService.getReviewWorkspace(projectId);
+      const tasks = res.data || [];
 
-      setData(res.data[0]);
+      const currentTaskData = tasks.find(
+        (t) => t.assignmentId.toString() === assignmentId.toString(),
+      );
+
+      if (currentTaskData) {
+        setData(currentTaskData);
+        setTaskList(tasks);
+      }
     } catch (error) {
       console.error("Lỗi lấy dữ liệu:", error);
     } finally {
       setLoading(false);
+      setRejectComment("");
+      setErrorCategory("");
+      setCheckedItems({});
     }
   };
 
-  const handleCheckChange = (labelId, idx) => {
-    const key = `${labelId}-${idx}`;
-    setCheckedItems((prev) => ({ ...prev, [key]: !prev[key] }));
+  const handleNavigateTask = (direction) => {
+    const newIndex = direction === "next" ? currentIndex + 1 : currentIndex - 1;
+
+    if (newIndex >= 0 && newIndex < taskList.length) {
+      const nextId = taskList[newIndex].assignmentId;
+
+      navigate(`/reviewer/review-workspace/${projectId}/${nextId}`, {
+        state: { taskList },
+      });
+    }
   };
 
   const submitReview = async (isApproved) => {
@@ -108,12 +139,31 @@ const ReviewWorkspace = () => {
       await projectService.submitReview(payload);
       console.log("Submit Payload:", payload);
 
-      alert(
-        isApproved
-          ? "Phán quyết: DUYỆT thành công!"
-          : "Phán quyết: TỪ CHỐI bài làm.",
-      );
-      navigate("/reviewer/tasks");
+      const isLastTask = currentIndex === taskList.length - 1;
+
+      if (isLastTask) {
+        alert("Chúc mừng! Bạn đã hoàn thành mục kiểm duyệt cuối cùng.");
+        navigate("/reviewer/tasks");
+      } else {
+        const nextTask = taskList[currentIndex + 1];
+
+        console.log(
+          isApproved
+            ? "Đã duyệt, chuyển ảnh tiếp theo..."
+            : "Đã từ chối, chuyển ảnh tiếp theo...",
+        );
+
+        navigate(
+          `/reviewer/review-workspace/${projectId}/${nextTask.assignmentId}`,
+          {
+            state: {
+              taskList,
+              workspaceData: nextTask,
+              projectId,
+            },
+          },
+        );
+      }
     } catch (error) {
       alert("Lỗi hệ thống, không thể lưu phán quyết.");
     } finally {
@@ -150,10 +200,34 @@ const ReviewWorkspace = () => {
             <Button
               variant="outline-secondary"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/reviewer/tasks")}
             >
               <ArrowLeft size={14} /> Quay lại
             </Button>
+            <div className="d-flex align-items-center bg-light rounded-pill px-2 py-1 border">
+              <Button
+                variant="link"
+                className={`p-1 ${currentIndex <= 0 ? "text-muted" : "text-primary"}`}
+                disabled={currentIndex <= 0}
+                onClick={() => handleNavigateTask("prev")}
+              >
+                <ChevronLeft size={20} />
+              </Button>
+              <span
+                className="px-2 fw-bold border-start border-end mx-1"
+                style={{ minWidth: "60px", textAlign: "center" }}
+              >
+                {currentIndex + 1} / {taskList.length}
+              </span>
+              <Button
+                variant="link"
+                className={`p-1 ${currentIndex >= taskList.length - 1 ? "text-muted" : "text-primary"}`}
+                disabled={currentIndex >= taskList.length - 1}
+                onClick={() => handleNavigateTask("next")}
+              >
+                <ChevronRight size={20} />
+              </Button>
+            </div>
             <div className="ms-2 border-start ps-3">
               <span
                 className="text-muted small d-block"
@@ -226,13 +300,17 @@ const ReviewWorkspace = () => {
               </div>
             </div>
 
-            <div className="p-3 flex-grow-1 overflow-auto bg-white">
+            <div
+              className="p-3 flex-grow-1 overflow-auto"
+              style={{ backgroundColor: "#f8f9fa" }}
+            >
               <h6
-                className="text-uppercase text-muted fw-bold mb-3"
-                style={{ fontSize: "11px" }}
+                className="text-uppercase fw-bold mb-3 text-secondary"
+                style={{ fontSize: "11px", letterSpacing: "0.5px" }}
               >
                 Đối chiếu Quy định
               </h6>
+
               {data.labels?.map((label) => {
                 const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
                   label.id
@@ -240,38 +318,69 @@ const ReviewWorkspace = () => {
                 if (!isLabelUsed) return null;
 
                 return (
-                  <div
+                  <Card
                     key={label.id}
-                    className="mb-3 p-3 rounded-3 border shadow-sm"
-                    style={{ borderLeft: `4px solid ${label.color}` }}
+                    className="border-0 shadow-sm mb-3 rounded-3 overflow-hidden"
                   >
                     <div
-                      className="fw-bold mb-1"
-                      style={{ color: label.color }}
+                      className="px-3 py-2 fw-bold d-flex align-items-center justify-content-between"
+                      style={{
+                        backgroundColor: `${label.color}15`,
+                        borderLeft: `4px solid ${label.color}`,
+                        color: label.color,
+                        fontSize: "13px",
+                      }}
                     >
-                      {label.name}
+                      <span>{label.name}</span>
+                      <Badge
+                        pill
+                        style={{
+                          backgroundColor: label.color,
+                          fontSize: "10px",
+                        }}
+                      >
+                        Active
+                      </Badge>
                     </div>
-                    <div className="text-muted mb-2 small">
-                      {label.guideLine}
-                    </div>
-                    {label.checklist?.length > 0 && (
-                      <div className="mt-2 pt-2 border-top">
-                        {label.checklist.map((item, idx) => (
-                          <Form.Check
-                            key={idx}
-                            type="checkbox"
-                            id={`check-${label.id}-${idx}`}
-                            className="small mb-1"
-                            checked={!!checkedItems[`${label.id}-${idx}`]}
-                            onChange={() => handleCheckChange(label.id, idx)}
-                            label={
-                              <span style={{ fontSize: "11px" }}>{item}</span>
-                            }
-                          />
-                        ))}
+
+                    <Card.Body className="p-3 bg-white">
+                      <div
+                        className="text-dark mb-2 fw-medium"
+                        style={{ fontSize: "12px", lineHeight: "1.4" }}
+                      >
+                        {label.guideLine}
                       </div>
-                    )}
-                  </div>
+
+                      {label.checklist?.length > 0 && (
+                        <div className="mt-2 pt-2 border-top">
+                          <div
+                            className="text-uppercase text-muted fw-bold mb-2"
+                            style={{ fontSize: "10px", letterSpacing: "0.5px" }}
+                          >
+                            Checklist kiểm duyệt
+                          </div>
+                          {label.checklist.map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="d-flex align-items-start gap-2 mb-2 text-dark"
+                              style={{ fontSize: "12px" }}
+                            >
+                              <div
+                                className="mt-1"
+                                style={{
+                                  minWidth: "6px",
+                                  height: "6px",
+                                  borderRadius: "50%",
+                                  backgroundColor: label.color,
+                                }}
+                              ></div>
+                              <span className="opacity-85">{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </Card.Body>
+                  </Card>
                 );
               })}
             </div>

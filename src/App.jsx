@@ -149,7 +149,7 @@ function App() {
             </Route>
             <Route element={<RoleProtectedRoute allowRoles={["Reviewer"]} />}>
               <Route
-                path="/reviewer/review-workspace/:assignmentId"
+                path="/reviewer/review-workspace/:projectId/:assignmentId"
                 element={<ReviewWorkspace />}
               />
             </Route>

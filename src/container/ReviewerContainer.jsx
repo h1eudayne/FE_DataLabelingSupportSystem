@@ -49,12 +49,16 @@ const ReviewerContainer = () => {
   const getReviewWorkspace = async (projectId) => {
     try {
       const res = await projectService.getReviewWorkspace(projectId);
-      if (res.data) {
-        const data = res.data[0];
+      if (res.data && res.data.length > 0) {
+        const allTasks = res.data;
+        const firstTask = allTasks[0];
 
-        navigate(`/reviewer/review-workspace/${data.assignmentId}`, {
-          state: { workspaceData: data },
-        });
+        navigate(
+          `/reviewer/review-workspace/${projectId}/${firstTask.assignmentId}`,
+          {
+            state: { workspaceData: firstTask, taskList: allTasks },
+          },
+        );
       } else {
         alert(
           "Hiện tại không còn mục dữ liệu nào cần kiểm duyệt trong dự án này!",
@@ -125,6 +129,7 @@ const ReviewerContainer = () => {
 };
 
 const ProjectCardItem = ({ project, onReview }) => {
+  const isCompleted = project.progressPercent >= 100;
   return (
     <Card className="border-0 shadow-sm rounded-4 overflow-hidden project-card-hover">
       <Card.Body className="p-4">
@@ -163,15 +168,26 @@ const ProjectCardItem = ({ project, onReview }) => {
           </Col>
 
           <Col md={3} className="text-end">
-            <Button
-              variant="outline-primary"
-              className="rounded-pill px-4 d-inline-flex align-items-center gap-2"
-              onClick={() => {
-                onReview(project.projectId);
-              }}
-            >
-              Bắt đầu Review <ArrowRight size={16} />
-            </Button>
+            {isCompleted ? (
+              <Button
+                variant="light"
+                className="rounded-pill px-4 d-inline-flex align-items-center gap-2 text-success fw-bold border-0"
+                style={{ backgroundColor: "#e1f5fe", cursor: "default" }}
+                disabled
+              >
+                <CheckCircle size={16} /> Completed
+              </Button>
+            ) : (
+              <Button
+                variant="outline-primary"
+                className="rounded-pill px-4 d-inline-flex align-items-center gap-2"
+                onClick={() => {
+                  onReview(project.projectId);
+                }}
+              >
+                Bắt đầu Review <ArrowRight size={16} />
+              </Button>
+            )}
           </Col>
         </Row>
       </Card.Body>
