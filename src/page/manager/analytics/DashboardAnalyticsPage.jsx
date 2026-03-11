@@ -32,6 +32,7 @@ import {
   Users,
   AlertTriangle,
   TrendingDown,
+  Target,
 } from "lucide-react";
 import StatCard from "../../../components/manager/analytics/StatCard";
 import { useSelector } from "react-redux";
@@ -66,6 +67,8 @@ const DashboardAnalytics = () => {
   const [expandedReviewers, setExpandedReviewers] = useState({});
   const [projectProgressData, setProjectProgressData] = useState([]);
   const [expandedProjects, setExpandedProjects] = useState({});
+  const [avgProjectAccuracy, setAvgProjectAccuracy] = useState(null);
+  const [projectAccuracies, setProjectAccuracies] = useState([]);
 
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.id;
@@ -96,11 +99,15 @@ const DashboardAnalytics = () => {
         const allErrors = {};
         const allAnnotators = [];
         const allLabels = {};
+        const allReviewerPerformances = [];
+        let totalAccItems = 0;
+        let totalAccWeighted = 0;
 
         const reviewerMap = {};
         const alerts = [];
         const chartStatsArr = [];
         const projectProgressArr = [];
+        const projectAccuraciesArr = [];
 
         for (const project of projects) {
           try {
@@ -141,6 +148,28 @@ const DashboardAnalytics = () => {
                 });
               });
             }
+
+            if (s.reviewerPerformances?.length) {
+              s.reviewerPerformances.forEach((rp) => {
+                allReviewerPerformances.push({
+                  ...rp,
+                  _projectName: project.name,
+                  _projectId: project.id,
+                });
+              });
+            }
+
+            if (s.projectAccuracy != null && s.totalItems > 0) {
+              totalAccWeighted += s.projectAccuracy * s.totalItems;
+              totalAccItems += s.totalItems;
+            }
+            projectAccuraciesArr.push({
+              projectId: project.id,
+              projectName: project.name,
+              accuracy: s.projectAccuracy ?? 0,
+              totalItems: s.totalItems ?? 0,
+              completedItems: s.completedItems ?? 0,
+            });
 
             if (s.labelDistributions?.length) {
               s.labelDistributions.forEach((ld) => {
@@ -307,8 +336,38 @@ const DashboardAnalytics = () => {
         }
 
         projectProgressArr.forEach((pp) => {
+          const apiReviewersForProject = allReviewerPerformances.filter(
+            (rp) => rp._projectId === pp.projectId,
+          );
+
           const projectReviewers = [];
+          const seenReviewers = new Set();
+
+          apiReviewersForProject.forEach((rp) => {
+            const revTotal = rp.totalReviews || 0;
+            const mapData = Object.values(reviewerMap).find(
+              (rm) => rm.name === rp.reviewerName,
+            );
+            const mapPd = mapData?.projectDetails[pp.projectId];
+            const assignedTotal = mapPd?.assigned || 0;
+            const effectiveTotal = Math.max(revTotal, assignedTotal);
+
+            projectReviewers.push({
+              id: rp.reviewerId,
+              name: rp.reviewerName,
+              role: "Reviewer",
+              done: revTotal,
+              total: effectiveTotal,
+              progress:
+                effectiveTotal > 0
+                  ? Math.round((revTotal / effectiveTotal) * 100)
+                  : 0,
+            });
+            seenReviewers.add(rp.reviewerName);
+          });
+
           Object.values(reviewerMap).forEach((rev) => {
+            if (seenReviewers.has(rev.name)) return;
             const pd = rev.projectDetails[pp.projectId];
             if (pd) {
               const revTotal = pd.assigned || 0;
@@ -324,6 +383,7 @@ const DashboardAnalytics = () => {
               });
             }
           });
+
           pp.reviewers = projectReviewers;
         });
 
@@ -377,8 +437,15 @@ const DashboardAnalytics = () => {
               completedImages: a.tasksCompleted || 0,
               rejectedImages: a.tasksRejected || 0,
               averageQualityScore: a.averageQualityScore ?? 100,
+              annotatorAccuracy: a.annotatorAccuracy ?? 0,
               totalCriticalErrors: a.totalCriticalErrors || 0,
               _qualityScores: [a.averageQualityScore ?? 100],
+              _accuracyScores: [
+                {
+                  score: a.annotatorAccuracy ?? 0,
+                  weight: a.tasksAssigned || 1,
+                },
+              ],
               projectDetails: [projectDetail],
             };
           } else {
@@ -393,6 +460,21 @@ const DashboardAnalytics = () => {
             existing.averageQualityScore =
               existing._qualityScores.reduce((s, v) => s + v, 0) /
               existing._qualityScores.length;
+            existing._accuracyScores.push({
+              score: a.annotatorAccuracy ?? 0,
+              weight: a.tasksAssigned || 1,
+            });
+            const totalWeight = existing._accuracyScores.reduce(
+              (s, v) => s + v.weight,
+              0,
+            );
+            existing.annotatorAccuracy =
+              totalWeight > 0
+                ? existing._accuracyScores.reduce(
+                    (s, v) => s + v.score * v.weight,
+                    0,
+                  ) / totalWeight
+                : 0;
             existing.projectDetails.push(projectDetail);
           }
         });
@@ -411,19 +493,64 @@ const DashboardAnalytics = () => {
 
         setQualityAlerts(alerts);
 
-        const reviewerEvals = Object.values(reviewerMap).map((r) => ({
-          ...r,
-          overrideRate:
-            r.totalReviews > 0
-              ? ((r.overridden / r.totalReviews) * 100).toFixed(1)
-              : "0.0",
-          disputeRate:
-            r.totalReviews > 0
-              ? ((r.disputeCount / r.totalReviews) * 100).toFixed(1)
-              : "0.0",
-          totalProjects: Object.keys(r.projectDetails || {}).length,
-          projectDetailsList: Object.values(r.projectDetails || {}),
-        }));
+        const reviewerAccuracyMap = {};
+        allReviewerPerformances.forEach((rp) => {
+          if (!reviewerAccuracyMap[rp.reviewerName]) {
+            reviewerAccuracyMap[rp.reviewerName] = {
+              totalCorrect: 0,
+              totalMgrDecisions: 0,
+              projectAccuracies: [],
+            };
+          }
+          reviewerAccuracyMap[rp.reviewerName].totalCorrect +=
+            rp.correctDecisions || 0;
+          reviewerAccuracyMap[rp.reviewerName].totalMgrDecisions +=
+            rp.totalManagerDecisions || 0;
+          reviewerAccuracyMap[rp.reviewerName].projectAccuracies.push({
+            projectName: rp._projectName,
+            reviewerAccuracy: rp.reviewerAccuracy ?? 0,
+            totalReviews: rp.totalReviews || 0,
+            correctDecisions: rp.correctDecisions || 0,
+            totalManagerDecisions: rp.totalManagerDecisions || 0,
+          });
+        });
+
+        const reviewerEvals = Object.values(reviewerMap).map((r) => {
+          const accData = reviewerAccuracyMap[r.name];
+          const apiTotalReviews =
+            accData?.projectAccuracies?.reduce(
+              (sum, pa) => sum + (pa.totalReviews || 0),
+              0,
+            ) || 0;
+          const effectiveTotalReviews = Math.max(
+            r.totalReviews,
+            apiTotalReviews,
+          );
+
+          const reviewerAccuracy =
+            accData && accData.totalMgrDecisions > 0
+              ? (
+                  (accData.totalCorrect / accData.totalMgrDecisions) *
+                  100
+                ).toFixed(1)
+              : "—";
+          return {
+            ...r,
+            totalReviews: effectiveTotalReviews,
+            overrideRate:
+              effectiveTotalReviews > 0
+                ? ((r.overridden / effectiveTotalReviews) * 100).toFixed(1)
+                : "0.0",
+            disputeRate:
+              effectiveTotalReviews > 0
+                ? ((r.disputeCount / effectiveTotalReviews) * 100).toFixed(1)
+                : "0.0",
+            totalProjects: Object.keys(r.projectDetails || {}).length,
+            projectDetailsList: Object.values(r.projectDetails || {}),
+            reviewerAccuracy,
+            projectAccuracies: accData?.projectAccuracies || [],
+          };
+        });
         setReviewerEvaluations(reviewerEvals);
 
         setProjectChartData(chartStatsArr);
@@ -436,6 +563,13 @@ const DashboardAnalytics = () => {
         const frontendStaffCount = allStaffIds.size;
         const apiMembers = managerStats?.totalMembers || 0;
         setTotalMembers(Math.max(apiMembers, frontendStaffCount));
+
+        setAvgProjectAccuracy(
+          totalAccItems > 0
+            ? Math.round((totalAccWeighted / totalAccItems) * 10) / 10
+            : null,
+        );
+        setProjectAccuracies(projectAccuraciesArr);
 
         setAnnotatorData(
           annotatorsArr
@@ -520,6 +654,7 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
+      {/* 1. Cảnh báo Chất lượng */}
       {qualityAlerts.length > 0 && (
         <Row className="mt-3">
           <Col xl={12}>
@@ -543,6 +678,7 @@ const DashboardAnalytics = () => {
         </Row>
       )}
 
+      {/* 2. Charts: So sánh quy mô + Cơ cấu trạng thái */}
       <Row className="mt-3">
         <Col xl={8}>
           <Card className="shadow-sm border-0 h-100">
@@ -610,6 +746,488 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
+      {/* 3. Độ chính xác dự án (PA) */}
+      {projectAccuracies.length > 0 && (
+        <Row className="mt-3">
+          <Col xl={12}>
+            <Card className="shadow-sm border-0">
+              <CardHeader className="bg-white border-bottom">
+                <div className="d-flex align-items-center justify-content-between">
+                  <h5 className="mb-0">
+                    <Target size={18} className="me-2 text-primary" />
+                    Độ chính xác dự án (PA) — First-pass Correct
+                  </h5>
+                  {avgProjectAccuracy !== null && (
+                    <Badge
+                      color={
+                        avgProjectAccuracy >= 80
+                          ? "success"
+                          : avgProjectAccuracy >= 50
+                            ? "warning"
+                            : "danger"
+                      }
+                      className="fs-12 px-3 py-1"
+                    >
+                      Trung bình: {avgProjectAccuracy}%
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardBody>
+                <p className="text-muted small mb-3">
+                  <i className="ri-information-line me-1"></i>
+                  PA = Tỷ lệ approved đúng từ lần review đầu tiên / Tổng data
+                  items.
+                </p>
+                <div className="table-responsive">
+                  <Table className="table-hover align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Dự án</th>
+                        <th className="text-center">Tổng ảnh</th>
+                        <th className="text-center">Đã hoàn thành</th>
+                        <th className="text-center">Accuracy (PA)</th>
+                        <th style={{ minWidth: "200px" }}>Tiến độ chính xác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {projectAccuracies.map((pa) => (
+                        <tr key={pa.projectId}>
+                          <td className="fw-semibold">
+                            <i className="ri-folder-line me-1 text-primary"></i>
+                            {pa.projectName}
+                          </td>
+                          <td className="text-center">{pa.totalItems}</td>
+                          <td className="text-center text-success fw-bold">
+                            {pa.completedItems}
+                          </td>
+                          <td className="text-center">
+                            <Badge
+                              color={
+                                pa.accuracy >= 80
+                                  ? "success"
+                                  : pa.accuracy >= 50
+                                    ? "warning"
+                                    : "danger"
+                              }
+                            >
+                              {pa.accuracy > 0 ? `${pa.accuracy}%` : "—"}
+                            </Badge>
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center gap-2">
+                              <Progress
+                                value={pa.accuracy}
+                                color={
+                                  pa.accuracy >= 80
+                                    ? "success"
+                                    : pa.accuracy >= 50
+                                      ? "warning"
+                                      : "danger"
+                                }
+                                className="flex-grow-1"
+                                style={{ height: "6px" }}
+                              />
+                              <small
+                                className="text-muted fw-bold"
+                                style={{ minWidth: "40px" }}
+                              >
+                                {pa.accuracy}%
+                              </small>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+      )}
+
+      {/* 4. Hiệu suất Annotator */}
+      <Row className="mt-3">
+        <Col xl={12}>
+          <Card className="shadow-sm border-0">
+            <CardHeader className="bg-white border-bottom">
+              <h5 className="mb-0">
+                <i className="ri-user-star-line me-2 text-success"></i>
+                Hiệu suất Annotator
+              </h5>
+            </CardHeader>
+            <CardBody>
+              {annotatorPerformances.length > 0 ? (
+                <div className="table-responsive">
+                  <p className="text-muted small mb-2">
+                    <i className="ri-information-line me-1"></i>
+                    Bấm vào tên annotator để xem chi tiết theo dự án
+                  </p>
+                  <Table className="table-hover align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Annotator</th>
+                        <th className="text-center">Được giao (task)</th>
+                        <th className="text-center">Hoàn thành (task)</th>
+                        <th className="text-center">Tổng ảnh</th>
+                        <th className="text-center">Ảnh đã xong</th>
+                        <th className="text-center">Quality Score</th>
+                        <th className="text-center">Lỗi nghiêm trọng</th>
+                        <th className="text-center">Accuracy</th>
+                        <th>Tiến độ (ảnh)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {annotatorPerformances.map((a) => {
+                        const completionRate =
+                          a.totalImages > 0
+                            ? Math.round(
+                                (a.completedImages / a.totalImages) * 100,
+                              )
+                            : 0;
+                        const isExpanded = expandedAnnotators[a.annotatorId];
+                        return (
+                          <React.Fragment key={a.annotatorId}>
+                            {/* Summary row - per person */}
+                            <tr
+                              style={{ cursor: "pointer" }}
+                              onClick={() =>
+                                setExpandedAnnotators((prev) => ({
+                                  ...prev,
+                                  [a.annotatorId]: !prev[a.annotatorId],
+                                }))
+                              }
+                              className={isExpanded ? "table-active" : ""}
+                            >
+                              <td className="fw-semibold">
+                                <i
+                                  className={`ri-arrow-${isExpanded ? "down" : "right"}-s-line me-1`}
+                                ></i>
+                                {a.annotatorName || a.annotatorId}
+                              </td>
+                              <td className="text-center">{a.totalTasks}</td>
+                              <td className="text-center text-success fw-bold">
+                                {a.completedTasks}
+                              </td>
+                              <td className="text-center">{a.totalImages}</td>
+                              <td className="text-center text-info fw-bold">
+                                {a.completedImages}
+                              </td>
+                              <td className="text-center">
+                                <Badge
+                                  color={
+                                    a.averageQualityScore >= 80
+                                      ? "success"
+                                      : a.averageQualityScore >= 50
+                                        ? "warning"
+                                        : "danger"
+                                  }
+                                >
+                                  {a.averageQualityScore > 0
+                                    ? a.averageQualityScore.toFixed(1)
+                                    : "—"}
+                                </Badge>
+                              </td>
+                              <td className="text-center">
+                                {a.totalCriticalErrors > 0 ? (
+                                  <Badge color="danger">
+                                    {a.totalCriticalErrors}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted">0</span>
+                                )}
+                              </td>
+                              <td className="text-center">
+                                <Badge
+                                  color={
+                                    a.annotatorAccuracy >= 80
+                                      ? "success"
+                                      : a.annotatorAccuracy >= 50
+                                        ? "warning"
+                                        : "danger"
+                                  }
+                                >
+                                  {a.annotatorAccuracy > 0
+                                    ? `${a.annotatorAccuracy.toFixed(1)}%`
+                                    : "—"}
+                                </Badge>
+                              </td>
+                              <td style={{ minWidth: "150px" }}>
+                                <div className="d-flex align-items-center gap-2">
+                                  <Progress
+                                    value={completionRate}
+                                    color={
+                                      completionRate >= 80
+                                        ? "success"
+                                        : completionRate >= 50
+                                          ? "warning"
+                                          : "danger"
+                                    }
+                                    className="flex-grow-1"
+                                    style={{ height: "6px" }}
+                                  />
+                                  <small className="text-muted fw-bold">
+                                    {completionRate}%
+                                  </small>
+                                </div>
+                              </td>
+                            </tr>
+                            {/* Expanded: per-project detail rows */}
+                            {isExpanded &&
+                              a.projectDetails?.map((pd) => {
+                                const pdRate =
+                                  pd.totalImages > 0
+                                    ? Math.round(
+                                        (pd.completedImages / pd.totalImages) *
+                                          100,
+                                      )
+                                    : 0;
+                                return (
+                                  <tr
+                                    key={pd.projectId}
+                                    className="bg-light"
+                                    style={{ fontSize: "0.85em" }}
+                                  >
+                                    <td className="ps-4 text-muted" colSpan={3}>
+                                      <i className="ri-folder-line me-1"></i>
+                                      {pd.projectName}
+                                      {pd.isCompleted ? (
+                                        <Badge
+                                          color="success"
+                                          pill
+                                          className="ms-2"
+                                        >
+                                          Xong
+                                        </Badge>
+                                      ) : (
+                                        <Badge
+                                          color="warning"
+                                          pill
+                                          className="ms-2"
+                                        >
+                                          Đang làm
+                                        </Badge>
+                                      )}
+                                    </td>
+                                    <td className="text-center text-muted">
+                                      {pd.totalImages} ảnh
+                                    </td>
+                                    <td className="text-center text-muted">
+                                      {pd.completedImages} xong
+                                    </td>
+                                    <td className="text-center text-muted">
+                                      —
+                                    </td>
+                                    <td className="text-center text-muted">
+                                      —
+                                    </td>
+                                    <td className="text-center text-muted">
+                                      —
+                                    </td>
+                                    <td style={{ minWidth: "150px" }}>
+                                      <div className="d-flex align-items-center gap-2">
+                                        <Progress
+                                          value={pdRate}
+                                          color={
+                                            pdRate >= 80
+                                              ? "success"
+                                              : pdRate >= 50
+                                                ? "warning"
+                                                : "danger"
+                                          }
+                                          className="flex-grow-1"
+                                          style={{ height: "5px" }}
+                                        />
+                                        <small className="text-muted">
+                                          {pd.completedImages}/{pd.totalImages}
+                                        </small>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </React.Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center text-muted py-5">
+                  <i className="ri-user-star-line display-5 mb-3 d-block"></i>
+                  <p>Chưa có annotator nào được giao việc.</p>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 5. Đánh giá Reviewer */}
+      <Row className="mt-3">
+        <Col xl={12}>
+          <Card className="shadow-sm border-0">
+            <CardHeader className="bg-white border-bottom">
+              <h5 className="mb-0">
+                <i className="ri-shield-star-line me-2 text-info"></i>
+                Đánh giá Reviewer — Accuracy & Dispute Rate
+              </h5>
+            </CardHeader>
+            <CardBody>
+              <Alert color="light" className="border py-2 mb-3">
+                <i className="ri-information-line me-1"></i>
+                <strong>Reviewer Accuracy</strong>: % quyết định reviewer đúng
+                theo ground truth (quyết định của Manager).
+                <strong> Dispute Rate</strong>: % khiếu nại liên quan.
+              </Alert>
+              {reviewerEvaluations.length > 0 ? (
+                <div className="table-responsive">
+                  <Table className="table-hover align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Reviewer</th>
+                        <th className="text-center">Tổng Review</th>
+                        <th className="text-center">Bị Override</th>
+                        <th className="text-center">Override Rate</th>
+                        <th className="text-center">Disputes</th>
+                        <th className="text-center">Dispute Rate</th>
+                        <th className="text-center">Accuracy</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reviewerEvaluations.map((r, idx) => {
+                        const overrideHigh = parseFloat(r.overrideRate) > 20;
+                        const disputeHigh = parseFloat(r.disputeRate) > 15;
+                        const accValue = r.reviewerAccuracy;
+                        const accNum = parseFloat(accValue);
+                        const isExpanded = expandedReviewers[r.name];
+                        return (
+                          <React.Fragment key={idx}>
+                            {/* Summary row */}
+                            <tr
+                              style={{ cursor: "pointer" }}
+                              onClick={() =>
+                                setExpandedReviewers((prev) => ({
+                                  ...prev,
+                                  [r.name]: !prev[r.name],
+                                }))
+                              }
+                              className={isExpanded ? "table-active" : ""}
+                            >
+                              <td className="fw-semibold">
+                                <i
+                                  className={`ri-arrow-${isExpanded ? "down" : "right"}-s-line me-1`}
+                                ></i>
+                                {r.name}
+                                <small className="text-muted ms-1">
+                                  ({r.totalProjects} dự án)
+                                </small>
+                              </td>
+                              <td className="text-center">{r.totalReviews}</td>
+                              <td className="text-center">
+                                {r.overridden > 0 ? (
+                                  <Badge color="danger">{r.overridden}</Badge>
+                                ) : (
+                                  <span className="text-muted">0</span>
+                                )}
+                              </td>
+                              <td className="text-center">
+                                <Badge
+                                  color={overrideHigh ? "danger" : "success"}
+                                >
+                                  {r.overrideRate}%
+                                </Badge>
+                              </td>
+                              <td className="text-center">
+                                {r.disputeCount > 0 ? (
+                                  <Badge color="warning">
+                                    {r.disputeCount}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted">0</span>
+                                )}
+                              </td>
+                              <td className="text-center">
+                                <Badge
+                                  color={disputeHigh ? "danger" : "success"}
+                                >
+                                  {r.disputeRate}%
+                                </Badge>
+                              </td>
+                              <td className="text-center">
+                                <Badge
+                                  color={
+                                    isNaN(accNum)
+                                      ? "secondary"
+                                      : accNum >= 80
+                                        ? "success"
+                                        : accNum >= 50
+                                          ? "warning"
+                                          : "danger"
+                                  }
+                                  className="fs-12"
+                                >
+                                  {isNaN(accNum) ? "—" : `${accValue}%`}
+                                </Badge>
+                              </td>
+                            </tr>
+                            {/* Expanded: per-project detail */}
+                            {isExpanded &&
+                              r.projectDetailsList?.map((pd, pdIdx) => (
+                                <tr
+                                  key={pdIdx}
+                                  className="bg-light"
+                                  style={{ fontSize: "0.85em" }}
+                                >
+                                  <td className="ps-4 text-muted">
+                                    <i className="ri-folder-line me-1"></i>
+                                    {pd.projectName}
+                                  </td>
+                                  <td className="text-center">{pd.reviews}</td>
+                                  <td className="text-center">
+                                    {pd.overridden > 0 ? pd.overridden : "—"}
+                                  </td>
+                                  <td className="text-center">
+                                    {pd.reviews > 0
+                                      ? (
+                                          (pd.overridden / pd.reviews) *
+                                          100
+                                        ).toFixed(1) + "%"
+                                      : "—"}
+                                  </td>
+                                  <td className="text-center">
+                                    {pd.disputes > 0 ? pd.disputes : "—"}
+                                  </td>
+                                  <td className="text-center">
+                                    {pd.reviews > 0
+                                      ? (
+                                          (pd.disputes / pd.reviews) *
+                                          100
+                                        ).toFixed(1) + "%"
+                                      : "—"}
+                                  </td>
+                                  <td className="text-center text-muted">—</td>
+                                </tr>
+                              ))}
+                          </React.Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center text-muted py-5">
+                  <i className="ri-shield-star-line display-5 mb-3 d-block"></i>
+                  <p>Chưa có dữ liệu đánh giá reviewer.</p>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 6. Error Breakdown + Label Distribution + Top 5 */}
       <Row className="mt-3">
         {errorBreakdown.length > 0 && (
           <Col xl={6}>
@@ -694,352 +1312,6 @@ const DashboardAnalytics = () => {
                   </div>
                 );
               })()}
-            </CardBody>
-          </Card>
-        </Col>
-      </Row>
-
-      <Row className="mt-3">
-        <Col xl={12}>
-          <Card className="shadow-sm border-0">
-            <CardHeader className="bg-white border-bottom">
-              <h5 className="mb-0">
-                <i className="ri-user-star-line me-2 text-success"></i>
-                Hiệu suất Annotator
-              </h5>
-            </CardHeader>
-            <CardBody>
-              {annotatorPerformances.length > 0 ? (
-                <div className="table-responsive">
-                  <p className="text-muted small mb-2">
-                    <i className="ri-information-line me-1"></i>
-                    Bấm vào tên annotator để xem chi tiết theo dự án
-                  </p>
-                  <Table className="table-hover align-middle mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Annotator</th>
-                        <th className="text-center">Được giao (task)</th>
-                        <th className="text-center">Hoàn thành (task)</th>
-                        <th className="text-center">Tổng ảnh</th>
-                        <th className="text-center">Ảnh đã xong</th>
-                        <th className="text-center">Quality Score</th>
-                        <th>Tiến độ (ảnh)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {annotatorPerformances.map((a) => {
-                        const completionRate =
-                          a.totalImages > 0
-                            ? Math.round(
-                                (a.completedImages / a.totalImages) * 100,
-                              )
-                            : 0;
-                        const isExpanded = expandedAnnotators[a.annotatorId];
-                        return (
-                          <React.Fragment key={a.annotatorId}>
-                            {/* Summary row - per person */}
-                            <tr
-                              style={{ cursor: "pointer" }}
-                              onClick={() =>
-                                setExpandedAnnotators((prev) => ({
-                                  ...prev,
-                                  [a.annotatorId]: !prev[a.annotatorId],
-                                }))
-                              }
-                              className={isExpanded ? "table-active" : ""}
-                            >
-                              <td className="fw-semibold">
-                                <i
-                                  className={`ri-arrow-${isExpanded ? "down" : "right"}-s-line me-1`}
-                                ></i>
-                                {a.annotatorName || a.annotatorId}
-                              </td>
-                              <td className="text-center">{a.totalTasks}</td>
-                              <td className="text-center text-success fw-bold">
-                                {a.completedTasks}
-                              </td>
-                              <td className="text-center">{a.totalImages}</td>
-                              <td className="text-center text-info fw-bold">
-                                {a.completedImages}
-                              </td>
-                              <td className="text-center">
-                                <Badge
-                                  color={
-                                    a.averageQualityScore >= 80
-                                      ? "success"
-                                      : a.averageQualityScore >= 50
-                                        ? "warning"
-                                        : "danger"
-                                  }
-                                >
-                                  {(a.averageQualityScore ?? 0).toFixed(0)}
-                                </Badge>
-                              </td>
-                              <td style={{ minWidth: "150px" }}>
-                                <div className="d-flex align-items-center gap-2">
-                                  <Progress
-                                    value={completionRate}
-                                    color={
-                                      completionRate >= 80
-                                        ? "success"
-                                        : completionRate >= 50
-                                          ? "warning"
-                                          : "danger"
-                                    }
-                                    className="flex-grow-1"
-                                    style={{ height: "6px" }}
-                                  />
-                                  <small className="text-muted fw-bold">
-                                    {completionRate}%
-                                  </small>
-                                </div>
-                              </td>
-                            </tr>
-                            {/* Expanded: per-project detail rows */}
-                            {isExpanded &&
-                              a.projectDetails?.map((pd) => {
-                                const pdRate =
-                                  pd.totalImages > 0
-                                    ? Math.round(
-                                        (pd.completedImages / pd.totalImages) *
-                                          100,
-                                      )
-                                    : 0;
-                                return (
-                                  <tr
-                                    key={pd.projectId}
-                                    className="bg-light"
-                                    style={{ fontSize: "0.85em" }}
-                                  >
-                                    <td className="ps-4 text-muted" colSpan={3}>
-                                      <i className="ri-folder-line me-1"></i>
-                                      {pd.projectName}
-                                      {pd.isCompleted ? (
-                                        <Badge
-                                          color="success"
-                                          pill
-                                          className="ms-2"
-                                        >
-                                          Xong
-                                        </Badge>
-                                      ) : (
-                                        <Badge
-                                          color="warning"
-                                          pill
-                                          className="ms-2"
-                                        >
-                                          Đang làm
-                                        </Badge>
-                                      )}
-                                    </td>
-                                    <td className="text-center text-muted">
-                                      {pd.totalImages} ảnh
-                                    </td>
-                                    <td className="text-center text-muted">
-                                      {pd.completedImages} xong
-                                    </td>
-                                    <td className="text-center text-muted">
-                                      —
-                                    </td>
-                                    <td style={{ minWidth: "150px" }}>
-                                      <div className="d-flex align-items-center gap-2">
-                                        <Progress
-                                          value={pdRate}
-                                          color={
-                                            pdRate >= 80
-                                              ? "success"
-                                              : pdRate >= 50
-                                                ? "warning"
-                                                : "danger"
-                                          }
-                                          className="flex-grow-1"
-                                          style={{ height: "5px" }}
-                                        />
-                                        <small className="text-muted">
-                                          {pd.completedImages}/{pd.totalImages}
-                                        </small>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                          </React.Fragment>
-                        );
-                      })}
-                    </tbody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center text-muted py-5">
-                  <i className="ri-user-star-line display-5 mb-3 d-block"></i>
-                  <p>Chưa có annotator nào được giao việc.</p>
-                </div>
-              )}
-            </CardBody>
-          </Card>
-        </Col>
-      </Row>
-
-      <Row className="mt-3">
-        <Col xl={12}>
-          <Card className="shadow-sm border-0">
-            <CardHeader className="bg-white border-bottom">
-              <h5 className="mb-0">
-                <i className="ri-shield-star-line me-2 text-info"></i>
-                Đánh giá Reviewer — Override Rate & Dispute Rate
-              </h5>
-            </CardHeader>
-            <CardBody>
-              <Alert color="light" className="border py-2 mb-3">
-                <i className="ri-information-line me-1"></i>
-                <strong>Override Rate</strong>: % reviews bị Manager đảo kết
-                quả. <strong>Dispute Rate</strong>: % khiếu nại liên quan. Badge
-                đỏ khi Override Rate &gt; 20% hoặc Dispute Rate &gt; 15%.
-              </Alert>
-              {reviewerEvaluations.length > 0 ? (
-                <div className="table-responsive">
-                  <Table className="table-hover align-middle mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Reviewer</th>
-                        <th className="text-center">Tổng Review</th>
-                        <th className="text-center">Bị Override</th>
-                        <th className="text-center">Override Rate</th>
-                        <th className="text-center">Disputes</th>
-                        <th className="text-center">Dispute Rate</th>
-                        <th className="text-center">KQS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reviewerEvaluations.map((r, idx) => {
-                        const overrideHigh = parseFloat(r.overrideRate) > 20;
-                        const disputeHigh = parseFloat(r.disputeRate) > 15;
-                        const kqsScore = Math.max(
-                          0,
-                          100 -
-                            parseFloat(r.overrideRate) * 2 -
-                            parseFloat(r.disputeRate) * 3,
-                        ).toFixed(0);
-                        const isExpanded = expandedReviewers[r.name];
-                        return (
-                          <React.Fragment key={idx}>
-                            {/* Summary row */}
-                            <tr
-                              style={{ cursor: "pointer" }}
-                              onClick={() =>
-                                setExpandedReviewers((prev) => ({
-                                  ...prev,
-                                  [r.name]: !prev[r.name],
-                                }))
-                              }
-                              className={isExpanded ? "table-active" : ""}
-                            >
-                              <td className="fw-semibold">
-                                <i
-                                  className={`ri-arrow-${isExpanded ? "down" : "right"}-s-line me-1`}
-                                ></i>
-                                {r.name}
-                                <small className="text-muted ms-1">
-                                  ({r.totalProjects} dự án)
-                                </small>
-                              </td>
-                              <td className="text-center">{r.totalReviews}</td>
-                              <td className="text-center">
-                                {r.overridden > 0 ? (
-                                  <Badge color="danger">{r.overridden}</Badge>
-                                ) : (
-                                  <span className="text-muted">0</span>
-                                )}
-                              </td>
-                              <td className="text-center">
-                                <Badge
-                                  color={overrideHigh ? "danger" : "success"}
-                                >
-                                  {r.overrideRate}%
-                                </Badge>
-                              </td>
-                              <td className="text-center">
-                                {r.disputeCount > 0 ? (
-                                  <Badge color="warning">
-                                    {r.disputeCount}
-                                  </Badge>
-                                ) : (
-                                  <span className="text-muted">0</span>
-                                )}
-                              </td>
-                              <td className="text-center">
-                                <Badge
-                                  color={disputeHigh ? "danger" : "success"}
-                                >
-                                  {r.disputeRate}%
-                                </Badge>
-                              </td>
-                              <td className="text-center">
-                                <Badge
-                                  color={
-                                    kqsScore >= 80
-                                      ? "success"
-                                      : kqsScore >= 50
-                                        ? "warning"
-                                        : "danger"
-                                  }
-                                  className="fs-12"
-                                >
-                                  {kqsScore}
-                                </Badge>
-                              </td>
-                            </tr>
-                            {/* Expanded: per-project detail */}
-                            {isExpanded &&
-                              r.projectDetailsList?.map((pd, pdIdx) => (
-                                <tr
-                                  key={pdIdx}
-                                  className="bg-light"
-                                  style={{ fontSize: "0.85em" }}
-                                >
-                                  <td className="ps-4 text-muted">
-                                    <i className="ri-folder-line me-1"></i>
-                                    {pd.projectName}
-                                  </td>
-                                  <td className="text-center">{pd.reviews}</td>
-                                  <td className="text-center">
-                                    {pd.overridden > 0 ? pd.overridden : "—"}
-                                  </td>
-                                  <td className="text-center">
-                                    {pd.reviews > 0
-                                      ? (
-                                          (pd.overridden / pd.reviews) *
-                                          100
-                                        ).toFixed(1) + "%"
-                                      : "—"}
-                                  </td>
-                                  <td className="text-center">
-                                    {pd.disputes > 0 ? pd.disputes : "—"}
-                                  </td>
-                                  <td className="text-center">
-                                    {pd.reviews > 0
-                                      ? (
-                                          (pd.disputes / pd.reviews) *
-                                          100
-                                        ).toFixed(1) + "%"
-                                      : "—"}
-                                  </td>
-                                  <td className="text-center text-muted">—</td>
-                                </tr>
-                              ))}
-                          </React.Fragment>
-                        );
-                      })}
-                    </tbody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center text-muted py-5">
-                  <i className="ri-shield-star-line display-5 mb-3 d-block"></i>
-                  <p>Chưa có dữ liệu đánh giá reviewer.</p>
-                </div>
-              )}
             </CardBody>
           </Card>
         </Col>

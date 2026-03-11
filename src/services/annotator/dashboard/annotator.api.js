@@ -129,3 +129,63 @@ export const getProjectProgressDetails = async () => {
 
   return results;
 };
+
+export const getMyAccuracy = async () => {
+  const projects = await getAssignedProjects();
+  if (!projects || projects.length === 0) return null;
+
+  let userId = null;
+  try {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      userId = user.id;
+    }
+  } catch {
+    return null;
+  }
+  if (!userId) return null;
+
+  let totalWeight = 0;
+  let weightedSum = 0;
+  let hasAnyReviewData = false;
+  const perProject = [];
+
+  for (const p of projects) {
+    try {
+      const statsRes = await axios.get(
+        `/api/projects/${p.projectId}/statistics`,
+      );
+      const s = statsRes.data;
+      const me = s.annotatorPerformances?.find((a) => a.annotatorId === userId);
+      if (me) {
+        const weight = me.tasksAssigned || 1;
+        const acc = me.annotatorAccuracy ?? 0;
+        perProject.push({
+          projectName: p.projectName,
+          accuracy: acc,
+          tasksAssigned: me.tasksAssigned,
+          tasksCompleted: me.tasksCompleted,
+        });
+        weightedSum += acc * weight;
+        totalWeight += weight;
+        if (me.tasksCompleted > 0 || acc > 0) {
+          hasAnyReviewData = true;
+        }
+      }
+    } catch {
+      // skip inaccessible projects
+    }
+  }
+
+  const overallAccuracy =
+    totalWeight > 0 ? Math.round((weightedSum / totalWeight) * 10) / 10 : null;
+
+  return {
+    overallAccuracy:
+      overallAccuracy === null && !hasAnyReviewData
+        ? null
+        : (overallAccuracy ?? 0),
+    perProject,
+  };
+};

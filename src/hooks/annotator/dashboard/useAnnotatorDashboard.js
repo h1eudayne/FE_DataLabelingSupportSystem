@@ -5,6 +5,7 @@ import {
   getMyTasks,
   getAllReviewerFeedback,
   getProjectProgressDetails,
+  getMyAccuracy,
 } from "../../../services/annotator/dashboard/annotator.api";
 
 const useAnnotatorDashboard = (projectId) => {
@@ -39,12 +40,20 @@ const useAnnotatorDashboard = (projectId) => {
     staleTime: 1000 * 60,
   });
 
+  const myAccuracy = useQuery({
+    queryKey: ["my-accuracy"],
+    queryFn: getMyAccuracy,
+    retry: false,
+    staleTime: 1000 * 60,
+  });
+
   return {
     profile,
     projects,
     tasksByProject,
     reviewerFeedback,
     projectProgress,
+    myAccuracy,
   };
 };
 
