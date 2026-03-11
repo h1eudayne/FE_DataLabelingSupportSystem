@@ -3,14 +3,28 @@ import React, { useEffect, useState } from "react";
 const StatCard = ({ title, value = 0, icon: Icon, color = "primary" }) => {
   const [displayValue, setDisplayValue] = useState(0);
 
+  const strVal = String(value);
+  const match = strVal.match(/^([\d.]+)(.*)$/);
+  const numericPart = match ? parseFloat(match[1]) : 0;
+  const suffix = match ? match[2] : "";
+  const isNumeric = match !== null && !isNaN(numericPart);
+
   useEffect(() => {
-    const end = Number(value) || 0;
+    if (!isNumeric) {
+      setDisplayValue(numericPart);
+      return;
+    }
+    const end = numericPart;
     const duration = 1000;
     const startTime = performance.now();
+    const hasDecimal = strVal.includes(".");
 
     const animate = (currentTime) => {
       const progress = Math.min((currentTime - startTime) / duration, 1);
-      setDisplayValue(Math.floor(progress * end));
+      const current = progress * end;
+      setDisplayValue(
+        hasDecimal ? Math.round(current * 10) / 10 : Math.floor(current),
+      );
       if (progress < 1) requestAnimationFrame(animate);
     };
 
@@ -38,7 +52,7 @@ const StatCard = ({ title, value = 0, icon: Icon, color = "primary" }) => {
         <div className="d-flex align-items-end justify-content-between mt-2">
           <div>
             <h4 className="fs-22 fw-semibold ff-secondary mb-0">
-              {displayValue.toLocaleString()}
+              {isNumeric ? `${displayValue.toLocaleString()}${suffix}` : strVal}
             </h4>
           </div>
           <div className="avatar-sm flex-shrink-0">
