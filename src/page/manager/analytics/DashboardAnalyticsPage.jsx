@@ -168,7 +168,10 @@ const DashboardAnalytics = () => {
             const pendingAsgn = s.pendingAssignments ?? 0;
             const projAnnotators = (s.annotatorPerformances || []).map((ap) => {
               const annTotal = ap.tasksAssigned || 0;
+              const annCompleted = ap.tasksCompleted || 0;
               const annRejected = ap.tasksRejected || 0;
+              const annApproved = Math.max(0, annCompleted - annRejected);
+              const annRemaining = Math.max(0, annTotal - annCompleted);
               const annPendingEst =
                 totalAsgn > 0
                   ? Math.round((pendingAsgn * annTotal) / totalAsgn)
