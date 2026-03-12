@@ -1,14 +1,7 @@
 import React from "react";
 
-/**
- * CommentSection displays the reviewer's rejection reason
- * directly from the task assignment response (rejectionReason field).
- * No separate API call needed - data comes from:
- *   GET /api/tasks/projects/{projectId}/images
- *   GET /api/tasks/assignments/{id}
- */
+
 const CommentSection = ({ rejectionReason, status }) => {
-  // Only show when there is a rejection reason
   if (!rejectionReason || !rejectionReason.trim()) {
     return (
       <div className="stitch-ws-card" style={{ marginTop: 16 }}>

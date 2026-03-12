@@ -45,8 +45,16 @@ export const getReviewerFeedbackByProject = async (projectId) => {
   if (!projectId) return [];
 
   try {
-    const res = await axios.get(`/api/reviews/projects/${projectId}/tasks`);
-    return res.data;
+    const res = await axios.get(`/api/tasks/projects/${projectId}/images`);
+    const tasks = res.data || [];
+    return tasks
+      .filter((t) => t.rejectionReason && t.rejectionReason.trim())
+      .map((t) => ({
+        assignmentId: t.id,
+        comment: t.rejectionReason,
+        isApproved: false,
+        status: t.status,
+      }));
   } catch {
     return [];
   }
@@ -56,15 +64,11 @@ export const getAllReviewerFeedback = async () => {
   const projects = await getAssignedProjects();
   if (!projects || projects.length === 0) return [];
 
-  const validProjects = projects.filter(
-    (p) => p.status === "Submitted" || p.status === "Returned",
-  );
-
-  const requests = validProjects.map((p) =>
-    getReviewerFeedbackByProject(p.id).then((reviews) =>
+  const requests = projects.map((p) =>
+    getReviewerFeedbackByProject(p.projectId).then((reviews) =>
       reviews.map((r) => ({
         ...r,
-        projectName: p.name,
+        projectName: p.projectName,
       })),
     ),
   );
@@ -128,4 +132,64 @@ export const getProjectProgressDetails = async () => {
   );
 
   return results;
+};
+
+export const getMyAccuracy = async () => {
+  const projects = await getAssignedProjects();
+  if (!projects || projects.length === 0) return null;
+
+  let userId = null;
+  try {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      userId = user.id;
+    }
+  } catch {
+    return null;
+  }
+  if (!userId) return null;
+
+  let totalWeight = 0;
+  let weightedSum = 0;
+  let hasAnyReviewData = false;
+  const perProject = [];
+
+  for (const p of projects) {
+    try {
+      const statsRes = await axios.get(
+        `/api/projects/${p.projectId}/statistics`,
+      );
+      const s = statsRes.data;
+      const me = s.annotatorPerformances?.find((a) => a.annotatorId === userId);
+      if (me) {
+        const weight = me.tasksAssigned || 1;
+        const acc = me.annotatorAccuracy ?? 0;
+        perProject.push({
+          projectName: p.projectName,
+          accuracy: acc,
+          tasksAssigned: me.tasksAssigned,
+          tasksCompleted: me.tasksCompleted,
+        });
+        weightedSum += acc * weight;
+        totalWeight += weight;
+        if (me.tasksCompleted > 0 || acc > 0) {
+          hasAnyReviewData = true;
+        }
+      }
+    } catch {
+      //
+    }
+  }
+
+  const overallAccuracy =
+    totalWeight > 0 ? Math.round((weightedSum / totalWeight) * 10) / 10 : null;
+
+  return {
+    overallAccuracy:
+      overallAccuracy === null && !hasAnyReviewData
+        ? null
+        : (overallAccuracy ?? 0),
+    perProject,
+  };
 };
