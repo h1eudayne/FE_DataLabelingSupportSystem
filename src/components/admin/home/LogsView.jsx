@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { Card, Badge, InputGroup, Form, Button } from "react-bootstrap";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Card,
+  Badge,
+  InputGroup,
+  Form,
+  Button,
+  Pagination,
+} from "react-bootstrap";
 import { History, Activity, Search, User, Filter } from "lucide-react";
 import { getSysLogs } from "../../../services/admin/managementSystem/systemLog.api";
 import SysLogsModal from "../managementSystem/SysLogsModal";
@@ -9,10 +16,26 @@ const LogsView = () => {
   const [logData, setLogData] = useState(null);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [selectUserLogs, setSelectUserLogs] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
     fetchLog();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const filteredLogs = useMemo(() => {
+    if (!logData) return [];
+    if (!searchTerm) return logData;
+
+    return logData.filter((log) =>
+      log.email?.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [searchTerm, logData]);
 
   const fetchLog = async () => {
     try {
@@ -50,6 +73,14 @@ const LogsView = () => {
     }
   };
 
+  const totalItems = filteredLogs.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const currentItems = useMemo(() => {
+    const lastIndex = currentPage * pageSize;
+    const firstIndex = lastIndex - pageSize;
+    return filteredLogs.slice(firstIndex, lastIndex);
+  }, [filteredLogs, currentPage]);
+
   const onCloseModal = () => {
     setSelectUserLogs(null);
     setIsOpenModal(false);
@@ -83,89 +114,136 @@ const LogsView = () => {
             <Form.Control
               placeholder="Tìm kiếm log theo email..."
               className="border-0 shadow-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <Button
+                variant="link"
+                className="text-muted border-0 shadow-none"
+                onClick={() => setSearchTerm("")}
+              >
+                X
+              </Button>
+            )}
           </InputGroup>
         </div>
 
         <div className="list-group list-group-flush">
-          {logData?.map((log) => (
-            <div
-              key={log.id}
-              className="list-group-item p-3 d-flex justify-content-between align-items-center border-0 border-bottom bg-transparent main-log-item"
-              style={{ transition: "all 0.3s ease" }}
-            >
-              <div className="d-flex align-items-center gap-3">
-                <div className="position-relative">
-                  <img
-                    src={
-                      log.avatar
-                        ? log.avatar.startsWith("http")
-                          ? log.avatar
-                          : `${BACKEND_URL}${log.avatar.startsWith("/") ? "" : "/"}${log.avatar}`
-                        : `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`
-                    }
-                    alt="avatar"
-                    className="rounded-circle shadow-sm border"
-                    style={{
-                      width: "45px",
-                      height: "45px",
-                      objectFit: "cover",
-                    }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`;
-                    }}
-                  />
-                </div>
-
-                <div className="d-flex flex-column">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <span
-                      className="fw-bold text-dark mb-0"
-                      style={{ fontSize: "15px", letterSpacing: "-0.3px" }}
-                    >
-                      {log.email || "No Email"}
-                    </span>
-
-                    <Badge
-                      bg={log.role === "Admin" ? "danger" : "info"}
-                      className="text-uppercase"
-                      style={{ fontSize: "10px", padding: "3px 6px" }}
-                    >
-                      {log.role}
-                    </Badge>
-                  </div>
-                  <div className="d-flex align-items-center gap-2">
-                    <Badge
-                      bg="light"
-                      className="text-muted border-0 fw-normal p-0"
-                      style={{ fontSize: "11px" }}
-                    >
-                      <Activity size={10} className="me-1" />
-                      {log.logs?.length} hoạt động ghi nhận
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                variant="primary"
-                size="sm"
-                style={{
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                  padding: "5px 15px",
-                }}
-                onClick={() => {
-                  setIsOpenModal(true);
-                  setSelectUserLogs(log);
-                }}
+          {currentItems.length > 0 ? (
+            currentItems.map((log) => (
+              <div
+                key={log.id}
+                className="list-group-item p-3 d-flex justify-content-between align-items-center border-0 border-bottom bg-transparent main-log-item"
+                style={{ transition: "all 0.3s ease" }}
               >
-                Chi tiết
-              </Button>
+                <div className="d-flex align-items-center gap-3">
+                  <div className="position-relative">
+                    <img
+                      src={
+                        log.avatar
+                          ? log.avatar.startsWith("http")
+                            ? log.avatar
+                            : `${BACKEND_URL}${log.avatar.startsWith("/") ? "" : "/"}${log.avatar}`
+                          : `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`
+                      }
+                      alt="avatar"
+                      className="rounded-circle shadow-sm border"
+                      style={{
+                        width: "45px",
+                        height: "45px",
+                        objectFit: "cover",
+                      }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`;
+                      }}
+                    />
+                  </div>
+
+                  <div className="d-flex flex-column">
+                    <div className="d-flex align-items-center gap-2 mb-1">
+                      <span
+                        className="fw-bold text-dark mb-0"
+                        style={{ fontSize: "15px", letterSpacing: "-0.3px" }}
+                      >
+                        {log.email || "No Email"}
+                      </span>
+
+                      <Badge
+                        bg={log.role === "Admin" ? "danger" : "info"}
+                        className="text-uppercase"
+                        style={{ fontSize: "10px", padding: "3px 6px" }}
+                      >
+                        {log.role}
+                      </Badge>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      <Badge
+                        bg="light"
+                        className="text-muted border-0 fw-normal p-0"
+                        style={{ fontSize: "11px" }}
+                      >
+                        <Activity size={10} className="me-1" />
+                        {log.logs?.length} hoạt động ghi nhận
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  style={{
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                    padding: "5px 15px",
+                  }}
+                  onClick={() => {
+                    setIsOpenModal(true);
+                    setSelectUserLogs(log);
+                  }}
+                >
+                  Chi tiết
+                </Button>
+              </div>
+            ))
+          ) : (
+            <div className="p-5 text-center text-muted">
+              <Search size={40} className="mb-2 opacity-25" />
+              <p>Không tìm thấy kết quả cho "{searchTerm}"</p>
             </div>
-          ))}
+          )}
         </div>
+        {totalPages > 1 && (
+          <div className="d-flex justify-content-between align-items-center p-4 bg-white border-top">
+            <div className="text-muted small">
+              Hiển thị{" "}
+              <b>{Math.min((currentPage - 1) * pageSize + 1, totalItems)}</b>{" "}
+              đến <b>{Math.min(currentPage * pageSize, totalItems)}</b> trong{" "}
+              <b>{totalItems}</b> người dùng
+            </div>
+            <Pagination className="mb-0">
+              <Pagination.Prev
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => prev - 1)}
+              />
+              {[...Array(totalPages)].map((_, idx) => (
+                <Pagination.Item
+                  key={idx + 1}
+                  active={idx + 1 === currentPage}
+                  onClick={() => setCurrentPage(idx + 1)}
+                >
+                  {idx + 1}
+                </Pagination.Item>
+              ))}
+              <Pagination.Next
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+              />
+            </Pagination>
+          </div>
+        )}
       </Card>
       <SysLogsModal
         isOpen={isOpenModal}

@@ -36,6 +36,8 @@ const UserManagementView = ({
 }) => {
   const { page, pageSize, onPageChange } = pagination;
   const totalPages = Math.ceil(totalCount / pageSize);
+  const fromEntry = (page - 1) * pageSize + 1;
+  const toEntry = Math.min(page * pageSize, totalCount);
 
   let items = [];
   for (let number = 1; number <= totalPages; number++) {
@@ -199,26 +201,35 @@ const UserManagementView = ({
           </Table>
 
           {totalPages > 1 && (
-            <div className="d-flex justify-content-between align-items-center mt-4">
+            <div className="d-flex justify-content-between align-items-center mt-3 px-3">
               <div className="text-muted small">
-                Hiển thị <b>{users.length}</b> trên <b>{totalCount}</b> nhân sự
+                Hiển thị <b>{fromEntry}</b> đến <b>{toEntry}</b> trên{" "}
+                <b>{totalCount}</b> người dùng
               </div>
-              <Pagination className="mb-0 shadow-sm custom-pagination">
+
+              <Pagination className="mb-0">
                 <Pagination.Prev
                   disabled={page === 1}
                   onClick={() => onPageChange(page - 1)}
-                >
-                  <ChevronLeft size={16} />
-                </Pagination.Prev>
+                />
 
-                {items}
+                {[...Array(totalPages)].map((_, idx) => {
+                  const pageNum = idx + 1;
+                  return (
+                    <Pagination.Item
+                      key={pageNum}
+                      active={pageNum === page}
+                      onClick={() => onPageChange(pageNum)}
+                    >
+                      {pageNum}
+                    </Pagination.Item>
+                  );
+                })}
 
                 <Pagination.Next
                   disabled={page === totalPages}
                   onClick={() => onPageChange(page + 1)}
-                >
-                  <ChevronRight size={16} />
-                </Pagination.Next>
+                />
               </Pagination>
             </div>
           )}

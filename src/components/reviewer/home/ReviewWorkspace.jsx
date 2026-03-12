@@ -9,6 +9,7 @@ import {
   Badge,
   Form,
   Card,
+  Modal,
 } from "react-bootstrap";
 import projectService from "../../../services/reviewer/project.service";
 import { useDispatch } from "react-redux";
@@ -22,6 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Lock,
 } from "lucide-react";
 
 const ReviewWorkspace = () => {
@@ -34,54 +36,55 @@ const ReviewWorkspace = () => {
   const [data, setData] = useState(location.state?.workspaceData || null);
   const [loading, setLoading] = useState(!data);
   const [rejectComment, setRejectComment] = useState("");
-  const [errorCategory, setErrorCategory] = useState("");
+  const [errorCategories, setErrorCategories] = useState([]);
   const [checkedItems, setCheckedItems] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [checkedCriteria, setCheckedCriteria] = useState({});
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const ERROR_CATEGORIES = [
     {
       id: "CL-01",
-      label: "CL-01: Xác định đúng đối tượng",
+      label: "CL-01: Xác định sai đối tượng",
       desc: "Đối tượng gán nhãn không đúng thực tế",
     },
     {
       id: "CL-02",
-      label: "CL-02: Đúng loại nhãn (Label Class)",
+      label: "CL-02: Sai loại nhãn (Label Class)",
       desc: "Chọn sai danh mục nhãn",
     },
     {
       id: "CL-03",
-      label: "CL-03: Bounding Box chính xác",
+      label: "CL-03: Bounding Box chưa chính xác",
       desc: "Khung bao không ôm sát, quá rộng/hẹp",
     },
     {
       id: "CL-04",
-      label: "CL-04: Không bỏ sót đối tượng",
+      label: "CL-04: Còn bỏ sót đối tượng",
       desc: "Chưa gán nhãn hết các đối tượng trong ảnh",
     },
     {
       id: "CL-05",
-      label: "CL-05: Không gán nhãn sai",
+      label: "CL-05: Gán nhãn sai",
       desc: "Gán nhãn cho đối tượng không liên quan",
     },
     {
       id: "CL-06",
-      label: "CL-06: Tuân thủ guideline",
+      label: "CL-06: Không tuân thủ guideline",
       desc: "Sai quy định đặc thù của dự án",
     },
     {
       id: "CL-07",
-      label: "CL-07: Tính nhất quán",
+      label: "CL-07: Chưa có tính nhất quán",
       desc: "Gán nhãn không đồng nhất với các ảnh khác",
     },
     {
       id: "CL-08",
-      label: "CL-08: Đúng loại công cụ",
+      label: "CL-08: Dùng sai loại công cụ",
       desc: "Dùng sai công cụ (VD: dùng Box thay vì Polygon)",
     },
     {
       id: "CL-09",
-      label: "CL-09: Bao phủ đầy đủ",
+      label: "CL-09: Chưa bao phủ đầy đủ",
       desc: "Phần hiển thị của đối tượng bị cắt mất",
     },
     {
@@ -138,7 +141,7 @@ const ReviewWorkspace = () => {
     } finally {
       setLoading(false);
       setRejectComment("");
-      setErrorCategory("");
+      setErrorCategories([]);
       setCheckedItems({});
     }
   };
@@ -155,6 +158,14 @@ const ReviewWorkspace = () => {
     }
   };
 
+  const handleToggleError = (errorId) => {
+    setErrorCategories((prev) =>
+      prev.includes(errorId)
+        ? prev.filter((id) => id !== errorId)
+        : [...prev, errorId],
+    );
+  };
+
   const handleCriteriaCheck = (labelId, criteriaId) => {
     const key = `${labelId}-${criteriaId}`;
     setCheckedCriteria((prev) => ({
@@ -165,29 +176,12 @@ const ReviewWorkspace = () => {
 
   const submitReview = async (isApproved) => {
     if (!isApproved) {
-      if (!errorCategory)
-        return alert("Quy định: Phải chọn Phân loại lỗi khi Reject!");
+      if (errorCategories.length === 0)
+        return alert(
+          "Quy định: Phải chọn ít nhất một Phân loại lỗi khi Reject!",
+        );
       if (!rejectComment.trim())
         return alert("Quy định: Phải ghi rõ lý do để Annotator sửa bài!");
-    }
-
-    if (isApproved) {
-      const totalChecklistItems = data.labels?.reduce((acc, label) => {
-        const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
-          label.id
-        ]?.some((v) => v === true);
-        return isLabelUsed ? acc + (label.checklist?.length || 0) : acc;
-      }, 0);
-      const checkedCount = Object.values(checkedItems).filter(Boolean).length;
-
-      if (checkedCount < totalChecklistItems) {
-        if (
-          !window.confirm(
-            "Bạn chưa đối chiếu hết Guideline (Checklist). Vẫn muốn Approve?",
-          )
-        )
-          return;
-      }
     }
 
     setSubmitting(true);
@@ -196,7 +190,7 @@ const ReviewWorkspace = () => {
         assignmentId: parseInt(assignmentId),
         isApproved,
         comment: rejectComment,
-        errorCategory: isApproved ? "" : errorCategory,
+        errorCategories: isApproved ? [] : errorCategories,
       };
 
       await projectService.submitReview(payload);
@@ -248,6 +242,18 @@ const ReviewWorkspace = () => {
     );
 
   const isOverdue = new Date(data.deadline) < new Date();
+
+  const totalCLItemsToTick = data.labels?.reduce((acc, label) => {
+    const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
+      label.id
+    ]?.some((v) => v === true);
+    return isLabelUsed ? acc + 10 : acc;
+  }, 0);
+
+  const checkedCLCount = Object.values(checkedCriteria).filter(Boolean).length;
+
+  const isChecklistComplete =
+    totalCLItemsToTick > 0 && checkedCLCount >= totalCLItemsToTick;
 
   return (
     <div
@@ -307,7 +313,7 @@ const ReviewWorkspace = () => {
               size="sm"
               className="px-4 fw-bold shadow-sm"
               disabled={submitting}
-              onClick={() => submitReview(false)}
+              onClick={() => setShowRejectModal(true)}
             >
               Reject
             </Button>
@@ -315,10 +321,10 @@ const ReviewWorkspace = () => {
               variant="success"
               size="sm"
               className="px-4 fw-bold shadow-sm"
-              disabled={submitting}
+              disabled={submitting || !isChecklistComplete}
               onClick={() => submitReview(true)}
             >
-              Approve
+              {!isChecklistComplete && <Lock size={14} />} Approve
             </Button>
           </div>
         </div>
@@ -408,8 +414,41 @@ const ReviewWorkspace = () => {
                         className="text-muted mb-3 small italic"
                         style={{ fontSize: "11px" }}
                       >
-                        Mô tả: {label.guideLine}
+                        <strong>Mô tả:</strong> {label.guideLine}
                       </div>
+
+                      {label.checklist && label.checklist.length > 0 && (
+                        <div className="mb-3 p-2 rounded bg-light border-start border-2 border-info">
+                          <div
+                            className="text-uppercase fw-bold text-info mb-1"
+                            style={{ fontSize: "9px", letterSpacing: "0.5px" }}
+                          >
+                            Checklist công việc:
+                          </div>
+                          <ul className="list-unstyled mb-0 d-flex flex-column gap-1">
+                            {label.checklist.map((item, index) => (
+                              <li
+                                key={index}
+                                className="d-flex align-items-start gap-2"
+                                style={{ fontSize: "11px", color: "#495057" }}
+                              >
+                                <div className="mt-1">
+                                  <div
+                                    style={{
+                                      width: "4px",
+                                      height: "4px",
+                                      borderRadius: "50%",
+                                      backgroundColor: "#0dcaf0",
+                                      marginTop: "4px",
+                                    }}
+                                  ></div>
+                                </div>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
                       <div className="mt-2 pt-2 border-top">
                         <div
@@ -534,59 +573,131 @@ const ReviewWorkspace = () => {
               })}
             </div>
 
-            <div className="mt-3 p-3 border rounded-3 bg-white shadow-sm">
-              <h6
-                className="text-danger fw-bold mb-3 d-flex align-items-center gap-2"
-                style={{ fontSize: "12px" }}
+            <div className="mt-3">
+              <p
+                className="text-muted mb-2 italic"
+                style={{ fontSize: "11px" }}
               >
-                <AlertCircle size={16} /> THÔNG TIN TỪ CHỐI
-              </h6>
-
-              <Form.Group className="mb-3">
-                <Form.Label className="small fw-bold text-secondary">
-                  Phân loại lỗi theo tiêu chí CL:
-                </Form.Label>
-                <Form.Select
-                  size="sm"
-                  value={errorCategory}
-                  onChange={(e) => setErrorCategory(e.target.value)}
-                  className="border-danger-subtle shadow-none"
-                >
-                  <option value="">-- Chọn mã lỗi đối chiếu --</option>
-                  {ERROR_CATEGORIES.map((err) => (
-                    <option key={err.id} value={err.id}>
-                      {err.label}
-                    </option>
-                  ))}
-                </Form.Select>
-                {errorCategory && (
-                  <div
-                    className="mt-2 p-2 bg-danger-subtle rounded text-danger"
-                    style={{ fontSize: "10px" }}
-                  >
-                    <strong>Mô tả:</strong>{" "}
-                    {ERROR_CATEGORIES.find((e) => e.id === errorCategory)?.desc}
-                  </div>
-                )}
-              </Form.Group>
-
-              <Form.Group>
-                <Form.Label className="small fw-bold text-secondary">
-                  Ghi chú chi tiết cho Annotator:
-                </Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  placeholder="Giải thích cụ thể vị trí lỗi hoặc cách sửa..."
-                  style={{ fontSize: "12px" }}
-                  value={rejectComment}
-                  onChange={(e) => setRejectComment(e.target.value)}
-                />
-              </Form.Group>
+                * Nếu có lỗi, hãy nhấn vào nút bên dưới để chọn mã lỗi.
+              </p>
+              <Button
+                variant="danger"
+                className="w-100 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm"
+                style={{ fontSize: "12px", padding: "10px" }}
+                onClick={() => setShowRejectModal(true)}
+              >
+                <AlertCircle size={16} /> THIẾT LẬP LỖI REJECT
+              </Button>
             </div>
           </Col>
         </Row>
       </Container>
+      <Modal
+        show={showRejectModal}
+        onHide={() => setShowRejectModal(false)}
+        centered
+        size="lg"
+        backdrop="static"
+      >
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title
+            className="fw-bold d-flex align-items-center gap-2"
+            style={{ color: "#d93025" }}
+          >
+            <AlertTriangle size={24} /> Xác nhận lỗi vi phạm
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="bg-light">
+          <Form.Group className="mb-4">
+            <Form.Label className="fw-bold text-secondary small mb-3">
+              1. Phân loại các tiêu chí vi phạm (Chọn nhiều):
+            </Form.Label>
+            <Row xs={1} md={2} className="g-2">
+              {ERROR_CATEGORIES.map((err) => (
+                <Col key={err.id}>
+                  <div
+                    className={`d-flex align-items-start p-3 rounded-3 border h-100 transition-all ${
+                      errorCategories.includes(err.id)
+                        ? "border-danger bg-danger-subtle shadow-sm"
+                        : "border-secondary-subtle bg-white shadow-sm-hover"
+                    }`}
+                    style={{
+                      cursor: "pointer",
+                      borderWidth: "1.5px",
+                      transition: "all 0.2s ease",
+                      minHeight: "80px",
+                    }}
+                    onClick={() => handleToggleError(err.id)}
+                  >
+                    <Form.Check
+                      type="checkbox"
+                      checked={errorCategories.includes(err.id)}
+                      onChange={() => {}}
+                      className="me-3 mt-1 flex-shrink-0"
+                      style={{ transform: "scale(1.2)" }}
+                    />
+                    <div className="flex-grow-1">
+                      <div
+                        className="fw-bolder mb-1"
+                        style={{
+                          fontSize: "14px",
+                          color: errorCategories.includes(err.id)
+                            ? "#d93025"
+                            : "#1a1a1a",
+                          letterSpacing: "-0.2px",
+                          lineHeight: "1.2",
+                        }}
+                      >
+                        {err.label}
+                      </div>
+                      <div
+                        className="text-muted"
+                        style={{ fontSize: "11px", lineHeight: "1.4" }}
+                      >
+                        {err.desc}
+                      </div>
+                    </div>
+                  </div>
+                </Col>
+              ))}
+            </Row>
+          </Form.Group>
+
+          <Form.Group>
+            <Form.Label className="fw-bold text-secondary small mb-2">
+              2. Ghi chú cụ thể cho Annotator:
+            </Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={4}
+              placeholder="Mô tả chi tiết vị trí lỗi..."
+              style={{ fontSize: "13px" }}
+              value={rejectComment}
+              onChange={(e) => setRejectComment(e.target.value)}
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer className="bg-light">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowRejectModal(false)}
+          >
+            Hủy bỏ
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            className="px-4 fw-bold"
+            onClick={() => {
+              submitReview(false);
+              setShowRejectModal(false);
+            }}
+          >
+            Xác nhận Reject
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

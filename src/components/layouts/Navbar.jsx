@@ -96,7 +96,76 @@ const Navbar = () => {
           }}
         >
           <div className="flex-grow-1">
-            {["Admin", "Manager"].includes(role) && (
+            {["Admin"].includes(role) && (
+              <>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/dashboard"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-dashboard-2-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>Dashboard</span>
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/settings-user-management"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-user-settings-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>User Management</span>
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/settings-system-logs"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-list-settings-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>System Logs</span>
+                  </Link>
+                </li>
+                {/* <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/dispute-management"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-scales-3-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>Disputes</span>
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/review-audit"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-shield-check-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>Review Audit</span>
+                  </Link>
+                </li> */}
+              </>
+            )}
+            {["Manager"].includes(role) && (
               <>
                 <li className="nav-item">
                   <Link
@@ -263,36 +332,7 @@ const Navbar = () => {
               className="mx-3 my-2"
               style={{ borderColor: "rgba(0,0,0,0.1)" }}
             />
-            {role === "Admin" && (
-              <>
-                <li className="nav-item">
-                  <Link
-                    className="nav-link menu-link fs-18"
-                    to="/settings-user-management"
-                    style={menuItemStyle}
-                  >
-                    <i
-                      className="ri-user-settings-line fs-20 me-2"
-                      style={iconStyle}
-                    ></i>
-                    <span>User Management</span>
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link
-                    className="nav-link menu-link fs-18"
-                    to="/settings-system-logs"
-                    style={menuItemStyle}
-                  >
-                    <i
-                      className="ri-list-settings-line fs-20 me-2"
-                      style={iconStyle}
-                    ></i>
-                    <span>System Logs</span>
-                  </Link>
-                </li>
-              </>
-            )}
+
             {["Annotator", "Manager", "Reviewer"].includes(role) && (
               <li className="nav-item">
                 <Link

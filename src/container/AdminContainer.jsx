@@ -125,8 +125,6 @@ const AdminContainer = () => {
       const res = await importUser(file);
       if (res.data) {
         await fetchUsers();
-        console.log(res.data.successCount);
-        console.log(res.data.failureCount);
       }
       onCloseCreateModal();
     } catch (error) {
@@ -178,7 +176,6 @@ const AdminContainer = () => {
         </>
       )}
 
-      {activeTab === "settings" && <SettingsView />}
       {activeTab === "logs" && <LogsView />}
     </Container>
   );
