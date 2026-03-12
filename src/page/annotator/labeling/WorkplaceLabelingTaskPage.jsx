@@ -22,11 +22,20 @@ import taskService from "../../../services/annotator/labeling/taskService";
 import projectService from "../../../services/annotator/labeling/projectService";
 
 const STATUS_CONFIG = {
-  New: { bg: "bg-secondary-subtle", text: "text-secondary", label: "Mới" },
-  InProgress: { bg: "bg-info-subtle", text: "text-info", label: "Đang làm" },
-  Rejected: { bg: "bg-danger-subtle", text: "text-danger", label: "Từ chối" },
-  Submitted: { bg: "bg-warning-subtle", text: "text-warning", label: "Đã nộp" },
-  Approved: { bg: "bg-success-subtle", text: "text-success", label: "Duyệt" },
+  New: { cls: "stitch-ws-badge stitch-ws-badge-new", label: "Mới" },
+  InProgress: {
+    cls: "stitch-ws-badge stitch-ws-badge-inprogress",
+    label: "Đang làm",
+  },
+  Rejected: {
+    cls: "stitch-ws-badge stitch-ws-badge-rejected",
+    label: "Từ chối",
+  },
+  Submitted: {
+    cls: "stitch-ws-badge stitch-ws-badge-submitted",
+    label: "Đã nộp",
+  },
+  Approved: { cls: "stitch-ws-badge stitch-ws-badge-approved", label: "Duyệt" },
 };
 
 const WorkplaceLabelingTaskPage = () => {
@@ -648,86 +657,175 @@ const WorkplaceLabelingTaskPage = () => {
 
   return (
     <div>
-      <div className="mb-3">
+      {/* ── Workspace Header Bar ── */}
+      <div className="stitch-ws-header-bar">
         <button
-          className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
+          className="back-btn"
           onClick={handleGoBack}
           disabled={goingBack}
         >
           {goingBack ? (
             <>
-              <span className="spinner-border spinner-border-sm" />
-              Đang lưu...
+              <span className="spinner-border spinner-border-sm" /> Đang lưu...
             </>
           ) : (
             <>
-              <i className="ri-arrow-left-line"></i>
-              Quay lại danh sách Pack
+              <i className="ri-arrow-left-line"></i> Quay về
             </>
           )}
         </button>
+
+        <span className="stitch-ws-header-title">
+          <i className="ri-image-edit-line me-1"></i>
+          {projectInfo?.name || "Workspace"} — Ảnh {currentImgIndex + 1}/
+          {images.length}
+        </span>
+
+        <span
+          className={
+            (STATUS_CONFIG[currentImage.status] || STATUS_CONFIG.New).cls
+          }
+        >
+          {(STATUS_CONFIG[currentImage.status] || STATUS_CONFIG.New).label}
+        </span>
+
+        {!isReadOnly && (
+          <span className={`stitch-ws-save-badge ${saveStatus}`}>
+            {saveStatus === "saved" && (
+              <>
+                <i className="ri-check-line"></i> Saved{" "}
+                {lastSavedTime &&
+                  lastSavedTime.toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+              </>
+            )}
+            {saveStatus === "saving" && (
+              <>
+                <span
+                  className="spinner-border spinner-border-sm"
+                  style={{ width: 10, height: 10 }}
+                ></span>{" "}
+                Saving...
+              </>
+            )}
+            {saveStatus === "unsaved" && (
+              <>
+                <i className="ri-circle-fill" style={{ fontSize: 6 }}></i>{" "}
+                Unsaved
+              </>
+            )}
+          </span>
+        )}
+
+        <button
+          className="back-btn"
+          onClick={() => setShowShortcuts(!showShortcuts)}
+          title="Phím tắt"
+        >
+          <i className="ri-keyboard-line"></i>
+        </button>
       </div>
 
-      <div className="row g-3">
-        <div className="col-lg-3">
-          <div className="card border-0 shadow-sm mb-3">
-            <div className="card-body py-2 px-3">
+      {/* Shortcuts dropdown (below header) */}
+      {showShortcuts && (
+        <div className="stitch-ws-card mb-2">
+          <div className="stitch-ws-card-body" style={{ padding: "8px 14px" }}>
+            <div className="d-flex flex-wrap gap-3">
+              <div className="stitch-ws-shortcut">
+                <span>Undo</span>
+                <span className="stitch-ws-kbd">Ctrl+Z</span>
+              </div>
+              <div className="stitch-ws-shortcut">
+                <span>Xóa box cuối</span>
+                <span className="stitch-ws-kbd">Delete</span>
+              </div>
+              <div className="stitch-ws-shortcut">
+                <span>Xóa 1 box</span>
+                <span className="stitch-ws-text-muted">Double-click</span>
+              </div>
+              <div className="stitch-ws-shortcut">
+                <span>Zoom</span>
+                <span className="stitch-ws-kbd">Ctrl+Scroll</span>
+              </div>
+              <div className="stitch-ws-shortcut">
+                <span>Di chuyển</span>
+                <span className="stitch-ws-kbd">Arrow keys</span>
+              </div>
+              <div className="stitch-ws-shortcut">
+                <span>Ảnh trước/sau</span>
+                <span>
+                  <span className="stitch-ws-kbd me-1">Shift+←</span>
+                  <span className="stitch-ws-kbd">Shift+→</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 3-Panel Layout ── */}
+      <div className="stitch-ws-layout">
+        {/* ──── LEFT PANEL ──── */}
+        <div className="stitch-ws-left-panel">
+          {/* Progress */}
+          <div className="stitch-ws-card">
+            <div
+              className="stitch-ws-card-body"
+              style={{ padding: "10px 14px" }}
+            >
               <div className="d-flex align-items-center justify-content-between mb-2">
-                <div className="d-flex align-items-center gap-2">
-                  <span
-                    className={`badge ${(STATUS_CONFIG[currentImage.status] || STATUS_CONFIG.New).bg} ${(STATUS_CONFIG[currentImage.status] || STATUS_CONFIG.New).text}`}
-                  >
-                    {
-                      (STATUS_CONFIG[currentImage.status] || STATUS_CONFIG.New)
-                        .label
-                    }
-                  </span>
-                  <span className="small fw-bold text-muted">
-                    Ảnh {currentImgIndex + 1} / {images.length}
-                  </span>
-                </div>
-                <span className="small fw-bold text-primary">
+                <span
+                  className="stitch-ws-text-muted"
+                  style={{ fontWeight: 600, fontSize: "0.78rem" }}
+                >
+                  Tiến độ
+                </span>
+                <span
+                  className="stitch-ws-text-primary"
+                  style={{ fontSize: "0.78rem" }}
+                >
                   {doneCount}/{images.length} ({progressPercent}%)
                 </span>
               </div>
-              <div className="progress" style={{ height: 6 }}>
+              <div className="stitch-ws-progress">
                 <div
-                  className={`progress-bar bg-${progressPercent === 100 ? "success" : "primary"}`}
-                  role="progressbar"
+                  className={`stitch-ws-progress-bar ${progressPercent === 100 ? "complete" : ""}`}
                   style={{ width: `${progressPercent}%` }}
                 ></div>
               </div>
             </div>
           </div>
 
+          {/* Rejected Alert */}
           {isRejected && (
-            <div className="alert alert-danger small py-2 mb-3">
-              <div className="d-flex align-items-start">
-                <i className="ri-error-warning-fill me-2 fs-5 text-danger"></i>
+            <div className="stitch-ws-alert danger">
+              <div className="d-flex align-items-start gap-2">
+                <i
+                  className="ri-error-warning-fill"
+                  style={{ fontSize: "1.1rem", marginTop: 2 }}
+                ></i>
                 <div className="flex-grow-1">
-                  <strong className="d-block mb-1">
-                    Ảnh bị từ chối bởi Reviewer
-                  </strong>
-                  <span>
-                    Vui lòng đọc comment bên dưới và sửa lại bản vẽ. Nếu ảnh
-                    mờ/thiếu thông tin, hãy làm theo Guideline.
+                  <strong className="d-block mb-1">Ảnh bị từ chối</strong>
+                  <span style={{ opacity: 0.85 }}>
+                    Vui lòng đọc comment bên phải và sửa lại.
                   </span>
-                  <br />
-
                   {disputeStatus === "Pending" ? (
-                    <div className="mt-2 p-2 bg-warning bg-opacity-10 rounded border border-warning">
-                      <i className="ri-time-line me-1 text-warning"></i>
-                      <span className="text-warning fw-bold">
-                        Đã gửi khiếu nại — đang chờ Manager xử lý
-                      </span>
+                    <div
+                      className="stitch-ws-alert warning mt-2"
+                      style={{ marginBottom: 0 }}
+                    >
+                      <i className="ri-time-line me-1"></i>
+                      <strong>Đã gửi khiếu nại — đang chờ xử lý</strong>
                     </div>
                   ) : (
                     <button
-                      className="btn btn-outline-danger btn-sm mt-2"
+                      className="stitch-ws-nav-btn mt-2"
+                      style={{ padding: "4px 12px", fontSize: "0.75rem" }}
                       onClick={() => setShowDisputeForm(true)}
                     >
-                      <i className="ri-questionnaire-line me-1"></i>
-                      Khiếu nại (Dispute)
+                      <i className="ri-questionnaire-line"></i> Khiếu nại
                     </button>
                   )}
                 </div>
@@ -735,22 +833,22 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           )}
 
+          {/* Read-only / Dispute lock notices */}
           {currentImage.status === "Rejected" &&
             disputeStatus === "Pending" && (
-              <div className="alert alert-warning small py-2">
+              <div className="stitch-ws-alert warning">
                 <i className="ri-lock-line me-1"></i>
-                Đang chờ xử lý khiếu nại. Bạn không thể chỉnh sửa cho đến khi
-                Manager phân xử.
+                Đang chờ xử lý khiếu nại.
               </div>
             )}
-
           {isReadOnly && currentImage.status !== "Rejected" && (
-            <div className="alert alert-info small py-2 mb-3">
+            <div className="stitch-ws-alert info">
               <i className="ri-lock-line me-1"></i>
-              Ảnh này đã được nộp. Chỉ xem, không chỉnh sửa.
+              Chỉ xem, không chỉnh sửa.
             </div>
           )}
 
+          {/* Label Toolbox */}
           {!isReadOnly && (
             <LabelToolbox
               labels={labels}
@@ -759,35 +857,35 @@ const WorkplaceLabelingTaskPage = () => {
             />
           )}
 
-          <div className="card border-0 shadow-sm mb-3">
-            <div className="card-header bg-white py-2 border-bottom d-flex justify-content-between align-items-center">
-              <small className="fw-bold text-muted">
-                <i className="ri-list-check-2 me-1"></i>
-                Annotations
-              </small>
-              <span className="badge bg-primary-subtle text-primary">
+          {/* Annotations List */}
+          <div className="stitch-ws-card">
+            <div className="stitch-ws-card-header">
+              <span>
+                <i className="ri-list-check-2 me-1"></i> Annotations
+              </span>
+              <span className="stitch-ws-badge stitch-ws-badge-inprogress">
                 {annotations.length}
               </span>
             </div>
-            <div
-              className="card-body p-0"
-              style={{ maxHeight: "200px", overflowY: "auto" }}
-            >
+            <div style={{ maxHeight: "200px", overflowY: "auto" }}>
               {annotations.length === 0 ? (
-                <div className="text-center text-muted small py-3">
-                  <i className="ri-shape-line d-block fs-4 mb-1 opacity-50"></i>
-                  Chưa có annotation nào
+                <div
+                  className="stitch-ws-card-body text-center"
+                  style={{ padding: "20px 14px" }}
+                >
+                  <i
+                    className="ri-shape-line d-block mb-1"
+                    style={{ fontSize: "1.5rem", opacity: 0.3 }}
+                  ></i>
+                  <span className="stitch-ws-text-muted">
+                    Chưa có annotation
+                  </span>
                 </div>
               ) : (
                 annotations.map((a, idx) => (
                   <div
                     key={a.id}
-                    className={`d-flex align-items-center px-3 py-2 border-bottom ${highlightedAnnotationId === a.id ? "bg-warning bg-opacity-10" : ""}`}
-                    style={{
-                      fontSize: 12,
-                      cursor: "pointer",
-                      transition: "background 0.15s",
-                    }}
+                    className={`stitch-ws-ann-item ${highlightedAnnotationId === a.id ? "highlighted" : ""}`}
                     onMouseEnter={() => setHighlightedAnnotationId(a.id)}
                     onMouseLeave={() => setHighlightedAnnotationId(null)}
                     onClick={() => setHighlightedAnnotationId(a.id)}
@@ -801,20 +899,27 @@ const WorkplaceLabelingTaskPage = () => {
                         flexShrink: 0,
                         border:
                           highlightedAnnotationId === a.id
-                            ? "2px solid #0d6efd"
+                            ? "2px solid #3B82F6"
                             : "none",
                       }}
                       className="me-2"
                     ></span>
-                    <span className="flex-grow-1 text-truncate fw-medium">
+                    <span
+                      className="flex-grow-1 text-truncate"
+                      style={{ fontWeight: 500 }}
+                    >
                       {a.labelName || `Box ${idx + 1}`}
                     </span>
-                    <span className="text-muted me-2" style={{ fontSize: 10 }}>
+                    <span
+                      className="stitch-ws-text-muted me-2"
+                      style={{ fontSize: "0.65rem" }}
+                    >
                       {Math.round(a.width)}×{Math.round(a.height)}
                     </span>
                     {!isReadOnly && (
                       <button
-                        className="btn btn-link btn-sm text-danger p-0"
+                        className="btn btn-link btn-sm p-0"
+                        style={{ color: "#F87171", lineHeight: 1 }}
                         onClick={(e) => {
                           e.stopPropagation();
                           dispatch(
@@ -825,7 +930,6 @@ const WorkplaceLabelingTaskPage = () => {
                           );
                         }}
                         title="Xóa annotation này"
-                        style={{ lineHeight: 1 }}
                       >
                         <i className="ri-close-line"></i>
                       </button>
@@ -836,169 +940,42 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           </div>
 
-          <div className="card border-0 shadow-sm mb-3">
-            <div className="card-header bg-white py-2 border-bottom">
-              <small className="fw-bold text-muted">
-                <i className="ri-gallery-line me-1"></i>
-                Danh sách ảnh
-              </small>
-            </div>
-            <div
-              className="d-flex gap-1 p-2 flex-wrap"
-              style={{ maxHeight: "140px", overflowY: "auto" }}
-            >
-              {images.map((img, idx) => {
-                const cfg = STATUS_CONFIG[img.status] || STATUS_CONFIG.New;
-                const isCurrent = idx === currentImgIndex;
-                const borderColor =
-                  img.status === "Approved"
-                    ? "#198754"
-                    : img.status === "Submitted"
-                      ? "#ffc107"
-                      : img.status === "Rejected"
-                        ? "#dc3545"
-                        : img.status === "InProgress"
-                          ? "#0dcaf0"
-                          : "#adb5bd";
-                const imgAnns = allAnnotations[img.id] || [];
-                return (
-                  <div
-                    key={img.id}
-                    onClick={() => setCurrentImgIndex(idx)}
-                    title={`Ảnh ${idx + 1} — ${cfg.label} — ${imgAnns.length} box`}
-                    style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 6,
-                      border: isCurrent
-                        ? `3px solid #0d6efd`
-                        : `2px solid ${borderColor}`,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 11,
-                      fontWeight: isCurrent ? 700 : 500,
-                      background: isCurrent
-                        ? "rgba(13,110,253,0.1)"
-                        : "#f8f9fa",
-                      color: isCurrent ? "#0d6efd" : "#495057",
-                      transition: "all 0.15s",
-                      flexShrink: 0,
-                      position: "relative",
-                    }}
-                  >
-                    {idx + 1}
-                    {imgAnns.length > 0 && (
-                      <span
-                        style={{
-                          position: "absolute",
-                          top: -4,
-                          right: -4,
-                          fontSize: 8,
-                          background: "#0d6efd",
-                          color: "#fff",
-                          borderRadius: "50%",
-                          width: 14,
-                          height: 14,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: 700,
-                        }}
-                      >
-                        {imgAnns.length}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mb-3">
+          {/* Batch Submit Toggle */}
+          <div>
             <button
-              className="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-between"
-              onClick={() => setShowShortcuts(!showShortcuts)}
-            >
-              <span>
-                <i className="ri-keyboard-line me-1"></i>
-                Phím tắt
-              </span>
-              <i
-                className={`ri-arrow-${showShortcuts ? "up" : "down"}-s-line`}
-              ></i>
-            </button>
-            {showShortcuts && (
-              <div className="card border-0 shadow-sm mt-1">
-                <div className="card-body py-2 px-3 small">
-                  <div className="d-flex justify-content-between py-1 border-bottom">
-                    <span className="text-muted">Undo</span>
-                    <kbd style={{ fontSize: 10 }}>Ctrl+Z</kbd>
-                  </div>
-                  <div className="d-flex justify-content-between py-1 border-bottom">
-                    <span className="text-muted">Xóa box cuối</span>
-                    <kbd style={{ fontSize: 10 }}>Delete</kbd>
-                  </div>
-                  <div className="d-flex justify-content-between py-1 border-bottom">
-                    <span className="text-muted">Xóa 1 box</span>
-                    <span className="text-muted" style={{ fontSize: 10 }}>
-                      Double-click
-                    </span>
-                  </div>
-                  <div className="d-flex justify-content-between py-1 border-bottom">
-                    <span className="text-muted">Zoom</span>
-                    <kbd style={{ fontSize: 10 }}>Ctrl+Scroll</kbd>
-                  </div>
-                  <div className="d-flex justify-content-between py-1 border-bottom">
-                    <span className="text-muted">Di chuyển canvas</span>
-                    <kbd style={{ fontSize: 10 }}>Arrow keys</kbd>
-                  </div>
-                  <div className="d-flex justify-content-between py-1">
-                    <span className="text-muted">Ảnh trước/sau</span>
-                    <span>
-                      <kbd style={{ fontSize: 10 }}>Shift+←</kbd>{" "}
-                      <kbd style={{ fontSize: 10 }}>Shift+→</kbd>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-3">
-            <button
-              className={`btn btn-sm w-100 ${showBatchPanel ? "btn-outline-secondary" : "btn-outline-primary"}`}
+              className={`stitch-ws-nav-btn w-100 ${showBatchPanel ? "" : "primary"}`}
+              style={{ justifyContent: "center" }}
               onClick={async () => {
-                if (!showBatchPanel) {
-                  await saveDraft(true);
-                }
+                if (!showBatchPanel) await saveDraft(true);
                 setShowBatchPanel(!showBatchPanel);
               }}
             >
               <i
-                className={`ri-${showBatchPanel ? "close" : "stack"}-line me-1`}
+                className={`ri-${showBatchPanel ? "close" : "stack"}-line`}
               ></i>
-              {showBatchPanel ? "Ẩn danh sách ảnh" : "Nộp hàng loạt"}
+              {showBatchPanel ? "Ẩn batch" : "Nộp hàng loạt"}
             </button>
           </div>
 
+          {/* Batch Panel */}
           {showBatchPanel && (
-            <div className="card mt-2 border shadow-sm">
-              <div className="card-header bg-primary bg-opacity-10 py-2 d-flex justify-content-between align-items-center">
-                <small className="fw-bold text-primary">
-                  <i className="ri-checkbox-multiple-line me-1"></i>
-                  Chọn ảnh để nộp
-                </small>
-                <span className="badge bg-primary">
-                  {selectedIds.size} đã chọn
+            <div className="stitch-ws-card">
+              <div className="stitch-ws-card-header">
+                <span>
+                  <i className="ri-checkbox-multiple-line me-1"></i> Chọn ảnh
+                </span>
+                <span className="stitch-ws-badge stitch-ws-badge-inprogress">
+                  {selectedIds.size}
                 </span>
               </div>
               <div
-                className="card-body p-0"
-                style={{ maxHeight: "300px", overflowY: "auto" }}
+                className="stitch-ws-card-body p-0"
+                style={{ maxHeight: "250px", overflowY: "auto" }}
               >
-                <div className="px-3 py-2 border-bottom bg-light">
+                <div
+                  className="px-3 py-2"
+                  style={{ borderBottom: "1px solid rgba(51, 65, 85, 0.2)" }}
+                >
                   <div className="form-check">
                     <input
                       className="form-check-input"
@@ -1014,14 +991,14 @@ const WorkplaceLabelingTaskPage = () => {
                       disabled={eligibleForSubmit.length === 0}
                     />
                     <label
-                      className="form-check-label small fw-bold"
+                      className="form-check-label stitch-ws-text-muted"
                       htmlFor="selectAllEligible"
+                      style={{ fontWeight: 600, fontSize: "0.78rem" }}
                     >
-                      Chọn tất cả chưa nộp ({eligibleForSubmit.length} ảnh)
+                      Chọn tất cả ({eligibleForSubmit.length})
                     </label>
                   </div>
                 </div>
-
                 {images.map((img, idx) => {
                   const config = STATUS_CONFIG[img.status] || STATUS_CONFIG.New;
                   const isEligible =
@@ -1030,16 +1007,10 @@ const WorkplaceLabelingTaskPage = () => {
                   const hasData =
                     hasValidAnnotations(img.annotationData) ||
                     (reduxAnns && reduxAnns.length > 0);
-
                   return (
                     <div
                       key={img.id}
-                      className={`d-flex align-items-center px-3 py-2 border-bottom ${
-                        idx === currentImgIndex
-                          ? "bg-primary bg-opacity-10"
-                          : ""
-                      }`}
-                      style={{ cursor: "pointer" }}
+                      className={`stitch-ws-batch-item ${idx === currentImgIndex ? "active" : ""}`}
                       onClick={() => setCurrentImgIndex(idx)}
                     >
                       {isEligible && (
@@ -1053,7 +1024,6 @@ const WorkplaceLabelingTaskPage = () => {
                           }}
                           onClick={(e) => e.stopPropagation()}
                           disabled={!hasData}
-                          title={!hasData ? "Ảnh chưa có dữ liệu gán nhãn" : ""}
                         />
                       )}
                       {!isEligible && (
@@ -1062,32 +1032,29 @@ const WorkplaceLabelingTaskPage = () => {
                       <small className="flex-grow-1 text-truncate">
                         Ảnh {idx + 1}
                       </small>
-                      <span
-                        className={`badge ${config.bg} ${config.text} ms-1`}
-                        style={{ fontSize: "10px" }}
-                      >
+                      <span className={`${config.cls} ms-1`}>
                         {config.label}
                       </span>
                     </div>
                   );
                 })}
               </div>
-
-              <div className="card-footer bg-white py-2 text-center">
+              <div className="stitch-ws-card-body py-2 text-center">
                 <button
-                  className="btn btn-success btn-sm w-100"
+                  className="stitch-ws-nav-btn success w-100"
+                  style={{ justifyContent: "center" }}
                   disabled={selectedIds.size === 0 || batchSubmitting}
                   onClick={handleBatchSubmit}
                 >
                   {batchSubmitting ? (
                     <>
-                      <span className="spinner-border spinner-border-sm me-1"></span>
+                      <span className="spinner-border spinner-border-sm"></span>{" "}
                       Đang nộp...
                     </>
                   ) : (
                     <>
-                      <i className="ri-send-plane-fill me-1"></i>
-                      Nộp {selectedIds.size} ảnh đã chọn
+                      <i className="ri-send-plane-fill"></i> Nộp{" "}
+                      {selectedIds.size} ảnh
                     </>
                   )}
                 </button>
@@ -1096,7 +1063,8 @@ const WorkplaceLabelingTaskPage = () => {
           )}
         </div>
 
-        <div className="col-lg-9">
+        {/* ──── CENTER PANEL ──── */}
+        <div className="stitch-ws-center-panel">
           <LabelingWorkspace
             assignmentId={currentImage.id}
             imageUrl={currentImage.dataItemUrl}
@@ -1105,162 +1073,169 @@ const WorkplaceLabelingTaskPage = () => {
             onAnnotationClick={(id) => setHighlightedAnnotationId(id)}
           />
 
-          <div className="d-flex justify-content-between align-items-center mt-3 p-3 bg-light rounded shadow-sm">
+          {/* ── Bottom Navigation Bar ── */}
+          <div className="stitch-ws-bottom-bar">
             <button
-              className="btn btn-secondary"
+              className="nav-arrow"
               disabled={currentImgIndex === 0}
               onClick={handlePrev}
+              title="Ảnh trước (Shift+←)"
             >
-              <i className="bx bx-chevron-left"></i> Trước
+              <i className="ri-arrow-left-s-line"></i>
             </button>
 
-            <div className="d-flex align-items-center gap-2">
-              {/* Save indicator */}
-              {!isReadOnly && (
-                <span
-                  className={`small d-flex align-items-center gap-1 me-2 ${
-                    saveStatus === "saved"
-                      ? "text-success"
-                      : saveStatus === "saving"
-                        ? "text-warning"
-                        : "text-danger"
-                  }`}
-                  style={{ fontSize: 11, minWidth: 80 }}
-                >
-                  {saveStatus === "saved" && (
-                    <>
-                      <i className="ri-check-line"></i>
-                      Đã lưu{" "}
-                      {lastSavedTime &&
-                        lastSavedTime.toLocaleTimeString("vi-VN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                    </>
-                  )}
-                  {saveStatus === "saving" && (
-                    <>
+            {/* Thumbnail strip */}
+            <div className="stitch-ws-thumb-strip">
+              {images.map((img, idx) => {
+                const isCurrent = idx === currentImgIndex;
+                const statusKey = img.status || "New";
+                const dotColor =
+                  statusKey === "Approved"
+                    ? "#22C55E"
+                    : statusKey === "Submitted"
+                      ? "#FACC15"
+                      : statusKey === "Rejected"
+                        ? "#EF4444"
+                        : statusKey === "InProgress"
+                          ? "#3B82F6"
+                          : null;
+                return (
+                  <div
+                    key={img.id}
+                    className={`thumb-item ${isCurrent ? "active" : ""}`}
+                    onClick={() => setCurrentImgIndex(idx)}
+                    title={`Ảnh ${idx + 1} — ${(STATUS_CONFIG[statusKey] || STATUS_CONFIG.New).label}`}
+                  >
+                    {idx + 1}
+                    {dotColor && (
                       <span
-                        className="spinner-border spinner-border-sm"
-                        style={{ width: 10, height: 10 }}
+                        className="status-dot"
+                        style={{ background: dotColor }}
                       ></span>
-                      Đang lưu...
-                    </>
-                  )}
-                  {saveStatus === "unsaved" && (
-                    <>
-                      <i className="ri-circle-fill" style={{ fontSize: 8 }}></i>
-                      Chưa lưu
-                    </>
-                  )}
-                </span>
-              )}
+                    )}
+                  </div>
+                );
+              })}
+            </div>
 
+            <button
+              className="nav-arrow"
+              disabled={currentImgIndex === images.length - 1}
+              onClick={handleNext}
+              title="Ảnh tiếp (Shift+→)"
+            >
+              <i className="ri-arrow-right-s-line"></i>
+            </button>
+
+            {/* Action buttons */}
+            <div className="action-group">
               {!isReadOnly && (
                 <>
                   <button
-                    className="btn btn-outline-primary"
+                    className="action-btn primary"
                     onClick={() => saveDraft(false)}
                   >
-                    <i className="bx bx-save me-1"></i> Lưu nháp
+                    <i className="ri-save-line"></i> Lưu nháp
                   </button>
                   <button
-                    className={`btn ${isRejected ? "btn-warning" : "btn-success"}`}
+                    className={`action-btn ${isRejected ? "warning" : "success"}`}
                     onClick={handleSubmit}
                   >
                     <i
-                      className={`bx ${isRejected ? "bx-revision" : "bx-check-circle"} me-1`}
+                      className={`ri-${isRejected ? "restart-line" : "check-line"}`}
                     ></i>
                     {isRejected ? "Nộp lại" : "Nộp bài"}
                   </button>
                 </>
               )}
-
               {isReadOnly && (
-                <span className="badge bg-success-subtle text-success fs-6 d-flex align-items-center">
+                <span
+                  className="stitch-ws-badge stitch-ws-badge-approved"
+                  style={{ fontSize: "0.78rem", padding: "5px 12px" }}
+                >
                   <i className="ri-check-double-line me-1"></i> Đã nộp
                 </span>
               )}
             </div>
-
-            <button
-              className="btn btn-secondary"
-              disabled={currentImgIndex === images.length - 1}
-              onClick={handleNext}
-            >
-              Tiếp <i className="bx bx-chevron-right"></i>
-            </button>
           </div>
+        </div>
 
-          {(currentImage.status === "Approved" ||
-            currentImage.status === "Rejected" ||
-            currentImage.status === "Submitted") && (
-            <div className="mt-4">
-              <CommentSection
-                rejectionReason={currentImage.rejectionReason}
-                status={currentImage.status}
-              />
-            </div>
-          )}
+        {/* ──── RIGHT PANEL ──── */}
+        <div className="stitch-ws-right-panel">
+          {/* Comments */}
+          <CommentSection
+            rejectionReason={currentImage.rejectionReason}
+            status={currentImage.status}
+          />
 
+          {/* Dispute Form */}
           {showDisputeForm && isRejected && (
-            <div className="mt-3">
-              <div className="card border-danger shadow-sm">
-                <div className="card-header bg-danger bg-opacity-10 d-flex justify-content-between align-items-center">
-                  <h6 className="mb-0 text-danger fw-bold">
-                    <i className="ri-questionnaire-line me-1"></i>
-                    Tạo khiếu nại (Dispute)
-                  </h6>
+            <div
+              className="stitch-ws-card"
+              style={{ borderColor: "rgba(239, 68, 68, 0.3)" }}
+            >
+              <div className="stitch-ws-card-header">
+                <span style={{ color: "#F87171" }}>
+                  <i className="ri-questionnaire-line me-1"></i> Khiếu nại
+                </span>
+                <button
+                  className="stitch-back-btn"
+                  style={{ padding: "4px 8px", fontSize: "0.72rem" }}
+                  onClick={() => {
+                    setShowDisputeForm(false);
+                    setDisputeReason("");
+                  }}
+                >
+                  <i className="ri-close-line"></i>
+                </button>
+              </div>
+              <div className="stitch-ws-card-body">
+                <p
+                  className="stitch-ws-text-muted mb-2"
+                  style={{ fontSize: "0.78rem" }}
+                >
+                  Nhập lý do nếu bạn cho rằng Reviewer chấm sai.
+                </p>
+                <textarea
+                  className="form-control mb-2"
+                  rows={3}
+                  placeholder="Nhập lý do khiếu nại..."
+                  value={disputeReason}
+                  onChange={(e) => setDisputeReason(e.target.value)}
+                  disabled={disputeSubmitting}
+                />
+                <div className="d-flex justify-content-end gap-2">
                   <button
-                    className="btn-close btn-close-sm"
+                    className="stitch-ws-nav-btn"
                     onClick={() => {
                       setShowDisputeForm(false);
                       setDisputeReason("");
                     }}
-                  ></button>
-                </div>
-                <div className="card-body">
-                  <p className="text-muted small mb-2">
-                    Nếu bạn cho rằng Reviewer đã chấm sai bài của mình, hãy nhập
-                    lý do bên dưới. Manager sẽ xem xét và phân xử.
-                  </p>
-                  <textarea
-                    className="form-control mb-3"
-                    rows={3}
-                    placeholder="Nhập lý do khiếu nại... (ví dụ: Annotation đã đúng theo guideline, Reviewer nhầm lẫn...)"
-                    value={disputeReason}
-                    onChange={(e) => setDisputeReason(e.target.value)}
                     disabled={disputeSubmitting}
-                  />
-                  <div className="d-flex justify-content-end gap-2">
-                    <button
-                      className="btn btn-outline-secondary btn-sm"
-                      onClick={() => {
-                        setShowDisputeForm(false);
-                        setDisputeReason("");
-                      }}
-                      disabled={disputeSubmitting}
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={handleCreateDispute}
-                      disabled={!disputeReason.trim() || disputeSubmitting}
-                    >
-                      {disputeSubmitting ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-1"></span>
-                          Đang gửi...
-                        </>
-                      ) : (
-                        <>
-                          <i className="ri-send-plane-fill me-1"></i>Gửi khiếu
-                          nại
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    className="stitch-ws-nav-btn"
+                    style={{
+                      background: "linear-gradient(135deg, #EF4444, #DC2626)",
+                      color: "#fff",
+                      border: "none",
+                    }}
+                    onClick={handleCreateDispute}
+                    disabled={!disputeReason.trim() || disputeSubmitting}
+                  >
+                    {disputeSubmitting ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm"></span>{" "}
+                        Đang gửi...
+                      </>
+                    ) : (
+                      <>
+                        <i className="ri-send-plane-fill"></i> Gửi
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

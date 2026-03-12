@@ -8,37 +8,32 @@ export default function StatCard({
   color = "primary",
 }) {
   return (
-    <div className="card card-animate h-100 shadow-sm">
-      <div className="card-body d-flex align-items-center justify-content-between">
-        <div>
-          <p className="text-uppercase fw-semibold text-muted mb-1 fs-12">
-            {title}
-          </p>
-
-          {loading ? (
-            <div className="placeholder-glow">
-              <span className="placeholder col-6"></span>
+    <div className="col">
+      <div className="card stitch-stat-card h-100">
+        <div className="card-body d-flex align-items-center gap-3 p-3">
+          {/* Gradient icon */}
+          {icon && (
+            <div className={`stat-icon-gradient ${color}`}>
+              <i className={icon}></i>
             </div>
-          ) : (
-            <h3 className="fw-bold mb-0">{value ?? 0}</h3>
           )}
-        </div>
 
-        {icon && (
-          <div
-            className={`stat-icon bg-${color} bg-opacity-10 text-${color}`}
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <i className={icon} style={{ fontSize: 26 }}></i>
+          {/* Text content */}
+          <div className="flex-grow-1 min-width-0">
+            <p className="stitch-stat-title">{title}</p>
+
+            {loading ? (
+              <div className="placeholder-glow">
+                <span
+                  className="placeholder col-6"
+                  style={{ borderRadius: 4, height: 24 }}
+                ></span>
+              </div>
+            ) : (
+              <h3 className="stitch-stat-value">{value ?? 0}</h3>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

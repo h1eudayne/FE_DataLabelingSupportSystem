@@ -9,10 +9,31 @@ const MainLayouts = () => {
 
   useEffect(() => {
     document.body.setAttribute("data-layout", "vertical");
-    document.body.setAttribute("data-sidebar", "dark");
+    const currentTheme = localStorage.getItem("theme") || "light";
+    document.body.setAttribute(
+      "data-sidebar",
+      currentTheme === "dark" ? "dark" : "light",
+    );
     document.body.setAttribute("data-sidebar-size", sidebarSize);
 
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === "data-bs-theme") {
+          const theme = document.documentElement.getAttribute("data-bs-theme");
+          document.body.setAttribute(
+            "data-sidebar",
+            theme === "dark" ? "dark" : "light",
+          );
+        }
+      });
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-bs-theme"],
+    });
+
     return () => {
+      observer.disconnect();
       document.body.removeAttribute("data-layout");
       document.body.removeAttribute("data-sidebar-size");
       document.body.removeAttribute("data-sidebar");
