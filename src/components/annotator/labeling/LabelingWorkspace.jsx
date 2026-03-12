@@ -353,108 +353,115 @@ const LabelingWorkspace = ({
 
       {/* Canvas wrapper — this div is measured for accurate image centering */}
       <div ref={stageWrapperRef} className="stitch-ws-stage-wrapper">
-      <Stage
-        width={size.width}
-        height={size.height}
-        scaleX={stageScale}
-        scaleY={stageScale}
-        x={stagePos.x}
-        y={stagePos.y}
-        onWheel={handleWheel}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-      >
-        <Layer>
-          {image && <KonvaImage image={image} />}
+        <Stage
+          width={size.width}
+          height={size.height}
+          scaleX={stageScale}
+          scaleY={stageScale}
+          x={stagePos.x}
+          y={stagePos.y}
+          onWheel={handleWheel}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+        >
+          <Layer>
+            {image && <KonvaImage image={image} />}
 
-          {/* Existing annotations */}
-          {annotations.map((a) => {
-            const isHighlighted = highlightedAnnotationId === a.id;
-            const tagFontSize = 11 / stageScale;
-            const tagPadding = 3 / stageScale;
-            const tagText = a.labelName || "Box";
-            // Approximate tag width
-            const tagWidth = tagText.length * tagFontSize * 0.65 + tagPadding * 2;
-            const tagHeight = tagFontSize + tagPadding * 2;
+            {/* Existing annotations */}
+            {annotations.map((a) => {
+              const isHighlighted = highlightedAnnotationId === a.id;
+              const tagFontSize = 11 / stageScale;
+              const tagPadding = 3 / stageScale;
+              const tagText = a.labelName || "Box";
+              // Approximate tag width
+              const tagWidth =
+                tagText.length * tagFontSize * 0.65 + tagPadding * 2;
+              const tagHeight = tagFontSize + tagPadding * 2;
 
-            return (
-              <Group key={a.id}>
-                {/* Bounding box rect */}
-                <Rect
-                  x={a.x}
-                  y={a.y}
-                  width={a.width}
-                  height={a.height}
-                  stroke={isHighlighted ? "#fff" : (a.color || "#6c757d")}
-                  strokeWidth={(isHighlighted ? 3 : 2) / stageScale}
-                  fill={(a.color || "#6c757d") + (isHighlighted ? "55" : "22")}
-                  dash={isHighlighted ? [6 / stageScale, 3 / stageScale] : undefined}
-                  onDblClick={() => {
-                    if (!readOnly)
-                      dispatch(removeAnnotation({ assignmentId, id: a.id }));
-                  }}
-                  onClick={() => {
-                    if (onAnnotationClick) onAnnotationClick(a.id);
-                  }}
-                />
-                {/* Label tag background */}
-                <Rect
-                  x={a.x}
-                  y={a.y - tagHeight}
-                  width={tagWidth}
-                  height={tagHeight}
-                  fill={a.color || "#6c757d"}
-                  cornerRadius={2 / stageScale}
-                />
-                {/* Label tag text */}
-                <Text
-                  x={a.x + tagPadding}
-                  y={a.y - tagHeight + tagPadding}
-                  text={tagText}
-                  fill="white"
-                  fontSize={tagFontSize}
-                  fontStyle="bold"
-                />
-              </Group>
-            );
-          })}
+              return (
+                <Group key={a.id}>
+                  {/* Bounding box rect */}
+                  <Rect
+                    x={a.x}
+                    y={a.y}
+                    width={a.width}
+                    height={a.height}
+                    stroke={isHighlighted ? "#fff" : a.color || "#6c757d"}
+                    strokeWidth={(isHighlighted ? 3 : 2) / stageScale}
+                    fill={
+                      (a.color || "#6c757d") + (isHighlighted ? "55" : "22")
+                    }
+                    dash={
+                      isHighlighted
+                        ? [6 / stageScale, 3 / stageScale]
+                        : undefined
+                    }
+                    onDblClick={() => {
+                      if (!readOnly)
+                        dispatch(removeAnnotation({ assignmentId, id: a.id }));
+                    }}
+                    onClick={() => {
+                      if (onAnnotationClick) onAnnotationClick(a.id);
+                    }}
+                  />
+                  {/* Label tag background */}
+                  <Rect
+                    x={a.x}
+                    y={a.y - tagHeight}
+                    width={tagWidth}
+                    height={tagHeight}
+                    fill={a.color || "#6c757d"}
+                    cornerRadius={2 / stageScale}
+                  />
+                  {/* Label tag text */}
+                  <Text
+                    x={a.x + tagPadding}
+                    y={a.y - tagHeight + tagPadding}
+                    text={tagText}
+                    fill="white"
+                    fontSize={tagFontSize}
+                    fontStyle="bold"
+                  />
+                </Group>
+              );
+            })}
 
-          {/* Drawing rect preview */}
-          {newRect && (
-            <Rect
-              {...newRect}
-              stroke="yellow"
-              dash={[6, 4]}
-              strokeWidth={2 / stageScale}
-            />
-          )}
-
-          {/* Crosshair lines */}
-          {showCrosshair && (
-            <>
-              {/* Vertical line */}
-              <Line
-                points={[mouseImgPos.x, 0, mouseImgPos.x, imgH]}
-                stroke="rgba(255,255,255,0.35)"
-                strokeWidth={1 / stageScale}
-                dash={[4 / stageScale, 4 / stageScale]}
-                listening={false}
+            {/* Drawing rect preview */}
+            {newRect && (
+              <Rect
+                {...newRect}
+                stroke="yellow"
+                dash={[6, 4]}
+                strokeWidth={2 / stageScale}
               />
-              {/* Horizontal line */}
-              <Line
-                points={[0, mouseImgPos.y, imgW, mouseImgPos.y]}
-                stroke="rgba(255,255,255,0.35)"
-                strokeWidth={1 / stageScale}
-                dash={[4 / stageScale, 4 / stageScale]}
-                listening={false}
-              />
-            </>
-          )}
-        </Layer>
-      </Stage>
+            )}
+
+            {/* Crosshair lines */}
+            {showCrosshair && (
+              <>
+                {/* Vertical line */}
+                <Line
+                  points={[mouseImgPos.x, 0, mouseImgPos.x, imgH]}
+                  stroke="rgba(255,255,255,0.35)"
+                  strokeWidth={1 / stageScale}
+                  dash={[4 / stageScale, 4 / stageScale]}
+                  listening={false}
+                />
+                {/* Horizontal line */}
+                <Line
+                  points={[0, mouseImgPos.y, imgW, mouseImgPos.y]}
+                  stroke="rgba(255,255,255,0.35)"
+                  strokeWidth={1 / stageScale}
+                  dash={[4 / stageScale, 4 / stageScale]}
+                  listening={false}
+                />
+              </>
+            )}
+          </Layer>
+        </Stage>
       </div>
 
       {/* Coordinate bar */}
@@ -477,7 +484,10 @@ const LabelingWorkspace = ({
 
         {newRect && (
           <>
-            <div className="stitch-ws-toolbar-divider" style={{ height: 16 }}></div>
+            <div
+              className="stitch-ws-toolbar-divider"
+              style={{ height: 16 }}
+            ></div>
             <span style={{ color: "#FACC15" }}>
               <i className="ri-shape-line me-1"></i>
               W: <strong>{Math.abs(Math.round(newRect.width))}</strong>

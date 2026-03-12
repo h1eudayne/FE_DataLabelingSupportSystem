@@ -116,38 +116,59 @@ const Navbar = () => {
             background: #475569;
             border-radius: 2px;
           }
+
+          /* ================================================================
+             LOGO TOGGLE - Override based on data-bs-theme
+             ================================================================ */
+          /* Dark mode: show logo-dark, hide logo-light */
+          [data-bs-theme="dark"] .navbar-brand-box .logo-dark {
+            display: block !important;
+          }
+          [data-bs-theme="dark"] .navbar-brand-box .logo-light {
+            display: none !important;
+          }
+
+          /* Light mode: show logo-light, hide logo-dark */
+          [data-bs-theme="light"] .navbar-brand-box .logo-dark {
+            display: none !important;
+          }
+          [data-bs-theme="light"] .navbar-brand-box .logo-light {
+            display: block !important;
+          }
         `}
       </style>
 
       <div className="navbar-brand-box" style={{ textAlign: "left" }}>
+        {/* Logo cho Dark Mode sidebar (text trắng) */}
         <Link to="/" className="logo logo-dark">
           <span className="logo-sm">
             <img
-              src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842133/logo-2_v1wquw.png"
-              alt=""
+              src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1773346579/logo-darkmode-small_lknbuk.png"
+              alt="Logo"
               height="50"
             />
           </span>
           <span className="logo-lg">
             <img
-              src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842054/logo-1_jc0rul.png"
-              alt=""
+              src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1773346453/logo-darkmode_txjdzq.png"
+              alt="Logo"
               height="55"
             />
           </span>
         </Link>
+        {/* Logo cho Light Mode sidebar (text đen) */}
         <Link to="/" className="logo logo-light">
           <span className="logo-sm">
             <img
               src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842133/logo-2_v1wquw.png"
-              alt=""
+              alt="Logo"
               height="50"
             />
           </span>
           <span className="logo-lg">
             <img
               src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842054/logo-1_jc0rul.png"
-              alt=""
+              alt="Logo"
               height="55"
             />
           </span>

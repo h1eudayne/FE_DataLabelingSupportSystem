@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { setSelectedLabel, toggleChecklistItem } from "../../../store/annotator/labelling/labelingSlice";
+import {
+  setSelectedLabel,
+  toggleChecklistItem,
+} from "../../../store/annotator/labelling/labelingSlice";
 import { toast } from "react-toastify";
 
 const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
@@ -64,7 +67,10 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
   if (!labels || labels.length === 0) {
     return (
       <div className="stitch-ws-card">
-        <div className="stitch-ws-card-body text-center stitch-ws-text-muted" style={{ padding: 20 }}>
+        <div
+          className="stitch-ws-card-body text-center stitch-ws-text-muted"
+          style={{ padding: 20 }}
+        >
           Đang tải bộ nhãn...
         </div>
       </div>
@@ -130,10 +136,19 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
       )}
 
       {/* Label list — FIXED 280px max, always scrollable */}
-      <div className="stitch-ws-card-body p-0" style={{ maxHeight: 280, overflowY: "auto" }}>
+      <div
+        className="stitch-ws-card-body p-0"
+        style={{ maxHeight: 280, overflowY: "auto" }}
+      >
         {filteredLabels.length === 0 && (
-          <div className="text-center stitch-ws-text-muted" style={{ padding: "16px 14px", fontSize: "0.78rem" }}>
-            <i className="ri-search-line d-block" style={{ fontSize: 20, marginBottom: 4, opacity: 0.5 }}></i>
+          <div
+            className="text-center stitch-ws-text-muted"
+            style={{ padding: "16px 14px", fontSize: "0.78rem" }}
+          >
+            <i
+              className="ri-search-line d-block"
+              style={{ fontSize: 20, marginBottom: 4, opacity: 0.5 }}
+            ></i>
             Không tìm thấy nhãn "{searchTerm}"
           </div>
         )}
@@ -141,7 +156,9 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
         {filteredLabels.map((label) => {
           const items = label.checklist || [];
           const checked = checklistState[label.id] || [];
-          const checkedCount = items.filter((_, idx) => checked[idx] === true).length;
+          const checkedCount = items.filter(
+            (_, idx) => checked[idx] === true,
+          ).length;
           const hasChecklist = items.length > 0;
           const isUnlocked = unlockedLabelIds.has(label.id);
           const isSelected = selectedLabel?.id === label.id;
@@ -152,7 +169,9 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
               {/* Label row */}
               <div
                 className={`stitch-ws-label-item ${isSelected ? "selected" : ""} ${!isUnlocked ? "locked" : ""}`}
-                style={{ borderLeftColor: isSelected ? label.color : "transparent" }}
+                style={{
+                  borderLeftColor: isSelected ? label.color : "transparent",
+                }}
               >
                 {/* LEFT ZONE — click to select label */}
                 <div
@@ -198,13 +217,18 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                     <span
                       className={`stitch-ws-badge me-1 ${isUnlocked ? "stitch-ws-badge-success" : "stitch-ws-badge-warning"}`}
                     >
-                      <i className={`ri-${isUnlocked ? "lock-unlock" : "lock"}-line`}></i>
+                      <i
+                        className={`ri-${isUnlocked ? "lock-unlock" : "lock"}-line`}
+                      ></i>
                       {checkedCount}/{items.length}
                     </span>
                   )}
 
                   {isSelected && (
-                    <i className="ri-checkbox-circle-fill me-1" style={{ fontSize: 14, color: "#3B82F6" }}></i>
+                    <i
+                      className="ri-checkbox-circle-fill me-1"
+                      style={{ fontSize: 14, color: "#3B82F6" }}
+                    ></i>
                   )}
                 </div>
 
@@ -214,11 +238,15 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                     className={`stitch-ws-chevron-btn ${isExpanded ? "expanded" : ""}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setExpandedLabelId((prev) => (prev === label.id ? null : label.id));
+                      setExpandedLabelId((prev) =>
+                        prev === label.id ? null : label.id,
+                      );
                     }}
                     title={isExpanded ? "Thu gọn checklist" : "Xem checklist"}
                   >
-                    <i className={`ri-arrow-${isExpanded ? "up" : "down"}-s-line`}></i>
+                    <i
+                      className={`ri-arrow-${isExpanded ? "up" : "down"}-s-line`}
+                    ></i>
                   </button>
                 )}
               </div>
@@ -265,7 +293,9 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                             style={{
                               cursor: "pointer",
                               fontSize: 12,
-                              textDecoration: isChecked ? "line-through" : "none",
+                              textDecoration: isChecked
+                                ? "line-through"
+                                : "none",
                               opacity: isChecked ? 0.6 : 1,
                             }}
                           >

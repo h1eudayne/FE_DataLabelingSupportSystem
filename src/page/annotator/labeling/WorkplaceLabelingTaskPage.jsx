@@ -23,9 +23,18 @@ import projectService from "../../../services/annotator/labeling/projectService"
 
 const STATUS_CONFIG = {
   New: { cls: "stitch-ws-badge stitch-ws-badge-new", label: "Mới" },
-  InProgress: { cls: "stitch-ws-badge stitch-ws-badge-inprogress", label: "Đang làm" },
-  Rejected: { cls: "stitch-ws-badge stitch-ws-badge-rejected", label: "Từ chối" },
-  Submitted: { cls: "stitch-ws-badge stitch-ws-badge-submitted", label: "Đã nộp" },
+  InProgress: {
+    cls: "stitch-ws-badge stitch-ws-badge-inprogress",
+    label: "Đang làm",
+  },
+  Rejected: {
+    cls: "stitch-ws-badge stitch-ws-badge-rejected",
+    label: "Từ chối",
+  },
+  Submitted: {
+    cls: "stitch-ws-badge stitch-ws-badge-submitted",
+    label: "Đã nộp",
+  },
   Approved: { cls: "stitch-ws-badge stitch-ws-badge-approved", label: "Duyệt" },
 };
 
@@ -221,9 +230,7 @@ const WorkplaceLabelingTaskPage = () => {
         setCurrentImgIndex((prev) => Math.max(0, prev - 1));
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        setCurrentImgIndex((prev) =>
-          Math.min(images.length - 1, prev + 1)
-        );
+        setCurrentImgIndex((prev) => Math.min(images.length - 1, prev + 1));
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -658,31 +665,56 @@ const WorkplaceLabelingTaskPage = () => {
           disabled={goingBack}
         >
           {goingBack ? (
-            <><span className="spinner-border spinner-border-sm" /> Đang lưu...</>
+            <>
+              <span className="spinner-border spinner-border-sm" /> Đang lưu...
+            </>
           ) : (
-            <><i className="ri-arrow-left-line"></i> Quay về</>
+            <>
+              <i className="ri-arrow-left-line"></i> Quay về
+            </>
           )}
         </button>
 
         <span className="stitch-ws-header-title">
           <i className="ri-image-edit-line me-1"></i>
-          {projectInfo?.name || "Workspace"} — Ảnh {currentImgIndex + 1}/{images.length}
+          {projectInfo?.name || "Workspace"} — Ảnh {currentImgIndex + 1}/
+          {images.length}
         </span>
 
-        <span className={(STATUS_CONFIG[currentImage.status] || STATUS_CONFIG.New).cls}>
+        <span
+          className={
+            (STATUS_CONFIG[currentImage.status] || STATUS_CONFIG.New).cls
+          }
+        >
           {(STATUS_CONFIG[currentImage.status] || STATUS_CONFIG.New).label}
         </span>
 
         {!isReadOnly && (
           <span className={`stitch-ws-save-badge ${saveStatus}`}>
             {saveStatus === "saved" && (
-              <><i className="ri-check-line"></i> Saved {lastSavedTime && lastSavedTime.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</>
+              <>
+                <i className="ri-check-line"></i> Saved{" "}
+                {lastSavedTime &&
+                  lastSavedTime.toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+              </>
             )}
             {saveStatus === "saving" && (
-              <><span className="spinner-border spinner-border-sm" style={{ width: 10, height: 10 }}></span> Saving...</>
+              <>
+                <span
+                  className="spinner-border spinner-border-sm"
+                  style={{ width: 10, height: 10 }}
+                ></span>{" "}
+                Saving...
+              </>
             )}
             {saveStatus === "unsaved" && (
-              <><i className="ri-circle-fill" style={{ fontSize: 6 }}></i> Unsaved</>
+              <>
+                <i className="ri-circle-fill" style={{ fontSize: 6 }}></i>{" "}
+                Unsaved
+              </>
             )}
           </span>
         )}
@@ -701,12 +733,33 @@ const WorkplaceLabelingTaskPage = () => {
         <div className="stitch-ws-card mb-2">
           <div className="stitch-ws-card-body" style={{ padding: "8px 14px" }}>
             <div className="d-flex flex-wrap gap-3">
-              <div className="stitch-ws-shortcut"><span>Undo</span><span className="stitch-ws-kbd">Ctrl+Z</span></div>
-              <div className="stitch-ws-shortcut"><span>Xóa box cuối</span><span className="stitch-ws-kbd">Delete</span></div>
-              <div className="stitch-ws-shortcut"><span>Xóa 1 box</span><span className="stitch-ws-text-muted">Double-click</span></div>
-              <div className="stitch-ws-shortcut"><span>Zoom</span><span className="stitch-ws-kbd">Ctrl+Scroll</span></div>
-              <div className="stitch-ws-shortcut"><span>Di chuyển</span><span className="stitch-ws-kbd">Arrow keys</span></div>
-              <div className="stitch-ws-shortcut"><span>Ảnh trước/sau</span><span><span className="stitch-ws-kbd me-1">Shift+←</span><span className="stitch-ws-kbd">Shift+→</span></span></div>
+              <div className="stitch-ws-shortcut">
+                <span>Undo</span>
+                <span className="stitch-ws-kbd">Ctrl+Z</span>
+              </div>
+              <div className="stitch-ws-shortcut">
+                <span>Xóa box cuối</span>
+                <span className="stitch-ws-kbd">Delete</span>
+              </div>
+              <div className="stitch-ws-shortcut">
+                <span>Xóa 1 box</span>
+                <span className="stitch-ws-text-muted">Double-click</span>
+              </div>
+              <div className="stitch-ws-shortcut">
+                <span>Zoom</span>
+                <span className="stitch-ws-kbd">Ctrl+Scroll</span>
+              </div>
+              <div className="stitch-ws-shortcut">
+                <span>Di chuyển</span>
+                <span className="stitch-ws-kbd">Arrow keys</span>
+              </div>
+              <div className="stitch-ws-shortcut">
+                <span>Ảnh trước/sau</span>
+                <span>
+                  <span className="stitch-ws-kbd me-1">Shift+←</span>
+                  <span className="stitch-ws-kbd">Shift+→</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -714,17 +767,25 @@ const WorkplaceLabelingTaskPage = () => {
 
       {/* ── 3-Panel Layout ── */}
       <div className="stitch-ws-layout">
-
         {/* ──── LEFT PANEL ──── */}
         <div className="stitch-ws-left-panel">
           {/* Progress */}
           <div className="stitch-ws-card">
-            <div className="stitch-ws-card-body" style={{ padding: "10px 14px" }}>
+            <div
+              className="stitch-ws-card-body"
+              style={{ padding: "10px 14px" }}
+            >
               <div className="d-flex align-items-center justify-content-between mb-2">
-                <span className="stitch-ws-text-muted" style={{ fontWeight: 600, fontSize: "0.78rem" }}>
+                <span
+                  className="stitch-ws-text-muted"
+                  style={{ fontWeight: 600, fontSize: "0.78rem" }}
+                >
                   Tiến độ
                 </span>
-                <span className="stitch-ws-text-primary" style={{ fontSize: "0.78rem" }}>
+                <span
+                  className="stitch-ws-text-primary"
+                  style={{ fontSize: "0.78rem" }}
+                >
                   {doneCount}/{images.length} ({progressPercent}%)
                 </span>
               </div>
@@ -741,12 +802,20 @@ const WorkplaceLabelingTaskPage = () => {
           {isRejected && (
             <div className="stitch-ws-alert danger">
               <div className="d-flex align-items-start gap-2">
-                <i className="ri-error-warning-fill" style={{ fontSize: "1.1rem", marginTop: 2 }}></i>
+                <i
+                  className="ri-error-warning-fill"
+                  style={{ fontSize: "1.1rem", marginTop: 2 }}
+                ></i>
                 <div className="flex-grow-1">
                   <strong className="d-block mb-1">Ảnh bị từ chối</strong>
-                  <span style={{ opacity: 0.85 }}>Vui lòng đọc comment bên phải và sửa lại.</span>
+                  <span style={{ opacity: 0.85 }}>
+                    Vui lòng đọc comment bên phải và sửa lại.
+                  </span>
                   {disputeStatus === "Pending" ? (
-                    <div className="stitch-ws-alert warning mt-2" style={{ marginBottom: 0 }}>
+                    <div
+                      className="stitch-ws-alert warning mt-2"
+                      style={{ marginBottom: 0 }}
+                    >
                       <i className="ri-time-line me-1"></i>
                       <strong>Đã gửi khiếu nại — đang chờ xử lý</strong>
                     </div>
@@ -765,12 +834,13 @@ const WorkplaceLabelingTaskPage = () => {
           )}
 
           {/* Read-only / Dispute lock notices */}
-          {currentImage.status === "Rejected" && disputeStatus === "Pending" && (
-            <div className="stitch-ws-alert warning">
-              <i className="ri-lock-line me-1"></i>
-              Đang chờ xử lý khiếu nại.
-            </div>
-          )}
+          {currentImage.status === "Rejected" &&
+            disputeStatus === "Pending" && (
+              <div className="stitch-ws-alert warning">
+                <i className="ri-lock-line me-1"></i>
+                Đang chờ xử lý khiếu nại.
+              </div>
+            )}
           {isReadOnly && currentImage.status !== "Rejected" && (
             <div className="stitch-ws-alert info">
               <i className="ri-lock-line me-1"></i>
@@ -780,20 +850,36 @@ const WorkplaceLabelingTaskPage = () => {
 
           {/* Label Toolbox */}
           {!isReadOnly && (
-            <LabelToolbox labels={labels} assignmentId={currentImage.id} annotations={annotations} />
+            <LabelToolbox
+              labels={labels}
+              assignmentId={currentImage.id}
+              annotations={annotations}
+            />
           )}
 
           {/* Annotations List */}
           <div className="stitch-ws-card">
             <div className="stitch-ws-card-header">
-              <span><i className="ri-list-check-2 me-1"></i> Annotations</span>
-              <span className="stitch-ws-badge stitch-ws-badge-inprogress">{annotations.length}</span>
+              <span>
+                <i className="ri-list-check-2 me-1"></i> Annotations
+              </span>
+              <span className="stitch-ws-badge stitch-ws-badge-inprogress">
+                {annotations.length}
+              </span>
             </div>
             <div style={{ maxHeight: "200px", overflowY: "auto" }}>
               {annotations.length === 0 ? (
-                <div className="stitch-ws-card-body text-center" style={{ padding: "20px 14px" }}>
-                  <i className="ri-shape-line d-block mb-1" style={{ fontSize: "1.5rem", opacity: 0.3 }}></i>
-                  <span className="stitch-ws-text-muted">Chưa có annotation</span>
+                <div
+                  className="stitch-ws-card-body text-center"
+                  style={{ padding: "20px 14px" }}
+                >
+                  <i
+                    className="ri-shape-line d-block mb-1"
+                    style={{ fontSize: "1.5rem", opacity: 0.3 }}
+                  ></i>
+                  <span className="stitch-ws-text-muted">
+                    Chưa có annotation
+                  </span>
                 </div>
               ) : (
                 annotations.map((a, idx) => (
@@ -806,16 +892,28 @@ const WorkplaceLabelingTaskPage = () => {
                   >
                     <span
                       style={{
-                        width: 12, height: 12, borderRadius: 3,
-                        background: a.color || "#6c757d", flexShrink: 0,
-                        border: highlightedAnnotationId === a.id ? "2px solid #3B82F6" : "none",
+                        width: 12,
+                        height: 12,
+                        borderRadius: 3,
+                        background: a.color || "#6c757d",
+                        flexShrink: 0,
+                        border:
+                          highlightedAnnotationId === a.id
+                            ? "2px solid #3B82F6"
+                            : "none",
                       }}
                       className="me-2"
                     ></span>
-                    <span className="flex-grow-1 text-truncate" style={{ fontWeight: 500 }}>
+                    <span
+                      className="flex-grow-1 text-truncate"
+                      style={{ fontWeight: 500 }}
+                    >
                       {a.labelName || `Box ${idx + 1}`}
                     </span>
-                    <span className="stitch-ws-text-muted me-2" style={{ fontSize: "0.65rem" }}>
+                    <span
+                      className="stitch-ws-text-muted me-2"
+                      style={{ fontSize: "0.65rem" }}
+                    >
                       {Math.round(a.width)}×{Math.round(a.height)}
                     </span>
                     {!isReadOnly && (
@@ -824,7 +922,12 @@ const WorkplaceLabelingTaskPage = () => {
                         style={{ color: "#F87171", lineHeight: 1 }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          dispatch(removeAnnotation({ assignmentId: currentImage.id, id: a.id }));
+                          dispatch(
+                            removeAnnotation({
+                              assignmentId: currentImage.id,
+                              id: a.id,
+                            }),
+                          );
                         }}
                         title="Xóa annotation này"
                       >
@@ -847,7 +950,9 @@ const WorkplaceLabelingTaskPage = () => {
                 setShowBatchPanel(!showBatchPanel);
               }}
             >
-              <i className={`ri-${showBatchPanel ? "close" : "stack"}-line`}></i>
+              <i
+                className={`ri-${showBatchPanel ? "close" : "stack"}-line`}
+              ></i>
               {showBatchPanel ? "Ẩn batch" : "Nộp hàng loạt"}
             </button>
           </div>
@@ -856,41 +961,80 @@ const WorkplaceLabelingTaskPage = () => {
           {showBatchPanel && (
             <div className="stitch-ws-card">
               <div className="stitch-ws-card-header">
-                <span><i className="ri-checkbox-multiple-line me-1"></i> Chọn ảnh</span>
-                <span className="stitch-ws-badge stitch-ws-badge-inprogress">{selectedIds.size}</span>
+                <span>
+                  <i className="ri-checkbox-multiple-line me-1"></i> Chọn ảnh
+                </span>
+                <span className="stitch-ws-badge stitch-ws-badge-inprogress">
+                  {selectedIds.size}
+                </span>
               </div>
-              <div className="stitch-ws-card-body p-0" style={{ maxHeight: "250px", overflowY: "auto" }}>
-                <div className="px-3 py-2" style={{ borderBottom: "1px solid rgba(51, 65, 85, 0.2)" }}>
+              <div
+                className="stitch-ws-card-body p-0"
+                style={{ maxHeight: "250px", overflowY: "auto" }}
+              >
+                <div
+                  className="px-3 py-2"
+                  style={{ borderBottom: "1px solid rgba(51, 65, 85, 0.2)" }}
+                >
                   <div className="form-check">
                     <input
-                      className="form-check-input" type="checkbox" id="selectAllEligible"
-                      checked={eligibleForSubmit.length > 0 && eligibleForSubmit.every((img) => selectedIds.has(img.id))}
+                      className="form-check-input"
+                      type="checkbox"
+                      id="selectAllEligible"
+                      checked={
+                        eligibleForSubmit.length > 0 &&
+                        eligibleForSubmit.every((img) =>
+                          selectedIds.has(img.id),
+                        )
+                      }
                       onChange={handleSelectAllEligible}
                       disabled={eligibleForSubmit.length === 0}
                     />
-                    <label className="form-check-label stitch-ws-text-muted" htmlFor="selectAllEligible" style={{ fontWeight: 600, fontSize: "0.78rem" }}>
+                    <label
+                      className="form-check-label stitch-ws-text-muted"
+                      htmlFor="selectAllEligible"
+                      style={{ fontWeight: 600, fontSize: "0.78rem" }}
+                    >
                       Chọn tất cả ({eligibleForSubmit.length})
                     </label>
                   </div>
                 </div>
                 {images.map((img, idx) => {
                   const config = STATUS_CONFIG[img.status] || STATUS_CONFIG.New;
-                  const isEligible = img.status !== "Submitted" && img.status !== "Approved";
+                  const isEligible =
+                    img.status !== "Submitted" && img.status !== "Approved";
                   const reduxAnns = allAnnotations[img.id];
-                  const hasData = hasValidAnnotations(img.annotationData) || (reduxAnns && reduxAnns.length > 0);
+                  const hasData =
+                    hasValidAnnotations(img.annotationData) ||
+                    (reduxAnns && reduxAnns.length > 0);
                   return (
-                    <div key={img.id} className={`stitch-ws-batch-item ${idx === currentImgIndex ? "active" : ""}`} onClick={() => setCurrentImgIndex(idx)}>
+                    <div
+                      key={img.id}
+                      className={`stitch-ws-batch-item ${idx === currentImgIndex ? "active" : ""}`}
+                      onClick={() => setCurrentImgIndex(idx)}
+                    >
                       {isEligible && (
-                        <input className="form-check-input me-2 flex-shrink-0" type="checkbox"
+                        <input
+                          className="form-check-input me-2 flex-shrink-0"
+                          type="checkbox"
                           checked={selectedIds.has(img.id)}
-                          onChange={(e) => { e.stopPropagation(); handleToggleSelect(img.id); }}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleToggleSelect(img.id);
+                          }}
                           onClick={(e) => e.stopPropagation()}
                           disabled={!hasData}
                         />
                       )}
-                      {!isEligible && <div style={{ width: "22px" }} className="me-2"></div>}
-                      <small className="flex-grow-1 text-truncate">Ảnh {idx + 1}</small>
-                      <span className={`${config.cls} ms-1`}>{config.label}</span>
+                      {!isEligible && (
+                        <div style={{ width: "22px" }} className="me-2"></div>
+                      )}
+                      <small className="flex-grow-1 text-truncate">
+                        Ảnh {idx + 1}
+                      </small>
+                      <span className={`${config.cls} ms-1`}>
+                        {config.label}
+                      </span>
                     </div>
                   );
                 })}
@@ -903,9 +1047,15 @@ const WorkplaceLabelingTaskPage = () => {
                   onClick={handleBatchSubmit}
                 >
                   {batchSubmitting ? (
-                    <><span className="spinner-border spinner-border-sm"></span> Đang nộp...</>
+                    <>
+                      <span className="spinner-border spinner-border-sm"></span>{" "}
+                      Đang nộp...
+                    </>
                   ) : (
-                    <><i className="ri-send-plane-fill"></i> Nộp {selectedIds.size} ảnh</>
+                    <>
+                      <i className="ri-send-plane-fill"></i> Nộp{" "}
+                      {selectedIds.size} ảnh
+                    </>
                   )}
                 </button>
               </div>
@@ -940,10 +1090,15 @@ const WorkplaceLabelingTaskPage = () => {
                 const isCurrent = idx === currentImgIndex;
                 const statusKey = img.status || "New";
                 const dotColor =
-                  statusKey === "Approved" ? "#22C55E" :
-                  statusKey === "Submitted" ? "#FACC15" :
-                  statusKey === "Rejected" ? "#EF4444" :
-                  statusKey === "InProgress" ? "#3B82F6" : null;
+                  statusKey === "Approved"
+                    ? "#22C55E"
+                    : statusKey === "Submitted"
+                      ? "#FACC15"
+                      : statusKey === "Rejected"
+                        ? "#EF4444"
+                        : statusKey === "InProgress"
+                          ? "#3B82F6"
+                          : null;
                 return (
                   <div
                     key={img.id}
@@ -953,7 +1108,10 @@ const WorkplaceLabelingTaskPage = () => {
                   >
                     {idx + 1}
                     {dotColor && (
-                      <span className="status-dot" style={{ background: dotColor }}></span>
+                      <span
+                        className="status-dot"
+                        style={{ background: dotColor }}
+                      ></span>
                     )}
                   </div>
                 );
@@ -973,20 +1131,28 @@ const WorkplaceLabelingTaskPage = () => {
             <div className="action-group">
               {!isReadOnly && (
                 <>
-                  <button className="action-btn primary" onClick={() => saveDraft(false)}>
+                  <button
+                    className="action-btn primary"
+                    onClick={() => saveDraft(false)}
+                  >
                     <i className="ri-save-line"></i> Lưu nháp
                   </button>
                   <button
                     className={`action-btn ${isRejected ? "warning" : "success"}`}
                     onClick={handleSubmit}
                   >
-                    <i className={`ri-${isRejected ? "restart-line" : "check-line"}`}></i>
+                    <i
+                      className={`ri-${isRejected ? "restart-line" : "check-line"}`}
+                    ></i>
                     {isRejected ? "Nộp lại" : "Nộp bài"}
                   </button>
                 </>
               )}
               {isReadOnly && (
-                <span className="stitch-ws-badge stitch-ws-badge-approved" style={{ fontSize: "0.78rem", padding: "5px 12px" }}>
+                <span
+                  className="stitch-ws-badge stitch-ws-badge-approved"
+                  style={{ fontSize: "0.78rem", padding: "5px 12px" }}
+                >
                   <i className="ri-check-double-line me-1"></i> Đã nộp
                 </span>
               )}
@@ -997,11 +1163,17 @@ const WorkplaceLabelingTaskPage = () => {
         {/* ──── RIGHT PANEL ──── */}
         <div className="stitch-ws-right-panel">
           {/* Comments */}
-          <CommentSection rejectionReason={currentImage.rejectionReason} status={currentImage.status} />
+          <CommentSection
+            rejectionReason={currentImage.rejectionReason}
+            status={currentImage.status}
+          />
 
           {/* Dispute Form */}
           {showDisputeForm && isRejected && (
-            <div className="stitch-ws-card" style={{ borderColor: "rgba(239, 68, 68, 0.3)" }}>
+            <div
+              className="stitch-ws-card"
+              style={{ borderColor: "rgba(239, 68, 68, 0.3)" }}
+            >
               <div className="stitch-ws-card-header">
                 <span style={{ color: "#F87171" }}>
                   <i className="ri-questionnaire-line me-1"></i> Khiếu nại
@@ -1009,13 +1181,19 @@ const WorkplaceLabelingTaskPage = () => {
                 <button
                   className="stitch-back-btn"
                   style={{ padding: "4px 8px", fontSize: "0.72rem" }}
-                  onClick={() => { setShowDisputeForm(false); setDisputeReason(""); }}
+                  onClick={() => {
+                    setShowDisputeForm(false);
+                    setDisputeReason("");
+                  }}
                 >
                   <i className="ri-close-line"></i>
                 </button>
               </div>
               <div className="stitch-ws-card-body">
-                <p className="stitch-ws-text-muted mb-2" style={{ fontSize: "0.78rem" }}>
+                <p
+                  className="stitch-ws-text-muted mb-2"
+                  style={{ fontSize: "0.78rem" }}
+                >
                   Nhập lý do nếu bạn cho rằng Reviewer chấm sai.
                 </p>
                 <textarea
@@ -1027,23 +1205,42 @@ const WorkplaceLabelingTaskPage = () => {
                   disabled={disputeSubmitting}
                 />
                 <div className="d-flex justify-content-end gap-2">
-                  <button className="stitch-ws-nav-btn" onClick={() => { setShowDisputeForm(false); setDisputeReason(""); }} disabled={disputeSubmitting}>
+                  <button
+                    className="stitch-ws-nav-btn"
+                    onClick={() => {
+                      setShowDisputeForm(false);
+                      setDisputeReason("");
+                    }}
+                    disabled={disputeSubmitting}
+                  >
                     Hủy
                   </button>
                   <button
                     className="stitch-ws-nav-btn"
-                    style={{ background: "linear-gradient(135deg, #EF4444, #DC2626)", color: "#fff", border: "none" }}
+                    style={{
+                      background: "linear-gradient(135deg, #EF4444, #DC2626)",
+                      color: "#fff",
+                      border: "none",
+                    }}
                     onClick={handleCreateDispute}
                     disabled={!disputeReason.trim() || disputeSubmitting}
                   >
-                    {disputeSubmitting ? (<><span className="spinner-border spinner-border-sm"></span> Đang gửi...</>) : (<><i className="ri-send-plane-fill"></i> Gửi</>)}
+                    {disputeSubmitting ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm"></span>{" "}
+                        Đang gửi...
+                      </>
+                    ) : (
+                      <>
+                        <i className="ri-send-plane-fill"></i> Gửi
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
