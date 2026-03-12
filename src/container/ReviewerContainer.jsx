@@ -51,7 +51,6 @@ const ReviewerContainer = () => {
       const res = await projectService.getReviewWorkspace(projectId);
       if (res.data) {
         const data = res.data[0];
-        console.log(data);
 
         navigate(`/reviewer/review-workspace/${data.assignmentId}`, {
           state: { workspaceData: data },
