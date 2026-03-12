@@ -6,6 +6,7 @@ import {
   Image as KonvaImage,
   Group,
   Text,
+  Line,
 } from "react-konva";
 import useImage from "use-image";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,7 +23,13 @@ const ZOOM_STEP = 1.1;
 const PAN_STEP = 30;
 const ZOOM_BTN_STEP = 1.25;
 
-const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
+const LabelingWorkspace = ({
+  imageUrl,
+  assignmentId,
+  readOnly = false,
+  highlightedAnnotationId = null,
+  onAnnotationClick,
+}) => {
   const dispatch = useDispatch();
   const containerRef = useRef(null);
 
@@ -44,6 +51,7 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
     scale: 1,
     pos: { x: 0, y: 0 },
   });
+  const [mouseImgPos, setMouseImgPos] = useState(null);
 
   const fitImageToStage = useCallback(() => {
     if (!containerRef.current || !image) return;
@@ -162,6 +170,7 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
 
     const imgCoords = getImageCoords(pos);
     setCursorPos({ x: Math.round(imgCoords.x), y: Math.round(imgCoords.y) });
+    setMouseImgPos(imgCoords);
 
     if (isPanning && panStart) {
       setStagePos({
@@ -221,6 +230,7 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
     if (!containerRef.current) return;
     containerRef.current.style.cursor = "default";
     setCursorPos(null);
+    setMouseImgPos(null);
   };
 
   const handleZoomIn = () => {
@@ -262,9 +272,12 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
 
   const zoomPercent = Math.round((stageScale / (defaultView.scale || 1)) * 100);
 
+  const imgW = image ? image.width : 0;
+  const imgH = image ? image.height : 0;
+  const showCrosshair = !readOnly && selectedLabel && mouseImgPos && !isPanning;
+
   return (
     <div ref={containerRef} className="bg-dark rounded position-relative">
-      {/* Toolbar */}
       <div
         className="d-flex align-items-center gap-2 px-3 py-2"
         style={{
@@ -318,6 +331,12 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
             <span className="small">Undo</span>
           </button>
         )}
+        {annotations.length > 0 && (
+          <span className="badge bg-info bg-opacity-25 text-info small ms-1">
+            <i className="ri-shape-line me-1"></i>
+            {annotations.length} box{annotations.length > 1 ? "es" : ""}
+          </span>
+        )}
         <div className="ms-auto d-flex align-items-center gap-3 text-white small opacity-75">
           <span>
             <i className="ri-mouse-line me-1"></i>
@@ -330,7 +349,6 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
         </div>
       </div>
 
-      {/* Canvas */}
       <Stage
         width={size.width}
         height={size.height}
@@ -347,27 +365,56 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
       >
         <Layer>
           {image && <KonvaImage image={image} />}
-          {annotations.map((a) => (
-            <Group key={a.id}>
-              <Rect
-                {...a}
-                stroke={a.color}
-                strokeWidth={2 / stageScale}
-                fill={a.color + "33"}
-                onDblClick={() => {
-                  if (!readOnly)
-                    dispatch(removeAnnotation({ assignmentId, id: a.id }));
-                }}
-              />
-              <Text
-                x={a.x}
-                y={a.y - 16 / stageScale}
-                text={a.labelName}
-                fill="white"
-                fontSize={12 / stageScale}
-              />
-            </Group>
-          ))}
+
+          {annotations.map((a) => {
+            const isHighlighted = highlightedAnnotationId === a.id;
+            const tagFontSize = 11 / stageScale;
+            const tagPadding = 3 / stageScale;
+            const tagText = a.labelName || "Box";
+            const tagWidth =
+              tagText.length * tagFontSize * 0.65 + tagPadding * 2;
+            const tagHeight = tagFontSize + tagPadding * 2;
+
+            return (
+              <Group key={a.id}>
+                <Rect
+                  x={a.x}
+                  y={a.y}
+                  width={a.width}
+                  height={a.height}
+                  stroke={isHighlighted ? "#fff" : a.color || "#6c757d"}
+                  strokeWidth={(isHighlighted ? 3 : 2) / stageScale}
+                  fill={(a.color || "#6c757d") + (isHighlighted ? "55" : "22")}
+                  dash={
+                    isHighlighted ? [6 / stageScale, 3 / stageScale] : undefined
+                  }
+                  onDblClick={() => {
+                    if (!readOnly)
+                      dispatch(removeAnnotation({ assignmentId, id: a.id }));
+                  }}
+                  onClick={() => {
+                    if (onAnnotationClick) onAnnotationClick(a.id);
+                  }}
+                />
+                <Rect
+                  x={a.x}
+                  y={a.y - tagHeight}
+                  width={tagWidth}
+                  height={tagHeight}
+                  fill={a.color || "#6c757d"}
+                  cornerRadius={2 / stageScale}
+                />
+                <Text
+                  x={a.x + tagPadding}
+                  y={a.y - tagHeight + tagPadding}
+                  text={tagText}
+                  fill="white"
+                  fontSize={tagFontSize}
+                  fontStyle="bold"
+                />
+              </Group>
+            );
+          })}
 
           {newRect && (
             <Rect
@@ -377,10 +424,28 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
               strokeWidth={2 / stageScale}
             />
           )}
+
+          {showCrosshair && (
+            <>
+              <Line
+                points={[mouseImgPos.x, 0, mouseImgPos.x, imgH]}
+                stroke="rgba(255,255,255,0.35)"
+                strokeWidth={1 / stageScale}
+                dash={[4 / stageScale, 4 / stageScale]}
+                listening={false}
+              />
+              <Line
+                points={[0, mouseImgPos.y, imgW, mouseImgPos.y]}
+                stroke="rgba(255,255,255,0.35)"
+                strokeWidth={1 / stageScale}
+                dash={[4 / stageScale, 4 / stageScale]}
+                listening={false}
+              />
+            </>
+          )}
         </Layer>
       </Stage>
 
-      {/* Coordinate bar */}
       <div
         className="d-flex align-items-center gap-3 px-3 py-2 text-white small"
         style={{
