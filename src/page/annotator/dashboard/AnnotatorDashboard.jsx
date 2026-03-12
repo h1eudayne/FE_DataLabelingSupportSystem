@@ -54,9 +54,9 @@ const AnnotatorDashboard = () => {
   const progressData = projectProgress.data || [];
 
   const getProgressColor = (value) => {
-    if (value >= 80) return "#0ab39c";
-    if (value >= 50) return "#f7b84b";
-    return "#f06548";
+    if (value >= 80) return "#10B981";
+    if (value >= 50) return "#F59E0B";
+    return "#EF4444";
   };
 
   const getBadgeColor = (value) => {
@@ -66,10 +66,14 @@ const AnnotatorDashboard = () => {
   };
 
   return (
-    <DashboardLayout title="Dashboard" className="page-content">
-      <h4>Welcome, {profile?.data?.fullName}</h4>
+    <DashboardLayout
+      title="Dashboard"
+      subtitle={`Welcome, ${profile?.data?.fullName || "Annotator"}`}
+      className="page-content"
+    >
 
-      <div className="row row-cols-1 row-cols-md-3 row-cols-xl-6 g-3 mt-3">
+      {/* ===== Stat Cards Grid ===== */}
+      <div className="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-3">
         <StatCard
           title="Dự án được giao"
           value={stats.assigned}
@@ -122,18 +126,19 @@ const AnnotatorDashboard = () => {
         />
       </div>
 
+      {/* ===== Accuracy by Project ===== */}
       {perProjectAccuracy.length > 0 && (
         <div className="row mt-4">
           <div className="col-12">
-            <div className="card shadow-sm border-0">
-              <div className="card-header bg-white border-bottom d-flex align-items-center justify-content-between">
-                <h5 className="mb-0">
+            <div className="card stitch-card">
+              <div className="stitch-card-header">
+                <h5>
                   <i className="ri-focus-2-line me-2 text-primary"></i>
                   Độ chính xác theo dự án
                 </h5>
                 {accuracy !== null && (
                   <span
-                    className={`badge bg-${getBadgeColor(accuracy)} px-3 py-1`}
+                    className={`badge bg-${getBadgeColor(accuracy)} stitch-badge`}
                   >
                     Trung bình: {accuracy}%
                   </span>
@@ -146,8 +151,8 @@ const AnnotatorDashboard = () => {
                   Tổng ảnh Manager đã đánh giá.
                 </p>
                 <div className="table-responsive">
-                  <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light">
+                  <table className="table table-hover stitch-table align-middle mb-0">
+                    <thead>
                       <tr>
                         <th>Dự án</th>
                         <th className="text-center">Tasks giao</th>
@@ -171,12 +176,12 @@ const AnnotatorDashboard = () => {
                               {pa.projectName}
                             </td>
                             <td className="text-center">{pa.tasksAssigned}</td>
-                            <td className="text-center text-success fw-bold">
+                            <td className="text-center fw-bold" style={{ color: "#10B981" }}>
                               {pa.tasksCompleted}
                             </td>
                             <td className="text-center">
                               <span
-                                className={`badge bg-${
+                                className={`badge stitch-badge bg-${
                                   pa.accuracy > 0
                                     ? getBadgeColor(pa.accuracy)
                                     : pa.tasksCompleted > 0
@@ -194,8 +199,7 @@ const AnnotatorDashboard = () => {
                             <td>
                               <div className="d-flex align-items-center gap-2">
                                 <div
-                                  className="progress flex-grow-1"
-                                  style={{ height: "6px" }}
+                                  className="progress stitch-progress flex-grow-1"
                                 >
                                   <div
                                     className="progress-bar"
@@ -207,7 +211,7 @@ const AnnotatorDashboard = () => {
                                     }}
                                   ></div>
                                 </div>
-                                <small className="text-muted fw-bold">
+                                <small className="fw-bold" style={{ minWidth: 36, color: getProgressColor(taskRate) }}>
                                   {taskRate}%
                                 </small>
                               </div>
@@ -224,11 +228,12 @@ const AnnotatorDashboard = () => {
         </div>
       )}
 
+      {/* ===== Project Progress ===== */}
       <div className="row mt-4">
         <div className="col-12">
-          <div className="card shadow-sm border-0">
-            <div className="card-header bg-white border-bottom">
-              <h5 className="mb-0">
+          <div className="card stitch-card">
+            <div className="stitch-card-header">
+              <h5>
                 <i className="ri-bar-chart-grouped-line me-2 text-primary"></i>
                 Tiến độ dự án
               </h5>
@@ -243,26 +248,24 @@ const AnnotatorDashboard = () => {
                   Đang tải tiến độ...
                 </div>
               ) : progressData.length > 0 ? (
-                <div className="table-responsive">
+                <>
                   <p className="text-muted small mb-3">
                     <i className="ri-information-line me-1"></i>
                     <strong>Annotator</strong> = (Submitted + Approved) / Total
-                    |<strong className="ms-1">Reviewer</strong> = (Approved +
-                    Rejected) / Total |<strong className="ms-1">Overall</strong>{" "}
-                    = Approved / Total
+                    | <strong className="ms-1">Reviewer</strong> = (Approved +
+                    Rejected) / Total |{" "}
+                    <strong className="ms-1">Overall</strong> = Approved / Total
                   </p>
                   {progressData.map((pp) => (
-                    <div
-                      key={pp.projectId}
-                      className="mb-4 p-3 border rounded bg-light"
-                    >
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <h6 className="mb-0 fw-semibold">
+                    <div key={pp.projectId} className="stitch-progress-item">
+                      {/* Project header */}
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h6 className="mb-0 fw-semibold" style={{ fontSize: "0.9rem" }}>
                           <i className="ri-folder-line me-1 text-primary"></i>
                           {pp.projectName}
                         </h6>
                         <span
-                          className={`badge bg-${
+                          className={`badge stitch-badge bg-${
                             pp.status === "Completed"
                               ? "success"
                               : pp.status === "Expired"
@@ -270,16 +273,26 @@ const AnnotatorDashboard = () => {
                                 : "warning"
                           }`}
                         >
+                          {pp.status === "Completed" && (
+                            <i className="ri-checkbox-circle-line me-1"></i>
+                          )}
+                          {pp.status === "Expired" && (
+                            <i className="ri-time-line me-1"></i>
+                          )}
+                          {pp.status !== "Completed" &&
+                            pp.status !== "Expired" && (
+                              <i className="ri-loader-4-line me-1"></i>
+                            )}
                           {pp.status}
                         </span>
                       </div>
 
+                      {/* Annotator progress */}
                       <div className="mb-2">
                         <div className="d-flex justify-content-between align-items-center mb-1">
                           <small className="fw-semibold">
                             <span
-                              className="badge bg-primary me-1"
-                              style={{ fontSize: "0.65em" }}
+                              className="badge bg-primary stitch-badge me-1"
                             >
                               Annotator
                             </span>
@@ -295,24 +308,24 @@ const AnnotatorDashboard = () => {
                             {pp.annotator.progress}%)
                           </small>
                         </div>
-                        <div className="progress" style={{ height: "8px" }}>
+                        <div className="progress stitch-progress">
                           <div
                             className="progress-bar"
                             role="progressbar"
                             style={{
                               width: `${pp.annotator.progress}%`,
-                              backgroundColor: "#405189",
+                              backgroundColor: "#3B82F6",
                             }}
                           ></div>
                         </div>
                       </div>
 
+                      {/* Reviewer progress */}
                       <div className="mb-2">
                         <div className="d-flex justify-content-between align-items-center mb-1">
                           <small className="fw-semibold">
                             <span
-                              className="badge bg-info me-1"
-                              style={{ fontSize: "0.65em" }}
+                              className="badge bg-info stitch-badge me-1"
                             >
                               Reviewer
                             </span>
@@ -328,24 +341,24 @@ const AnnotatorDashboard = () => {
                             {pp.reviewer.progress}%)
                           </small>
                         </div>
-                        <div className="progress" style={{ height: "8px" }}>
+                        <div className="progress stitch-progress">
                           <div
                             className="progress-bar"
                             role="progressbar"
                             style={{
                               width: `${pp.reviewer.progress}%`,
-                              backgroundColor: "#299cdb",
+                              backgroundColor: "#06B6D4",
                             }}
                           ></div>
                         </div>
                       </div>
 
+                      {/* Overall progress */}
                       <div>
                         <div className="d-flex justify-content-between align-items-center mb-1">
                           <small className="fw-semibold">
                             <span
-                              className="badge bg-success me-1"
-                              style={{ fontSize: "0.65em" }}
+                              className="badge bg-success stitch-badge me-1"
                             >
                               Overall
                             </span>
@@ -361,23 +374,23 @@ const AnnotatorDashboard = () => {
                             {pp.overall.progress}%)
                           </small>
                         </div>
-                        <div className="progress" style={{ height: "8px" }}>
+                        <div className="progress stitch-progress">
                           <div
                             className="progress-bar"
                             role="progressbar"
                             style={{
                               width: `${pp.overall.progress}%`,
-                              backgroundColor: "#0ab39c",
+                              backgroundColor: "#10B981",
                             }}
                           ></div>
                         </div>
                       </div>
                     </div>
                   ))}
-                </div>
+                </>
               ) : (
-                <div className="text-center text-muted py-4">
-                  <i className="ri-bar-chart-grouped-line display-5 mb-3 d-block"></i>
+                <div className="stitch-empty-state">
+                  <i className="ri-bar-chart-grouped-line"></i>
                   <p>Chưa có dữ liệu tiến độ dự án.</p>
                 </div>
               )}
@@ -386,11 +399,12 @@ const AnnotatorDashboard = () => {
         </div>
       </div>
 
+      {/* ===== Task List by Project ===== */}
       <div className="row mt-4">
         <div className="col-12">
-          <div className="card shadow-sm border-0">
-            <div className="card-header bg-white border-bottom">
-              <h5 className="mb-0">
+          <div className="card stitch-card">
+            <div className="stitch-card-header">
+              <h5>
                 <i className="ri-image-line me-2 text-info"></i>
                 Danh sách ảnh theo dự án
               </h5>
@@ -398,9 +412,11 @@ const AnnotatorDashboard = () => {
 
             <div className="card-body">
               <div className="mb-4">
-                <label className="form-label fw-bold">Dự án</label>
+                <label className="form-label fw-semibold" style={{ fontSize: "0.85rem" }}>
+                  Chọn dự án
+                </label>
                 <select
-                  className="form-select"
+                  className="form-select stitch-select"
                   value={projectId || ""}
                   onChange={(e) =>
                     setProjectId(e.target.value ? Number(e.target.value) : null)
@@ -424,6 +440,7 @@ const AnnotatorDashboard = () => {
         </div>
       </div>
 
+      {/* ===== Reviewer Feedback ===== */}
       <ReviewerFeedbackTable
         loading={reviewerFeedback.isLoading}
         data={reviewerFeedback.data || []}
