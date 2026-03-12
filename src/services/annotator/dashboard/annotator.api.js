@@ -45,8 +45,16 @@ export const getReviewerFeedbackByProject = async (projectId) => {
   if (!projectId) return [];
 
   try {
-    const res = await axios.get(`/api/reviews/projects/${projectId}/tasks`);
-    return res.data;
+    const res = await axios.get(`/api/tasks/projects/${projectId}/images`);
+    const tasks = res.data || [];
+    return tasks
+      .filter((t) => t.rejectionReason && t.rejectionReason.trim())
+      .map((t) => ({
+        assignmentId: t.id,
+        comment: t.rejectionReason,
+        isApproved: false,
+        status: t.status,
+      }));
   } catch {
     return [];
   }
@@ -56,15 +64,11 @@ export const getAllReviewerFeedback = async () => {
   const projects = await getAssignedProjects();
   if (!projects || projects.length === 0) return [];
 
-  const validProjects = projects.filter(
-    (p) => p.status === "Submitted" || p.status === "Returned",
-  );
-
-  const requests = validProjects.map((p) =>
-    getReviewerFeedbackByProject(p.id).then((reviews) =>
+  const requests = projects.map((p) =>
+    getReviewerFeedbackByProject(p.projectId).then((reviews) =>
       reviews.map((r) => ({
         ...r,
-        projectName: p.name,
+        projectName: p.projectName,
       })),
     ),
   );
@@ -174,7 +178,7 @@ export const getMyAccuracy = async () => {
         }
       }
     } catch {
-      // skip inaccessible projects
+      //
     }
   }
 
