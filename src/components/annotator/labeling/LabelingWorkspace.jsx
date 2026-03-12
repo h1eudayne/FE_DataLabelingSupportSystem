@@ -6,6 +6,7 @@ import {
   Image as KonvaImage,
   Group,
   Text,
+  Line,
 } from "react-konva";
 import useImage from "use-image";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,9 +23,16 @@ const ZOOM_STEP = 1.1;
 const PAN_STEP = 30;
 const ZOOM_BTN_STEP = 1.25;
 
-const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
+const LabelingWorkspace = ({
+  imageUrl,
+  assignmentId,
+  readOnly = false,
+  highlightedAnnotationId = null,
+  onAnnotationClick,
+}) => {
   const dispatch = useDispatch();
   const containerRef = useRef(null);
+  const stageWrapperRef = useRef(null);
 
   const { selectedLabel, annotationsByAssignment } = useSelector(
     (state) => state.labeling,
@@ -44,12 +52,16 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
     scale: 1,
     pos: { x: 0, y: 0 },
   });
+  // For crosshair lines
+  const [mouseImgPos, setMouseImgPos] = useState(null);
 
   const fitImageToStage = useCallback(() => {
-    if (!containerRef.current || !image) return;
-    const w = containerRef.current.offsetWidth;
-    const h = 600;
-    const scale = Math.min(w / image.width, h / image.height) * 0.85;
+    // Use stageWrapperRef for accurate canvas-only dimensions (excludes toolbar/coord-bar)
+    const el = stageWrapperRef.current || containerRef.current;
+    if (!el || !image) return;
+    const w = el.offsetWidth;
+    const h = el.offsetHeight || 600;
+    const scale = Math.min(w / image.width, h / image.height) * 0.92;
     const pos = {
       x: (w - image.width * scale) / 2,
       y: (h - image.height * scale) / 2,
@@ -62,6 +74,15 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
 
   useEffect(() => {
     fitImageToStage();
+  }, [fitImageToStage]);
+
+  // Auto-resize when stage wrapper changes size
+  useEffect(() => {
+    const el = stageWrapperRef.current || containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => fitImageToStage());
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [fitImageToStage]);
 
   useEffect(() => {
@@ -162,6 +183,7 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
 
     const imgCoords = getImageCoords(pos);
     setCursorPos({ x: Math.round(imgCoords.x), y: Math.round(imgCoords.y) });
+    setMouseImgPos(imgCoords);
 
     if (isPanning && panStart) {
       setStagePos({
@@ -221,6 +243,7 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
     if (!containerRef.current) return;
     containerRef.current.style.cursor = "default";
     setCursorPos(null);
+    setMouseImgPos(null);
   };
 
   const handleZoomIn = () => {
@@ -262,75 +285,74 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
 
   const zoomPercent = Math.round((stageScale / (defaultView.scale || 1)) * 100);
 
+  // Calculate crosshair bounds
+  const imgW = image ? image.width : 0;
+  const imgH = image ? image.height : 0;
+  const showCrosshair = !readOnly && selectedLabel && mouseImgPos && !isPanning;
+
   return (
-    <div ref={containerRef} className="bg-dark rounded position-relative">
+    <div ref={containerRef} className="stitch-ws-canvas-container">
       {/* Toolbar */}
-      <div
-        className="d-flex align-items-center gap-2 px-3 py-2"
-        style={{
-          background: "rgba(0,0,0,0.6)",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "0.375rem 0.375rem 0 0",
-        }}
-      >
+      <div className="stitch-ws-toolbar">
         <button
-          className="btn btn-sm btn-outline-light"
+          className="stitch-ws-toolbar-btn"
           onClick={handleZoomOut}
           title="Thu nhỏ"
         >
           <i className="ri-zoom-out-line"></i>
         </button>
         <span
-          className="text-white fw-bold small"
-          style={{ minWidth: "48px", textAlign: "center" }}
+          className="text-white fw-bold"
+          style={{ minWidth: "48px", textAlign: "center", fontSize: "0.75rem" }}
         >
           {zoomPercent}%
         </span>
         <button
-          className="btn btn-sm btn-outline-light"
+          className="stitch-ws-toolbar-btn"
           onClick={handleZoomIn}
           title="Phóng to"
         >
           <i className="ri-zoom-in-line"></i>
         </button>
-        <div
-          style={{
-            width: "1px",
-            height: "20px",
-            background: "rgba(255,255,255,0.3)",
-          }}
-        ></div>
+        <div className="stitch-ws-toolbar-divider"></div>
         <button
-          className="btn btn-sm btn-outline-light"
+          className="stitch-ws-toolbar-btn"
           onClick={handleResetView}
           title="Về mặc định"
         >
           <i className="ri-fullscreen-line me-1"></i>
-          <span className="small">Reset</span>
+          Reset
         </button>
         {!readOnly && (
           <button
-            className="btn btn-sm btn-outline-warning"
+            className="stitch-ws-toolbar-btn warning"
             onClick={handleUndo}
             title="Hoàn tác (Ctrl+Z)"
           >
             <i className="ri-arrow-go-back-line me-1"></i>
-            <span className="small">Undo</span>
+            Undo
           </button>
         )}
-        <div className="ms-auto d-flex align-items-center gap-3 text-white small opacity-75">
+        {annotations.length > 0 && (
+          <span className="stitch-ws-badge stitch-ws-badge-inprogress ms-1">
+            <i className="ri-shape-line"></i>
+            {annotations.length} box{annotations.length > 1 ? "es" : ""}
+          </span>
+        )}
+        <div className="ms-auto d-flex align-items-center gap-3 stitch-ws-toolbar-hint">
           <span>
-            <i className="ri-mouse-line me-1"></i>
+            <i className="ri-mouse-line"></i>
             Ctrl+Scroll: Zoom
           </span>
           <span>
-            <i className="ri-drag-move-line me-1"></i>
+            <i className="ri-drag-move-line"></i>
             Scroll/Kéo: Di chuyển
           </span>
         </div>
       </div>
 
-      {/* Canvas */}
+      {/* Canvas wrapper — this div is measured for accurate image centering */}
+      <div ref={stageWrapperRef} className="stitch-ws-stage-wrapper">
       <Stage
         width={size.width}
         height={size.height}
@@ -347,28 +369,60 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
       >
         <Layer>
           {image && <KonvaImage image={image} />}
-          {annotations.map((a) => (
-            <Group key={a.id}>
-              <Rect
-                {...a}
-                stroke={a.color}
-                strokeWidth={2 / stageScale}
-                fill={a.color + "33"}
-                onDblClick={() => {
-                  if (!readOnly)
-                    dispatch(removeAnnotation({ assignmentId, id: a.id }));
-                }}
-              />
-              <Text
-                x={a.x}
-                y={a.y - 16 / stageScale}
-                text={a.labelName}
-                fill="white"
-                fontSize={12 / stageScale}
-              />
-            </Group>
-          ))}
 
+          {/* Existing annotations */}
+          {annotations.map((a) => {
+            const isHighlighted = highlightedAnnotationId === a.id;
+            const tagFontSize = 11 / stageScale;
+            const tagPadding = 3 / stageScale;
+            const tagText = a.labelName || "Box";
+            // Approximate tag width
+            const tagWidth = tagText.length * tagFontSize * 0.65 + tagPadding * 2;
+            const tagHeight = tagFontSize + tagPadding * 2;
+
+            return (
+              <Group key={a.id}>
+                {/* Bounding box rect */}
+                <Rect
+                  x={a.x}
+                  y={a.y}
+                  width={a.width}
+                  height={a.height}
+                  stroke={isHighlighted ? "#fff" : (a.color || "#6c757d")}
+                  strokeWidth={(isHighlighted ? 3 : 2) / stageScale}
+                  fill={(a.color || "#6c757d") + (isHighlighted ? "55" : "22")}
+                  dash={isHighlighted ? [6 / stageScale, 3 / stageScale] : undefined}
+                  onDblClick={() => {
+                    if (!readOnly)
+                      dispatch(removeAnnotation({ assignmentId, id: a.id }));
+                  }}
+                  onClick={() => {
+                    if (onAnnotationClick) onAnnotationClick(a.id);
+                  }}
+                />
+                {/* Label tag background */}
+                <Rect
+                  x={a.x}
+                  y={a.y - tagHeight}
+                  width={tagWidth}
+                  height={tagHeight}
+                  fill={a.color || "#6c757d"}
+                  cornerRadius={2 / stageScale}
+                />
+                {/* Label tag text */}
+                <Text
+                  x={a.x + tagPadding}
+                  y={a.y - tagHeight + tagPadding}
+                  text={tagText}
+                  fill="white"
+                  fontSize={tagFontSize}
+                  fontStyle="bold"
+                />
+              </Group>
+            );
+          })}
+
+          {/* Drawing rect preview */}
           {newRect && (
             <Rect
               {...newRect}
@@ -377,19 +431,35 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
               strokeWidth={2 / stageScale}
             />
           )}
+
+          {/* Crosshair lines */}
+          {showCrosshair && (
+            <>
+              {/* Vertical line */}
+              <Line
+                points={[mouseImgPos.x, 0, mouseImgPos.x, imgH]}
+                stroke="rgba(255,255,255,0.35)"
+                strokeWidth={1 / stageScale}
+                dash={[4 / stageScale, 4 / stageScale]}
+                listening={false}
+              />
+              {/* Horizontal line */}
+              <Line
+                points={[0, mouseImgPos.y, imgW, mouseImgPos.y]}
+                stroke="rgba(255,255,255,0.35)"
+                strokeWidth={1 / stageScale}
+                dash={[4 / stageScale, 4 / stageScale]}
+                listening={false}
+              />
+            </>
+          )}
         </Layer>
       </Stage>
+      </div>
 
       {/* Coordinate bar */}
-      <div
-        className="d-flex align-items-center gap-3 px-3 py-2 text-white small"
-        style={{
-          background: "rgba(0,0,0,0.6)",
-          borderTop: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "0 0 0.375rem 0.375rem",
-        }}
-      >
-        <span className="fw-bold text-info">
+      <div className="stitch-ws-coord-bar">
+        <span className="fw-bold" style={{ color: "#22D3EE" }}>
           <i className="ri-crosshair-2-line me-1"></i>Toạ độ:
         </span>
         {cursorPos ? (
@@ -402,19 +472,13 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
             </span>
           </>
         ) : (
-          <span className="opacity-50">Di chuột vào canvas</span>
+          <span style={{ opacity: 0.5 }}>Di chuột vào canvas</span>
         )}
 
         {newRect && (
           <>
-            <div
-              style={{
-                width: "1px",
-                height: "16px",
-                background: "rgba(255,255,255,0.3)",
-              }}
-            ></div>
-            <span className="text-warning">
+            <div className="stitch-ws-toolbar-divider" style={{ height: 16 }}></div>
+            <span style={{ color: "#FACC15" }}>
               <i className="ri-shape-line me-1"></i>
               W: <strong>{Math.abs(Math.round(newRect.width))}</strong>
               {" × "}
@@ -424,7 +488,7 @@ const LabelingWorkspace = ({ imageUrl, assignmentId, readOnly = false }) => {
         )}
 
         {image && (
-          <span className="ms-auto opacity-50">
+          <span className="ms-auto" style={{ opacity: 0.5 }}>
             Ảnh gốc: {image.width} × {image.height}px
           </span>
         )}

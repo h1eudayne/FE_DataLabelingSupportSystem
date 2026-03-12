@@ -1,9 +1,9 @@
-// import "./App.css";
-import "./assets/css/app.min.css";
 import "./assets/css/bootstrap.min.css";
+import "./assets/css/app.min.css";
 import "./assets/css/custom.min.css";
 import "./assets/css/icons.min.css";
 import "./assets/css/usertable.min.css";
+import "./App.css"; // Dark mode overrides - must be last to take precedence
 
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import MainLayouts from "./components/layouts/MainLayouts";
@@ -157,12 +157,6 @@ function App() {
                     </div>
                   </div>
                 }
-              />
-            </Route>
-            <Route element={<RoleProtectedRoute allowRoles={["Reviewer"]} />}>
-              <Route
-                path="/reviewer/review-workspace/:assignmentId"
-                element={<ReviewWorkspace />}
               />
             </Route>
           </Route>
