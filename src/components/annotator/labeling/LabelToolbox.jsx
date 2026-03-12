@@ -77,6 +77,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
 
   return (
     <div className="card shadow-sm border-0 mb-3">
+      {/* Header */}
       <div className="card-header bg-white border-bottom py-2 px-3">
         <div className="d-flex align-items-center justify-content-between">
           <h6 className="card-title mb-0 text-primary fw-bold small">
@@ -127,6 +128,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
         )}
       </div>
 
+      {/* Label list — FIXED 280px max, always scrollable */}
       <div
         className="card-body p-0"
         style={{ maxHeight: 280, overflowY: "auto" }}
@@ -151,6 +153,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
 
           return (
             <div key={label.id} className="border-bottom">
+              {/* Label row: 2 zones — LEFT click = select label, RIGHT click = toggle checklist */}
               <div
                 className={`d-flex align-items-stretch ${
                   isSelected
@@ -167,6 +170,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                   minHeight: 38,
                 }}
               >
+                {/* LEFT ZONE — click to select label */}
                 <div
                   className="d-flex align-items-center flex-grow-1 px-2 py-1"
                   style={{ cursor: "pointer" }}
@@ -193,6 +197,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                     {label.name}
                   </span>
 
+                  {/* Annotation count badge */}
                   {annotationCountByLabel[label.id] > 0 && (
                     <span
                       className="badge bg-dark bg-opacity-10 text-dark me-1"
@@ -223,6 +228,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                   )}
                 </div>
 
+                {/* RIGHT ZONE — big toggle button for checklist (easy to tap) */}
                 {hasChecklist && (
                   <button
                     className={`btn btn-sm d-flex align-items-center justify-content-center border-start ${
@@ -252,6 +258,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                 )}
               </div>
 
+              {/* Inline checklist panel */}
               {isExpanded && hasChecklist && (
                 <div
                   className="px-3 py-2 bg-light bg-opacity-50"
@@ -314,6 +321,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
         })}
       </div>
 
+      {/* Footer */}
       <div className="card-footer bg-white py-2 px-3">
         <small className="text-muted" style={{ fontSize: 11 }}>
           <i className="ri-information-line me-1"></i>
