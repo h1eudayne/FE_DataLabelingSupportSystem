@@ -4,11 +4,15 @@ import {
   getUserProfile,
   updateUser,
   updateStatus,
+  importUser,
 } from "../../services/admin/managementUsers/user.api";
 import UserTable from "../../components/admin/managementUser/UserTable";
 import { Card, CardBody, CardHeader } from "reactstrap";
 import UserFilter from "../../components/admin/managementUser/UserFilter";
 import UserModal from "../../components/admin/managementUser/UserModal";
+import AddUser from "../../components/admin/home/AddUser";
+import { Button } from "react-bootstrap";
+import { UserPlus } from "lucide-react";
 
 const SettingUserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -16,6 +20,11 @@ const SettingUserManagement = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentRole, setCurrentRole] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [file, setFile] = useState(null);
 
   const fetchSelf = async () => {
     try {
@@ -26,20 +35,24 @@ const SettingUserManagement = () => {
     }
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (currentPage = page) => {
     try {
-      const res = await getUsers();
+      const res = await getUsers(currentPage, pageSize);
       const data = res.data;
-      const userList = data.items || data;
-      setUsers(userList);
-      setFilteredUsers(userList);
+      setUsers(data.items || []);
+      setFilteredUsers(data.items || []);
+      setTotalCount(data.totalCount || 0);
+      setPage(data.page || currentPage);
     } catch (error) {
       console.error(error);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(page);
+  }, [page]);
+
+  useEffect(() => {
     fetchSelf();
   }, []);
 
@@ -91,11 +104,45 @@ const SettingUserManagement = () => {
     }
   };
 
+  const onCloseCreateModal = () => {
+    setFile(null);
+    setIsCreateModalOpen(false);
+  };
+
+  const uploadUser = async (file) => {
+    try {
+      const res = await importUser(file);
+      if (res.data) {
+        await fetchUsers();
+      }
+      onCloseCreateModal();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <>
       <Card>
-        <CardHeader className="d-flex align-items-center">
-          <h4 className="card-title mb-0 flex-grow-1">User Management</h4>
+        <CardHeader className="bg-white border-bottom py-3">
+          <div className="d-flex align-items-center justify-content-between">
+            <div>
+              <h4 className="card-title mb-1 fw-bold">User Management</h4>
+              <p className="text-muted small mb-0">
+                Quản lý danh sách thành viên và phân quyền hệ thống
+              </p>
+            </div>
+
+            <Button
+              variant="primary"
+              className="d-flex align-items-center gap-2 shadow-sm px-3 py-2"
+              style={{ borderRadius: "10px" }}
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <UserPlus size={18} />
+              <span className="fw-semibold">Thêm nhân viên</span>
+            </Button>
+          </div>
         </CardHeader>
         <CardBody>
           <UserFilter onSearch={handleSearch} />
@@ -104,6 +151,12 @@ const SettingUserManagement = () => {
             onEdit={handleEdit}
             onActive={handleActive}
             currentRole={currentRole}
+            totalCount={totalCount}
+            pagination={{
+              page,
+              pageSize,
+              onPageChange: (newPage) => setPage(newPage),
+            }}
           />
         </CardBody>
       </Card>
@@ -113,6 +166,14 @@ const SettingUserManagement = () => {
         toggle={toggleModal}
         user={selectUser}
         handleSave={handleSave}
+      />
+
+      <AddUser
+        isOpen={isCreateModalOpen}
+        onClose={onCloseCreateModal}
+        uploadUser={uploadUser}
+        file={file}
+        setFile={setFile}
       />
     </>
   );

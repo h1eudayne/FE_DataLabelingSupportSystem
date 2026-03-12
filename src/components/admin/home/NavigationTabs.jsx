@@ -17,14 +17,7 @@ const NavigationTabs = ({ activeTab, setActiveTab }) => (
             <Users size={18} /> Quản lý người dùng
           </Nav.Link>
         </Nav.Item>
-        <Nav.Item>
-          <Nav.Link
-            eventKey="settings"
-            className="d-flex align-items-center gap-2 px-4 py-2 fw-bold"
-          >
-            <Settings size={18} /> Cấu hình hệ thống
-          </Nav.Link>
-        </Nav.Item>
+
         <Nav.Item>
           <Nav.Link
             eventKey="logs"
