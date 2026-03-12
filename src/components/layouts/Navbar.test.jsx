@@ -21,10 +21,11 @@ describe("Navbar Component Integration Tests", () => {
       </Provider>,
     );
 
-    expect(screen.getByText(/Projects/i)).toBeInTheDocument();
-    expect(screen.getByText(/Datasets/i)).toBeInTheDocument();
-    expect(screen.getByText(/Export Data/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Projects/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Datasets/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Export Data/i)).not.toBeInTheDocument();
 
+    expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
     expect(screen.getByText(/User Management/i)).toBeInTheDocument();
     expect(screen.getByText(/System Logs/i)).toBeInTheDocument();
   });

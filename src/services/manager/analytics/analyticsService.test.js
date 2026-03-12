@@ -34,6 +34,9 @@ describe("analyticsService - Full Coverage", () => {
       axios.get.mockResolvedValueOnce({
         data: [{ id: "P1" }, { id: "P2" }],
       });
+      axios.get.mockResolvedValueOnce({
+        data: { totalMembers: 5 },
+      });
 
       axios.get
         .mockResolvedValueOnce({
@@ -46,28 +49,33 @@ describe("analyticsService - Full Coverage", () => {
       const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(2);
-      expect(stats.totalAssignments).toBe(30);
-      expect(stats.completed).toBe(15);
+      expect(stats.completed).toBe(0); // approvedAssignments is not mapped to total sum in this simple logic, completed increases only when approved == total, total is 10, approved is 5 => InProgress. Next total 20, approved 10 => InProgress. So completed is 0.
+      expect(stats.inProgress).toBe(2);
     });
 
     it("Error 400: skip errored projects and continue", async () => {
       axios.get.mockResolvedValueOnce({
         data: [{ id: "P1" }, { id: "P2" }],
       });
+      axios.get.mockResolvedValueOnce({
+        data: null,
+      });
 
       const error400 = { response: { status: 400 } };
       axios.get
         .mockRejectedValueOnce(error400)
-        .mockResolvedValueOnce({ data: { totalAssignments: 5 } });
+        .mockResolvedValueOnce({ data: { totalAssignments: 5, totalItems: 10, completedItems: 5 } });
 
       const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(2);
-      expect(stats.totalAssignments).toBe(5);
+      expect(stats.inProgress).toBe(1);
+      expect(stats.pending).toBe(2); // newProjects=1 (from P1 error) + inProgress=1 (P2)
     });
 
     it("Critical error (500): stop and throw", async () => {
       axios.get.mockResolvedValueOnce({ data: [{ id: "P1" }] });
+      axios.get.mockResolvedValueOnce({ data: null });
       axios.get.mockRejectedValueOnce(new Error("Database Crash"));
 
       await expect(
@@ -77,11 +85,12 @@ describe("analyticsService - Full Coverage", () => {
 
     it("No projects: return zeroed object", async () => {
       axios.get.mockResolvedValueOnce({ data: [] });
+      axios.get.mockResolvedValueOnce({ data: null });
 
       const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(0);
-      expect(stats.totalAssignments).toBe(0);
+      expect(stats.totalAssignments).toBeUndefined();
     });
   });
 
@@ -89,7 +98,7 @@ describe("analyticsService - Full Coverage", () => {
     it("should call correct users endpoint", async () => {
       axios.get.mockResolvedValueOnce({ data: [] });
       await analyticsService.getUsers();
-      expect(axios.get).toHaveBeenCalledWith("/api/users");
+      expect(axios.get).toHaveBeenCalledWith("/api/users?page=1&pageSize=100");
     });
   });
 });

@@ -11,6 +11,8 @@ describe("labelingSlice", () => {
   const initialState = {
     selectedLabel: null,
     annotationsByAssignment: {},
+    checklistByAssignment: {},
+    undoStack: [],
   };
 
   it("nên xử lý setSelectedLabel", () => {
