@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import ProfileTable from "../components/home/ProfileTable";
 import {
   getUserProfile,
@@ -12,6 +13,7 @@ import { updateUser } from "@/store/auth/auth.slice";
 import { BACKEND_URL } from "../services/axios.customize";
 
 const ProfileContainer = () => {
+  const { t } = useTranslation();
   const [userSelf, setUserSelf] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const dispatch = useDispatch();
@@ -79,7 +81,7 @@ const ProfileContainer = () => {
       await fetchSelf();
     } catch (error) {
       console.error(error);
-      alert("Mật khẩu cũ không chính xác hoặc có lỗi xảy ra");
+      alert(t("profileContainer.oldPasswordError"));
     }
   };
 

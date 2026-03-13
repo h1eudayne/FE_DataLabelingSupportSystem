@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -20,6 +21,7 @@ const getStatusBadge = (status) => {
 
 export default function TaskTable({ data, loading }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   if (loading) {
     return (
@@ -28,7 +30,7 @@ export default function TaskTable({ data, loading }) {
           className="spinner-border spinner-border-sm text-primary me-2"
           role="status"
         ></div>
-        <span>Đang tải danh sách ảnh...</span>
+        <span>{t('annotatorDashboardComp.loadingImages')}</span>
       </div>
     );
   }
@@ -37,7 +39,7 @@ export default function TaskTable({ data, loading }) {
     return (
       <div className="stitch-empty-state">
         <i className="ri-image-line"></i>
-        <p>Chưa có ảnh nào trong dự án này</p>
+        <p>{t('annotatorDashboardComp.noImages')}</p>
       </div>
     );
   }
@@ -52,11 +54,11 @@ export default function TaskTable({ data, loading }) {
       <table className="table table-hover stitch-table align-middle">
         <thead>
           <tr>
-            <th style={{ width: 70 }}>ID</th>
-            <th>Dữ liệu</th>
-            <th style={{ width: 130 }}>Trạng thái</th>
-            <th style={{ width: 120 }}>Deadline</th>
-            <th style={{ width: 90 }}>Hành động</th>
+            <th style={{ width: 70 }}>{t('annotatorDashboardComp.colId')}</th>
+            <th>{t('annotatorDashboardComp.colData')}</th>
+            <th style={{ width: 130 }}>{t('annotatorDashboardComp.colStatus')}</th>
+            <th style={{ width: 120 }}>{t('annotatorDashboardComp.colDeadline')}</th>
+            <th style={{ width: 90 }}>{t('annotatorDashboardComp.colAction')}</th>
           </tr>
         </thead>
 
@@ -97,7 +99,7 @@ export default function TaskTable({ data, loading }) {
                     onClick={() => handleOpenTask(task.id)}
                   >
                     <i className="ri-external-link-line me-1"></i>
-                    Mở
+                    {t('annotatorDashboardComp.open')}
                   </button>
                 </td>
               </tr>

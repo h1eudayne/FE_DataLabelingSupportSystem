@@ -4,9 +4,11 @@ import ProjectOverviewChart from "../../../components/manager/status/ProjectOver
 import ProjectStatusSidebar from "../../../components/manager/status/ProjectStatusSidebar";
 import StatCards from "../../../components/manager/status/StatCards";
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import analyticsService from "../../../services/manager/analytics/analyticsService";
 
 const DashboardProjectStatus = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +26,7 @@ const DashboardProjectStatus = () => {
       setStats(resStats.data || resStats);
       setProjects(resProjects.data || resProjects);
     } catch (error) {
-      console.error("Lỗi khi tải dữ liệu dashboard:", error);
+      console.error("Error loading dashboard data:", error);
     } finally {
       setLoading(false);
     }
@@ -38,7 +40,7 @@ const DashboardProjectStatus = () => {
     return (
       <div className="text-center p-5">
         <Spinner color="primary" />
-        <p className="mt-2 text-muted">Đang đồng bộ dữ liệu hệ thống...</p>
+        <p className="mt-2 text-muted">{t('managerStatus.syncing')}</p>
       </div>
     );
   }
@@ -49,7 +51,7 @@ const DashboardProjectStatus = () => {
         <div className="col-12">
           <div className="page-title-box d-sm-flex align-items-center justify-content-between">
             <h4 className="mb-sm-0 text-uppercase fw-bold text-primary">
-              Project Analytics
+              {t('managerStatus.pageTitle')}
             </h4>
           </div>
         </div>

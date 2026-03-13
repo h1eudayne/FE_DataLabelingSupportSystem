@@ -7,20 +7,18 @@ import {
   Form,
   Table,
   Badge,
-  Pagination,
+  Pagination, // Đã thêm
 } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 import {
   Users,
   ShieldAlert,
   Award,
-  UserCheck,
   Search,
   Edit2,
   CheckCircle,
   Power,
   UserPlus,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 
 const UserManagementView = ({
@@ -31,52 +29,45 @@ const UserManagementView = ({
   onEdit,
   currentRole,
   openCreateModal,
-  pagination,
-  totalCount,
+  // Đã thêm các props thiếu
+  pagination = { page: 1, pageSize: 10, onPageChange: () => {} },
+  totalCount = 0,
 }) => {
+  const { t } = useTranslation();
   const { page, pageSize, onPageChange } = pagination;
+
   const totalPages = Math.ceil(totalCount / pageSize);
-  const fromEntry = (page - 1) * pageSize + 1;
+  const fromEntry = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
   const toEntry = Math.min(page * pageSize, totalCount);
+
   const adminUsers = users.filter((user) => user.role === "Admin");
   const regularUsers = users.filter((user) => user.role !== "Admin");
 
-  let items = [];
-  for (let number = 1; number <= totalPages; number++) {
-    items.push(
-      <Pagination.Item
-        key={number}
-        active={number === page}
-        onClick={() => onPageChange(number)}
-      >
-        {number}
-      </Pagination.Item>,
-    );
-  }
-
   return (
     <>
+      {/* Thẻ thống kê */}
       <Row className="mb-4 g-3">
         <StatCard
           icon={<Users size={28} />}
-          title="Tổng nhân sự"
-          value={totalCount}
+          title={t("userMgmt.totalStaff")}
+          value={stats.total}
           colorClass="text-primary"
         />
         <StatCard
           icon={<ShieldAlert size={28} />}
-          title="Quản trị viên"
+          title={t("userMgmt.admins")}
           value={stats.admins}
           colorClass="text-warning"
         />
         <StatCard
           icon={<Award size={28} />}
-          title="Lao động"
+          title={t("userMgmt.workers")}
           value={stats.workers}
           colorClass="text-success"
         />
       </Row>
 
+      {/* Ban Quản Trị */}
       <div className="mb-5">
         <div className="d-flex align-items-center gap-2 mb-3">
           <ShieldAlert className="text-warning" size={24} />
@@ -95,8 +86,12 @@ const UserManagementView = ({
                 ></div>
                 <Card.Body className="d-flex align-items-center p-3">
                   <div
-                    className="bg-light-warning text-warning rounded-circle d-flex align-items-center justify-content-center me-3"
-                    style={{ width: "45px", height: "45px" }}
+                    className="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center me-3"
+                    style={{
+                      width: "45px",
+                      height: "45px",
+                      fontWeight: "bold",
+                    }}
                   >
                     {admin.email.charAt(0).toUpperCase()}
                   </div>
@@ -105,7 +100,7 @@ const UserManagementView = ({
                       {admin.email}
                     </div>
                     <div
-                      className="text-muted italic"
+                      className="text-muted fst-italic"
                       style={{ fontSize: "10px" }}
                     >
                       Quản trị viên hệ thống
@@ -117,6 +112,8 @@ const UserManagementView = ({
           ))}
         </Row>
       </div>
+
+      {/* Danh sách nhân viên */}
       <Card className="border-0 shadow-sm" style={{ borderRadius: "15px" }}>
         <Card.Header className="bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
           <div>
@@ -135,6 +132,7 @@ const UserManagementView = ({
             <span className="fw-semibold">Thêm nhân viên</span>
           </Button>
         </Card.Header>
+
         <Card.Body className="px-4 pb-4">
           <InputGroup className="mb-3 border rounded-3 overflow-hidden">
             <InputGroup.Text className="bg-white border-0">
@@ -157,8 +155,8 @@ const UserManagementView = ({
             </thead>
             <tbody>
               {regularUsers.length > 0 ? (
-                regularUsers.map((user, idx) => (
-                  <tr key={user.id || idx}>
+                regularUsers.map((user) => (
+                  <tr key={user.id}>
                     <td>
                       <div className="d-flex align-items-center gap-3">
                         <div
@@ -188,7 +186,7 @@ const UserManagementView = ({
                     </td>
                     <td className="text-center">
                       {user.role !== currentRole && (
-                        <>
+                        <div className="d-flex justify-content-center align-items-center">
                           <Button
                             variant="link"
                             className="text-muted p-1 me-2"
@@ -202,7 +200,7 @@ const UserManagementView = ({
                             onClick={() => onActive(user.id, !user.isActive)}
                           >
                             <div
-                              className={`d-flex align-items-center px-2 py-1 rounded ${user.isActive ? "bg-light-success" : "bg-light-danger"}`}
+                              className={`d-flex align-items-center px-2 py-1 rounded ${user.isActive ? "bg-success bg-opacity-10" : "bg-danger bg-opacity-10"}`}
                               style={{
                                 minWidth: "95px",
                                 justifyContent: "center",
@@ -225,7 +223,7 @@ const UserManagementView = ({
                               )}
                             </div>
                           </Button>
-                        </>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -240,32 +238,27 @@ const UserManagementView = ({
             </tbody>
           </Table>
 
+          {/* Phân trang */}
           {totalPages > 1 && (
             <div className="d-flex justify-content-between align-items-center mt-3 px-3">
               <div className="text-muted small">
                 Hiển thị <b>{fromEntry}</b> đến <b>{toEntry}</b> trên{" "}
                 <b>{totalCount}</b> người dùng
               </div>
-
               <Pagination className="mb-0">
                 <Pagination.Prev
                   disabled={page === 1}
                   onClick={() => onPageChange(page - 1)}
                 />
-
-                {[...Array(totalPages)].map((_, idx) => {
-                  const pageNum = idx + 1;
-                  return (
-                    <Pagination.Item
-                      key={pageNum}
-                      active={pageNum === page}
-                      onClick={() => onPageChange(pageNum)}
-                    >
-                      {pageNum}
-                    </Pagination.Item>
-                  );
-                })}
-
+                {[...Array(totalPages)].map((_, idx) => (
+                  <Pagination.Item
+                    key={idx + 1}
+                    active={idx + 1 === page}
+                    onClick={() => onPageChange(idx + 1)}
+                  >
+                    {idx + 1}
+                  </Pagination.Item>
+                ))}
                 <Pagination.Next
                   disabled={page === totalPages}
                   onClick={() => onPageChange(page + 1)}
@@ -286,8 +279,13 @@ const StatCard = ({ icon, title, value, colorClass }) => (
       style={{ borderRadius: "15px" }}
     >
       <div className={`${colorClass} mb-2`}>{icon}</div>
-      <div className="text-muted small fw-bold text-uppercase">{title}</div>
-      <h2 className="fw-black m-0">{value}</h2>
+      <div
+        className="text-muted small fw-bold text-uppercase"
+        style={{ fontSize: "10px" }}
+      >
+        {title}
+      </div>
+      <h2 className="fw-bold m-0">{value}</h2>
     </Card>
   </Col>
 );

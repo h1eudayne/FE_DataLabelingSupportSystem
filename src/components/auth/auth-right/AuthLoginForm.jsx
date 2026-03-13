@@ -3,8 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { loginThunk } from "@/store/auth/auth.thunk";
 import AuthSocialLogin from "./AuthSocialLogin";
+import { useTranslation } from "react-i18next";
 
 const AuthLoginForm = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -47,14 +49,14 @@ const AuthLoginForm = () => {
     <div>
       {error && (
         <div className="alert alert-danger py-2 small">
-          {typeof error === "string" ? error : error?.title || "Login failed"}
+          {typeof error === "string" ? error : error?.title || t("auth.loginFailed")}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="text-start">
         <div className="mb-3">
           <label className="form-label fw-bold text-muted small">
-            Email / Tên đăng nhập
+            {t("auth.email")}
           </label>
           <div className="input-group auth-input rounded-3">
             <span className="input-group-text bg-transparent border-0">
@@ -63,7 +65,7 @@ const AuthLoginForm = () => {
             <input
               type="email"
               className="form-control bg-transparent border-0 py-2"
-              placeholder="Nhập tài khoản"
+              placeholder={t("auth.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -75,14 +77,14 @@ const AuthLoginForm = () => {
         <div className="mb-3">
           <div className="d-flex justify-content-between">
             <label className="form-label fw-bold text-muted small">
-              Mật khẩu
+              {t("auth.password")}
             </label>
             <Link
               to="/forgot-password"
               className="text-decoration-none small fw-bold"
               style={{ color: "#0ab39c" }}
             >
-              Quên mật khẩu?
+              {t("auth.forgotPassword")}
             </Link>
           </div>
 
@@ -115,7 +117,7 @@ const AuthLoginForm = () => {
         <div className="form-check mb-4">
           <input className="form-check-input" type="checkbox" />
           <label className="form-check-label text-muted small">
-            Ghi nhớ đăng nhập
+            {t("auth.rememberMe")}
           </label>
         </div>
 
@@ -127,7 +129,7 @@ const AuthLoginForm = () => {
             background: "linear-gradient(135deg, #0ab39c 0%, #405189 100%)",
           }}
         >
-          {loading ? "Đang xử lý..." : "Đăng nhập"}
+          {loading ? t("auth.loginProcessing") : t("auth.login")}
         </button>
       </form>
     </div>

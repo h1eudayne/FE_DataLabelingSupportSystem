@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { Container, Row, Col, Spinner, Button } from "react-bootstrap";
 import { TrendingUp, Plus } from "lucide-react";
@@ -29,31 +30,33 @@ const ManagerContainer = () => {
       </div>
     );
 
+  const { t } = useTranslation();
+
   return (
     <Container fluid className="p-4 bg-light min-vh-100">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h4 className="fw-bold mb-1">Báo cáo Quản lý</h4>
+          <h4 className="fw-bold mb-1">{t("managerDashboard.title")}</h4>
           <p className="text-muted small mb-0">
-            Tăng trưởng{" "}
+            {t("managerDashboard.growth")}{" "}
             <span className="text-success fw-bold">
               <TrendingUp size={14} /> {data.growth || 0}%
             </span>{" "}
-            so với tháng trước
+            {t("managerDashboard.comparedLastMonth")}
           </p>
         </div>
         <Button
           variant="primary"
           className="rounded-3 shadow-sm px-4 d-flex align-items-center gap-2"
         >
-          <Plus size={18} /> Tạo dự án mới
+          <Plus size={18} /> {t("managerDashboard.createProject")}
         </Button>
       </div>
 
       <Row className="g-3 mb-4">
         <Col>
           <KpiCard
-            label="Tổng dự án"
+            label={t("managerDashboard.totalProjects")}
             value={data.total}
             color="primary"
             iconName="Layers"
@@ -61,7 +64,7 @@ const ManagerContainer = () => {
         </Col>
         <Col>
           <KpiCard
-            label="Hoàn thành"
+            label={t("managerDashboard.completed")}
             value={data.completed}
             color="success"
             iconName="CheckCircle2"
@@ -69,7 +72,7 @@ const ManagerContainer = () => {
         </Col>
         <Col>
           <KpiCard
-            label="Đang thực hiện"
+            label={t("managerDashboard.inProgress")}
             value={data.inProgress}
             color="warning"
             iconName="BarChart3"
@@ -77,7 +80,7 @@ const ManagerContainer = () => {
         </Col>
         <Col>
           <KpiCard
-            label="Bị từ chối"
+            label={t("managerDashboard.rejected")}
             value={data.rejected}
             color="danger"
             iconName="AlertCircle"
@@ -85,7 +88,7 @@ const ManagerContainer = () => {
         </Col>
         <Col>
           <KpiCard
-            label="Nhân sự"
+            label={t("managerDashboard.personnel")}
             value={data.totalMembers || 0}
             color="info"
             iconName="Users"

@@ -1,12 +1,15 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import taskService from "../../../services/annotator/labeling/taskService";
 import projectService from "../../../services/annotator/labeling/projectService";
 import { toast } from "react-toastify";
+import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
+import { useTranslation } from "react-i18next";
 
 const PACK_SIZE = 50;
 
 const AnnotatorProjectPacks = () => {
+  const { t } = useTranslation();
   const { assignmentId } = useParams();
   const navigate = useNavigate();
 
@@ -14,29 +17,33 @@ const AnnotatorProjectPacks = () => {
   const [projectInfo, setProjectInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [projectRes, imgRes] = await Promise.all([
-          projectService.getById(assignmentId),
-          taskService.getProjectImages(assignmentId),
-        ]);
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [projectRes, imgRes] = await Promise.all([
+        projectService.getById(assignmentId),
+        taskService.getProjectImages(assignmentId),
+      ]);
 
-        const projectData = projectRes.data || projectRes;
-        setProjectInfo(projectData);
+      const projectData = projectRes.data || projectRes;
+      setProjectInfo(projectData);
 
-        const allImages = imgRes.data || imgRes || [];
-        setImages(allImages);
-      } catch (err) {
-        console.error(err);
-        toast.error("Không tải được dữ liệu dự án");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+      const allImages = imgRes.data || imgRes || [];
+      setImages(allImages);
+    } catch (err) {
+      console.error(err);
+      toast.error(t("annotatorPacks.loadError"));
+    } finally {
+      setLoading(false);
+    }
   }, [assignmentId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Realtime: auto-refetch packs when notification arrives (approve/reject)
+  useSignalRRefresh(fetchData);
 
   const packs = useMemo(() => {
     const result = [];
@@ -77,9 +84,9 @@ const AnnotatorProjectPacks = () => {
   };
 
   const getPackStatusLabel = (pack) => {
-    if (pack.progress === 100) return "Hoàn thành";
-    if (pack.inProgress > 0 || pack.completed > 0) return "Đang làm";
-    return "Chưa bắt đầu";
+    if (pack.progress === 100) return t("annotatorPacks.statusDone");
+    if (pack.inProgress > 0 || pack.completed > 0) return t("annotatorPacks.statusInProgress");
+    return t("annotatorPacks.statusNotStarted");
   };
 
   const handleOpenPack = (pack) => {
@@ -108,7 +115,7 @@ const AnnotatorProjectPacks = () => {
             className="btn btn-sm btn-outline-secondary me-3"
             onClick={() => navigate("/annotator-my-tasks")}
           >
-            <i className="ri-arrow-left-line me-1"></i> Quay lại
+            <i className="ri-arrow-left-line me-1"></i> {t("annotatorPacks.back")}
           </button>
         </div>
       </div>
@@ -120,7 +127,7 @@ const AnnotatorProjectPacks = () => {
             <div className="col-md-6">
               <h4 className="fw-bold mb-1">
                 <i className="ri-folder-3-line me-2 text-primary"></i>
-                {projectInfo?.projectName || "Dự án"}
+                {projectInfo?.projectName || t("annotatorPacks.project")}
               </h4>
               {projectInfo?.description && (
                 <p className="text-muted mb-0 small">
@@ -132,17 +139,17 @@ const AnnotatorProjectPacks = () => {
               <div className="d-flex align-items-center gap-4 justify-content-md-end">
                 <div className="text-center">
                   <h3 className="fw-bold text-primary mb-0">{images.length}</h3>
-                  <small className="text-muted">Tổng ảnh</small>
+                  <small className="text-muted">{t("annotatorPacks.totalImages")}</small>
                 </div>
                 <div className="text-center">
                   <h3 className="fw-bold text-success mb-0">
                     {totalCompleted}
                   </h3>
-                  <small className="text-muted">Hoàn thành</small>
+                  <small className="text-muted">{t("annotatorPacks.completed")}</small>
                 </div>
                 <div className="text-center">
                   <h3 className="fw-bold text-warning mb-0">{packs.length}</h3>
-                  <small className="text-muted">Tổng pack</small>
+                  <small className="text-muted">{t("annotatorPacks.totalPacks")}</small>
                 </div>
               </div>
             </div>
@@ -150,9 +157,9 @@ const AnnotatorProjectPacks = () => {
 
           <div className="mt-3">
             <div className="d-flex justify-content-between small mb-1">
-              <span className="fw-semibold">Tiến độ tổng dự án</span>
+              <span className="fw-semibold">{t("annotatorPacks.overallProgress")}</span>
               <span className="fw-bold text-primary">
-                {totalProgress}% ({totalCompleted}/{images.length} ảnh)
+                {totalProgress}% ({totalCompleted}/{images.length} {t("annotatorPacks.images")})
               </span>
             </div>
             <div className="progress" style={{ height: 10 }}>
@@ -167,14 +174,14 @@ const AnnotatorProjectPacks = () => {
 
       {/* Pack Grid */}
       <h5 className="fw-bold mb-3">
-        <i className="ri-stack-line me-2"></i>Danh sách Pack ({packs.length}{" "}
-        pack)
+        <i className="ri-stack-line me-2"></i>{t("annotatorPacks.packList")} ({packs.length}{" "}
+        {t("annotatorPacks.pack")})
       </h5>
 
       {packs.length === 0 ? (
         <div className="alert alert-info">
           <i className="ri-information-line me-2"></i>
-          Dự án này chưa có ảnh nào.
+          {t("annotatorPacks.noImages")}
         </div>
       ) : (
         <div className="row">
@@ -214,20 +221,20 @@ const AnnotatorProjectPacks = () => {
                 <div className="card-body">
                   <div className="d-flex justify-content-between mb-3">
                     <div>
-                      <small className="text-muted d-block">Ảnh</small>
+                      <small className="text-muted d-block">{t("annotatorPacks.imageLabel")}</small>
                       <span className="fw-bold">
                         {pack.startIdx + 1} – {pack.endIdx}
                       </span>
                     </div>
                     <div className="text-end">
-                      <small className="text-muted d-block">Tổng</small>
-                      <span className="fw-bold">{pack.total} ảnh</span>
+                      <small className="text-muted d-block">{t("annotatorPacks.total")}</small>
+                      <span className="fw-bold">{pack.total} {t("annotatorPacks.images")}</span>
                     </div>
                   </div>
 
                   <div className="mb-3">
                     <div className="d-flex justify-content-between small mb-1">
-                      <span>Tiến độ</span>
+                      <span>{t("annotatorTasks.progress")}</span>
                       <span className="fw-semibold">
                         {pack.completed}/{pack.total} ({pack.progress}%)
                       </span>
@@ -245,15 +252,15 @@ const AnnotatorProjectPacks = () => {
                   >
                     {pack.progress === 100 ? (
                       <>
-                        <i className="ri-eye-line me-1"></i> Xem lại
+                        <i className="ri-eye-line me-1"></i> {t("annotatorPacks.reviewBtn")}
                       </>
                     ) : pack.inProgress > 0 || pack.completed > 0 ? (
                       <>
-                        <i className="ri-play-line me-1"></i> Tiếp tục
+                        <i className="ri-play-line me-1"></i> {t("annotatorPacks.continueBtn")}
                       </>
                     ) : (
                       <>
-                        <i className="ri-play-circle-line me-1"></i> Bắt đầu
+                        <i className="ri-play-circle-line me-1"></i> {t("annotatorPacks.startBtn")}
                       </>
                     )}
                   </button>

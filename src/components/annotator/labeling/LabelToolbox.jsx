@@ -5,9 +5,11 @@ import {
   toggleChecklistItem,
 } from "../../../store/annotator/labelling/labelingSlice";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const { selectedLabel } = useSelector((state) => state.labeling);
   const checklistState = useSelector(
     (state) => state.labeling.checklistByAssignment[assignmentId] || {},
@@ -52,7 +54,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
   const handleLabelClick = (label) => {
     if (!unlockedLabelIds.has(label.id)) {
       toast.warning(
-        `Vui lòng tick hết checklist của nhãn "${label.name}" trước khi sử dụng.`,
+        t('labeling.checklistWarning', { name: label.name }),
       );
       setExpandedLabelId(label.id);
       return;
@@ -71,7 +73,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
           className="stitch-ws-card-body text-center stitch-ws-text-muted"
           style={{ padding: 20 }}
         >
-          Đang tải bộ nhãn...
+          {t('labeling.loadingLabels')}
         </div>
       </div>
     );
@@ -85,10 +87,10 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
       {/* Header */}
       <div className="stitch-ws-card-header">
         <span>
-          <i className="ri-tools-line me-1"></i>BỘ NHÃN & CHECKLIST
+          <i className="ri-tools-line me-1"></i>{t('labeling.labelChecklist')}
         </span>
         <span className="stitch-ws-badge stitch-ws-badge-inprogress">
-          {unlockedCount}/{labels.length} mở khóa
+          {unlockedCount}/{labels.length} {t('labeling.unlocked')}
         </span>
       </div>
 
@@ -109,7 +111,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
           <input
             type="text"
             className="stitch-ws-search-input"
-            placeholder={`Tìm nhãn (${labels.length})...`}
+            placeholder={t('labeling.searchLabel', { count: labels.length })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -149,7 +151,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
               className="ri-search-line d-block"
               style={{ fontSize: 20, marginBottom: 4, opacity: 0.5 }}
             ></i>
-            Không tìm thấy nhãn "{searchTerm}"
+            {t('labeling.noLabelFound', { term: searchTerm })}
           </div>
         )}
 
@@ -178,7 +180,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                   className="d-flex align-items-center flex-grow-1 px-2 py-1"
                   style={{ cursor: "pointer" }}
                   onClick={() => handleLabelClick(label)}
-                  title={`Click để ${isSelected ? "bỏ chọn" : "chọn"} nhãn "${label.name}"`}
+                  title={t('labeling.clickToSelect', { action: isSelected ? t('labeling.deselectAction') : t('labeling.selectAction'), name: label.name })}
                 >
                   <span
                     className="rounded-circle me-2 flex-shrink-0"
@@ -207,7 +209,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                   {annotationCountByLabel[label.id] > 0 && (
                     <span
                       className="stitch-ws-badge stitch-ws-badge-count me-1"
-                      title={`${annotationCountByLabel[label.id]} box đã vẽ`}
+                      title={`${annotationCountByLabel[label.id]} ${t('labeling.boxDrawn')}`}
                     >
                       {annotationCountByLabel[label.id]}
                     </span>
@@ -242,7 +244,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                         prev === label.id ? null : label.id,
                       );
                     }}
-                    title={isExpanded ? "Thu gọn checklist" : "Xem checklist"}
+                    title={isExpanded ? t('labeling.collapseChecklist') : t('labeling.expandChecklist')}
                   >
                     <i
                       className={`ri-arrow-${isExpanded ? "up" : "down"}-s-line`}
@@ -316,8 +318,8 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
       <div className="stitch-ws-card-footer">
         <i className="ri-information-line me-1"></i>
         {selectedLabel
-          ? `Đang vẽ: ${selectedLabel.name} — click lại để hủy`
-          : "Tick checklist → mở khóa → chọn nhãn để vẽ"}
+          ? t('labeling.drawingLabel', { name: selectedLabel.name })
+          : t('labeling.checklistGuide')}
       </div>
     </div>
   );

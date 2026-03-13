@@ -1,11 +1,14 @@
 import { Card, ListGroup, Badge } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 import { MessageSquare, CheckCircle, Clock } from "lucide-react";
 
-const FeedbackSection = ({ feedbacks = [] }) => (
+const FeedbackSection = ({ feedbacks = [] }) => {
+  const { t } = useTranslation();
+  return (
   <Card className="border-0 shadow-sm rounded-4 h-100 overflow-hidden">
     <Card.Header className="bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
       <MessageSquare size={18} className="text-danger" />
-      <h6 className="mb-0 fw-bold text-dark">Phản hồi & Chỉnh sửa</h6>
+      <h6 className="mb-0 fw-bold text-dark">{t("annotatorFeedback.title")}</h6>
     </Card.Header>
     <Card.Body className="p-0">
       {feedbacks.length > 0 ? (
@@ -25,11 +28,12 @@ const FeedbackSection = ({ feedbacks = [] }) => (
       ) : (
         <div className="text-center py-5">
           <CheckCircle size={40} className="text-success opacity-25 mb-3" />
-          <p className="text-muted">Chưa có phản hồi nào!</p>
+          <p className="text-muted">{t("annotatorFeedback.noFeedback")}</p>
         </div>
       )}
     </Card.Body>
   </Card>
 );
+};
 
 export default FeedbackSection;

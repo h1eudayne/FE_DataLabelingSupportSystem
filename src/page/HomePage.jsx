@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Container, Button } from "react-bootstrap";
@@ -41,6 +42,7 @@ const HomePage = () => {
 };
 
 const RoleBasedRenderer = ({ role }) => {
+  const { t } = useTranslation();
   switch (role) {
     case "Admin":
       // return <AdminContainer />;
@@ -54,7 +56,7 @@ const RoleBasedRenderer = ({ role }) => {
     case "Reviewer":
       return <ReviewerContainer />;
     default:
-      return <div className="text-center p-5">Quyền truy cập không hợp lệ</div>;
+      return <div className="text-center p-5">{t("homePage.invalidAccess")}</div>;
   }
 };
 

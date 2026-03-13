@@ -1,11 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import SimpleBar from "simplebar-react";
 import { useSelector } from "react-redux";
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
   const role = user?.role;
+  const { t } = useTranslation();
 
   const menuItemStyle = {
     display: "flex",
@@ -185,7 +187,7 @@ const Navbar = () => {
           }}
         >
           <div className="flex-grow-1">
-            {["Admin"].includes(role) && (
+            {["Admin", "Manager"].includes(role) && (
               <>
                 <li className="nav-item">
                   <Link
@@ -197,76 +199,7 @@ const Navbar = () => {
                       className="ri-dashboard-2-line fs-20 me-2"
                       style={iconStyle}
                     ></i>
-                    <span>Dashboard</span>
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link
-                    className="nav-link menu-link fs-18"
-                    to="/settings-user-management"
-                    style={menuItemStyle}
-                  >
-                    <i
-                      className="ri-user-settings-line fs-20 me-2"
-                      style={iconStyle}
-                    ></i>
-                    <span>User Management</span>
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link
-                    className="nav-link menu-link fs-18"
-                    to="/settings-system-logs"
-                    style={menuItemStyle}
-                  >
-                    <i
-                      className="ri-list-settings-line fs-20 me-2"
-                      style={iconStyle}
-                    ></i>
-                    <span>System Logs</span>
-                  </Link>
-                </li>
-                {/* <li className="nav-item">
-                  <Link
-                    className="nav-link menu-link fs-18"
-                    to="/dispute-management"
-                    style={menuItemStyle}
-                  >
-                    <i
-                      className="ri-scales-3-line fs-20 me-2"
-                      style={iconStyle}
-                    ></i>
-                    <span>Disputes</span>
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link
-                    className="nav-link menu-link fs-18"
-                    to="/review-audit"
-                    style={menuItemStyle}
-                  >
-                    <i
-                      className="ri-shield-check-line fs-20 me-2"
-                      style={iconStyle}
-                    ></i>
-                    <span>Review Audit</span>
-                  </Link>
-                </li> */}
-              </>
-            )}
-            {["Manager"].includes(role) && (
-              <>
-                <li className="nav-item">
-                  <Link
-                    className="nav-link menu-link fs-18"
-                    to="/dashboard"
-                    style={menuItemStyle}
-                  >
-                    <i
-                      className="ri-dashboard-2-line fs-20 me-2"
-                      style={iconStyle}
-                    ></i>
-                    <span>Dashboard</span>
+                    <span>{t("navbar.dashboard")}</span>
                   </Link>
                 </li>
 
@@ -280,7 +213,7 @@ const Navbar = () => {
                       className="ri-stack-fill fs-20 me-2"
                       style={iconStyle}
                     ></i>
-                    <span>Projects</span>
+                    <span>{t("navbar.projects")}</span>
                   </Link>
                 </li>
                 <li className="nav-item">
@@ -293,7 +226,7 @@ const Navbar = () => {
                       className="ri-database-2-line fs-20 me-2"
                       style={iconStyle}
                     ></i>
-                    <span>Datasets</span>
+                    <span>{t("navbar.datasets")}</span>
                   </Link>
                 </li>
                 <li className="nav-item">
@@ -306,7 +239,7 @@ const Navbar = () => {
                       className="ri-file-download-line fs-20 me-2"
                       style={iconStyle}
                     ></i>
-                    <span>Export Data</span>
+                    <span>{t("navbar.exportData")}</span>
                   </Link>
                 </li>
                 <li className="nav-item">
@@ -319,7 +252,7 @@ const Navbar = () => {
                       className="ri-scales-3-line fs-20 me-2"
                       style={iconStyle}
                     ></i>
-                    <span>Disputes</span>
+                    <span>{t("navbar.disputes")}</span>
                   </Link>
                 </li>
                 <li className="nav-item">
@@ -332,7 +265,7 @@ const Navbar = () => {
                       className="ri-shield-check-line fs-20 me-2"
                       style={iconStyle}
                     ></i>
-                    <span>Review Audit</span>
+                    <span>{t("navbar.reviewAudit")}</span>
                   </Link>
                 </li>
               </>
@@ -350,7 +283,7 @@ const Navbar = () => {
                       className="ri-home-4-line fs-20 me-2"
                       style={iconStyle}
                     ></i>
-                    <span>Dashboard</span>
+                    <span>{t("navbar.dashboard")}</span>
                   </Link>
                 </li>
 
@@ -366,7 +299,7 @@ const Navbar = () => {
                           className="ri-task-line fs-20 me-2"
                           style={iconStyle}
                         ></i>
-                        <span>My Task</span>
+                        <span>{t("navbar.myTask")}</span>
                       </Link>
                     </li>
                     <li className="nav-item">
@@ -379,7 +312,7 @@ const Navbar = () => {
                           className="ri-folders-line fs-20 me-2"
                           style={iconStyle}
                         ></i>
-                        <span>Projects</span>
+                        <span>{t("navbar.projects")}</span>
                       </Link>
                     </li>
                     <li className="nav-item">
@@ -392,7 +325,7 @@ const Navbar = () => {
                           className="ri-group-line fs-20 me-2"
                           style={iconStyle}
                         ></i>
-                        <span>Team</span>
+                        <span>{t("navbar.team")}</span>
                       </Link>
                     </li>
                   </>
@@ -401,14 +334,14 @@ const Navbar = () => {
                   <li className="nav-item">
                     <Link
                       className="nav-link menu-link fs-18"
-                      to="/reviewer/review-task/"
+                      to="/workplace-review-task"
                       style={menuItemStyle}
                     >
                       <i
                         className="ri-shield-check-line fs-20 me-2"
                         style={iconStyle}
                       ></i>
-                      <span>Review Task</span>
+                      <span>{t("navbar.reviewTask")}</span>
                     </Link>
                   </li>
                 )}
@@ -421,7 +354,36 @@ const Navbar = () => {
               className="mx-3 my-2"
               style={{ borderColor: "var(--border-color, rgba(0,0,0,0.1))" }}
             />
-
+            {role === "Admin" && (
+              <>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/settings-user-management"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-user-settings-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>{t("navbar.userManagement")}</span>
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
+                    to="/settings-system-logs"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-list-settings-line fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>{t("navbar.systemLogs")}</span>
+                  </Link>
+                </li>
+              </>
+            )}
             {["Annotator", "Manager", "Reviewer"].includes(role) && (
               <li className="nav-item">
                 <Link
@@ -433,7 +395,7 @@ const Navbar = () => {
                     className="ri-settings-4-line fs-20 me-2"
                     style={iconStyle}
                   ></i>
-                  <span>Settings</span>
+                  <span>{t("navbar.settingsMenu")}</span>
                 </Link>
               </li>
             )}

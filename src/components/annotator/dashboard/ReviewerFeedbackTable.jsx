@@ -1,6 +1,8 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 export default function ReviewerFeedbackTable({ data = [], loading = false }) {
+  const { t } = useTranslation();
   return (
     <div className="row mt-4">
       <div className="col-12">
@@ -8,11 +10,11 @@ export default function ReviewerFeedbackTable({ data = [], loading = false }) {
           <div className="stitch-card-header">
             <h5>
               <i className="ri-feedback-line me-2 text-warning"></i>
-              Phản hồi từ Reviewer
+              {t('annotatorDashboardComp.reviewerFeedback')}
             </h5>
             {data.length > 0 && (
               <span className="badge bg-warning bg-opacity-10 text-warning stitch-badge">
-                {data.length} phản hồi
+                {data.length} {t('annotatorDashboardComp.feedbackCount')}
               </span>
             )}
           </div>
@@ -24,22 +26,22 @@ export default function ReviewerFeedbackTable({ data = [], loading = false }) {
                   className="spinner-border spinner-border-sm text-primary me-2"
                   role="status"
                 ></div>
-                <span>Đang tải phản hồi...</span>
+                <span>{t('annotatorDashboardComp.loadingFeedback')}</span>
               </div>
             ) : data.length === 0 ? (
               <div className="stitch-empty-state">
                 <i className="ri-chat-check-line"></i>
-                <p>Chưa có phản hồi từ Reviewer</p>
+                <p>{t('annotatorDashboardComp.noFeedback')}</p>
               </div>
             ) : (
               <div className="table-responsive">
                 <table className="table table-hover stitch-table align-middle mb-0">
                   <thead>
                     <tr>
-                      <th>Task</th>
-                      <th>Loại lỗi</th>
-                      <th>Nhận xét</th>
-                      <th style={{ width: 130 }}>Ngày trả về</th>
+                      <th>{t('annotatorDashboardComp.colTask')}</th>
+                      <th>{t('annotatorDashboardComp.colErrorType')}</th>
+                      <th>{t('annotatorDashboardComp.colComment')}</th>
+                      <th style={{ width: 130 }}>{t('annotatorDashboardComp.colReturnDate')}</th>
                     </tr>
                   </thead>
                   <tbody>

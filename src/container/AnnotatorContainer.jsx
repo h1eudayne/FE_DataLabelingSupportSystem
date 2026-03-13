@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Spinner, Container } from "react-bootstrap";
 import * as annotatorApi from "../services/annotator/dashboard/annotator.api";
 
@@ -9,6 +10,7 @@ import FeedbackSection from "../components/annotator/home/FeedbackSection";
 import AnnotatorHeader from "../components/annotator/home/AnnotatorHeader";
 
 const AnnotatorContainer = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState({
     stats: { totalAssigned: 0, submitted: 0, inProgress: 0 },
     feedbacks: [],
@@ -53,9 +55,9 @@ const AnnotatorContainer = () => {
 
       <Container fluid className="px-4 pb-4">
         <div className="mb-4 mt-2">
-          <h4 className="fw-bold mb-1 text-dark">Bảng làm việc</h4>
+          <h4 className="fw-bold mb-1 text-dark">{t("annotatorContainerComp.workboard")}</h4>
           <p className="text-muted small">
-            Chào mừng trở lại, bạn có phản hồi mới cần xử lý.
+            {t("annotatorContainerComp.welcomeBack")}
           </p>
         </div>
 

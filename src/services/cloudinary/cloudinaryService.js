@@ -24,6 +24,6 @@ export const uploadToCloudinary = async (file) => {
     return res.data.secure_url;
   } catch (error) {
     console.error("Upload Cloudinary failed:", error.response?.data || error);
-    throw new Error("Upload Cloudinary thất bại");
+    throw new Error("Cloudinary upload failed");
   }
 };

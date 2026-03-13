@@ -13,6 +13,7 @@ import {
   Form,
 } from "reactstrap";
 import Select from "react-select";
+import { useTranslation } from "react-i18next";
 
 import { uploadToCloudinary } from "../../../services/cloudinary/cloudinaryService";
 
@@ -21,6 +22,7 @@ import { userService } from "../../../services/manager/project/userService";
 import taskService from "../../../services/manager/project/taskService";
 
 const CreateProject = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const isSubmittingRef = useRef(false);
@@ -66,7 +68,7 @@ const CreateProject = () => {
         setAnnotatorOptions(annotators);
         setReviewerOptions(reviewers);
       } catch {
-        toast.error("Không thể tải danh sách nhân viên");
+        toast.error(t("createProject.loadingUsers"));
       }
     };
     fetchUsers();
@@ -79,7 +81,7 @@ const CreateProject = () => {
     ]);
 
   const removeLabel = (index) => {
-    if (labels.length === 1) return toast.info("Phải có ít nhất một nhãn");
+    if (labels.length === 1) return toast.info(t("createProject.minOneLabel"));
     setLabels(labels.filter((_, i) => i !== index));
   };
 
@@ -116,33 +118,33 @@ const CreateProject = () => {
 
   const validateForm = () => {
     if (!projectInfo.name.trim()) {
-      toast.warning("Vui lòng nhập tên dự án!");
+      toast.warning(t("createProject.warnName"));
       return false;
     }
     const validLabels = labels.filter((l) => l.name.trim());
     if (validLabels.length === 0) {
-      toast.warning("Phải có ít nhất một nhãn được định nghĩa!");
+      toast.warning(t("createProject.warnLabel"));
       return false;
     }
     for (let i = 0; i < validLabels.length; i++) {
       const filledChecklist = validLabels[i].checklist.filter((c) => c.trim());
       if (filledChecklist.length === 0) {
         toast.warning(
-          `Nhãn "${validLabels[i].name}" phải có ít nhất 1 điều kiện checklist (BR-MNG-06)!`,
+          t("createProject.warnChecklist", { name: validLabels[i].name }),
         );
         return false;
       }
     }
     if (!selectedFiles.length) {
-      toast.warning("Vui lòng chọn file ảnh!");
+      toast.warning(t("createProject.warnFiles"));
       return false;
     }
     if (!selectedAnnotators.length) {
-      toast.warning("Vui lòng chọn ít nhất một Annotator!");
+      toast.warning(t("createProject.warnAnnotator"));
       return false;
     }
     if (!selectedReviewers.length) {
-      toast.warning("Vui lòng chọn ít nhất một Reviewer!");
+      toast.warning(t("createProject.warnReviewer"));
       return false;
     }
     return true;
@@ -182,9 +184,9 @@ const CreateProject = () => {
       });
 
       const projectId = resProj.data?.id || resProj.data?.projectId;
-      if (!projectId) throw new Error("Không lấy được projectId");
+      if (!projectId) throw new Error(t("createProject.noProjectId"));
 
-      toast.info("Đang upload ảnh lên Cloudinary...");
+      toast.info(t("createProject.uploadingImages"));
       const uploadedUrls = [];
 
       for (const file of selectedFiles) {
@@ -214,11 +216,11 @@ const CreateProject = () => {
         }
       }
 
-      toast.success("Tạo dự án thành công!");
+      toast.success(t("createProject.createSuccess"));
       navigate("/projects-all-projects");
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Lỗi hệ thống");
+      toast.error(err.response?.data?.message || t("createProject.createError"));
     } finally {
       isSubmittingRef.current = false;
       setLoading(false);
@@ -229,7 +231,7 @@ const CreateProject = () => {
     <>
       <div className="mb-3">
         <h4 className="text-uppercase fw-bold text-primary">
-          Thiết lập dự án mới
+          {t("createProject.title")}
         </h4>
       </div>
 
@@ -239,10 +241,10 @@ const CreateProject = () => {
             <Card className="shadow-sm border-0 mb-4">
               <CardBody>
                 <div className="mb-3">
-                  <Label className="fw-bold">Tên dự án *</Label>
+                  <Label className="fw-bold">{t("createProject.projectName")}</Label>
                   <Input
                     required
-                    placeholder="VD: Nhận diện biển số xe..."
+                    placeholder={t("createProject.projectNamePlaceholder")}
                     value={projectInfo.name}
                     onChange={(e) =>
                       setProjectInfo({ ...projectInfo, name: e.target.value })
@@ -250,11 +252,11 @@ const CreateProject = () => {
                   />
                 </div>
                 <div className="mb-3">
-                  <Label className="fw-bold">Mô tả</Label>
+                  <Label className="fw-bold">{t("createProject.description")}</Label>
                   <Input
                     type="textarea"
                     rows="2"
-                    placeholder="Mục tiêu dự án..."
+                    placeholder={t("createProject.descriptionPlaceholder")}
                     value={projectInfo.description}
                     onChange={(e) =>
                       setProjectInfo({
@@ -266,7 +268,7 @@ const CreateProject = () => {
                 </div>
                 <Row>
                   <Col md={6}>
-                    <Label className="fw-bold">Loại Tool</Label>
+                    <Label className="fw-bold">{t("createProject.toolType")}</Label>
                     <select
                       className="form-select"
                       value={projectInfo.type}
@@ -282,7 +284,7 @@ const CreateProject = () => {
                     </select>
                   </Col>
                   <Col md={6}>
-                    <Label className="fw-bold">Hạn chót</Label>
+                    <Label className="fw-bold">{t("createProject.deadline")}</Label>
                     <Input
                       type="date"
                       value={projectInfo.deadline}
@@ -298,7 +300,7 @@ const CreateProject = () => {
 
                 <Row className="mt-3">
                   <Col md={6}>
-                    <Label className="fw-bold">Thời hạn mỗi task (giờ)</Label>
+                    <Label className="fw-bold">{t("createProject.taskDuration")}</Label>
                     <Input
                       type="number"
                       min="1"
@@ -312,7 +314,7 @@ const CreateProject = () => {
                     />
                   </Col>
                   <Col md={6}>
-                    <Label className="fw-bold">Đơn vị phạt (điểm)</Label>
+                    <Label className="fw-bold">{t("createProject.penaltyUnit")}</Label>
                     <Input
                       type="number"
                       min="0"
@@ -328,11 +330,11 @@ const CreateProject = () => {
                 </Row>
 
                 <div className="mt-3">
-                  <Label className="fw-bold">Hướng dẫn chung</Label>
+                  <Label className="fw-bold">{t("createProject.generalGuide")}</Label>
                   <Input
                     type="textarea"
                     rows="2"
-                    placeholder="Hướng dẫn annotation chung cho dự án..."
+                    placeholder={t("createProject.generalGuidePlaceholder")}
                     value={projectInfo.annotationGuide}
                     onChange={(e) =>
                       setProjectInfo({
@@ -345,7 +347,7 @@ const CreateProject = () => {
 
                 <div className="mt-4">
                   <Label className="fw-bold text-dark">
-                    Dữ liệu đầu vào ({selectedFiles.length} file) *
+                    {t("createProject.inputData")} ({selectedFiles.length} {t("createProject.file")}) *
                   </Label>
                   <div
                     className="dropzone border-2 border-dashed rounded-3 p-4 text-center bg-light"
@@ -362,7 +364,7 @@ const CreateProject = () => {
                     />
                     <i className="ri-upload-cloud-2-line display-6 text-muted"></i>
                     <p className="mt-2 small">
-                      Click để chọn hoặc kéo thả ảnh vào đây
+                      {t("createProject.dropzoneText")}
                     </p>
                   </div>
 
@@ -402,10 +404,10 @@ const CreateProject = () => {
             <Card className="shadow-sm border-0 mb-3">
               <div className="card-header bg-soft-info py-2">
                 <h6 className="card-title mb-0 fs-13 fw-bold">
-                  DANH SÁCH NHÃN (LABELS) *
+                  {t("createProject.labelListTitle")}
                 </h6>
                 <small className="text-muted">
-                  Mỗi nhãn có checklist — tick đầy đủ mới được gán nhãn
+                  {t("createProject.labelListHint")}
                 </small>
               </div>
               <CardBody className="p-0">
@@ -426,7 +428,7 @@ const CreateProject = () => {
                       ></button>
                       <div className="d-flex gap-2 mb-2">
                         <Input
-                          placeholder="Tên nhãn..."
+                          placeholder={t("createProject.labelName")}
                           value={label.name}
                           onChange={(e) =>
                             updateLabel(index, "name", e.target.value)
@@ -444,7 +446,7 @@ const CreateProject = () => {
                       </div>
                       <Input
                         size="sm"
-                        placeholder="Hướng dẫn chung cho nhãn này..."
+                        placeholder={t("createProject.labelGuide")}
                         value={label.guideLine}
                         onChange={(e) =>
                           updateLabel(index, "guideLine", e.target.value)
@@ -455,7 +457,7 @@ const CreateProject = () => {
                       <div className="mt-2 ps-2 border-start border-2 border-info">
                         <small className="text-danger fw-bold d-block mb-1">
                           <i className="ri-checkbox-multiple-line me-1"></i>
-                          Checklist bắt buộc * (tick đầy đủ mới gán nhãn):
+                          {t("createProject.checklistRequired")}
                         </small>
                         {label.checklist.map((item, itemIdx) => (
                           <div
@@ -464,7 +466,7 @@ const CreateProject = () => {
                           >
                             <Input
                               bsSize="sm"
-                              placeholder={`Điều kiện ${itemIdx + 1}...`}
+                              placeholder={`${t("createProject.conditionPlaceholder")} ${itemIdx + 1}...`}
                               value={item}
                               onChange={(e) =>
                                 updateChecklistItem(
@@ -493,7 +495,7 @@ const CreateProject = () => {
                           className="btn btn-link btn-sm p-0 text-info"
                           onClick={() => addChecklistItem(index)}
                         >
-                          + Thêm điều kiện
+                          {t("createProject.addCondition")}
                         </button>
                       </div>
                     </div>
@@ -501,7 +503,7 @@ const CreateProject = () => {
                 </div>
                 <div className="p-2 border-top text-center">
                   <Button color="link" size="sm" onClick={addLabel}>
-                    + Thêm nhãn mới
+                    {t("createProject.addLabel")}
                   </Button>
                 </div>
               </CardBody>
@@ -510,30 +512,30 @@ const CreateProject = () => {
             <Card className="shadow-sm border-0 mb-3">
               <div className="card-header bg-soft-dark py-2">
                 <h6 className="card-title mb-0 fs-13 fw-bold">
-                  PHÂN CÔNG NHÂN VIÊN *
+                  {t("createProject.assignTitle")}
                 </h6>
               </div>
               <CardBody>
                 <div className="mb-3">
                   <Label className="fw-bold small">
-                    Annotator (người gán nhãn)
+                    {t("createProject.annotatorLabel")}
                   </Label>
                   <Select
                     isMulti
                     options={annotatorOptions}
-                    placeholder="Tìm kiếm Annotator..."
+                    placeholder={t("createProject.annotatorPlaceholder")}
                     onChange={setSelectedAnnotators}
                     className="basic-multi-select"
                   />
                 </div>
                 <div>
                   <Label className="fw-bold small">
-                    Reviewer (người kiểm tra) *
+                    {t("createProject.reviewerLabel")}
                   </Label>
                   <Select
                     isMulti
                     options={reviewerOptions}
-                    placeholder="Tìm kiếm Reviewer..."
+                    placeholder={t("createProject.reviewerPlaceholder")}
                     onChange={setSelectedReviewers}
                     className="basic-multi-select"
                   />
@@ -555,7 +557,7 @@ const CreateProject = () => {
               ) : (
                 <i className="ri-check-double-line me-2"></i>
               )}
-              HOÀN TẤT & TẠO DỰ ÁN
+              {t("createProject.submitBtn")}
             </Button>
           </Col>
         </Row>

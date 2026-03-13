@@ -1,7 +1,9 @@
 import { Modal, Button } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 import { UploadCloud, FileSpreadsheet } from "lucide-react";
 
 const AddUser = ({ isOpen, onClose, uploadUser, file, setFile }) => {
+  const { t } = useTranslation();
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
@@ -9,7 +11,7 @@ const AddUser = ({ isOpen, onClose, uploadUser, file, setFile }) => {
     <Modal show={isOpen} onHide={onClose} centered>
       <Modal.Header closeButton>
         <Modal.Title className="fs-16 fw-bold">
-          Nhập nhân sự từ Excel
+          {t("addUser.title")}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
@@ -20,10 +22,10 @@ const AddUser = ({ isOpen, onClose, uploadUser, file, setFile }) => {
         >
           <UploadCloud size={40} className="text-muted mb-2" />
           <p className="mb-0 text-muted">
-            Click hoặc kéo thả file Excel vào đây
+            {t("addUser.dropHint")}
           </p>
           <small className="text-primary fw-bold">
-            {file ? file.name : "Chưa có file nào được chọn"}
+            {file ? file.name : t("addUser.noFileSelected")}
           </small>
           <input
             id="excelInput"
@@ -36,7 +38,7 @@ const AddUser = ({ isOpen, onClose, uploadUser, file, setFile }) => {
       </Modal.Body>
       <Modal.Footer>
         <Button variant="light" onClick={onClose}>
-          Hủy
+          {t("addUser.cancelBtn")}
         </Button>
         <Button
           variant="primary"
@@ -44,7 +46,7 @@ const AddUser = ({ isOpen, onClose, uploadUser, file, setFile }) => {
           onClick={() => uploadUser(file)}
         >
           <FileSpreadsheet size={16} className="me-2" />
-          Xác nhận Import
+          {t("addUser.confirmImport")}
         </Button>
       </Modal.Footer>
     </Modal>

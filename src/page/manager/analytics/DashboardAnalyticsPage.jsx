@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Row,
   Col,
@@ -51,6 +52,7 @@ const EMPTY_STATS = {
 };
 
 const DashboardAnalytics = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState(EMPTY_STATS);
   const [projectChartData, setProjectChartData] = useState([]);
   const [annotatorData, setAnnotatorData] = useState([]);
@@ -182,7 +184,7 @@ const DashboardAnalytics = () => {
               alerts.push({
                 type: "danger",
                 icon: "ri-error-warning-line",
-                message: `Dự án "${project.name}" có Rejection Rate ${s.rejectionRate.toFixed(1)}% (> 30%) — Cần xem xét lại quy trình.`,
+                message: t('analytics.alertHighRejectProject', { name: project.name, rate: s.rejectionRate.toFixed(1) }),
               });
             }
 
@@ -243,7 +245,7 @@ const DashboardAnalytics = () => {
               alerts.push({
                 type: "warning",
                 icon: "ri-time-line",
-                message: `Dự án "${project.name}" còn ${daysLeft} ngày nhưng tiến độ mới ${progressPct.toFixed(0)}% — Nguy cơ trễ deadline.`,
+                message: t('analytics.alertDeadlineRisk', { name: project.name, days: daysLeft, progress: progressPct.toFixed(0) }),
               });
             }
           } catch (err) {
@@ -408,7 +410,7 @@ const DashboardAnalytics = () => {
           alerts.push({
             type: "danger",
             icon: "ri-error-warning-line",
-            message: `Tỷ lệ Reject trung bình ${avgRejRate}% vượt ngưỡng 30% — Cần điều chỉnh quy trình.`,
+            message: t('analytics.alertHighRejectAvg', { rate: avgRejRate }),
           });
         }
 
@@ -486,7 +488,7 @@ const DashboardAnalytics = () => {
             alerts.push({
               type: "warning",
               icon: "ri-alarm-warning-line",
-              message: `Annotator "${a.annotatorName || a.annotatorId}" có ${a.totalCriticalErrors} lỗi nghiêm trọng — Cần đào tạo lại.`,
+              message: t('analytics.alertCriticalErrors', { name: a.annotatorName || a.annotatorId, count: a.totalCriticalErrors }),
             });
           }
         });
@@ -595,7 +597,7 @@ const DashboardAnalytics = () => {
     return (
       <div className="p-5 text-center">
         <Spinner color="primary" className="me-2" />
-        <span>Đang phân tích dữ liệu hệ thống...</span>
+        <span>{t('analytics.analyzing')}</span>
       </div>
     );
   }
@@ -605,7 +607,7 @@ const DashboardAnalytics = () => {
       <Row>
         <Col md={2}>
           <StatCard
-            title="Tổng Dự án"
+            title={t('analytics.totalProjects')}
             value={stats.totalProjects}
             icon={Database}
             color="primary"
@@ -613,7 +615,7 @@ const DashboardAnalytics = () => {
         </Col>
         <Col md={2}>
           <StatCard
-            title="Dự án hoàn thành"
+            title={t('analytics.completedProjects')}
             value={stats.completed}
             icon={CheckCircle}
             color="success"
@@ -621,7 +623,7 @@ const DashboardAnalytics = () => {
         </Col>
         <Col md={2}>
           <StatCard
-            title="Đang thực hiện"
+            title={t('analytics.inProgress')}
             value={stats.inProgress}
             icon={Clock}
             color="warning"
@@ -629,7 +631,7 @@ const DashboardAnalytics = () => {
         </Col>
         <Col md={2}>
           <StatCard
-            title="Dự án bị từ chối"
+            title={t('analytics.rejectedProjects')}
             value={stats.rejected}
             icon={AlertTriangle}
             color="danger"
@@ -638,7 +640,7 @@ const DashboardAnalytics = () => {
 
         <Col md={2}>
           <StatCard
-            title="Tỷ lệ Reject"
+            title={t('analytics.rejectionRate')}
             value={`${rejectionRate}%`}
             icon={TrendingDown}
             color="danger"
@@ -646,7 +648,7 @@ const DashboardAnalytics = () => {
         </Col>
         <Col md={2}>
           <StatCard
-            title="Nhân sự"
+            title={t('analytics.staff')}
             value={totalMembers}
             icon={Users}
             color="info"
@@ -662,7 +664,7 @@ const DashboardAnalytics = () => {
               <CardHeader className="bg-white border-bottom">
                 <h5 className="mb-0">
                   <i className="ri-alarm-warning-line me-2 text-danger"></i>
-                  Cảnh báo Chất lượng
+                  {t('analytics.qualityAlerts')}
                 </h5>
               </CardHeader>
               <CardBody>
@@ -683,7 +685,7 @@ const DashboardAnalytics = () => {
         <Col xl={8}>
           <Card className="shadow-sm border-0 h-100">
             <CardHeader className="bg-white border-bottom">
-              <h5 className="mb-0">So sánh quy mô dữ liệu dự án</h5>
+              <h5 className="mb-0">{t('analytics.compareDataSize')}</h5>
             </CardHeader>
             <CardBody>
               <div style={{ width: "100%", height: 280 }}>
@@ -697,13 +699,13 @@ const DashboardAnalytics = () => {
                     <Bar
                       dataKey="total"
                       fill="#405189"
-                      name="Tổng dữ liệu"
+                      name={t('analytics.totalDataChart')}
                       radius={[4, 4, 0, 0]}
                     />
                     <Bar
                       dataKey="completed"
                       fill="#0ab39c"
-                      name="Đã hoàn thành"
+                      name={t('analytics.completedChart')}
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
@@ -716,7 +718,7 @@ const DashboardAnalytics = () => {
         <Col xl={4}>
           <Card className="shadow-sm border-0 h-100">
             <CardHeader className="bg-white border-bottom">
-              <h5 className="mb-0">Cơ cấu trạng thái Dự án</h5>
+              <h5 className="mb-0">{t('analytics.projectStatusStructure')}</h5>
             </CardHeader>
             <CardBody>
               <div style={{ width: "100%", height: 280 }}>
@@ -724,9 +726,9 @@ const DashboardAnalytics = () => {
                   <PieChart>
                     <Pie
                       data={[
-                        { name: "Hoàn thành", value: stats.completed },
-                        { name: "Đang thực hiện", value: stats.inProgress },
-                        { name: "Bị từ chối", value: stats.rejected },
+                        { name: t('analytics.statusCompleted'), value: stats.completed },
+                        { name: t('analytics.statusInProgress'), value: stats.inProgress },
+                        { name: t('analytics.statusRejected'), value: stats.rejected },
                       ].filter((d) => d.value > 0)}
                       innerRadius={70}
                       outerRadius={100}
@@ -755,7 +757,7 @@ const DashboardAnalytics = () => {
                 <div className="d-flex align-items-center justify-content-between">
                   <h5 className="mb-0">
                     <Target size={18} className="me-2 text-primary" />
-                    Độ chính xác dự án (PA) — First-pass Correct
+                    {t('analytics.projectAccuracy')}
                   </h5>
                   {avgProjectAccuracy !== null && (
                     <Badge
@@ -768,7 +770,7 @@ const DashboardAnalytics = () => {
                       }
                       className="fs-12 px-3 py-1"
                     >
-                      Trung bình: {avgProjectAccuracy}%
+                      {t('analytics.average')}: {avgProjectAccuracy}%
                     </Badge>
                   )}
                 </div>
@@ -783,11 +785,11 @@ const DashboardAnalytics = () => {
                   <Table className="table-hover align-middle mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Dự án</th>
-                        <th className="text-center">Tổng ảnh</th>
-                        <th className="text-center">Đã hoàn thành</th>
+                        <th>{t('analytics.project')}</th>
+                        <th className="text-center">{t('analytics.totalImages')}</th>
+                        <th className="text-center">{t('analytics.completedImages')}</th>
                         <th className="text-center">Accuracy (PA)</th>
-                        <th style={{ minWidth: "200px" }}>Tiến độ chính xác</th>
+                        <th style={{ minWidth: "200px" }}>{t('analytics.accuracyProgress')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -854,7 +856,7 @@ const DashboardAnalytics = () => {
             <CardHeader className="bg-white border-bottom">
               <h5 className="mb-0">
                 <i className="ri-user-star-line me-2 text-success"></i>
-                Hiệu suất Annotator
+                {t('analytics.annotatorPerformance')}
               </h5>
             </CardHeader>
             <CardBody>
@@ -862,20 +864,20 @@ const DashboardAnalytics = () => {
                 <div className="table-responsive">
                   <p className="text-muted small mb-2">
                     <i className="ri-information-line me-1"></i>
-                    Bấm vào tên annotator để xem chi tiết theo dự án
+                    {t('analytics.clickAnnotatorHint')}
                   </p>
                   <Table className="table-hover align-middle mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Annotator</th>
-                        <th className="text-center">Được giao (task)</th>
-                        <th className="text-center">Hoàn thành (task)</th>
-                        <th className="text-center">Tổng ảnh</th>
-                        <th className="text-center">Ảnh đã xong</th>
-                        <th className="text-center">Quality Score</th>
-                        <th className="text-center">Lỗi nghiêm trọng</th>
-                        <th className="text-center">Accuracy</th>
-                        <th>Tiến độ (ảnh)</th>
+                        <th>{t('statusCommon.annotator')}</th>
+                        <th className="text-center">{t('analytics.assignedTasks')}</th>
+                        <th className="text-center">{t('analytics.completedTasks')}</th>
+                        <th className="text-center">{t('analytics.imagesTotal')}</th>
+                        <th className="text-center">{t('analytics.imagesDone')}</th>
+                        <th className="text-center">{t('statusCommon.qualityScore')}</th>
+                        <th className="text-center">{t('analytics.criticalErrors')}</th>
+                        <th className="text-center">{t('statusCommon.accuracy')}</th>
+                        <th>{t('analytics.progressImages')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -998,7 +1000,7 @@ const DashboardAnalytics = () => {
                                           pill
                                           className="ms-2"
                                         >
-                                          Xong
+                                          {t('analytics.done')}
                                         </Badge>
                                       ) : (
                                         <Badge
@@ -1006,15 +1008,15 @@ const DashboardAnalytics = () => {
                                           pill
                                           className="ms-2"
                                         >
-                                          Đang làm
+                                          {t('analytics.working')}
                                         </Badge>
                                       )}
                                     </td>
                                     <td className="text-center text-muted">
-                                      {pd.totalImages} ảnh
+                                      {pd.totalImages} {t('analytics.imagesUnit')}
                                     </td>
                                     <td className="text-center text-muted">
-                                      {pd.completedImages} xong
+                                      {pd.completedImages} {t('analytics.doneUnit')}
                                     </td>
                                     <td className="text-center text-muted">
                                       —
@@ -1056,7 +1058,7 @@ const DashboardAnalytics = () => {
               ) : (
                 <div className="text-center text-muted py-5">
                   <i className="ri-user-star-line display-5 mb-3 d-block"></i>
-                  <p>Chưa có annotator nào được giao việc.</p>
+                  <p>{t('analytics.noAnnotatorAssigned')}</p>
                 </div>
               )}
             </CardBody>
@@ -1071,28 +1073,27 @@ const DashboardAnalytics = () => {
             <CardHeader className="bg-white border-bottom">
               <h5 className="mb-0">
                 <i className="ri-shield-star-line me-2 text-info"></i>
-                Đánh giá Reviewer — Accuracy & Dispute Rate
+                {t('analytics.reviewerEvaluation')}
               </h5>
             </CardHeader>
             <CardBody>
               <Alert color="light" className="border py-2 mb-3">
                 <i className="ri-information-line me-1"></i>
-                <strong>Reviewer Accuracy</strong>: % quyết định reviewer đúng
-                theo ground truth (quyết định của Manager).
-                <strong> Dispute Rate</strong>: % khiếu nại liên quan.
+                <strong>{t('analytics.reviewerAccuracyDesc')}</strong>{t('analytics.reviewerAccuracyExplain')}
+                <strong> {t('analytics.disputeRateDesc')}</strong>{t('analytics.disputeRateExplain')}
               </Alert>
               {reviewerEvaluations.length > 0 ? (
                 <div className="table-responsive">
                   <Table className="table-hover align-middle mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Reviewer</th>
-                        <th className="text-center">Tổng Review</th>
-                        <th className="text-center">Bị Override</th>
-                        <th className="text-center">Override Rate</th>
-                        <th className="text-center">Disputes</th>
-                        <th className="text-center">Dispute Rate</th>
-                        <th className="text-center">Accuracy</th>
+                        <th>{t('statusCommon.reviewer')}</th>
+                        <th className="text-center">{t('analytics.totalReview')}</th>
+                        <th className="text-center">{t('analytics.overridden')}</th>
+                        <th className="text-center">{t('statusCommon.overrideRate')}</th>
+                        <th className="text-center">{t('statusCommon.disputes')}</th>
+                        <th className="text-center">{t('statusCommon.disputeRate')}</th>
+                        <th className="text-center">{t('statusCommon.accuracy')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1121,7 +1122,7 @@ const DashboardAnalytics = () => {
                                 ></i>
                                 {r.name}
                                 <small className="text-muted ms-1">
-                                  ({r.totalProjects} dự án)
+                                  ({t('analytics.projectsCount', { count: r.totalProjects })})
                                 </small>
                               </td>
                               <td className="text-center">{r.totalReviews}</td>
@@ -1219,7 +1220,7 @@ const DashboardAnalytics = () => {
               ) : (
                 <div className="text-center text-muted py-5">
                   <i className="ri-shield-star-line display-5 mb-3 d-block"></i>
-                  <p>Chưa có dữ liệu đánh giá reviewer.</p>
+                  <p>{t('analytics.noReviewerData')}</p>
                 </div>
               )}
             </CardBody>
@@ -1235,7 +1236,7 @@ const DashboardAnalytics = () => {
               <CardHeader className="bg-white border-bottom">
                 <h5 className="mb-0">
                   <i className="ri-bug-line me-2 text-danger"></i>
-                  Phân loại lỗi (Error Breakdown)
+                  {t('analytics.errorBreakdown')}
                 </h5>
               </CardHeader>
               <CardBody>
@@ -1249,7 +1250,7 @@ const DashboardAnalytics = () => {
                       <Bar
                         dataKey="value"
                         fill="#f06548"
-                        name="Số lỗi"
+                        name={t('analytics.errorCount')}
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
@@ -1265,7 +1266,7 @@ const DashboardAnalytics = () => {
             <CardHeader className="bg-white border-bottom">
               <h5 className="mb-0">
                 <i className="ri-price-tag-3-line me-2 text-primary"></i>
-                Phân bố nhãn (Label Distribution)
+                {t('analytics.labelDistribution')}
               </h5>
             </CardHeader>
             <CardBody>
@@ -1306,8 +1307,8 @@ const DashboardAnalytics = () => {
                     <i className="ri-price-tag-3-line display-5 mb-3 d-block"></i>
                     <p>
                       {labelDistributions.length > 0
-                        ? "Có nhãn nhưng chưa có annotation nào. Hãy gán nhãn cho ảnh trong dự án."
-                        : "Chưa có dữ liệu nhãn. Hãy tạo nhãn và gán cho ảnh trong dự án."}
+                        ? t('analytics.hasLabelsNoAnnotation')
+                        : t('analytics.noLabelData')}
                     </p>
                   </div>
                 );
@@ -1321,7 +1322,7 @@ const DashboardAnalytics = () => {
         <Col xl={12}>
           <Card className="shadow-sm border-0">
             <CardHeader className="bg-white border-bottom">
-              <h5 className="mb-0">Top 5 Annotators làm việc hiệu quả nhất</h5>
+              <h5 className="mb-0">{t('analytics.top5Annotators')}</h5>
             </CardHeader>
             <CardBody>
               <div style={{ width: "100%", height: 250 }}>
@@ -1342,7 +1343,7 @@ const DashboardAnalytics = () => {
                     <Bar
                       dataKey="taskCount"
                       fill="#4b38b3"
-                      name="Số ảnh hoàn thành"
+                      name={t('analytics.imagesCompleted')}
                       barSize={24}
                       radius={[0, 4, 4, 0]}
                     />
@@ -1361,7 +1362,7 @@ const DashboardAnalytics = () => {
             <CardHeader className="bg-white border-bottom">
               <h5 className="mb-0">
                 <i className="ri-bar-chart-grouped-line me-2 text-primary"></i>
-                Tiến độ cá nhân theo dự án
+                {t('analytics.individualProgress')}
               </h5>
             </CardHeader>
             <CardBody>
@@ -1369,19 +1370,18 @@ const DashboardAnalytics = () => {
                 <div className="table-responsive">
                   <p className="text-muted small mb-2">
                     <i className="ri-information-line me-1"></i>
-                    Bấm vào tên dự án để xem tiến độ từng annotator / reviewer.
-                    <strong className="ms-2">Overall</strong> = Approved / Total
-                    Assignments.
+                    {t('analytics.clickProjectHint')}
+                    <strong className="ms-2">{t('statusCommon.overall')}</strong> {t('analytics.overallExplain')}
                   </p>
                   <Table className="table-hover align-middle mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Dự án</th>
-                        <th className="text-center">Total</th>
-                        <th className="text-center">Approved</th>
-                        <th className="text-center">Submitted</th>
-                        <th className="text-center">Rejected</th>
-                        <th>Overall Progress</th>
+                        <th>{t('analytics.project')}</th>
+                        <th className="text-center">{t('statusCommon.total')}</th>
+                        <th className="text-center">{t('statusCommon.approved')}</th>
+                        <th className="text-center">{t('statusCommon.submitted')}</th>
+                        <th className="text-center">{t('statusCommon.rejected')}</th>
+                        <th>{t('statusCommon.overallProgress')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1515,7 +1515,7 @@ const DashboardAnalytics = () => {
                                     </td>
                                     <td className="text-center" colSpan={3}>
                                       <small className="text-muted">
-                                        Đã review: {person.done}/{person.total}
+                                        {t('analytics.reviewed')}: {person.done}/{person.total}
                                       </small>
                                     </td>
                                     <td style={{ minWidth: "180px" }}>
@@ -1550,7 +1550,7 @@ const DashboardAnalytics = () => {
                                     >
                                       Overall
                                     </Badge>
-                                    Tổng dự án
+                                    {t('analytics.totalProject')}
                                   </td>
                                   <td className="text-center text-muted">
                                     {pp.totalAssignments}
@@ -1590,7 +1590,7 @@ const DashboardAnalytics = () => {
               ) : (
                 <div className="text-center text-muted py-5">
                   <i className="ri-bar-chart-grouped-line display-5 mb-3 d-block"></i>
-                  <p>Chưa có dữ liệu tiến độ dự án.</p>
+                  <p>{t('analytics.noProgressData')}</p>
                 </div>
               )}
             </CardBody>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 
 import LabelingWorkspace from "../../../components/annotator/labeling/LabelingWorkspace";
@@ -21,24 +22,24 @@ import { setCurrentTask } from "../../../store/annotator/labelling/taskSlice";
 import taskService from "../../../services/annotator/labeling/taskService";
 import projectService from "../../../services/annotator/labeling/projectService";
 
-const STATUS_CONFIG = {
-  New: { cls: "stitch-ws-badge stitch-ws-badge-new", label: "Mới" },
-  InProgress: {
-    cls: "stitch-ws-badge stitch-ws-badge-inprogress",
-    label: "Đang làm",
-  },
-  Rejected: {
-    cls: "stitch-ws-badge stitch-ws-badge-rejected",
-    label: "Từ chối",
-  },
-  Submitted: {
-    cls: "stitch-ws-badge stitch-ws-badge-submitted",
-    label: "Đã nộp",
-  },
-  Approved: { cls: "stitch-ws-badge stitch-ws-badge-approved", label: "Duyệt" },
+const STATUS_CLASSES = {
+  New: "stitch-ws-badge stitch-ws-badge-new",
+  InProgress: "stitch-ws-badge stitch-ws-badge-inprogress",
+  Rejected: "stitch-ws-badge stitch-ws-badge-rejected",
+  Submitted: "stitch-ws-badge stitch-ws-badge-submitted",
+  Approved: "stitch-ws-badge stitch-ws-badge-approved",
+};
+
+const STATUS_LABEL_KEYS = {
+  New: "workspace.statusNew",
+  InProgress: "workspace.statusInProgress",
+  Rejected: "workspace.statusRejected",
+  Submitted: "workspace.statusSubmitted",
+  Approved: "workspace.statusApproved",
 };
 
 const WorkplaceLabelingTaskPage = () => {
+  const { t } = useTranslation();
   const { assignmentId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -167,7 +168,7 @@ const WorkplaceLabelingTaskPage = () => {
         }
       } catch (err) {
         console.error(err);
-        toast.error("Không tải được dữ liệu dự án");
+        toast.error(t("workspace.loadError"));
       } finally {
         setLoading(false);
       }
@@ -296,12 +297,12 @@ const WorkplaceLabelingTaskPage = () => {
         isDirtyRef.current = false;
         setSaveStatus("saved");
         setLastSavedTime(new Date());
-        if (!silent) toast.success("Đã lưu bản nháp");
+        if (!silent) toast.success(t("workspace.draftSaved"));
         return true;
       } catch (err) {
         console.error(err);
         setSaveStatus("unsaved");
-        toast.error("Lưu nháp thất bại");
+        toast.error(t("workspace.draftFailed"));
         return false;
       }
     },
@@ -324,9 +325,7 @@ const WorkplaceLabelingTaskPage = () => {
     if (!currentImage) return;
 
     if (annotations.length === 0) {
-      toast.warning(
-        "Bạn chưa gán nhãn nào cho ảnh này. Vui lòng gán ít nhất 1 nhãn trước khi nộp.",
-      );
+      toast.warning(t("workspace.noLabelWarning"));
       return;
     }
 
@@ -338,7 +337,7 @@ const WorkplaceLabelingTaskPage = () => {
     if (unusedLabels.length > 0) {
       const names = unusedLabels.map((l) => l.name).join(", ");
       toast.error(
-        `Chưa gán đủ nhãn! Các nhãn bắt buộc chưa dùng: ${names}. Bạn phải gán nhãn cho TẤT CẢ đối tượng yêu cầu trong ảnh.`,
+        t("workspace.missingLabels", { names }),
         { autoClose: 8000 },
       );
       return;
@@ -347,7 +346,7 @@ const WorkplaceLabelingTaskPage = () => {
     try {
       const draftSaved = await saveDraft(true);
       if (!draftSaved) {
-        toast.error("Lưu bản nháp thất bại. Vui lòng thử lại trước khi nộp.");
+        toast.error(t("workspace.draftFailBeforeSubmit"));
         return;
       }
 
@@ -373,10 +372,10 @@ const WorkplaceLabelingTaskPage = () => {
       });
 
       const isResubmit = currentImage.status === "Rejected";
-      toast.success(isResubmit ? "Nộp lại thành công!" : "Nộp bài thành công!");
+      toast.success(isResubmit ? t("workspace.resubmitSuccess") : t("workspace.submitSuccess"));
     } catch (err) {
       console.error(err);
-      toast.error("Gửi bài thất bại");
+      toast.error(t("workspace.submitFailed"));
     }
   };
 
@@ -434,12 +433,12 @@ const WorkplaceLabelingTaskPage = () => {
 
   const handleBatchSubmit = async () => {
     if (selectedIds.size === 0) {
-      toast.warning("Chưa chọn ảnh nào để nộp.");
+      toast.warning(t("workspace.batchNoSelection"));
       return;
     }
 
     const confirmed = window.confirm(
-      `Bạn sắp nộp ${selectedIds.size} ảnh cùng lúc.\n\n Các ảnh chưa có dữ liệu gán nhãn sẽ bị từ chối bởi hệ thống.\nBạn có chắc chắn muốn nộp?`,
+      t("workspace.batchConfirm", { count: selectedIds.size }),
     );
     if (!confirmed) return;
 
@@ -452,10 +451,10 @@ const WorkplaceLabelingTaskPage = () => {
       const result = res.data || res;
 
       if (result.successCount > 0 && result.failureCount === 0) {
-        toast.success(`Đã nộp thành công ${result.successCount} ảnh!`);
+        toast.success(t("workspace.batchSuccess", { count: result.successCount }));
       } else if (result.successCount > 0 && result.failureCount > 0) {
         toast.warning(
-          `Nộp thành công ${result.successCount}/${selectedIds.size} ảnh. ${result.failureCount} ảnh thất bại.`,
+          t("workspace.batchPartial", { success: result.successCount, total: selectedIds.size, fail: result.failureCount }),
         );
         if (result.errors && result.errors.length > 0) {
           result.errors.forEach((errMsg) =>
@@ -463,7 +462,7 @@ const WorkplaceLabelingTaskPage = () => {
           );
         }
       } else {
-        toast.error("Nộp bài thất bại. Vui lòng kiểm tra lại dữ liệu.");
+        toast.error(t("workspace.batchFailed"));
         if (result.errors && result.errors.length > 0) {
           result.errors.forEach((errMsg) =>
             toast.error(errMsg, { autoClose: 5000 }),
@@ -476,7 +475,7 @@ const WorkplaceLabelingTaskPage = () => {
       setShowBatchPanel(false);
     } catch (err) {
       console.error(err);
-      toast.error("Lỗi khi nộp hàng loạt. Vui lòng thử lại.");
+      toast.error(t("workspace.batchError"));
     } finally {
       setBatchSubmitting(false);
     }
@@ -507,7 +506,7 @@ const WorkplaceLabelingTaskPage = () => {
 
   const handleCreateDispute = async () => {
     if (!currentImage || !disputeReason.trim()) {
-      toast.warning("Vui lòng nhập lý do khiếu nại.");
+      toast.warning(t("workspace.disputeReasonRequired"));
       return;
     }
 
@@ -517,7 +516,7 @@ const WorkplaceLabelingTaskPage = () => {
         assignmentId: currentImage.id,
         reason: disputeReason.trim(),
       });
-      toast.success("Khiếu nại đã được gửi thành công! Manager sẽ xem xét.");
+      toast.success(t("workspace.disputeSuccess"));
       setDisputeStatus("Pending");
       setShowDisputeForm(false);
       setDisputeReason("");
@@ -525,8 +524,8 @@ const WorkplaceLabelingTaskPage = () => {
       const msg =
         err.response?.data?.message ||
         err.response?.data ||
-        "Gửi khiếu nại thất bại.";
-      toast.error(typeof msg === "string" ? msg : "Gửi khiếu nại thất bại.");
+        t("workspace.disputeFailed");
+      toast.error(typeof msg === "string" ? msg : t("workspace.disputeFailed"));
     } finally {
       setDisputeSubmitting(false);
     }
@@ -554,7 +553,7 @@ const WorkplaceLabelingTaskPage = () => {
   }, [currentImage, assignmentId]);
 
   if (loading)
-    return <div className="text-center mt-5">Đang tải dữ liệu...</div>;
+    return <div className="text-center mt-5">{t("workspace.loadingData")}</div>;
 
   if (!guidelineRead && labels.length > 0) {
     return (
@@ -565,23 +564,21 @@ const WorkplaceLabelingTaskPage = () => {
               <div className="card-header bg-warning bg-opacity-10 py-3">
                 <h5 className="card-title mb-0 text-warning fw-bold">
                   <i className="ri-book-read-line me-2"></i>
-                  HƯỚNG DẪN GÁN NHÃN — BẮT BUỘC ĐỌC
+                  {t("workspace.guidelineTitle")}
                 </h5>
               </div>
               <div className="card-body">
                 {projectInfo?.annotationGuide && (
                   <div className="alert alert-info mb-4">
                     <h6 className="fw-bold mb-2">
-                      <i className="ri-file-text-line me-1"></i>Hướng dẫn tổng
-                      quan
+                      <i className="ri-file-text-line me-1"></i>{t("workspace.guidelineOverview")}
                     </h6>
                     <p className="mb-0">{projectInfo.annotationGuide}</p>
                   </div>
                 )}
 
                 <h6 className="fw-bold mb-3">
-                  <i className="ri-price-tag-3-line me-1"></i>Danh sách nhãn &
-                  Tiêu chí
+                  <i className="ri-price-tag-3-line me-1"></i>{t("workspace.labelListCriteria")}
                 </h6>
 
                 {labels.map((label) => (
@@ -610,7 +607,7 @@ const WorkplaceLabelingTaskPage = () => {
                       {label.checklist && label.checklist.length > 0 && (
                         <div className="mt-1">
                           <small className="fw-bold text-dark">
-                            Tiêu chí (phải tick hết mới dùng được nhãn này):
+                            {t("workspace.criteriaHint")}
                           </small>
                           <ul className="small mb-0 mt-1">
                             {label.checklist.map((item, idx) => (
@@ -629,7 +626,7 @@ const WorkplaceLabelingTaskPage = () => {
                   onClick={handleGuidelineConfirm}
                 >
                   <i className="ri-check-double-line me-2"></i>
-                  Tôi đã đọc hướng dẫn — Bắt đầu gán nhãn
+                  {t("workspace.guidelineConfirm")}
                 </button>
               </div>
             </div>
@@ -640,7 +637,7 @@ const WorkplaceLabelingTaskPage = () => {
   }
 
   if (!currentImage)
-    return <div className="text-center mt-5">Dự án này chưa có ảnh nào.</div>;
+    return <div className="text-center mt-5">{t("workspace.noImages")}</div>;
 
   const isReadOnly =
     currentImage.status === "Submitted" ||
@@ -666,27 +663,27 @@ const WorkplaceLabelingTaskPage = () => {
         >
           {goingBack ? (
             <>
-              <span className="spinner-border spinner-border-sm" /> Đang lưu...
+              <span className="spinner-border spinner-border-sm" /> {t("workspace.goingBack")}
             </>
           ) : (
             <>
-              <i className="ri-arrow-left-line"></i> Quay về
+              <i className="ri-arrow-left-line"></i> {t("workspace.goBack")}
             </>
           )}
         </button>
 
         <span className="stitch-ws-header-title">
           <i className="ri-image-edit-line me-1"></i>
-          {projectInfo?.name || "Workspace"} — Ảnh {currentImgIndex + 1}/
+          {projectInfo?.name || "Workspace"} — {t("workspace.imageOf")} {currentImgIndex + 1}/
           {images.length}
         </span>
 
         <span
           className={
-            (STATUS_CONFIG[currentImage.status] || STATUS_CONFIG.New).cls
+            STATUS_CLASSES[currentImage.status] || STATUS_CLASSES.New
           }
         >
-          {(STATUS_CONFIG[currentImage.status] || STATUS_CONFIG.New).label}
+          {t(STATUS_LABEL_KEYS[currentImage.status] || STATUS_LABEL_KEYS.New)}
         </span>
 
         {!isReadOnly && (
@@ -722,7 +719,7 @@ const WorkplaceLabelingTaskPage = () => {
         <button
           className="back-btn"
           onClick={() => setShowShortcuts(!showShortcuts)}
-          title="Phím tắt"
+          title={t("workspace.shortcuts")}
         >
           <i className="ri-keyboard-line"></i>
         </button>
@@ -738,11 +735,11 @@ const WorkplaceLabelingTaskPage = () => {
                 <span className="stitch-ws-kbd">Ctrl+Z</span>
               </div>
               <div className="stitch-ws-shortcut">
-                <span>Xóa box cuối</span>
+                <span>{t("workspace.deleteLastBox")}</span>
                 <span className="stitch-ws-kbd">Delete</span>
               </div>
               <div className="stitch-ws-shortcut">
-                <span>Xóa 1 box</span>
+                <span>{t("workspace.deleteOneBox")}</span>
                 <span className="stitch-ws-text-muted">Double-click</span>
               </div>
               <div className="stitch-ws-shortcut">
@@ -750,11 +747,11 @@ const WorkplaceLabelingTaskPage = () => {
                 <span className="stitch-ws-kbd">Ctrl+Scroll</span>
               </div>
               <div className="stitch-ws-shortcut">
-                <span>Di chuyển</span>
+                <span>{t("workspace.moveShortcut")}</span>
                 <span className="stitch-ws-kbd">Arrow keys</span>
               </div>
               <div className="stitch-ws-shortcut">
-                <span>Ảnh trước/sau</span>
+                <span>{t("workspace.prevNextImage")}</span>
                 <span>
                   <span className="stitch-ws-kbd me-1">Shift+←</span>
                   <span className="stitch-ws-kbd">Shift+→</span>
@@ -780,7 +777,7 @@ const WorkplaceLabelingTaskPage = () => {
                   className="stitch-ws-text-muted"
                   style={{ fontWeight: 600, fontSize: "0.78rem" }}
                 >
-                  Tiến độ
+                  {t("workspace.progress")}
                 </span>
                 <span
                   className="stitch-ws-text-primary"
@@ -807,9 +804,9 @@ const WorkplaceLabelingTaskPage = () => {
                   style={{ fontSize: "1.1rem", marginTop: 2 }}
                 ></i>
                 <div className="flex-grow-1">
-                  <strong className="d-block mb-1">Ảnh bị từ chối</strong>
+                  <strong className="d-block mb-1">{t("workspace.rejectedAlert")}</strong>
                   <span style={{ opacity: 0.85 }}>
-                    Vui lòng đọc comment bên phải và sửa lại.
+                    {t("workspace.rejectedHint")}
                   </span>
                   {disputeStatus === "Pending" ? (
                     <div
@@ -817,7 +814,7 @@ const WorkplaceLabelingTaskPage = () => {
                       style={{ marginBottom: 0 }}
                     >
                       <i className="ri-time-line me-1"></i>
-                      <strong>Đã gửi khiếu nại — đang chờ xử lý</strong>
+                      <strong>{t("workspace.disputeSent")}</strong>
                     </div>
                   ) : (
                     <button
@@ -825,7 +822,7 @@ const WorkplaceLabelingTaskPage = () => {
                       style={{ padding: "4px 12px", fontSize: "0.75rem" }}
                       onClick={() => setShowDisputeForm(true)}
                     >
-                      <i className="ri-questionnaire-line"></i> Khiếu nại
+                      <i className="ri-questionnaire-line"></i> {t("workspace.disputeBtn")}
                     </button>
                   )}
                 </div>
@@ -838,13 +835,13 @@ const WorkplaceLabelingTaskPage = () => {
             disputeStatus === "Pending" && (
               <div className="stitch-ws-alert warning">
                 <i className="ri-lock-line me-1"></i>
-                Đang chờ xử lý khiếu nại.
+                {t("workspace.disputePending")}
               </div>
             )}
           {isReadOnly && currentImage.status !== "Rejected" && (
             <div className="stitch-ws-alert info">
               <i className="ri-lock-line me-1"></i>
-              Chỉ xem, không chỉnh sửa.
+              {t("workspace.readOnly")}
             </div>
           )}
 
@@ -878,7 +875,7 @@ const WorkplaceLabelingTaskPage = () => {
                     style={{ fontSize: "1.5rem", opacity: 0.3 }}
                   ></i>
                   <span className="stitch-ws-text-muted">
-                    Chưa có annotation
+                    {t("workspace.noAnnotations")}
                   </span>
                 </div>
               ) : (
@@ -929,7 +926,7 @@ const WorkplaceLabelingTaskPage = () => {
                             }),
                           );
                         }}
-                        title="Xóa annotation này"
+                        title={t("workspace.deleteAnnotation")}
                       >
                         <i className="ri-close-line"></i>
                       </button>
@@ -953,7 +950,7 @@ const WorkplaceLabelingTaskPage = () => {
               <i
                 className={`ri-${showBatchPanel ? "close" : "stack"}-line`}
               ></i>
-              {showBatchPanel ? "Ẩn batch" : "Nộp hàng loạt"}
+              {showBatchPanel ? t("workspace.hideBatch") : t("workspace.batchSubmit")}
             </button>
           </div>
 
@@ -962,7 +959,7 @@ const WorkplaceLabelingTaskPage = () => {
             <div className="stitch-ws-card">
               <div className="stitch-ws-card-header">
                 <span>
-                  <i className="ri-checkbox-multiple-line me-1"></i> Chọn ảnh
+                  <i className="ri-checkbox-multiple-line me-1"></i> {t("workspace.selectImages")}
                 </span>
                 <span className="stitch-ws-badge stitch-ws-badge-inprogress">
                   {selectedIds.size}
@@ -995,7 +992,7 @@ const WorkplaceLabelingTaskPage = () => {
                       htmlFor="selectAllEligible"
                       style={{ fontWeight: 600, fontSize: "0.78rem" }}
                     >
-                      Chọn tất cả ({eligibleForSubmit.length})
+                      {t("workspace.selectAll")} ({eligibleForSubmit.length})
                     </label>
                   </div>
                 </div>
@@ -1030,7 +1027,7 @@ const WorkplaceLabelingTaskPage = () => {
                         <div style={{ width: "22px" }} className="me-2"></div>
                       )}
                       <small className="flex-grow-1 text-truncate">
-                        Ảnh {idx + 1}
+                        {t("workspace.imageLabel")} {idx + 1}
                       </small>
                       <span className={`${config.cls} ms-1`}>
                         {config.label}
@@ -1049,12 +1046,11 @@ const WorkplaceLabelingTaskPage = () => {
                   {batchSubmitting ? (
                     <>
                       <span className="spinner-border spinner-border-sm"></span>{" "}
-                      Đang nộp...
+                      {t("workspace.submitting")}
                     </>
                   ) : (
                     <>
-                      <i className="ri-send-plane-fill"></i> Nộp{" "}
-                      {selectedIds.size} ảnh
+                      <i className="ri-send-plane-fill"></i> {t("workspace.submitCount", { count: selectedIds.size })}
                     </>
                   )}
                 </button>
@@ -1079,7 +1075,7 @@ const WorkplaceLabelingTaskPage = () => {
               className="nav-arrow"
               disabled={currentImgIndex === 0}
               onClick={handlePrev}
-              title="Ảnh trước (Shift+←)"
+              title={t("workspace.prevImage")}
             >
               <i className="ri-arrow-left-s-line"></i>
             </button>
@@ -1104,7 +1100,7 @@ const WorkplaceLabelingTaskPage = () => {
                     key={img.id}
                     className={`thumb-item ${isCurrent ? "active" : ""}`}
                     onClick={() => setCurrentImgIndex(idx)}
-                    title={`Ảnh ${idx + 1} — ${(STATUS_CONFIG[statusKey] || STATUS_CONFIG.New).label}`}
+                    title={`${t("workspace.imageLabel")} ${idx + 1} — ${(STATUS_CONFIG[statusKey] || STATUS_CONFIG.New).label}`}
                   >
                     {idx + 1}
                     {dotColor && (
@@ -1122,7 +1118,7 @@ const WorkplaceLabelingTaskPage = () => {
               className="nav-arrow"
               disabled={currentImgIndex === images.length - 1}
               onClick={handleNext}
-              title="Ảnh tiếp (Shift+→)"
+              title={t("workspace.nextImage")}
             >
               <i className="ri-arrow-right-s-line"></i>
             </button>
@@ -1135,7 +1131,7 @@ const WorkplaceLabelingTaskPage = () => {
                     className="action-btn primary"
                     onClick={() => saveDraft(false)}
                   >
-                    <i className="ri-save-line"></i> Lưu nháp
+                    <i className="ri-save-line"></i> {t("workspace.saveDraft")}
                   </button>
                   <button
                     className={`action-btn ${isRejected ? "warning" : "success"}`}
@@ -1144,7 +1140,7 @@ const WorkplaceLabelingTaskPage = () => {
                     <i
                       className={`ri-${isRejected ? "restart-line" : "check-line"}`}
                     ></i>
-                    {isRejected ? "Nộp lại" : "Nộp bài"}
+                    {isRejected ? t("workspace.resubmit") : t("workspace.submitTask")}
                   </button>
                 </>
               )}
@@ -1153,7 +1149,7 @@ const WorkplaceLabelingTaskPage = () => {
                   className="stitch-ws-badge stitch-ws-badge-approved"
                   style={{ fontSize: "0.78rem", padding: "5px 12px" }}
                 >
-                  <i className="ri-check-double-line me-1"></i> Đã nộp
+                  <i className="ri-check-double-line me-1"></i> {t("workspace.submitted")}
                 </span>
               )}
             </div>
@@ -1176,7 +1172,7 @@ const WorkplaceLabelingTaskPage = () => {
             >
               <div className="stitch-ws-card-header">
                 <span style={{ color: "#F87171" }}>
-                  <i className="ri-questionnaire-line me-1"></i> Khiếu nại
+                  <i className="ri-questionnaire-line me-1"></i> {t("workspace.disputeTitle")}
                 </span>
                 <button
                   className="stitch-back-btn"
@@ -1194,12 +1190,12 @@ const WorkplaceLabelingTaskPage = () => {
                   className="stitch-ws-text-muted mb-2"
                   style={{ fontSize: "0.78rem" }}
                 >
-                  Nhập lý do nếu bạn cho rằng Reviewer chấm sai.
+                  {t("workspace.disputeHint")}
                 </p>
                 <textarea
                   className="form-control mb-2"
                   rows={3}
-                  placeholder="Nhập lý do khiếu nại..."
+                  placeholder={t("workspace.disputePlaceholder")}
                   value={disputeReason}
                   onChange={(e) => setDisputeReason(e.target.value)}
                   disabled={disputeSubmitting}
@@ -1213,7 +1209,7 @@ const WorkplaceLabelingTaskPage = () => {
                     }}
                     disabled={disputeSubmitting}
                   >
-                    Hủy
+                    {t("workspace.disputeCancel")}
                   </button>
                   <button
                     className="stitch-ws-nav-btn"
@@ -1228,11 +1224,11 @@ const WorkplaceLabelingTaskPage = () => {
                     {disputeSubmitting ? (
                       <>
                         <span className="spinner-border spinner-border-sm"></span>{" "}
-                        Đang gửi...
+                        {t("workspace.disputeSending")}
                       </>
                     ) : (
                       <>
-                        <i className="ri-send-plane-fill"></i> Gửi
+                        <i className="ri-send-plane-fill"></i> {t("workspace.disputeSendBtn")}
                       </>
                     )}
                   </button>

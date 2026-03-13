@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Container,
   Row,
@@ -23,8 +23,11 @@ import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import projectService from "../../../services/manager/project/projectService";
 import disputeService from "../../../services/manager/dispute/disputeService";
+import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
+import { useTranslation } from "react-i18next";
 
 const DisputeManagementPage = () => {
+  const { t } = useTranslation();
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [disputes, setDisputes] = useState([]);
@@ -45,13 +48,13 @@ const DisputeManagementPage = () => {
         const res = await projectService.getManagerProjects(managerId);
         setProjects(res.data || []);
       } catch {
-        toast.error("Không thể tải danh sách dự án");
+        toast.error(t("dispute.loadProjectError"));
       }
     };
     fetchProjects();
   }, []);
 
-  const handleProjectChange = async (projectId) => {
+  const handleProjectChange = useCallback(async (projectId) => {
     setSelectedProjectId(projectId);
     if (!projectId) {
       setDisputes([]);
@@ -67,11 +70,18 @@ const DisputeManagementPage = () => {
       setDisputes(resDisputes.data || []);
       setProjectDetail(resDetail.data || null);
     } catch {
-      toast.error("Không thể tải dữ liệu disputes");
+      toast.error(t("dispute.loadDisputeError"));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Realtime: auto-refetch disputes when notification arrives
+  useSignalRRefresh(
+    useCallback(() => {
+      if (selectedProjectId) handleProjectChange(selectedProjectId);
+    }, [selectedProjectId, handleProjectChange])
+  );
 
   const openResolveModal = (dispute) => {
     setSelectedDispute(dispute);
@@ -84,7 +94,7 @@ const DisputeManagementPage = () => {
     if (!selectedDispute) return;
     if (!managerComment.trim()) {
       toast.warning(
-        "Vui lòng nhập nhận xét dựa trên Guideline (BR-MNG-15). Không được để trống.",
+        t("dispute.commentWarning"),
       );
       return;
     }
@@ -95,11 +105,11 @@ const DisputeManagementPage = () => {
         isAccepted,
         managerComment,
       });
-      toast.success("Dispute đã được xử lý thành công!");
+      toast.success(t("dispute.resolveSuccess"));
       setModalOpen(false);
       handleProjectChange(selectedProjectId);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Không thể xử lý dispute");
+      toast.error(err.response?.data?.message || t("dispute.resolveError"));
     } finally {
       setSubmitting(false);
     }
@@ -107,9 +117,9 @@ const DisputeManagementPage = () => {
 
   const getStatusBadge = (status) => {
     const map = {
-      Pending: { color: "warning", text: "Đang chờ" },
-      Resolved: { color: "success", text: "Đã xử lý" },
-      Rejected: { color: "danger", text: "Đã từ chối" },
+      Pending: { color: "warning", text: t("dispute.statusPending") },
+      Resolved: { color: "success", text: t("dispute.statusResolved") },
+      Rejected: { color: "danger", text: t("dispute.statusRejected") },
     };
     const s = map[status] || { color: "secondary", text: status };
     return <Badge color={s.color}>{s.text}</Badge>;
@@ -121,7 +131,7 @@ const DisputeManagementPage = () => {
         <Col xs={12}>
           <div className="page-title-box d-sm-flex align-items-center justify-content-between">
             <h4 className="mb-sm-0 text-uppercase fw-bold text-primary">
-              Quản lý Tranh chấp (Disputes)
+              {t("dispute.title")}
             </h4>
           </div>
         </Col>
@@ -129,13 +139,13 @@ const DisputeManagementPage = () => {
 
       <Row className="mb-3">
         <Col md={4}>
-          <Label className="fw-semibold">Chọn dự án</Label>
+          <Label className="fw-semibold">{t("dispute.selectProjectLabel")}</Label>
           <Input
             type="select"
             value={selectedProjectId}
             onChange={(e) => handleProjectChange(e.target.value)}
           >
-            <option value="">-- Chọn dự án --</option>
+            <option value="">{t("dispute.selectProject")}</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -148,19 +158,19 @@ const DisputeManagementPage = () => {
       {loading ? (
         <div className="text-center py-5">
           <Spinner color="primary" />
-          <p className="mt-2 text-muted">Đang tải dữ liệu...</p>
+          <p className="mt-2 text-muted">{t("dispute.loadingData")}</p>
         </div>
       ) : selectedProjectId ? (
         <Row>
           <Col xl={12}>
             <Card className="shadow-sm border-0">
               <CardHeader className="bg-white border-bottom d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Danh sách Disputes ({disputes.length})</h5>
+                <h5 className="mb-0">{t("dispute.disputeList")} ({disputes.length})</h5>
               </CardHeader>
               <CardBody>
                 {disputes.length === 0 ? (
                   <Alert color="info" className="text-center">
-                    Không có dispute nào cho dự án này.
+                    {t("dispute.noDisputes")}
                   </Alert>
                 ) : (
                   <div className="table-responsive">
@@ -168,11 +178,11 @@ const DisputeManagementPage = () => {
                       <thead className="table-light">
                         <tr>
                           <th>#</th>
-                          <th>Assignment ID</th>
-                          <th>Lý do khiếu nại</th>
-                          <th>Trạng thái</th>
-                          <th>Ngày tạo</th>
-                          <th>Hành động</th>
+                          <th>{t("dispute.colAssignmentId")}</th>
+                          <th>{t("dispute.colReason")}</th>
+                          <th>{t("dispute.colStatus")}</th>
+                          <th>{t("dispute.colCreatedAt")}</th>
+                          <th>{t("dispute.colAction")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -206,11 +216,11 @@ const DisputeManagementPage = () => {
                                   onClick={() => openResolveModal(d)}
                                 >
                                   <i className="ri-scales-3-line me-1"></i>
-                                  Phân xử
+                                  {t("dispute.arbitrate")}
                                 </Button>
                               ) : (
                                 <span className="text-muted fs-12">
-                                  Đã xử lý
+                                  {t("dispute.resolved")}
                                 </span>
                               )}
                             </td>
@@ -227,8 +237,8 @@ const DisputeManagementPage = () => {
       ) : (
         <div className="text-center py-5 text-muted">
           <i className="ri-scales-3-line display-1 opacity-25"></i>
-          <h5 className="mt-3">Chưa chọn dự án</h5>
-          <p>Chọn một dự án để xem danh sách tranh chấp</p>
+          <h5 className="mt-3">{t("dispute.noProjectSelected")}</h5>
+          <p>{t("dispute.noProjectHint")}</p>
         </div>
       )}
 
@@ -240,19 +250,19 @@ const DisputeManagementPage = () => {
       >
         <ModalHeader toggle={() => setModalOpen(false)}>
           <i className="ri-scales-3-line me-2 text-primary"></i>
-          Phân xử Dispute #{selectedDispute?.id}
+          {t("dispute.modalTitle")} #{selectedDispute?.id}
         </ModalHeader>
         <ModalBody>
           {selectedDispute && (
             <>
               <div className="mb-3 p-3 bg-light rounded">
-                <h6 className="fw-bold mb-2">Thông tin khiếu nại</h6>
+                <h6 className="fw-bold mb-2">{t("dispute.complaintInfo")}</h6>
                 <p className="mb-1">
                   <strong>Assignment ID:</strong>{" "}
                   <Badge color="primary">#{selectedDispute.assignmentId}</Badge>
                 </p>
                 <p className="mb-0">
-                  <strong>Lý do:</strong> {selectedDispute.reason}
+                  <strong>{t("dispute.reason")}</strong> {selectedDispute.reason}
                 </p>
               </div>
 
@@ -260,15 +270,15 @@ const DisputeManagementPage = () => {
                 <div className="mb-3 p-3 border rounded">
                   <h6 className="fw-bold mb-2 text-info">
                     <i className="ri-book-read-line me-1"></i>
-                    Guideline tham khảo
+                    {t("dispute.guidelineRef")}
                   </h6>
                   <div className="table-responsive">
                     <Table size="sm" className="mb-0" bordered>
                       <thead className="table-light">
                         <tr>
-                          <th>Nhãn</th>
-                          <th>Màu</th>
-                          <th>Hướng dẫn</th>
+                          <th>{t("dispute.labelCol")}</th>
+                          <th>{t("dispute.colorCol")}</th>
+                          <th>{t("dispute.guideCol")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -295,7 +305,7 @@ const DisputeManagementPage = () => {
               )}
 
               <FormGroup>
-                <Label className="fw-semibold">Quyết định</Label>
+                <Label className="fw-semibold">{t("dispute.decision")}</Label>
                 <div className="d-flex gap-3">
                   <FormGroup check>
                     <Input
@@ -306,7 +316,7 @@ const DisputeManagementPage = () => {
                     />
                     <Label check className="text-success fw-semibold">
                       <i className="ri-check-line me-1"></i>
-                      Chấp nhận khiếu nại
+                      {t("dispute.acceptComplaint")}
                     </Label>
                   </FormGroup>
                   <FormGroup check>
@@ -318,7 +328,7 @@ const DisputeManagementPage = () => {
                     />
                     <Label check className="text-danger fw-semibold">
                       <i className="ri-close-line me-1"></i>
-                      Từ chối khiếu nại
+                      {t("dispute.rejectComplaint")}
                     </Label>
                   </FormGroup>
                 </div>
@@ -326,9 +336,9 @@ const DisputeManagementPage = () => {
 
               <FormGroup>
                 <Label className="fw-semibold">
-                  Nhận xét của Manager (dựa trên Guideline) *
+                  {t("dispute.managerComment")}
                   <small className="text-danger ms-1">
-                    (Bắt buộc - BR-MNG-15)
+                    {t("dispute.required")}
                   </small>
                 </Label>
                 <Input
@@ -336,13 +346,13 @@ const DisputeManagementPage = () => {
                   rows="3"
                   value={managerComment}
                   onChange={(e) => setManagerComment(e.target.value)}
-                  placeholder="Nhập lý do quyết định (THAM KHẢO Guideline ở trên). Mọi quyết định phải dựa trên Guideline chính thức..."
+                  placeholder={t("dispute.commentPlaceholder")}
                   className={!managerComment.trim() ? "border-danger" : ""}
                 />
                 {!managerComment.trim() && (
                   <small className="text-danger">
                     <i className="ri-error-warning-line me-1"></i>
-                    Bắt buộc phải nhập nhận xét dựa trên Guideline.
+                    {t("dispute.commentRequired")}
                   </small>
                 )}
               </FormGroup>
@@ -351,7 +361,7 @@ const DisputeManagementPage = () => {
         </ModalBody>
         <ModalFooter>
           <Button color="light" onClick={() => setModalOpen(false)}>
-            Hủy
+            {t("dispute.cancel")}
           </Button>
           <Button
             color="primary"
@@ -363,7 +373,7 @@ const DisputeManagementPage = () => {
             ) : (
               <i className="ri-check-double-line me-1"></i>
             )}
-            Xác nhận phân xử
+            {t("dispute.confirmArbitrate")}
           </Button>
         </ModalFooter>
       </Modal>

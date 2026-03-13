@@ -1,7 +1,9 @@
 import AuthLeftLogo from "./AuthLeftLogo";
 import AuthLeftQuotes from "./AuthLeftQuotes";
+import { useTranslation } from "react-i18next";
 
 const AuthLeft = () => {
+  const { t } = useTranslation();
   return (
     <div className="col-lg-6 d-none d-lg-block p-0">
       <div className="auth-one-bg auth-left h-100 position-relative">
@@ -15,12 +17,11 @@ const AuthLeft = () => {
               <div className="mt-4 text-white" style={{ paddingLeft: "5px" }}>
                 <h1 className="display-6 fw-bold mb-3 text-white">
                   Label data with <br />
-                  <span className="text-primary">precision.</span>
+                  <span className="text-primary">{t('authLeft.precision')}</span>
                 </h1>
 
                 <p className="text-white-50 fs-16 fw-light max-w-text">
-                  Nền tảng gán nhãn dữ liệu thông minh, chuyển hóa hình ảnh
-                  thành trí tuệ nhân tạo.
+                  {t('authLeft.subtitle')}
                 </p>
               </div>
             </div>

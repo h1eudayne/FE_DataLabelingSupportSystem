@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import projectService from "../../../services/manager/project/projectService";
 import taskService from "../../../services/manager/project/taskService";
 import { userService } from "../../../services/manager/project/userService";
 import Swal from "sweetalert2";
 
 const CreateProject = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [annotators, setAnnotators] = useState([]);
@@ -33,7 +35,7 @@ const CreateProject = () => {
           setReviewers(rawData.filter((u) => u.role === "Reviewer"));
         }
       } catch (err) {
-        console.error("Lỗi lấy user:", err);
+        console.error("Error fetching users:", err);
       }
     };
     fetchUsers();
@@ -47,11 +49,11 @@ const CreateProject = () => {
       .filter((u) => u !== "");
 
     if (selectedUsers.length === 0)
-      return Swal.fire("Lỗi", "Hãy chọn ít nhất 1 người làm.", "warning");
+      return Swal.fire(t("projectImport.error"), t("projectImport.errorSelectUser"), "warning");
     if (!selectedReviewer)
-      return Swal.fire("Lỗi", "Hãy chọn Reviewer.", "warning");
+      return Swal.fire(t("projectImport.error"), t("projectImport.errorSelectReviewer"), "warning");
     if (urlArray.length === 0)
-      return Swal.fire("Lỗi", "Hãy nhập danh sách URL ảnh.", "warning");
+      return Swal.fire(t("projectImport.error"), t("projectImport.errorInputUrl"), "warning");
 
     setLoading(true);
     try {
@@ -84,16 +86,16 @@ const CreateProject = () => {
       }
 
       await Swal.fire(
-        "Thành công",
-        `Đã tạo dự án và chia ${urlArray.length} ảnh cho ${selectedUsers.length} người.`,
+        t("projectImport.success"),
+        t("projectImport.successMsg", { count: urlArray.length, users: selectedUsers.length }),
         "success",
       );
       navigate("/projects-all-projects");
     } catch (error) {
-      console.error("Lỗi quy trình:", error);
+      console.error("Error:", error);
       Swal.fire(
-        "Lỗi",
-        error.response?.data?.message || "Không thể hoàn thành quy trình.",
+        t("projectImport.error"),
+        error.response?.data?.message || t("projectImport.errorProcess"),
         "error",
       );
     } finally {
@@ -108,11 +110,11 @@ const CreateProject = () => {
           <div className="col-lg-7">
             <div className="card h-100 border-0 shadow-sm">
               <div className="card-header bg-primary py-3">
-                <h6 className="mb-0 text-white">1. CẤU HÌNH DỰ ÁN</h6>
+                <h6 className="mb-0 text-white">{t("projectImport.configTitle")}</h6>
               </div>
               <div className="card-body d-flex flex-column text-start">
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Tên dự án</label>
+                  <label className="form-label fw-bold">{t("projectImport.projectName")}</label>
                   <input
                     type="text"
                     className="form-control"
@@ -124,7 +126,7 @@ const CreateProject = () => {
                 </div>
                 <div className="row mb-3">
                   <div className="col-6">
-                    <label className="form-label fw-bold">Loại hình</label>
+                    <label className="form-label fw-bold">{t("projectImport.type")}</label>
                     <select
                       className="form-select"
                       onChange={(e) =>
@@ -139,7 +141,7 @@ const CreateProject = () => {
                     </select>
                   </div>
                   <div className="col-6">
-                    <label className="form-label fw-bold">Hạn chót</label>
+                    <label className="form-label fw-bold">{t("projectImport.deadline")}</label>
                     <input
                       type="date"
                       className="form-control"
@@ -155,7 +157,7 @@ const CreateProject = () => {
                 </div>
                 <div className="flex-grow-1 d-flex flex-column">
                   <label className="form-label fw-bold">
-                    Danh sách URL ảnh (
+                    {t("projectImport.urlList")} (
                     {urlInput.split("\n").filter((x) => x).length})
                   </label>
                   <textarea
@@ -173,18 +175,18 @@ const CreateProject = () => {
           <div className="col-lg-5">
             <div className="card h-100 border-0 shadow-sm d-flex flex-column">
               <div className="card-header bg-dark py-3">
-                <h6 className="mb-0 text-white">2. PHÂN CÔNG NHÂN SỰ</h6>
+                <h6 className="mb-0 text-white">{t("projectImport.assignTitle")}</h6>
               </div>
               <div className="card-body d-flex flex-column text-start">
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Reviewer *</label>
+                  <label className="form-label fw-bold">{t("projectImport.reviewer")}</label>
                   <select
                     className="form-select"
                     value={selectedReviewer}
                     onChange={(e) => setSelectedReviewer(e.target.value)}
                   >
                     <option value="">
-                      -- Chọn Reviewer ({reviewers.length}) --
+                      {t("projectImport.selectReviewer")} ({reviewers.length}) --
                     </option>
                     {reviewers.map((u) => (
                       <option key={u.id} value={u.id}>
@@ -196,7 +198,7 @@ const CreateProject = () => {
                 <input
                   type="text"
                   className="form-control mb-3"
-                  placeholder="Tìm annotator..."
+                  placeholder={t("projectImport.searchAnnotator")}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 <div
@@ -242,7 +244,7 @@ const CreateProject = () => {
                   className="btn btn-primary w-100 py-3 mt-4 fw-bold"
                   disabled={loading}
                 >
-                  {loading ? "ĐANG XỬ LÝ..." : "XÁC NHẬN TẠO DỰ ÁN"}
+                  {loading ? t("projectImport.processing") : t("projectImport.submitBtn")}
                 </button>
               </div>
             </div>

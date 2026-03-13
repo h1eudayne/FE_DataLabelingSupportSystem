@@ -1,7 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const ProjectCard = ({ project, onDelete }) => {
+  const { t } = useTranslation();
   const annotatorCount = project.totalMembers ?? 0;
   const isAssigned = annotatorCount > 0;
 
@@ -11,7 +13,7 @@ const ProjectCard = ({ project, onDelete }) => {
 
   const deadlineStr = project.deadline
     ? new Date(project.deadline).toLocaleDateString("vi-VN")
-    : "N/A";
+    : t('projectCard.noDeadline');
 
   const isExpired = project.status === "Expired";
 
@@ -28,21 +30,21 @@ const ProjectCard = ({ project, onDelete }) => {
               </h5>
               <small className="text-muted d-flex align-items-center">
                 <i className="ri-stack-line me-1 text-primary"></i>
-                {totalItems} data items
+                {totalItems} {t('projectCard.dataItems')}
               </small>
             </div>
             <div className="flex-shrink-0">
               {isExpired ? (
                 <span className="badge bg-danger-subtle text-danger">
-                  Hết hạn
+                  {t('managerProjectCard.expired')}
                 </span>
               ) : isAssigned ? (
                 <span className="badge bg-success-subtle text-success">
-                  Đã giao việc
+                  {t('managerProjectCard.assigned')}
                 </span>
               ) : (
                 <span className="badge bg-warning-subtle text-warning">
-                  Chưa giao
+                  {t('managerProjectCard.unassigned')}
                 </span>
               )}
             </div>
@@ -50,19 +52,19 @@ const ProjectCard = ({ project, onDelete }) => {
 
           <div className="row gy-3 mb-4">
             <div className="col-6">
-              <p className="text-muted mb-1 small">Hạn chót</p>
+              <p className="text-muted mb-1 small">{t('managerProjectCard.deadline')}</p>
               <h6 className="mb-0">
                 <i className="ri-calendar-event-line me-1 text-muted"></i>
                 {deadlineStr}
               </h6>
             </div>
             <div className="col-6 text-end">
-              <p className="text-muted mb-1 small">Trạng thái</p>
+              <p className="text-muted mb-1 small">{t('managerProjectCard.status')}</p>
               <h6 className="mb-0">
                 <span
                   className={`badge ${isExpired ? "bg-danger" : "bg-success"}`}
                 >
-                  {project.status || "Active"}
+                  {project.status === "Expired" ? t('managerProjectCard.expired') : (project.status ? t('projectCard.statusActive') : t('projectCard.statusActive'))}
                 </span>
               </h6>
             </div>
@@ -70,7 +72,7 @@ const ProjectCard = ({ project, onDelete }) => {
 
           <div className="mt-4">
             <div className="d-flex justify-content-between mb-2">
-              <small className="text-muted">Tiến độ</small>
+              <small className="text-muted">{t('managerProjectCard.progress')}</small>
               <small className="fw-bold text-success">{progress}%</small>
             </div>
             <div className="progress progress-sm">
@@ -87,7 +89,7 @@ const ProjectCard = ({ project, onDelete }) => {
           <div className="d-flex align-items-center gap-3 border-top border-top-dashed pt-3 mt-4">
             <div className="d-flex align-items-center text-muted small">
               <i className="ri-image-2-line me-2 fs-16 text-info"></i>
-              <span>{totalItems} Ảnh</span>
+              <span>{t('managerProjectCard.images', { count: totalItems })}</span>
             </div>
             <div
               className="vr text-muted opacity-25"
@@ -95,7 +97,7 @@ const ProjectCard = ({ project, onDelete }) => {
             ></div>
             <div className="d-flex align-items-center text-muted small">
               <i className="ri-user-star-line me-2 fs-16 text-warning"></i>
-              <span>{annotatorCount} Nhân viên</span>
+              <span>{t('managerProjectCard.staff', { count: annotatorCount })}</span>
             </div>
           </div>
         </div>
@@ -105,13 +107,13 @@ const ProjectCard = ({ project, onDelete }) => {
             to={`/projects-datasets/${project.id}`}
             className="btn btn-soft-info btn-sm flex-grow-1"
           >
-            <i className="ri-database-2-line me-1"></i> Data
+            <i className="ri-database-2-line me-1"></i> {t('projectCard.dataBtn')}
           </Link>
           <Link
             to={`/projects-assign/${project.id}`}
             className="btn btn-soft-primary btn-sm flex-grow-1"
           >
-            <i className="ri-user-add-line me-1"></i> Assign
+            <i className="ri-user-add-line me-1"></i> {t('projectCard.assignBtn')}
           </Link>
           <button
             onClick={() => onDelete(project.id)}

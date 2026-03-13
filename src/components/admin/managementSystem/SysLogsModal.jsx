@@ -1,6 +1,8 @@
 import { Modal, Button, Table, Badge } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 
 const SysLogsModal = ({ isOpen, onClose, selectUserLogs }) => {
+  const { t } = useTranslation();
   const formatDateTime = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -17,12 +19,12 @@ const SysLogsModal = ({ isOpen, onClose, selectUserLogs }) => {
   return (
     <Modal show={isOpen} onHide={onClose} size="lg" centered borderless>
       <Modal.Header closeButton className="border-0 pb-0">
-        <Modal.Title className="fw-bold">Chi tiết hoạt động</Modal.Title>
+        <Modal.Title className="fw-bold">{t('sysLogs.activityDetail')}</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
         <div className="mb-3">
-          <p className="mb-1 text-muted small">Người dùng:</p>
+          <p className="mb-1 text-muted small">{t('sysLogs.user')}</p>
           <h6 className="fw-bold text-primary">{selectUserLogs?.email}</h6>
         </div>
 
@@ -33,10 +35,10 @@ const SysLogsModal = ({ isOpen, onClose, selectUserLogs }) => {
           <Table hover className="align-middle">
             <thead className="bg-light sticky-top" style={{ zIndex: 1 }}>
               <tr>
-                <th className="border-0 small text-muted">HÀNH ĐỘNG</th>
-                <th className="border-0 small text-muted">THỜI GIAN</th>
-                <th className="border-0 small text-muted">MÔ TẢ CHI TIẾT</th>
-                <th className="border-0 small text-muted">IP ADDRESS</th>
+                <th className="border-0 small text-muted">{t('sysLogs.colAction')}</th>
+                <th className="border-0 small text-muted">{t('sysLogs.colTime')}</th>
+                <th className="border-0 small text-muted">{t('sysLogs.colDetail')}</th>
+                <th className="border-0 small text-muted">{t('sysLogs.colIp')}</th>
               </tr>
             </thead>
             <tbody>
@@ -62,7 +64,7 @@ const SysLogsModal = ({ isOpen, onClose, selectUserLogs }) => {
               ) : (
                 <tr>
                   <td colSpan="3" className="text-center py-4 text-muted">
-                    Không có dữ liệu chi tiết
+                    {t('sysLogs.noData')}
                   </td>
                 </tr>
               )}
@@ -77,7 +79,7 @@ const SysLogsModal = ({ isOpen, onClose, selectUserLogs }) => {
           onClick={onClose}
           style={{ borderRadius: "8px" }}
         >
-          Đóng
+          {t('sysLogs.closeBtn')}
         </Button>
       </Modal.Footer>
     </Modal>
