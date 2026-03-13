@@ -1,3 +1,4 @@
+
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import taskService from "../../../services/annotator/labeling/taskService";
 
@@ -8,7 +9,7 @@ export const fetchMyProjects = createAsyncThunk(
       const res = await taskService.getMyProjects();
       return res.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Lỗi tải dự án");
+      return rejectWithValue(error.response?.data || "Failed to load projects");
     }
   }
 );

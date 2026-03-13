@@ -1,8 +1,10 @@
 import React from "react";
 import { Row, Col, Card, ProgressBar, Badge, Button } from "react-bootstrap";
 import { ClipboardCheck, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ProjectCard = ({ project, onReview }) => {
+  const { t } = useTranslation();
   const getStatusColor = (status) => {
     switch (status) {
       case "PENDING":
@@ -42,7 +44,7 @@ const ProjectCard = ({ project, onReview }) => {
 
         <Col lg={4} className="mb-3 mb-lg-0">
           <div className="d-flex justify-content-between mb-2 small fw-bold">
-            <span>Tiến độ</span>
+            <span>{t('reviewerProjectCard.progress')}</span>
             <span className="text-primary-velzon">{project.progress}%</span>
           </div>
           <ProgressBar

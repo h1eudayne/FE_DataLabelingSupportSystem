@@ -1,8 +1,10 @@
 import React from "react";
 import { Card, Badge } from "react-bootstrap";
 import * as Icons from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const KpiCard = ({ iconName, label, value, color }) => {
+  const { t } = useTranslation();
   const Icon = Icons[iconName] || Icons.HelpCircle;
 
   return (
@@ -15,7 +17,7 @@ const KpiCard = ({ iconName, label, value, color }) => {
             <Icon size={20} />
           </div>
           <Badge bg="light" className="text-muted fw-normal border">
-            Tháng này
+            {t('kpiCard.thisMonth')}
           </Badge>
         </div>
         <p className="text-muted small fw-bold text-uppercase mb-1">{label}</p>

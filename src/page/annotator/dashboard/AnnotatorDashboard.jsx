@@ -1,12 +1,28 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import useAnnotatorDashboard from "../../../hooks/annotator/dashboard/useAnnotatorDashboard";
 import DashboardLayout from "../../../components/layouts/DashboardLayout";
 import TaskTable from "../../../components/annotator/dashboard/TaskTable";
 import ReviewerFeedbackTable from "../../../components/annotator/dashboard/ReviewerFeedbackTable";
 import StatCard from "../../../components/annotator/dashboard/StatCard";
+import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
 
 const AnnotatorDashboard = () => {
+  const { t } = useTranslation();
   const [projectId, setProjectId] = useState(null);
+  const queryClient = useQueryClient();
+
+  // Realtime: invalidate all annotator queries when notification arrives
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["assigned-projects"] });
+    queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["reviewer-feedback"] });
+    queryClient.invalidateQueries({ queryKey: ["project-progress-details"] });
+    queryClient.invalidateQueries({ queryKey: ["my-accuracy"] });
+  }, [queryClient]);
+
+  useSignalRRefresh(handleRefresh);
 
   useEffect(() => {
     const pageContent = document.querySelector(".page-content");
@@ -75,50 +91,50 @@ const AnnotatorDashboard = () => {
 
   return (
     <DashboardLayout
-      title="Dashboard"
-      subtitle={`Welcome, ${profile?.data?.fullName || "Annotator"}`}
+      title={t("annotatorDash.title")}
+      subtitle={`${t("annotatorDash.welcome")}, ${profile?.data?.fullName || "Annotator"}`}
       style={{ padding: 0 }}
     >
       {/* ===== Stat Cards Grid ===== */}
       <div className="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-3">
         <StatCard
-          title="Dự án được giao"
+          title={t("annotatorDash.assignedProjects")}
           value={stats.assigned}
           icon="ri-folder-line"
           color="primary"
           loading={isLoadingStats}
         />
         <StatCard
-          title="Đã hoàn thành"
+          title={t("annotatorDash.completed")}
           value={stats.completed}
           icon="ri-checkbox-circle-line"
           color="success"
           loading={isLoadingStats}
         />
         <StatCard
-          title="Đang thực hiện"
+          title={t("annotatorDash.inProgress")}
           value={stats.inProgress}
           icon="ri-loader-4-line"
           color="warning"
           loading={isLoadingStats}
         />
         <StatCard
-          title="Hết hạn"
+          title={t("annotatorDash.expired")}
           value={stats.expired}
           icon="ri-time-line"
           color="danger"
           loading={isLoadingStats}
         />
         <StatCard
-          title="Ảnh đã xong"
+          title={t("annotatorDash.imagesDone")}
           value={`${stats.completedImages}/${stats.totalImages}`}
           icon="ri-image-line"
           color="info"
           loading={isLoadingStats}
         />
         <StatCard
-          title="Accuracy"
-          value={accuracy !== null ? `${accuracy}%` : "N/A"}
+          title={t("annotatorDash.accuracy")}
+          value={accuracy !== null ? `${accuracy}%` : t("statusCommon.notAvailable")}
           icon="ri-focus-2-line"
           color={
             accuracy === null
@@ -141,31 +157,30 @@ const AnnotatorDashboard = () => {
               <div className="stitch-card-header">
                 <h5>
                   <i className="ri-focus-2-line me-2 text-primary"></i>
-                  Độ chính xác theo dự án
+                  {t("annotatorDash.accuracyByProject")}
                 </h5>
                 {accuracy !== null && (
                   <span
                     className={`badge bg-${getBadgeColor(accuracy)} stitch-badge`}
                   >
-                    Trung bình: {accuracy}%
+                    {t("annotatorDash.averageLabel")}: {accuracy}%
                   </span>
                 )}
               </div>
               <div className="card-body">
                 <p className="text-muted small mb-3">
                   <i className="ri-information-line me-1"></i>
-                  Accuracy = % ảnh bạn gán nhãn được Manager xác nhận đúng /
-                  Tổng ảnh Manager đã đánh giá.
+                  {t("annotatorDash.accuracyDesc")}
                 </p>
                 <div className="table-responsive">
                   <table className="table table-hover stitch-table align-middle mb-0">
                     <thead>
                       <tr>
-                        <th>Dự án</th>
-                        <th className="text-center">Tasks giao</th>
-                        <th className="text-center">Tasks xong</th>
-                        <th className="text-center">Accuracy</th>
-                        <th style={{ minWidth: "180px" }}>Tiến độ</th>
+                        <th>{t("annotatorDash.project")}</th>
+                        <th className="text-center">{t("annotatorDash.tasksAssigned")}</th>
+                        <th className="text-center">{t("annotatorDash.tasksDone")}</th>
+                        <th className="text-center">{t("annotatorDash.accuracy")}</th>
+                        <th style={{ minWidth: "180px" }}>{t("annotatorDash.progress")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -249,7 +264,7 @@ const AnnotatorDashboard = () => {
             <div className="stitch-card-header">
               <h5>
                 <i className="ri-bar-chart-grouped-line me-2 text-primary"></i>
-                Tiến độ dự án
+                {t("annotatorDash.projectProgress")}
               </h5>
             </div>
             <div className="card-body">
@@ -259,16 +274,15 @@ const AnnotatorDashboard = () => {
                     className="spinner-border spinner-border-sm text-primary me-2"
                     role="status"
                   ></div>
-                  Đang tải tiến độ...
+                  {t("annotatorDash.loadingProgress")}
                 </div>
               ) : progressData.length > 0 ? (
                 <>
                   <p className="text-muted small mb-3">
                     <i className="ri-information-line me-1"></i>
-                    <strong>Annotator</strong> = (Submitted + Approved) / Total
-                    | <strong className="ms-1">Reviewer</strong> = (Approved +
-                    Rejected) / Total |{" "}
-                    <strong className="ms-1">Overall</strong> = Approved / Total
+                    <strong>Annotator</strong> = {t('statusCommon.formulaAnnotator')}
+                    | <strong className="ms-1">Reviewer</strong> = {t('statusCommon.formulaReviewer')} |{" "}
+                    <strong className="ms-1">{t('statusCommon.overall')}</strong> = {t('statusCommon.formulaOverall')}
                   </p>
                   {progressData.map((pp) => (
                     <div key={pp.projectId} className="stitch-progress-item">
@@ -402,7 +416,7 @@ const AnnotatorDashboard = () => {
               ) : (
                 <div className="stitch-empty-state">
                   <i className="ri-bar-chart-grouped-line"></i>
-                  <p>Chưa có dữ liệu tiến độ dự án.</p>
+                  <p>{t("annotatorDash.noProgressData")}</p>
                 </div>
               )}
             </div>
@@ -417,7 +431,7 @@ const AnnotatorDashboard = () => {
             <div className="stitch-card-header">
               <h5>
                 <i className="ri-image-line me-2 text-info"></i>
-                Danh sách ảnh theo dự án
+                {t("annotatorDash.imageListByProject")}
               </h5>
             </div>
 
@@ -427,7 +441,7 @@ const AnnotatorDashboard = () => {
                   className="form-label fw-semibold"
                   style={{ fontSize: "0.85rem" }}
                 >
-                  Chọn dự án
+                  {t("annotatorDash.selectProject")}
                 </label>
                 <select
                   className="form-select stitch-select"
@@ -436,10 +450,10 @@ const AnnotatorDashboard = () => {
                     setProjectId(e.target.value ? Number(e.target.value) : null)
                   }
                 >
-                  <option value="">Chọn dự án</option>
+                  <option value="">{t("annotatorDash.selectProject")}</option>
                   {projects.data?.map((p) => (
                     <option key={p.projectId} value={p.projectId}>
-                      {p.projectName} ({p.completedImages}/{p.totalImages} ảnh)
+                      {p.projectName} ({p.completedImages}/{p.totalImages} {t("annotatorDash.imageUnit")})
                     </option>
                   ))}
                 </select>

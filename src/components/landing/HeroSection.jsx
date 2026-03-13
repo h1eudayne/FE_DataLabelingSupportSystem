@@ -1,7 +1,9 @@
 import { Container, Row, Col, Badge, Button } from "react-bootstrap";
 import { Zap, ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const HeroSection = ({ onExplore }) => {
+  const { t } = useTranslation();
   const customStyles = {
     section: {
       position: "relative",
@@ -26,23 +28,22 @@ const HeroSection = ({ onExplore }) => {
               className="mb-4 text-uppercase fw-bold"
               style={customStyles.badge}
             >
-              <Zap size={14} className="me-2" /> Platform v2.0
+              <Zap size={14} className="me-2" /> {t('landingHero.badge')}
             </Badge>
 
             <h1
               className="display-5 fw-extrabold mb-4"
               style={{ lineHeight: 1.1 }}
             >
-              Số hóa dữ liệu <br />
-              <span className="text-primary-custom">Thông minh & Hiệu quả</span>
+              {t('landingHero.title1')} <br />
+              <span className="text-primary-custom">{t('landingHero.title2')}</span>
             </h1>
 
             <p
               className="text-muted mb-5 fs-6 fs-lg-5 mx-auto mx-lg-0"
               style={{ maxWidth: "540px" }}
             >
-              Kết nối đội ngũ chuyên gia gán nhãn, kiểm duyệt và quản lý dự án
-              trên một không gian làm việc tập trung.
+              {t('landingHero.desc')}
             </p>
 
             <div className="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-3 mt-4">
@@ -51,7 +52,7 @@ const HeroSection = ({ onExplore }) => {
                 style={{ borderRadius: "16px" }}
                 onClick={onExplore}
               >
-                Khám phá Dashboard <ArrowRight size={18} className="ms-2" />
+                {t('landingHero.exploreDashboard')} <ArrowRight size={18} className="ms-2" />
               </Button>
               <Button
                 variant="light"
@@ -59,7 +60,7 @@ const HeroSection = ({ onExplore }) => {
                 style={{ borderRadius: "16px", backgroundColor: "#f1f5f9" }}
                 onClick={onExplore}
               >
-                Bắt đầu ngay
+                {t('landingHero.getStartedNow')}
               </Button>
             </div>
           </Col>

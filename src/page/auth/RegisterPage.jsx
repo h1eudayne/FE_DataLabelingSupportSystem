@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Carousel } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 import registerApi from "../../services/auth/register/register.api";
 const RegisterPage = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
@@ -15,7 +17,7 @@ const RegisterPage = () => {
       await registerApi(fullName, email, password);
       window.location.href = "/login";
     } catch (err) {
-      setError(err?.response?.data?.message || "Register failed");
+      setError(err?.response?.data?.message || t("register.registerFailed"));
     }
   };
 
@@ -135,9 +137,9 @@ const RegisterPage = () => {
                   <div className="col-lg-6">
                     <div className="p-lg-5 p-4">
                       <div>
-                        <h5 className="text-primary">Register Account</h5>
+                        <h5 className="text-primary">{t("register.title")}</h5>
                         <p className="text-muted">
-                          Get your Free Velzon account now.
+                          {t("register.labelData")} {t("register.precision")}
                         </p>
                       </div>
                       <div className="mt-4">
@@ -148,36 +150,36 @@ const RegisterPage = () => {
                         >
                           <div className="mb-3">
                             <label htmlFor="useremail" className="form-label">
-                              Email <span className="text-danger">*</span>
+                              {t("register.email")} <span className="text-danger">*</span>
                             </label>
                             <input
                               type="email"
                               className="form-control"
                               id="useremail"
-                              placeholder="Enter email address"
+                              placeholder={t("register.emailPlaceholder")}
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
                               required
                             />
                             <div className="invalid-feedback">
-                              Please enter email
+                              {t("register.emailPlaceholder")}
                             </div>
                           </div>
                           <div className="mb-3">
                             <label htmlFor="username" className="form-label">
-                              Username <span className="text-danger">*</span>
+                              {t("register.fullName")} <span className="text-danger">*</span>
                             </label>
                             <input
                               type="text"
                               className="form-control"
                               id="username"
-                              placeholder="Enter username"
+                              placeholder={t("register.fullNamePlaceholder")}
                               value={fullName}
                               onChange={(e) => setFullName(e.target.value)}
                               required
                             />
                             <div className="invalid-feedback">
-                              Please enter username
+                              {t("register.fullNamePlaceholder")}
                             </div>
                           </div>
                           <div className="mb-3">
@@ -185,14 +187,14 @@ const RegisterPage = () => {
                               className="form-label"
                               htmlFor="password-input"
                             >
-                              Password
+                              {t("register.password")}
                             </label>
                             <div className="position-relative auth-pass-inputgroup">
                               <input
                                 type="password"
                                 className="form-control pe-5 password-input"
                                 onpaste="return false"
-                                placeholder="Enter password"
+                                placeholder={t("register.passwordPlaceholder")}
                                 id="password-input"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -208,7 +210,7 @@ const RegisterPage = () => {
                                 <i className="ri-eye-fill align-middle" />
                               </button>
                               <div className="invalid-feedback">
-                                Please enter password
+                                {t("register.passwordPlaceholder")}
                               </div>
                             </div>
                           </div>
@@ -251,7 +253,7 @@ const RegisterPage = () => {
                                   {error}
                                 </div>
                               )}
-                              Sign Up
+                              {t("register.submitBtn")}
                             </button>
                           </div>
                           <div className="mt-4 text-center">
@@ -291,12 +293,12 @@ const RegisterPage = () => {
                       </div>
                       <div className="mt-5 text-center">
                         <p className="mb-0">
-                          Already have an account ?
+                          {t("register.haveAccount")}{" "}
                           <a
                             href="/login"
                             className="fw-semibold text-primary text-decoration-underline"
                           >
-                            Signin
+                            {t("register.loginLink")}
                           </a>
                         </p>
                       </div>

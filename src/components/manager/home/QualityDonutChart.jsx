@@ -8,12 +8,14 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 
 const QualityDonutChart = ({ data }) => {
+  const { t } = useTranslation();
   const chartData = [
-    { name: "Hoàn thành", value: data[0] || 0 },
-    { name: "Đang chờ", value: data[1] || 0 },
-    { name: "Bị từ chối", value: data[2] || 0 },
+    { name: t('qualityDonut.completed'), value: data[0] || 0 },
+    { name: t('qualityDonut.pending'), value: data[1] || 0 },
+    { name: t('qualityDonut.rejected'), value: data[2] || 0 },
   ];
 
   const COLORS = ["#0ab39c", "#f7b84b", "#f06548"];
@@ -21,7 +23,7 @@ const QualityDonutChart = ({ data }) => {
   return (
     <Card className="border-0 shadow-sm rounded-4 h-100">
       <Card.Header className="bg-white border-0 py-3">
-        <h6 className="fw-bold mb-0">Chất lượng dữ liệu</h6>
+        <h6 className="fw-bold mb-0">{t('qualityDonut.title')}</h6>
       </Card.Header>
       <Card.Body>
         <div style={{ width: "100%", height: 300 }}>

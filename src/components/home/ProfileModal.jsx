@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Modal, Form, Row, Col, Button, Badge } from "react-bootstrap";
 import { BACKEND_URL } from "../../services/axios.customize";
+import { useTranslation } from "react-i18next";
 
 const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     fullName: "",
     avatarUrl: "",
@@ -62,7 +64,7 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
     <>
       <Modal show={isOpen} onHide={toggleModal} centered size="lg">
         <Modal.Header closeButton className="bg-light p-3">
-          <Modal.Title className="fs-18">Chỉnh sửa hồ sơ cá nhân</Modal.Title>
+          <Modal.Title className="fs-18">{t('profileComp.editTitle')}</Modal.Title>
         </Modal.Header>
 
         <Modal.Body>
@@ -87,14 +89,14 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
                   ></Badge>
                 </div>
               </div>
-              <p className="text-muted small mt-2">Xem trước ảnh đại diện</p>
+              <p className="text-muted small mt-2">{t('profileComp.avatarPreview')}</p>
             </div>
             <Row className="g-3">
               <Col lg={12}>
                 <Col lg={12}>
                   <Form.Group className="mb-3">
                     <Form.Label className="fw-semibold">
-                      Đường dẫn ảnh đại diện (URL)
+                      {t('profileComp.avatarUrl')}
                     </Form.Label>
                     <Form.Control
                       type="file"
@@ -104,11 +106,11 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
                   </Form.Group>
                 </Col>
                 <Form.Group>
-                  <Form.Label className="fw-semibold">Họ và tên</Form.Label>
+                  <Form.Label className="fw-semibold">{t('profileComp.fullName')}</Form.Label>
                   <Form.Control
                     type="text"
                     name="fullName"
-                    placeholder="Nhập họ tên đầy đủ"
+                    placeholder={t('profileComp.fullNamePlaceholder')}
                     value={formData.fullName}
                     onChange={handleChange}
                   />
@@ -117,7 +119,7 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
 
               <Col lg={6}>
                 <Form.Group>
-                  <Form.Label className="fw-semibold">Địa chỉ Email</Form.Label>
+                  <Form.Label className="fw-semibold">{t('profileComp.emailAddress')}</Form.Label>
                   <Form.Control
                     type="email"
                     value={userSelf.email}
@@ -125,7 +127,7 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
                     className="bg-light"
                   />
                   <Form.Text className="text-muted">
-                    Email không thể thay đổi.
+                    {t('profileComp.emailCannotChange')}
                   </Form.Text>
                 </Form.Group>
               </Col>
@@ -133,7 +135,7 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
               <Col lg={12}>
                 <Form.Group>
                   <Form.Label className="fw-semibold">
-                    Vai trò hệ thống
+                    {t('profileComp.systemRole')}
                   </Form.Label>
                   <Badge
                     bg="soft-primary"
@@ -150,7 +152,7 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
 
         <Modal.Footer>
           <Button variant="light" onClick={toggleModal}>
-            Hủy bỏ
+            {t('profileComp.cancelBtn')}
           </Button>
           <Button
             variant="primary"
@@ -160,7 +162,7 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
               toggleModal();
             }}
           >
-            Lưu thay đổi
+            {t('profileComp.saveBtn')}
           </Button>
         </Modal.Footer>
       </Modal>

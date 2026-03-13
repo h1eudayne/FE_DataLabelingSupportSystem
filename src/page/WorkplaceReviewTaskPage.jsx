@@ -1,19 +1,21 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 const WorkplaceReviewTaskPage = () => {
+  const { t } = useTranslation();
   return (
     <>
       <div>
         <div className="row">
           <div className="col-12">
             <div className="page-title-box d-sm-flex align-items-center justify-content-between">
-              <h4 className="mb-sm-0">Tasks List</h4>
+              <h4 className="mb-sm-0">{t('workplaceReview.tasksListTitle')}</h4>
               <div className="page-title-right">
                 <ol className="breadcrumb m-0">
                   <li className="breadcrumb-item">
-                    <a href="javascript: void(0);">Tasks</a>
+                    <a href="javascript: void(0);">{t('workplaceReview.breadcrumbTasks')}</a>
                   </li>
-                  <li className="breadcrumb-item active">Tasks List</li>
+                  <li className="breadcrumb-item active">{t('workplaceReview.tasksListTitle')}</li>
                 </ol>
               </div>
             </div>
@@ -25,7 +27,7 @@ const WorkplaceReviewTaskPage = () => {
               <div className="card-body">
                 <div className="d-flex justify-content-between">
                   <div>
-                    <p className="fw-medium text-muted mb-0">Total Tasks</p>
+                    <p className="fw-medium text-muted mb-0">{t('workplaceReview.totalTasks')}</p>
                     <h2 className="mt-4 ff-secondary fw-semibold">
                       <span className="counter-value" data-target={234}>
                         0
@@ -36,7 +38,7 @@ const WorkplaceReviewTaskPage = () => {
                       <span className="badge bg-light text-success mb-0">
                         <i className="ri-arrow-up-line align-middle" /> 17.32 %
                       </span>
-                      vs. previous month
+                      vs. {t('workplaceReview.vsPreviousMonth')}
                     </p>
                   </div>
                   <div>
@@ -55,7 +57,7 @@ const WorkplaceReviewTaskPage = () => {
               <div className="card-body">
                 <div className="d-flex justify-content-between">
                   <div>
-                    <p className="fw-medium text-muted mb-0">Pending Tasks</p>
+                    <p className="fw-medium text-muted mb-0">{t('workplaceReview.pendingTasks')}</p>
                     <h2 className="mt-4 ff-secondary fw-semibold">
                       <span className="counter-value" data-target="64.5">
                         0
@@ -66,7 +68,7 @@ const WorkplaceReviewTaskPage = () => {
                       <span className="badge bg-light text-danger mb-0">
                         <i className="ri-arrow-down-line align-middle" /> 0.87 %
                       </span>
-                      vs. previous month
+                      vs. {t('workplaceReview.vsPreviousMonth')}
                     </p>
                   </div>
                   <div>
@@ -85,7 +87,7 @@ const WorkplaceReviewTaskPage = () => {
               <div className="card-body">
                 <div className="d-flex justify-content-between">
                   <div>
-                    <p className="fw-medium text-muted mb-0">Completed Tasks</p>
+                    <p className="fw-medium text-muted mb-0">{t('workplaceReview.completedTasks')}</p>
                     <h2 className="mt-4 ff-secondary fw-semibold">
                       <span className="counter-value" data-target="116.21">
                         0
@@ -96,7 +98,7 @@ const WorkplaceReviewTaskPage = () => {
                       <span className="badge bg-light text-danger mb-0">
                         <i className="ri-arrow-down-line align-middle" /> 2.52 %
                       </span>
-                      vs. previous month
+                      vs. {t('workplaceReview.vsPreviousMonth')}
                     </p>
                   </div>
                   <div>
@@ -201,14 +203,14 @@ const WorkplaceReviewTaskPage = () => {
                           name="choices-single-default"
                           id="idStatus"
                         >
-                          <option value>Status</option>
+                          <option value>{t('statusCommon.status')}</option>
                           <option value="all" selected>
-                            All
+                            {t('statusCommon.all')}
                           </option>
-                          <option value="New">New</option>
-                          <option value="Pending">Pending</option>
-                          <option value="Inprogress">Inprogress</option>
-                          <option value="Completed">Completed</option>
+                          <option value="New">{t('statusCommon.new')}</option>
+                          <option value="Pending">{t('statusCommon.pending')}</option>
+                          <option value="Inprogress">{t('statusCommon.inProgressAlt')}</option>
+                          <option value="Completed">{t('statusCommon.completed')}</option>
                         </select>
                       </div>
                     </div>
@@ -795,25 +797,25 @@ const WorkplaceReviewTaskPage = () => {
                     </div>
                     <div className="col-lg-6">
                       <label htmlFor="ticket-status" className="form-label">
-                        Status
+                        {t('statusCommon.status')}
                       </label>
                       <select className="form-control" id="ticket-status">
-                        <option value>Status</option>
-                        <option value="New">New</option>
-                        <option value="Inprogress">Inprogress</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Completed">Completed</option>
+                        <option value>{t('statusCommon.status')}</option>
+                        <option value="New">{t('statusCommon.new')}</option>
+                        <option value="Inprogress">{t('statusCommon.inProgressAlt')}</option>
+                        <option value="Pending">{t('statusCommon.pending')}</option>
+                        <option value="Completed">{t('statusCommon.completed')}</option>
                       </select>
                     </div>
                     <div className="col-lg-12">
                       <label htmlFor="priority-field" className="form-label">
-                        Priority
+                        {t('statusCommon.priority')}
                       </label>
                       <select className="form-control" id="priority-field">
-                        <option value>Priority</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
+                        <option value>{t('statusCommon.priority')}</option>
+                        <option value="High">{t('statusCommon.high')}</option>
+                        <option value="Medium">{t('statusCommon.medium')}</option>
+                        <option value="Low">{t('statusCommon.low')}</option>
                       </select>
                     </div>
                   </div>
