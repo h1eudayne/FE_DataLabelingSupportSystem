@@ -67,12 +67,9 @@ const LogsView = () => {
           <div className="d-flex justify-content-between align-items-center">
             <div>
               <h5 className="fw-bold mb-0">
-                <History className="me-2 text-primary" /> {t('adminLogs.title')}
-                (System Logs)
+                <History className="me-2 text-primary" /> {t("adminLogs.title")}
               </h5>
-              <small className="text-muted">
-                {t('adminLogs.subtitle')}
-              </small>
+              <small className="text-muted">{t("adminLogs.subtitle")}</small>
             </div>
           </div>
         </Card.Header>
@@ -83,7 +80,7 @@ const LogsView = () => {
               <Search size={18} className="text-muted" />
             </InputGroup.Text>
             <Form.Control
-              placeholder={t('adminLogs.searchPlaceholder')}
+              placeholder={t("adminLogs.searchPlaceholder")}
               className="border-0 shadow-none"
             />
           </InputGroup>
@@ -144,7 +141,9 @@ const LogsView = () => {
                       style={{ fontSize: "11px" }}
                     >
                       <Activity size={10} className="me-1" />
-                      {t('adminLogs.activityCount', { count: log.logs?.length })}
+                      {t("adminLogs.activityCount", {
+                        count: log.logs?.length,
+                      })}
                     </Badge>
                   </div>
                 </div>
@@ -163,7 +162,7 @@ const LogsView = () => {
                   setSelectUserLogs(log);
                 }}
               >
-                {t('adminLogs.detail')}
+                {t("adminLogs.detail")}
               </Button>
             </div>
           ))}

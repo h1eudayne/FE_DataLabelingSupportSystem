@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { Col, Row } from "reactstrap";
 
 const UserFilter = (props) => {
   const { onSearch } = props;
+  const { t } = useTranslation();
   return (
     <>
       <Row className="g-3">
@@ -10,7 +12,7 @@ const UserFilter = (props) => {
             <input
               type="text"
               className="form-control"
-              placeholder="Search by name or email..."
+              placeholder={t("userFilter.searchPlaceholder")}
               onChange={(e) => onSearch(e.target.value)}
             />
             <i className="ri-search-line search-icon"></i>

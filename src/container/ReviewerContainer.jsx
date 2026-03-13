@@ -9,7 +9,13 @@ import {
   ProgressBar,
   Button,
 } from "react-bootstrap";
-import { CheckCircle, Clock, AlertCircle, ArrowRight } from "lucide-react";
+import {
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  ArrowRight,
+  Briefcase,
+} from "lucide-react";
 import ReviewerActionBar from "../components/reviewer/home/ReviewerActionBar";
 import ShortcutSidebar from "../components/reviewer/home/ShortcutSidebar";
 import CommonHeader from "../components/home/CommonHeader";
@@ -41,7 +47,6 @@ const ReviewerContainer = () => {
     setLoading(true);
     try {
       const res = await projectService.getReviewProjects();
-
       setProjects(res.data || []);
     } catch (err) {
       console.error("Error loading projects:", err);
@@ -54,7 +59,6 @@ const ReviewerContainer = () => {
     fetchProjects();
   }, []);
 
-  // Realtime: auto-refetch when notification arrives (assigned/submitted)
   useSignalRRefresh(fetchProjects);
 
   const filteredProjects = projects.filter(
@@ -66,13 +70,15 @@ const ReviewerContainer = () => {
   const getReviewWorkspace = async (projectId) => {
     try {
       const res = await projectService.getReviewWorkspace(projectId);
-      if (res.data) {
-        const data = res.data[0];
-        console.log(data);
-
-        navigate(`/reviewer/review-workspace/${data.assignmentId}`, {
-          state: { workspaceData: data },
-        });
+      if (res.data && res.data.length > 0) {
+        const allTasks = res.data;
+        const firstTask = allTasks[0];
+        navigate(
+          `/reviewer/review-workspace/${projectId}/${firstTask.assignmentId}`,
+          {
+            state: { workspaceData: firstTask, taskList: allTasks },
+          },
+        );
       } else {
         alert(t("reviewer.noReviewData"));
       }
@@ -80,6 +86,33 @@ const ReviewerContainer = () => {
       console.error(error);
     }
   };
+
+  const statsConfig = [
+    {
+      label: t("reviewer.stats.totalProjects"),
+      value: projects.length,
+      icon: <Briefcase size={22} />,
+      color: "primary",
+    },
+    {
+      label: t("reviewer.stats.pending"),
+      value: pendingProjectsCount,
+      icon: <Clock size={22} />,
+      color: "info",
+    },
+    {
+      label: t("reviewer.stats.completed"),
+      value: completedProjectsCount,
+      icon: <CheckCircle size={22} />,
+      color: "success",
+    },
+    {
+      label: t("reviewer.stats.overdue"),
+      value: overdueProjectsCount,
+      icon: <AlertCircle size={22} />,
+      color: "danger",
+    },
+  ];
 
   return (
     <div className="dashboard-wrapper p-4 bg-body-tertiary min-vh-100 transition-all">
@@ -91,35 +124,14 @@ const ReviewerContainer = () => {
         />
 
         <Row className="mb-4 g-3">
-          {[
-            {
-              label: "Tổng dự án",
-              value: projects.length,
-              icon: <Clock size={22} />,
-              color: "primary",
-            },
-            {
-              label: "Đang chờ",
-              value: pendingProjectsCount,
-              icon: <Clock size={22} />,
-              color: "info",
-            },
-            {
-              label: "Hoàn thành",
-              value: completedProjectsCount,
-              icon: <CheckCircle size={22} />,
-              color: "success",
-            },
-            {
-              label: "Quá hạn",
-              value: overdueProjectsCount,
-              icon: <AlertCircle size={22} />,
-              color: "danger",
-            },
-          ].map((stat, idx) => (
+          {statsConfig.map((stat, idx) => (
             <Col key={idx} xl={3} md={6} sm={6}>
               <Card
-                className={`border-0 shadow-sm rounded-4 h-100 transition-all ${stat.color === "danger" ? "border-start border-danger border-4" : ""}`}
+                className={`border-0 shadow-sm rounded-4 h-100 transition-all ${
+                  stat.color === "danger"
+                    ? "border-start border-danger border-4"
+                    : ""
+                }`}
               >
                 <Card.Body className="p-3 d-flex align-items-center gap-3">
                   <div
@@ -179,9 +191,12 @@ const ReviewerContainer = () => {
 };
 
 const ProjectCardItem = ({ project, onReview }) => {
+  const { t, i18n } = useTranslation();
   const isCompleted = project.progressPercent >= 100;
   const isOverdue = !isCompleted && new Date(project.deadline) < new Date();
-  const { t } = useTranslation();
+
+  const dateFormat = i18n.language === "vi" ? "vi-VN" : "en-US";
+
   return (
     <Card className="border-0 shadow-sm rounded-4 overflow-hidden project-card-hover">
       <Card.Body className="p-4">
@@ -193,7 +208,7 @@ const ProjectCardItem = ({ project, onReview }) => {
                 style={{ width: 50, height: 50 }}
               >
                 <Badge bg={isOverdue ? "danger" : "primary"}>
-                  {project.projectId}
+                  #{project.projectId}
                 </Badge>
               </div>
               <div>
@@ -207,14 +222,14 @@ const ProjectCardItem = ({ project, onReview }) => {
                       className="ms-2 small"
                       style={{ fontSize: "10px" }}
                     >
-                      QUÁ HẠN
+                      {t("reviewer.status.overdue")}
                     </Badge>
                   )}
                 </h5>
                 <small className="text-muted">
-                  Hạn chót:{" "}
+                  {t("reviewer.deadline")}:{" "}
                   <span className={isOverdue ? "text-danger fw-bold" : ""}>
-                    {new Date(project.deadline).toLocaleDateString("vi-VN")}
+                    {new Date(project.deadline).toLocaleDateString(dateFormat)}
                   </span>
                 </small>
               </div>
@@ -228,7 +243,7 @@ const ProjectCardItem = ({ project, onReview }) => {
             </div>
             <ProgressBar
               now={project.progressPercent}
-              variant="success"
+              variant={isCompleted ? "success" : "primary"}
               style={{ height: 8 }}
             />
             <small className="text-muted mt-1 d-block">
@@ -241,9 +256,7 @@ const ProjectCardItem = ({ project, onReview }) => {
             <Button
               variant="outline-primary"
               className="rounded-pill px-4 d-inline-flex align-items-center gap-2"
-              onClick={() => {
-                onReview(project.projectId);
-              }}
+              onClick={() => onReview(project.projectId)}
             >
               {t("reviewer.startReview")} <ArrowRight size={16} />
             </Button>
