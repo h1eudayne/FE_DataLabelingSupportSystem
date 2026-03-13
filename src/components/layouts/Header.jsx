@@ -1,10 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { Container, Dropdown, Form, InputGroup, Button } from "react-bootstrap";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Container,
+  Dropdown,
+  Form,
+  InputGroup,
+  Button,
+  Badge,
+} from "react-bootstrap";
 import {
   LogOut,
   User,
   Settings,
   Bell,
+  Check,
+  Trash2,
+  Clock,
   Menu,
   Maximize,
   Minimize,
@@ -20,6 +30,7 @@ import { logout } from "@/store/auth/auth.slice";
 import { getUserProfile } from "../../services/admin/managementUsers/user.api";
 import { updateUser } from "../../store/auth/auth.slice";
 import { BACKEND_URL } from "../../services/axios.customize";
+import useNotifications from "../../hooks/useNotifications";
 
 const Header = ({ toggleSidebar, sidebarSize }) => {
   const dispatch = useDispatch();
@@ -28,6 +39,8 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
 
   const [userData, setUserData] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } =
+    useNotifications();
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
@@ -361,16 +374,109 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                 </Dropdown.Menu>
               </Dropdown>
 
-              <Button
-                variant="light"
-                className="bg-transparent border-0 p-2 position-relative shadow-none rounded-circle"
-              >
-                <Bell size={20} className="text-muted" />
-                <span
-                  className="position-absolute top-2 end-2 bg-danger rounded-circle border border-white pulse-animation"
-                  style={{ width: "8px", height: "8px" }}
-                ></span>
-              </Button>
+              <Dropdown align="end">
+                <Dropdown.Toggle
+                  variant="light"
+                  className="bg-transparent border-0 p-2 position-relative shadow-none rounded-circle hide-extra-icon"
+                >
+                  <Bell size={20} className="text-muted" />
+                  {unreadCount > 0 && (
+                    <Badge
+                      bg="danger"
+                      pill
+                      className="position-absolute pulse-animation"
+                      style={{
+                        top: "2px",
+                        right: "2px",
+                        fontSize: "9px",
+                        minWidth: "16px",
+                        padding: "2px 4px",
+                      }}
+                    >
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </Badge>
+                  )}
+                </Dropdown.Toggle>
+                <Dropdown.Menu
+                  align="end"
+                  className="shadow-lg border-0 py-0 dropdown-menu-animated"
+                  style={{
+                    borderRadius: "12px",
+                    minWidth: "340px",
+                    maxHeight: "420px",
+                    marginTop: "15px",
+                  }}
+                  popperConfig={popperConfig}
+                >
+                  <div className="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                    <span className="fw-bold small">Thông báo</span>
+                    <div className="d-flex gap-1">
+                      {unreadCount > 0 && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="p-0 text-primary text-decoration-none"
+                          onClick={markAllAsRead}
+                          title="Đánh dấu tất cả đã đọc"
+                        >
+                          <Check size={14} />
+                        </Button>
+                      )}
+                      {notifications.length > 0 && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="p-0 text-muted text-decoration-none ms-2"
+                          onClick={clearAll}
+                          title="Xoá tất cả"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ maxHeight: "340px", overflowY: "auto" }}>
+                    {notifications.length === 0 ? (
+                      <div className="text-center py-4 text-muted">
+                        <Bell size={32} className="mb-2 opacity-25" />
+                        <p className="small mb-0">Chưa có thông báo</p>
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <Dropdown.Item
+                          key={n.id}
+                          onClick={() => markAsRead(n.id)}
+                          className={`py-2 px-3 border-bottom ${
+                            !n.read ? "bg-light" : ""
+                          }`}
+                          style={{ whiteSpace: "normal" }}
+                        >
+                          <div className="d-flex align-items-start gap-2">
+                            <div
+                              className={`rounded-circle mt-1 flex-shrink-0 ${
+                                !n.read
+                                  ? "bg-primary"
+                                  : "bg-secondary opacity-25"
+                              }`}
+                              style={{ width: "8px", height: "8px" }}
+                            />
+                            <div className="flex-grow-1">
+                              <div className="small">{n.message}</div>
+                              <div
+                                className="text-muted d-flex align-items-center gap-1"
+                                style={{ fontSize: "10px" }}
+                              >
+                                <Clock size={10} />
+                                {new Date(n.timestamp).toLocaleString("vi-VN")}
+                              </div>
+                            </div>
+                          </div>
+                        </Dropdown.Item>
+                      ))
+                    )}
+                  </div>
+                </Dropdown.Menu>
+              </Dropdown>
 
               <div
                 className="vr mx-2 opacity-10 d-none d-md-block"

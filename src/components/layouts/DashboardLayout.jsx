@@ -1,8 +1,8 @@
 import React from "react";
 
-const DashboardLayout = ({ title, subtitle, children }) => {
+const DashboardLayout = ({ title, subtitle, children, style }) => {
   return (
-    <div className="container-fluid">
+    <div className="container-fluid" style={style}>
       <div className="row">
         <div className="col-12">
           <div className="stitch-page-title-box">

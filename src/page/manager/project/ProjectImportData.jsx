@@ -57,8 +57,6 @@ const CreateProject = () => {
     try {
       const projectPayload = {
         ...projectData,
-        pricePerLabel: 100,
-        totalBudget: 1000,
         labelClasses: labels.filter((l) => l.name.trim() !== ""),
       };
       const projRes = await projectService.createProject(projectPayload);
