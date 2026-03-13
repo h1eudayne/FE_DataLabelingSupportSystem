@@ -8,6 +8,14 @@ import StatCard from "../../../components/annotator/dashboard/StatCard";
 const AnnotatorDashboard = () => {
   const [projectId, setProjectId] = useState(null);
 
+  useEffect(() => {
+    const pageContent = document.querySelector(".page-content");
+    if (pageContent) pageContent.classList.add("dashboard-flush");
+    return () => {
+      if (pageContent) pageContent.classList.remove("dashboard-flush");
+    };
+  }, []);
+
   const {
     profile,
     projects,
@@ -69,7 +77,7 @@ const AnnotatorDashboard = () => {
     <DashboardLayout
       title="Dashboard"
       subtitle={`Welcome, ${profile?.data?.fullName || "Annotator"}`}
-      className="page-content"
+      style={{ padding: 0 }}
     >
       {/* ===== Stat Cards Grid ===== */}
       <div className="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-3">
@@ -446,7 +454,6 @@ const AnnotatorDashboard = () => {
         </div>
       </div>
 
-      {/* ===== Reviewer Feedback ===== */}
       <ReviewerFeedbackTable
         loading={reviewerFeedback.isLoading}
         data={reviewerFeedback.data || []}

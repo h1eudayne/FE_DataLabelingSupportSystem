@@ -37,8 +37,6 @@ const CreateProject = () => {
     description: "",
     type: "Rectangle",
     deadline: "",
-    pricePerLabel: "",
-    totalBudget: "",
     maxTaskDurationHours: 24,
     penaltyUnit: 10,
     annotationGuide: "",
@@ -121,14 +119,6 @@ const CreateProject = () => {
       toast.warning("Vui lòng nhập tên dự án!");
       return false;
     }
-    if (!projectInfo.pricePerLabel || Number(projectInfo.pricePerLabel) <= 0) {
-      toast.warning("Vui lòng nhập giá mỗi nhãn hợp lệ!");
-      return false;
-    }
-    if (!projectInfo.totalBudget || Number(projectInfo.totalBudget) <= 0) {
-      toast.warning("Vui lòng nhập ngân sách hợp lệ!");
-      return false;
-    }
     const validLabels = labels.filter((l) => l.name.trim());
     if (validLabels.length === 0) {
       toast.warning("Phải có ít nhất một nhãn được định nghĩa!");
@@ -174,8 +164,6 @@ const CreateProject = () => {
       const resProj = await projectService.createProject({
         name: projectInfo.name,
         description: projectInfo.description,
-        pricePerLabel: Number(projectInfo.pricePerLabel),
-        totalBudget: Number(projectInfo.totalBudget),
         deadline: deadlineISO,
         startDate: new Date().toISOString(),
         endDate: deadlineISO,
@@ -302,41 +290,6 @@ const CreateProject = () => {
                         setProjectInfo({
                           ...projectInfo,
                           deadline: e.target.value,
-                        })
-                      }
-                    />
-                  </Col>
-                </Row>
-
-                <Row className="mt-3">
-                  <Col md={6}>
-                    <Label className="fw-bold">Giá mỗi nhãn (VNĐ) *</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="VD: 5000"
-                      value={projectInfo.pricePerLabel}
-                      onChange={(e) =>
-                        setProjectInfo({
-                          ...projectInfo,
-                          pricePerLabel: e.target.value,
-                        })
-                      }
-                    />
-                  </Col>
-                  <Col md={6}>
-                    <Label className="fw-bold">Tổng ngân sách (VNĐ) *</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="VD: 10000000"
-                      value={projectInfo.totalBudget}
-                      onChange={(e) =>
-                        setProjectInfo({
-                          ...projectInfo,
-                          totalBudget: e.target.value,
                         })
                       }
                     />

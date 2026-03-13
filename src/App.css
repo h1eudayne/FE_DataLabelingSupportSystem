@@ -1,3 +1,14 @@
+.page-content.dashboard-flush {
+    padding-top: 70px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.page-content.dashboard-flush>.container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
 :root {
     --dark-page: #0F172A;
     --dark-card: #1E293B;
@@ -28,6 +39,13 @@
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+/* ── Smooth transitions for theme switch ──
+   Only transition specific properties on elements that need it.
+   Wildcard * causes layout jank when toggling dark/light mode. */
+
+/* ================================================================
+   GLOBAL BODY & PAGE
+   ================================================================ */
 [data-bs-theme="dark"] body {
     background-color: var(--dark-page) !important;
     color: var(--dark-text-primary) !important;
