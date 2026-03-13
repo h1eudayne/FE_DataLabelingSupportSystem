@@ -23,11 +23,15 @@ const ReviewerContainer = () => {
 
   const navigate = useNavigate();
 
+  const today = new Date();
   const pendingProjectsCount = projects.filter(
-    (p) => p.progressPercent < 100,
+    (p) => p.progressPercent < 100 && new Date(p.deadline) >= today,
   ).length;
   const completedProjectsCount = projects.filter(
     (p) => p.progressPercent >= 100,
+  ).length;
+  const overdueProjectsCount = projects.filter(
+    (p) => p.progressPercent < 100 && new Date(p.deadline) < today,
   ).length;
 
   const fetchProjects = async () => {
@@ -86,47 +90,57 @@ const ReviewerContainer = () => {
         />
 
         <Row className="mb-4 g-3">
-          <Col md={4} sm={6}>
-            <Card className="border-0 shadow-sm rounded-4 h-100">
-              <Card.Body className="d-flex align-items-center gap-3">
-                <div className="p-3 bg-primary-subtle rounded-3 text-primary">
-                  <Clock size={24} />
-                </div>
-                <div>
+          {[
+            {
+              label: "Tổng dự án",
+              value: projects.length,
+              icon: <Clock size={22} />,
+              color: "primary",
+            },
+            {
+              label: "Đang chờ",
+              value: pendingProjectsCount,
+              icon: <Clock size={22} />,
+              color: "info",
+            },
+            {
+              label: "Hoàn thành",
+              value: completedProjectsCount,
+              icon: <CheckCircle size={22} />,
+              color: "success",
+            },
+            {
+              label: "Quá hạn",
+              value: overdueProjectsCount,
+              icon: <AlertCircle size={22} />,
+              color: "danger",
+            },
+          ].map((stat, idx) => (
+            <Col key={idx} xl={3} md={6} sm={6}>
+              <Card
+                className={`border-0 shadow-sm rounded-4 h-100 transition-all ${stat.color === "danger" ? "border-start border-danger border-4" : ""}`}
+              >
+                <Card.Body className="p-3 d-flex align-items-center gap-3">
                   <div
-                    className="text-muted small fw-bold text-uppercase"
-                    style={{ fontSize: "10px" }}
+                    className={`p-3 bg-${stat.color}-subtle rounded-4 text-${stat.color} d-flex align-items-center justify-content-center`}
                   >
-                    Dự án đang chờ
+                    {stat.icon}
                   </div>
-                  <h4 className="fw-bold mb-0 text-primary">
-                    {pendingProjectsCount}
-                  </h4>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-
-          <Col md={4} sm={6}>
-            <Card className="border-0 shadow-sm rounded-4 h-100">
-              <Card.Body className="d-flex align-items-center gap-3">
-                <div className="p-3 bg-success-subtle rounded-3 text-success">
-                  <CheckCircle size={24} />
-                </div>
-                <div>
-                  <div
-                    className="text-muted small fw-bold text-uppercase"
-                    style={{ fontSize: "10px" }}
-                  >
-                    Dự án hoàn thành
+                  <div>
+                    <div
+                      className="text-muted fw-bold text-uppercase"
+                      style={{ fontSize: "10px", letterSpacing: "0.5px" }}
+                    >
+                      {stat.label}
+                    </div>
+                    <h3 className={`fw-bold mb-0 text-${stat.color}`}>
+                      {stat.value}
+                    </h3>
                   </div>
-                  <h4 className="fw-bold mb-0 text-success">
-                    {completedProjectsCount}
-                  </h4>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
         </Row>
 
         <ReviewerActionBar onSearchChange={setSearchTerm} />
@@ -165,6 +179,7 @@ const ReviewerContainer = () => {
 
 const ProjectCardItem = ({ project, onReview }) => {
   const isCompleted = project.progressPercent >= 100;
+  const isOverdue = !isCompleted && new Date(project.deadline) < new Date();
   return (
     <Card className="border-0 shadow-sm rounded-4 overflow-hidden project-card-hover">
       <Card.Body className="p-4">
@@ -175,13 +190,30 @@ const ProjectCardItem = ({ project, onReview }) => {
                 className="project-icon bg-light rounded-3 d-flex align-items-center justify-content-center"
                 style={{ width: 50, height: 50 }}
               >
-                <Badge bg="primary">{project.projectId}</Badge>
+                <Badge bg={isOverdue ? "danger" : "primary"}>
+                  {project.projectId}
+                </Badge>
               </div>
               <div>
-                <h5 className="fw-bold mb-1">{project.projectName}</h5>
+                <h5
+                  className={`fw-bold mb-1 ${isOverdue ? "text-danger" : ""}`}
+                >
+                  {project.projectName}
+                  {isOverdue && (
+                    <Badge
+                      bg="danger"
+                      className="ms-2 small"
+                      style={{ fontSize: "10px" }}
+                    >
+                      QUÁ HẠN
+                    </Badge>
+                  )}
+                </h5>
                 <small className="text-muted">
-                  Giao ngày:{" "}
-                  {new Date(project.assignedDate).toLocaleDateString("vi-VN")}
+                  Hạn chót:{" "}
+                  <span className={isOverdue ? "text-danger fw-bold" : ""}>
+                    {new Date(project.deadline).toLocaleDateString("vi-VN")}
+                  </span>
                 </small>
               </div>
             </div>

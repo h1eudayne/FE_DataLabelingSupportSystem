@@ -38,6 +38,8 @@ const UserManagementView = ({
   const totalPages = Math.ceil(totalCount / pageSize);
   const fromEntry = (page - 1) * pageSize + 1;
   const toEntry = Math.min(page * pageSize, totalCount);
+  const adminUsers = users.filter((user) => user.role === "Admin");
+  const regularUsers = users.filter((user) => user.role !== "Admin");
 
   let items = [];
   for (let number = 1; number <= totalPages; number++) {
@@ -75,14 +77,52 @@ const UserManagementView = ({
         />
       </Row>
 
+      <div className="mb-5">
+        <div className="d-flex align-items-center gap-2 mb-3">
+          <ShieldAlert className="text-warning" size={24} />
+          <h5 className="fw-bold mb-0">Ban Quản Trị Hệ Thống</h5>
+        </div>
+        <Row className="g-3">
+          {adminUsers.map((admin) => (
+            <Col md={4} key={admin.id}>
+              <Card
+                className="border-0 shadow-sm position-relative overflow-hidden"
+                style={{ borderRadius: "12px" }}
+              >
+                <div
+                  className="position-absolute top-0 start-0 h-100 bg-warning"
+                  style={{ width: "4px" }}
+                ></div>
+                <Card.Body className="d-flex align-items-center p-3">
+                  <div
+                    className="bg-light-warning text-warning rounded-circle d-flex align-items-center justify-content-center me-3"
+                    style={{ width: "45px", height: "45px" }}
+                  >
+                    {admin.email.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-grow-1">
+                    <div className="fw-bold small text-truncate">
+                      {admin.email}
+                    </div>
+                    <div
+                      className="text-muted italic"
+                      style={{ fontSize: "10px" }}
+                    >
+                      Quản trị viên hệ thống
+                    </div>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </div>
       <Card className="border-0 shadow-sm" style={{ borderRadius: "15px" }}>
         <Card.Header className="bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
           <div>
-            <h5 className="fw-bold mb-0">
-              <UserCheck className="me-2 text-primary" /> Quản lý nhân sự
-            </h5>
+            <h5 className="fw-bold mb-0 text-primary">Danh Sách Nhân Viên</h5>
             <small className="text-muted">
-              Quản lý tài khoản và phân quyền hệ thống.
+              Quản lý và cấp quyền cho nhân sự thực hiện dự án.
             </small>
           </div>
           <Button
@@ -116,8 +156,8 @@ const UserManagementView = ({
               </tr>
             </thead>
             <tbody>
-              {users.length > 0 ? (
-                users.map((user, idx) => (
+              {regularUsers.length > 0 ? (
+                regularUsers.map((user, idx) => (
                   <tr key={user.id || idx}>
                     <td>
                       <div className="d-flex align-items-center gap-3">

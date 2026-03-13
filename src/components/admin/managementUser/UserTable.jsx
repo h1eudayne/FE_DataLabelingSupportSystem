@@ -6,10 +6,10 @@ const UserTable = (props) => {
   const { page, pageSize, onPageChange } = pagination;
 
   const totalPages = Math.ceil(totalCount / pageSize);
-  const currentItems = users;
 
   const fromEntry = (page - 1) * pageSize + 1;
   const toEntry = Math.min(page * pageSize, totalCount);
+  const regularUsers = users.filter((user) => user.role !== "Admin");
 
   return (
     <>
@@ -24,17 +24,13 @@ const UserTable = (props) => {
             </tr>
           </thead>
           <tbody>
-            {currentItems.length > 0 ? (
-              currentItems.map((user) => (
+            {regularUsers.length > 0 ? (
+              regularUsers.map((user) => (
                 <tr key={user.id}>
                   <td>{user.fullName}</td>
                   <td>{user.email}</td>
                   <td>
-                    <span
-                      className={`badge ${user.role === "Admin" ? "bg-danger" : "bg-info"}`}
-                    >
-                      {user.role}
-                    </span>
+                    <span className={`badge bg-info`}>{user.role}</span>
                   </td>
 
                   <td>
