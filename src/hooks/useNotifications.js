@@ -7,21 +7,24 @@ import {
 
 /**
  * Custom hook for managing real-time notifications via SignalR.
- * Connects on mount, disconnects on unmount.
+ * Handles React Strict Mode double-mount gracefully.
  * @returns {{ notifications, unreadCount, markAsRead, markAllAsRead, clearAll }}
  */
 const useNotifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const mountedRef = useRef(true);
+  const mountedRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
     const token = localStorage.getItem("access_token");
     if (!token) return;
 
-    // Start SignalR connection
-    startConnection();
+    // Use AbortController to cancel connection if component unmounts
+    const abortController = new AbortController();
+
+    // Start SignalR connection with abort signal
+    startConnection(abortController.signal);
 
     // Listen for incoming notifications
     const unsubscribe = onReceiveNotification((message, type, timestamp) => {
@@ -41,6 +44,7 @@ const useNotifications = () => {
 
     return () => {
       mountedRef.current = false;
+      abortController.abort(); // Cancel any pending connection
       unsubscribe();
       stopConnection();
     };
@@ -48,7 +52,7 @@ const useNotifications = () => {
 
   const markAsRead = useCallback((id) => {
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
