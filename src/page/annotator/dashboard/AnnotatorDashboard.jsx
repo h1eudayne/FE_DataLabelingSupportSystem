@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import "./AnnotatorDashboard.css";
+import "../../../assets/css/AnnotatorDashboard.css";
 import useAnnotatorDashboard from "../../../hooks/annotator/dashboard/useAnnotatorDashboard";
 import DashboardLayout from "../../../components/layouts/DashboardLayout";
 import TaskTable from "../../../components/annotator/dashboard/TaskTable";
