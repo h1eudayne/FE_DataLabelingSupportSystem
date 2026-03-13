@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Row,
   Col,
@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import projectService from "../../../services/manager/project/projectService";
 import reviewAuditService from "../../../services/manager/review/reviewAuditService";
+import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
 
 const ReviewAuditPage = () => {
   const [projects, setProjects] = useState([]);
@@ -76,7 +77,7 @@ const ReviewAuditPage = () => {
     fetchProjects();
   }, []);
 
-  const handleProjectChange = async (projectId) => {
+  const handleProjectChange = useCallback(async (projectId) => {
     setSelectedProjectId(projectId);
     if (!projectId) {
       setTasks([]);
@@ -96,7 +97,14 @@ const ReviewAuditPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Realtime: auto-refetch audit tasks when notification arrives
+  useSignalRRefresh(
+    useCallback(() => {
+      if (selectedProjectId) handleProjectChange(selectedProjectId);
+    }, [selectedProjectId, handleProjectChange]),
+  );
 
   const openAuditModal = (task) => {
     setSelectedTask(task);

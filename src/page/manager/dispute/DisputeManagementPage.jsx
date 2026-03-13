@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Container,
   Row,
@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import projectService from "../../../services/manager/project/projectService";
 import disputeService from "../../../services/manager/dispute/disputeService";
+import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
 
 const DisputeManagementPage = () => {
   const [projects, setProjects] = useState([]);
@@ -51,7 +52,7 @@ const DisputeManagementPage = () => {
     fetchProjects();
   }, []);
 
-  const handleProjectChange = async (projectId) => {
+  const handleProjectChange = useCallback(async (projectId) => {
     setSelectedProjectId(projectId);
     if (!projectId) {
       setDisputes([]);
@@ -71,7 +72,14 @@ const DisputeManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Realtime: auto-refetch disputes when notification arrives
+  useSignalRRefresh(
+    useCallback(() => {
+      if (selectedProjectId) handleProjectChange(selectedProjectId);
+    }, [selectedProjectId, handleProjectChange]),
+  );
 
   const openResolveModal = (dispute) => {
     setSelectedDispute(dispute);

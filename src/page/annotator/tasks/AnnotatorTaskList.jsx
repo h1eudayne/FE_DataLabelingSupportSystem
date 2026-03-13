@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import taskService from "../../../services/annotator/labeling/taskService";
 import { toast } from "react-toastify";
+import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
 
 const AnnotatorTaskList = () => {
   const [tasks, setTasks] = useState([]);
@@ -9,38 +10,41 @@ const AnnotatorTaskList = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const fetchTasks = useCallback(async () => {
+    try {
+      const res = await taskService.getMyProjects();
+
+      const projects = (res.data || []).map((p) => ({
+        assignmentId: p.projectId,
+        projectName: p.projectName,
+        description: p.description,
+        deadline: p.deadline,
+        assignedDate: p.assignedDate,
+
+        status: p.status,
+        progress: Number(p.progressPercent ?? 0),
+
+        totalImages: p.totalImages ?? 0,
+        completedImages: p.completedImages ?? 0,
+
+        thumbnailUrl: p.thumbnailUrl,
+      }));
+
+      setTasks(projects);
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể tải danh sách nhiệm vụ");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const res = await taskService.getMyProjects();
-
-        const projects = (res.data || []).map((p) => ({
-          assignmentId: p.projectId,
-          projectName: p.projectName,
-          description: p.description,
-          deadline: p.deadline,
-          assignedDate: p.assignedDate,
-
-          status: p.status,
-          progress: Number(p.progressPercent ?? 0),
-
-          totalImages: p.totalImages ?? 0,
-          completedImages: p.completedImages ?? 0,
-
-          thumbnailUrl: p.thumbnailUrl,
-        }));
-
-        setTasks(projects);
-      } catch (err) {
-        console.error(err);
-        toast.error("Không thể tải danh sách nhiệm vụ");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTasks();
-  }, [location.key]);
+  }, [location.key, fetchTasks]);
+
+  // Realtime: auto-refetch when notification arrives
+  useSignalRRefresh(fetchTasks);
 
   const statusColor = (status) => {
     switch (status) {

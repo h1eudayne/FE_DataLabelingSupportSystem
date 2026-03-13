@@ -1,12 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import useAnnotatorDashboard from "../../../hooks/annotator/dashboard/useAnnotatorDashboard";
 import DashboardLayout from "../../../components/layouts/DashboardLayout";
 import TaskTable from "../../../components/annotator/dashboard/TaskTable";
 import ReviewerFeedbackTable from "../../../components/annotator/dashboard/ReviewerFeedbackTable";
 import StatCard from "../../../components/annotator/dashboard/StatCard";
+import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
 
 const AnnotatorDashboard = () => {
   const [projectId, setProjectId] = useState(null);
+  const queryClient = useQueryClient();
+
+  // Realtime: invalidate all annotator queries when notification arrives
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["assigned-projects"] });
+    queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["reviewer-feedback"] });
+    queryClient.invalidateQueries({ queryKey: ["project-progress-details"] });
+    queryClient.invalidateQueries({ queryKey: ["my-accuracy"] });
+  }, [queryClient]);
+
+  useSignalRRefresh(handleRefresh);
 
   useEffect(() => {
     const pageContent = document.querySelector(".page-content");

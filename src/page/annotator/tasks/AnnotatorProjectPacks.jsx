@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import taskService from "../../../services/annotator/labeling/taskService";
 import projectService from "../../../services/annotator/labeling/projectService";
 import { toast } from "react-toastify";
+import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
 
 const PACK_SIZE = 50;
 
@@ -14,29 +15,33 @@ const AnnotatorProjectPacks = () => {
   const [projectInfo, setProjectInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [projectRes, imgRes] = await Promise.all([
-          projectService.getById(assignmentId),
-          taskService.getProjectImages(assignmentId),
-        ]);
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [projectRes, imgRes] = await Promise.all([
+        projectService.getById(assignmentId),
+        taskService.getProjectImages(assignmentId),
+      ]);
 
-        const projectData = projectRes.data || projectRes;
-        setProjectInfo(projectData);
+      const projectData = projectRes.data || projectRes;
+      setProjectInfo(projectData);
 
-        const allImages = imgRes.data || imgRes || [];
-        setImages(allImages);
-      } catch (err) {
-        console.error(err);
-        toast.error("Không tải được dữ liệu dự án");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+      const allImages = imgRes.data || imgRes || [];
+      setImages(allImages);
+    } catch (err) {
+      console.error(err);
+      toast.error("Không tải được dữ liệu dự án");
+    } finally {
+      setLoading(false);
+    }
   }, [assignmentId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Realtime: auto-refetch packs when notification arrives (approve/reject)
+  useSignalRRefresh(fetchData);
 
   const packs = useMemo(() => {
     const result = [];

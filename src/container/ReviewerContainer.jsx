@@ -15,6 +15,7 @@ import ShortcutSidebar from "../components/reviewer/home/ShortcutSidebar";
 import CommonHeader from "../components/home/CommonHeader";
 import projectService from "../services/reviewer/project.service";
 import { useNavigate } from "react-router-dom";
+import useSignalRRefresh from "../hooks/useSignalRRefresh";
 
 const ReviewerContainer = () => {
   const [projects, setProjects] = useState([]);
@@ -46,6 +47,9 @@ const ReviewerContainer = () => {
   useEffect(() => {
     fetchProjects();
   }, []);
+
+  // Realtime: auto-refetch when notification arrives (assigned/submitted)
+  useSignalRRefresh(fetchProjects);
 
   const filteredProjects = projects.filter(
     (p) =>
