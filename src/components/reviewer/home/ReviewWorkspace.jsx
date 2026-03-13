@@ -8,28 +8,99 @@ import {
   Button,
   Badge,
   Form,
+  Card,
+  Modal,
 } from "react-bootstrap";
 import projectService from "../../../services/reviewer/project.service";
 import { useDispatch } from "react-redux";
 import { setAnnotations } from "../../../store/annotator/labelling/labelingSlice";
 import LabelingWorkspace from "../../annotator/labeling/LabelingWorkspace";
-import { AlertTriangle, ArrowLeft, Clock } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Lock,
+} from "lucide-react";
 
 const ReviewWorkspace = () => {
-  const { assignmentId } = useParams();
+  const { assignmentId, projectId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const [taskList, setTaskList] = useState(location.state?.taskList || []);
   const [data, setData] = useState(location.state?.workspaceData || null);
   const [loading, setLoading] = useState(!data);
   const [rejectComment, setRejectComment] = useState("");
-  const [errorCategory, setErrorCategory] = useState("");
+  const [errorCategories, setErrorCategories] = useState([]);
   const [checkedItems, setCheckedItems] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [checkedCriteria, setCheckedCriteria] = useState({});
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const ERROR_CATEGORIES = [
+    {
+      id: "CL-01",
+      label: "CL-01: Xác định sai đối tượng",
+      desc: "Đối tượng gán nhãn không đúng thực tế",
+    },
+    {
+      id: "CL-02",
+      label: "CL-02: Sai loại nhãn (Label Class)",
+      desc: "Chọn sai danh mục nhãn",
+    },
+    {
+      id: "CL-03",
+      label: "CL-03: Bounding Box chưa chính xác",
+      desc: "Khung bao không ôm sát, quá rộng/hẹp",
+    },
+    {
+      id: "CL-04",
+      label: "CL-04: Còn bỏ sót đối tượng",
+      desc: "Chưa gán nhãn hết các đối tượng trong ảnh",
+    },
+    {
+      id: "CL-05",
+      label: "CL-05: Gán nhãn sai",
+      desc: "Gán nhãn cho đối tượng không liên quan",
+    },
+    {
+      id: "CL-06",
+      label: "CL-06: Không tuân thủ guideline",
+      desc: "Sai quy định đặc thù của dự án",
+    },
+    {
+      id: "CL-07",
+      label: "CL-07: Chưa có tính nhất quán",
+      desc: "Gán nhãn không đồng nhất với các ảnh khác",
+    },
+    {
+      id: "CL-08",
+      label: "CL-08: Dùng sai loại công cụ",
+      desc: "Dùng sai công cụ (VD: dùng Box thay vì Polygon)",
+    },
+    {
+      id: "CL-09",
+      label: "CL-09: Chưa bao phủ đầy đủ",
+      desc: "Phần hiển thị của đối tượng bị cắt mất",
+    },
+    {
+      id: "CL-10",
+      label: "CL-10: Chất lượng dữ liệu",
+      desc: "Ảnh quá mờ/lỗi không thể gán nhãn",
+    },
+  ];
+
+  const currentIndex = taskList.findIndex(
+    (t) => t.assignmentId.toString() === assignmentId,
+  );
 
   useEffect(() => {
-    if (!data) fetchWorkspaceData();
+    setData(null);
+    fetchWorkspaceData();
   }, [assignmentId]);
 
   useEffect(() => {
@@ -54,46 +125,63 @@ const ReviewWorkspace = () => {
   const fetchWorkspaceData = async () => {
     setLoading(true);
     try {
-      const res = await projectService.getReviewWorkspace(assignmentId);
+      const res = await projectService.getReviewWorkspace(projectId);
+      const tasks = res.data || [];
 
-      setData(res.data[0]);
+      const currentTaskData = tasks.find(
+        (t) => t.assignmentId.toString() === assignmentId.toString(),
+      );
+
+      if (currentTaskData) {
+        setData(currentTaskData);
+        setTaskList(tasks);
+      }
     } catch (error) {
       console.error("Lỗi lấy dữ liệu:", error);
     } finally {
       setLoading(false);
+      setRejectComment("");
+      setErrorCategories([]);
+      setCheckedItems({});
     }
   };
 
-  const handleCheckChange = (labelId, idx) => {
-    const key = `${labelId}-${idx}`;
-    setCheckedItems((prev) => ({ ...prev, [key]: !prev[key] }));
+  const handleNavigateTask = (direction) => {
+    const newIndex = direction === "next" ? currentIndex + 1 : currentIndex - 1;
+
+    if (newIndex >= 0 && newIndex < taskList.length) {
+      const nextId = taskList[newIndex].assignmentId;
+
+      navigate(`/reviewer/review-workspace/${projectId}/${nextId}`, {
+        state: { taskList },
+      });
+    }
+  };
+
+  const handleToggleError = (errorId) => {
+    setErrorCategories((prev) =>
+      prev.includes(errorId)
+        ? prev.filter((id) => id !== errorId)
+        : [...prev, errorId],
+    );
+  };
+
+  const handleCriteriaCheck = (labelId, criteriaId) => {
+    const key = `${labelId}-${criteriaId}`;
+    setCheckedCriteria((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
   };
 
   const submitReview = async (isApproved) => {
     if (!isApproved) {
-      if (!errorCategory)
-        return alert("Quy định: Phải chọn Phân loại lỗi khi Reject!");
+      if (errorCategories.length === 0)
+        return alert(
+          "Quy định: Phải chọn ít nhất một Phân loại lỗi khi Reject!",
+        );
       if (!rejectComment.trim())
         return alert("Quy định: Phải ghi rõ lý do để Annotator sửa bài!");
-    }
-
-    if (isApproved) {
-      const totalChecklistItems = data.labels?.reduce((acc, label) => {
-        const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
-          label.id
-        ]?.some((v) => v === true);
-        return isLabelUsed ? acc + (label.checklist?.length || 0) : acc;
-      }, 0);
-      const checkedCount = Object.values(checkedItems).filter(Boolean).length;
-
-      if (checkedCount < totalChecklistItems) {
-        if (
-          !window.confirm(
-            "Bạn chưa đối chiếu hết Guideline (Checklist). Vẫn muốn Approve?",
-          )
-        )
-          return;
-      }
     }
 
     setSubmitting(true);
@@ -102,18 +190,37 @@ const ReviewWorkspace = () => {
         assignmentId: parseInt(assignmentId),
         isApproved,
         comment: rejectComment,
-        errorCategory: isApproved ? "" : errorCategory,
+        errorCategories: isApproved ? [] : errorCategories,
       };
 
       await projectService.submitReview(payload);
       console.log("Submit Payload:", payload);
 
-      alert(
-        isApproved
-          ? "Phán quyết: DUYỆT thành công!"
-          : "Phán quyết: TỪ CHỐI bài làm.",
-      );
-      navigate("/reviewer/tasks");
+      const isLastTask = currentIndex === taskList.length - 1;
+
+      if (isLastTask) {
+        alert("Chúc mừng! Bạn đã hoàn thành mục kiểm duyệt cuối cùng.");
+        navigate("/");
+      } else {
+        const nextTask = taskList[currentIndex + 1];
+
+        console.log(
+          isApproved
+            ? "Đã duyệt, chuyển ảnh tiếp theo..."
+            : "Đã từ chối, chuyển ảnh tiếp theo...",
+        );
+
+        navigate(
+          `/reviewer/review-workspace/${projectId}/${nextTask.assignmentId}`,
+          {
+            state: {
+              taskList,
+              workspaceData: nextTask,
+              projectId,
+            },
+          },
+        );
+      }
     } catch (error) {
       alert("Lỗi hệ thống, không thể lưu phán quyết.");
     } finally {
@@ -136,6 +243,18 @@ const ReviewWorkspace = () => {
 
   const isOverdue = new Date(data.deadline) < new Date();
 
+  const totalCLItemsToTick = data.labels?.reduce((acc, label) => {
+    const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
+      label.id
+    ]?.some((v) => v === true);
+    return isLabelUsed ? acc + 10 : acc;
+  }, 0);
+
+  const checkedCLCount = Object.values(checkedCriteria).filter(Boolean).length;
+
+  const isChecklistComplete =
+    totalCLItemsToTick > 0 && checkedCLCount >= totalCLItemsToTick;
+
   return (
     <div
       className="workspace-layout min-vh-100"
@@ -150,10 +269,34 @@ const ReviewWorkspace = () => {
             <Button
               variant="outline-secondary"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/")}
             >
               <ArrowLeft size={14} /> Quay lại
             </Button>
+            <div className="d-flex align-items-center bg-light rounded-pill px-2 py-1 border">
+              <Button
+                variant="link"
+                className={`p-1 ${currentIndex <= 0 ? "text-muted" : "text-primary"}`}
+                disabled={currentIndex <= 0}
+                onClick={() => handleNavigateTask("prev")}
+              >
+                <ChevronLeft size={20} />
+              </Button>
+              <span
+                className="px-2 fw-bold border-start border-end mx-1"
+                style={{ minWidth: "60px", textAlign: "center" }}
+              >
+                {currentIndex + 1} / {taskList.length}
+              </span>
+              <Button
+                variant="link"
+                className={`p-1 ${currentIndex >= taskList.length - 1 ? "text-muted" : "text-primary"}`}
+                disabled={currentIndex >= taskList.length - 1}
+                onClick={() => handleNavigateTask("next")}
+              >
+                <ChevronRight size={20} />
+              </Button>
+            </div>
             <div className="ms-2 border-start ps-3">
               <span
                 className="text-muted small d-block"
@@ -170,7 +313,7 @@ const ReviewWorkspace = () => {
               size="sm"
               className="px-4 fw-bold shadow-sm"
               disabled={submitting}
-              onClick={() => submitReview(false)}
+              onClick={() => setShowRejectModal(true)}
             >
               Reject
             </Button>
@@ -178,10 +321,10 @@ const ReviewWorkspace = () => {
               variant="success"
               size="sm"
               className="px-4 fw-bold shadow-sm"
-              disabled={submitting}
+              disabled={submitting || !isChecklistComplete}
               onClick={() => submitReview(true)}
             >
-              Approve
+              {!isChecklistComplete && <Lock size={14} />} Approve
             </Button>
           </div>
         </div>
@@ -226,13 +369,14 @@ const ReviewWorkspace = () => {
               </div>
             </div>
 
-            <div className="p-3 flex-grow-1 overflow-auto bg-white">
+            <div className="p-3 flex-grow-1 overflow-auto bg-light">
               <h6
-                className="text-uppercase text-muted fw-bold mb-3"
+                className="text-uppercase text-muted fw-bold mb-3 d-flex align-items-center gap-2"
                 style={{ fontSize: "11px" }}
               >
-                Đối chiếu Quy định
+                <CheckCircle size={14} /> Đối chiếu Quy định Kiểm duyệt
               </h6>
+
               {data.labels?.map((label) => {
                 const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
                   label.id
@@ -240,94 +384,320 @@ const ReviewWorkspace = () => {
                 if (!isLabelUsed) return null;
 
                 return (
-                  <div
+                  <Card
                     key={label.id}
-                    className="mb-3 p-3 rounded-3 border shadow-sm"
-                    style={{ borderLeft: `4px solid ${label.color}` }}
+                    className="border-0 shadow-sm mb-3 rounded-3 overflow-hidden"
                   >
                     <div
-                      className="fw-bold mb-1"
-                      style={{ color: label.color }}
+                      className="px-3 py-2 fw-bold d-flex align-items-center justify-content-between"
+                      style={{
+                        backgroundColor: `${label.color}15`,
+                        borderLeft: `4px solid ${label.color}`,
+                        color: label.color,
+                        fontSize: "13px",
+                      }}
                     >
-                      {label.name}
+                      <span>{label.name}</span>
+                      <Badge
+                        pill
+                        style={{
+                          backgroundColor: label.color,
+                          fontSize: "10px",
+                        }}
+                      >
+                        Đang kiểm tra
+                      </Badge>
                     </div>
-                    <div className="text-muted mb-2 small">
-                      {label.guideLine}
-                    </div>
-                    {label.checklist?.length > 0 && (
-                      <div className="mt-2 pt-2 border-top">
-                        {label.checklist.map((item, idx) => (
-                          <Form.Check
-                            key={idx}
-                            type="checkbox"
-                            id={`check-${label.id}-${idx}`}
-                            className="small mb-1"
-                            checked={!!checkedItems[`${label.id}-${idx}`]}
-                            onChange={() => handleCheckChange(label.id, idx)}
-                            label={
-                              <span style={{ fontSize: "11px" }}>{item}</span>
-                            }
-                          />
-                        ))}
+
+                    <Card.Body className="p-3 bg-white">
+                      <div
+                        className="text-muted mb-3 small italic"
+                        style={{ fontSize: "11px" }}
+                      >
+                        <strong>Mô tả:</strong> {label.guideLine}
                       </div>
-                    )}
-                  </div>
+
+                      {label.checklist && label.checklist.length > 0 && (
+                        <div className="mb-3 p-2 rounded bg-light border-start border-2 border-info">
+                          <div
+                            className="text-uppercase fw-bold text-info mb-1"
+                            style={{ fontSize: "9px", letterSpacing: "0.5px" }}
+                          >
+                            Checklist công việc:
+                          </div>
+                          <ul className="list-unstyled mb-0 d-flex flex-column gap-1">
+                            {label.checklist.map((item, index) => (
+                              <li
+                                key={index}
+                                className="d-flex align-items-start gap-2"
+                                style={{ fontSize: "11px", color: "#495057" }}
+                              >
+                                <div className="mt-1">
+                                  <div
+                                    style={{
+                                      width: "4px",
+                                      height: "4px",
+                                      borderRadius: "50%",
+                                      backgroundColor: "#0dcaf0",
+                                      marginTop: "4px",
+                                    }}
+                                  ></div>
+                                </div>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <div className="mt-2 pt-2 border-top">
+                        <div
+                          className="text-uppercase text-muted fw-bold mb-2"
+                          style={{ fontSize: "10px", letterSpacing: "0.5px" }}
+                        >
+                          TIÊU CHÍ CHẤT LƯỢNG (CL)
+                        </div>
+
+                        <div className="d-flex flex-column gap-2">
+                          {[
+                            {
+                              id: "CL-01",
+                              title: "Xác định đúng đối tượng",
+                              desc: "Đối tượng được gán nhãn đúng với đối tượng thực tế trong ảnh/dữ liệu.",
+                            },
+                            {
+                              id: "CL-02",
+                              title: "Đúng loại nhãn (Label Class)",
+                              desc: "Nhãn được chọn đúng với danh mục nhãn đã định nghĩa trong dự án.",
+                            },
+                            {
+                              id: "CL-03",
+                              title: "Bounding Box chính xác",
+                              desc: "Khung bao (bounding box) ôm sát đối tượng, không quá lớn hoặc quá nhỏ.",
+                            },
+                            {
+                              id: "CL-04",
+                              title: "Không bỏ sót đối tượng",
+                              desc: "Tất cả các đối tượng cần gán nhãn trong ảnh đều được đánh dấu.",
+                            },
+                            {
+                              id: "CL-05",
+                              title: "Không gán nhãn sai",
+                              desc: "Không có nhãn được gán cho đối tượng không liên quan.",
+                            },
+                            {
+                              id: "CL-06",
+                              title: "Tuân thủ guideline",
+                              desc: "Annotation tuân theo hướng dẫn gán nhãn của dự án.",
+                            },
+                            {
+                              id: "CL-07",
+                              title: "Tính nhất quán",
+                              desc: "Cách gán nhãn giống với các dữ liệu khác trong cùng dự án.",
+                            },
+                            {
+                              id: "CL-08",
+                              title: "Đúng loại công cụ annotation",
+                              desc: "Sử dụng đúng loại công cụ (Bounding Box, Polygon, v.v.).",
+                            },
+                            {
+                              id: "CL-09",
+                              title: "Đối tượng được bao phủ đầy đủ",
+                              desc: "Phần đối tượng hiển thị được bao phủ đầy đủ trong annotation.",
+                            },
+                            {
+                              id: "CL-10",
+                              title: "Chất lượng dữ liệu đủ tốt",
+                              desc: "Hình ảnh/dữ liệu đủ rõ để gán nhãn chính xác.",
+                            },
+                          ].map((item) => {
+                            const isChecked =
+                              !!checkedCriteria[`${label.id}-${item.id}`];
+                            return (
+                              <div
+                                key={item.id}
+                                className={`p-2 rounded-2 border-start border-3 transition-all ${
+                                  isChecked
+                                    ? "border-success bg-success-subtle"
+                                    : "border-light-subtle bg-body-tertiary"
+                                }`}
+                                style={{ cursor: "pointer" }}
+                                onClick={() =>
+                                  handleCriteriaCheck(label.id, item.id)
+                                }
+                              >
+                                <div className="d-flex align-items-start gap-2">
+                                  <div className="mt-1">
+                                    <Form.Check
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => {}}
+                                      style={{ cursor: "pointer" }}
+                                    />
+                                  </div>
+
+                                  <div className="flex-grow-1">
+                                    <div className="d-flex align-items-center gap-2 mb-1">
+                                      <span
+                                        className={`badge ${isChecked ? "bg-success" : "bg-secondary"}`}
+                                        style={{ fontSize: "9px" }}
+                                      >
+                                        {item.id}
+                                      </span>
+                                      <span
+                                        className={`fw-bold ${isChecked ? "text-success" : "text-dark"}`}
+                                        style={{ fontSize: "11px" }}
+                                      >
+                                        {item.title}
+                                      </span>
+                                    </div>
+                                    <div
+                                      className="text-muted"
+                                      style={{
+                                        fontSize: "10px",
+                                        lineHeight: "1.2",
+                                      }}
+                                    >
+                                      {item.desc}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </Card.Body>
+                  </Card>
                 );
               })}
             </div>
 
-            <div className="p-3 border-top bg-light shadow-lg">
-              <Form.Group className="mb-3">
-                <Form.Label className="small fw-bold text-danger">
-                  <AlertTriangle size={14} /> PHÂN LOẠI LỖI
-                </Form.Label>
-                <Form.Select
-                  size="sm"
-                  className="border-2 shadow-sm"
-                  value={errorCategory}
-                  onChange={(e) => setErrorCategory(e.target.value)}
-                >
-                  <option value="">-- Chọn loại lỗi --</option>
-                  <option value="missing">Vẽ thiếu nhãn (Missing)</option>
-                  <option value="extra">Vẽ thừa nhãn (Extra)</option>
-                  <option value="wrong_label">
-                    Sai loại nhãn (Wrong Label)
-                  </option>
-                  <option value="poor_quality">Vẽ lệch/Xấu (Poor Box)</option>
-                  <option value="guideline_violation">Vi phạm Guideline</option>
-                </Form.Select>
-              </Form.Group>
-
-              <Form.Group>
-                <Form.Label className="small fw-bold text-muted">
-                  LÝ DO CHI TIẾT
-                </Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  placeholder="Mô tả lỗi cụ thể..."
-                  className="border-2 shadow-sm small"
-                  value={rejectComment}
-                  onChange={(e) => setRejectComment(e.target.value)}
-                  style={{ resize: "none" }}
-                />
-              </Form.Group>
-
-              <div className="mt-3 d-grid gap-2">
-                <Button
-                  variant="danger"
-                  size="sm"
-                  className="fw-bold"
-                  disabled={submitting}
-                  onClick={() => submitReview(false)}
-                >
-                  Xác nhận Reject
-                </Button>
-              </div>
+            <div className="mt-3">
+              <p
+                className="text-muted mb-2 italic"
+                style={{ fontSize: "11px" }}
+              >
+                * Nếu có lỗi, hãy nhấn vào nút bên dưới để chọn mã lỗi.
+              </p>
+              <Button
+                variant="danger"
+                className="w-100 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm"
+                style={{ fontSize: "12px", padding: "10px" }}
+                onClick={() => setShowRejectModal(true)}
+              >
+                <AlertCircle size={16} /> THIẾT LẬP LỖI REJECT
+              </Button>
             </div>
           </Col>
         </Row>
       </Container>
+      <Modal
+        show={showRejectModal}
+        onHide={() => setShowRejectModal(false)}
+        centered
+        size="lg"
+        backdrop="static"
+      >
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title
+            className="fw-bold d-flex align-items-center gap-2"
+            style={{ color: "#d93025" }}
+          >
+            <AlertTriangle size={24} /> Xác nhận lỗi vi phạm
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="bg-light">
+          <Form.Group className="mb-4">
+            <Form.Label className="fw-bold text-secondary small mb-3">
+              1. Phân loại các tiêu chí vi phạm (Chọn nhiều):
+            </Form.Label>
+            <Row xs={1} md={2} className="g-2">
+              {ERROR_CATEGORIES.map((err) => (
+                <Col key={err.id}>
+                  <div
+                    className={`d-flex align-items-start p-3 rounded-3 border h-100 transition-all ${
+                      errorCategories.includes(err.id)
+                        ? "border-danger bg-danger-subtle shadow-sm"
+                        : "border-secondary-subtle bg-white shadow-sm-hover"
+                    }`}
+                    style={{
+                      cursor: "pointer",
+                      borderWidth: "1.5px",
+                      transition: "all 0.2s ease",
+                      minHeight: "80px",
+                    }}
+                    onClick={() => handleToggleError(err.id)}
+                  >
+                    <Form.Check
+                      type="checkbox"
+                      checked={errorCategories.includes(err.id)}
+                      onChange={() => {}}
+                      className="me-3 mt-1 flex-shrink-0"
+                      style={{ transform: "scale(1.2)" }}
+                    />
+                    <div className="flex-grow-1">
+                      <div
+                        className="fw-bolder mb-1"
+                        style={{
+                          fontSize: "14px",
+                          color: errorCategories.includes(err.id)
+                            ? "#d93025"
+                            : "#1a1a1a",
+                          letterSpacing: "-0.2px",
+                          lineHeight: "1.2",
+                        }}
+                      >
+                        {err.label}
+                      </div>
+                      <div
+                        className="text-muted"
+                        style={{ fontSize: "11px", lineHeight: "1.4" }}
+                      >
+                        {err.desc}
+                      </div>
+                    </div>
+                  </div>
+                </Col>
+              ))}
+            </Row>
+          </Form.Group>
+
+          <Form.Group>
+            <Form.Label className="fw-bold text-secondary small mb-2">
+              2. Ghi chú cụ thể cho Annotator:
+            </Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={4}
+              placeholder="Mô tả chi tiết vị trí lỗi..."
+              style={{ fontSize: "13px" }}
+              value={rejectComment}
+              onChange={(e) => setRejectComment(e.target.value)}
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer className="bg-light">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowRejectModal(false)}
+          >
+            Hủy bỏ
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            className="px-4 fw-bold"
+            onClick={() => {
+              submitReview(false);
+              setShowRejectModal(false);
+            }}
+          >
+            Xác nhận Reject
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

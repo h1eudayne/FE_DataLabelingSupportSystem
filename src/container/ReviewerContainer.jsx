@@ -23,6 +23,13 @@ const ReviewerContainer = () => {
 
   const navigate = useNavigate();
 
+  const pendingProjectsCount = projects.filter(
+    (p) => p.progressPercent < 100,
+  ).length;
+  const completedProjectsCount = projects.filter(
+    (p) => p.progressPercent >= 100,
+  ).length;
+
   const fetchProjects = async () => {
     setLoading(true);
     try {
@@ -49,13 +56,16 @@ const ReviewerContainer = () => {
   const getReviewWorkspace = async (projectId) => {
     try {
       const res = await projectService.getReviewWorkspace(projectId);
-      if (res.data) {
-        const data = res.data[0];
-        console.log(data);
+      if (res.data && res.data.length > 0) {
+        const allTasks = res.data;
+        const firstTask = allTasks[0];
 
-        navigate(`/reviewer/review-workspace/${data.assignmentId}`, {
-          state: { workspaceData: data },
-        });
+        navigate(
+          `/reviewer/review-workspace/${projectId}/${firstTask.assignmentId}`,
+          {
+            state: { workspaceData: firstTask, taskList: allTasks },
+          },
+        );
       } else {
         alert(
           "Hiện tại không còn mục dữ liệu nào cần kiểm duyệt trong dự án này!",
@@ -76,15 +86,43 @@ const ReviewerContainer = () => {
         />
 
         <Row className="mb-4 g-3">
-          <Col md={4}>
-            <Card className="border-0 shadow-sm rounded-4">
+          <Col md={4} sm={6}>
+            <Card className="border-0 shadow-sm rounded-4 h-100">
               <Card.Body className="d-flex align-items-center gap-3">
                 <div className="p-3 bg-primary-subtle rounded-3 text-primary">
                   <Clock size={24} />
                 </div>
                 <div>
-                  <div className="text-muted small fw-bold">DỰ ÁN ĐANG CHỜ</div>
-                  <h4 className="fw-bold mb-0">{projects.length}</h4>
+                  <div
+                    className="text-muted small fw-bold text-uppercase"
+                    style={{ fontSize: "10px" }}
+                  >
+                    Dự án đang chờ
+                  </div>
+                  <h4 className="fw-bold mb-0 text-primary">
+                    {pendingProjectsCount}
+                  </h4>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          <Col md={4} sm={6}>
+            <Card className="border-0 shadow-sm rounded-4 h-100">
+              <Card.Body className="d-flex align-items-center gap-3">
+                <div className="p-3 bg-success-subtle rounded-3 text-success">
+                  <CheckCircle size={24} />
+                </div>
+                <div>
+                  <div
+                    className="text-muted small fw-bold text-uppercase"
+                    style={{ fontSize: "10px" }}
+                  >
+                    Dự án hoàn thành
+                  </div>
+                  <h4 className="fw-bold mb-0 text-success">
+                    {completedProjectsCount}
+                  </h4>
                 </div>
               </Card.Body>
             </Card>
@@ -126,6 +164,7 @@ const ReviewerContainer = () => {
 };
 
 const ProjectCardItem = ({ project, onReview }) => {
+  const isCompleted = project.progressPercent >= 100;
   return (
     <Card className="border-0 shadow-sm rounded-4 overflow-hidden project-card-hover">
       <Card.Body className="p-4">
@@ -164,15 +203,26 @@ const ProjectCardItem = ({ project, onReview }) => {
           </Col>
 
           <Col md={3} className="text-end">
-            <Button
-              variant="outline-primary"
-              className="rounded-pill px-4 d-inline-flex align-items-center gap-2"
-              onClick={() => {
-                onReview(project.projectId);
-              }}
-            >
-              Bắt đầu Review <ArrowRight size={16} />
-            </Button>
+            {isCompleted ? (
+              <Button
+                variant="light"
+                className="rounded-pill px-4 d-inline-flex align-items-center gap-2 text-success fw-bold border-0"
+                style={{ backgroundColor: "#e1f5fe", cursor: "default" }}
+                disabled
+              >
+                <CheckCircle size={16} /> Completed
+              </Button>
+            ) : (
+              <Button
+                variant="outline-primary"
+                className="rounded-pill px-4 d-inline-flex align-items-center gap-2"
+                onClick={() => {
+                  onReview(project.projectId);
+                }}
+              >
+                Bắt đầu Review <ArrowRight size={16} />
+              </Button>
+            )}
           </Col>
         </Row>
       </Card.Body>

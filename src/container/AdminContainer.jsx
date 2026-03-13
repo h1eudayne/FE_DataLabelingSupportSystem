@@ -17,8 +17,13 @@ import AddUser from "../components/admin/home/AddUser";
 const AdminContainer = () => {
   const [activeTab, setActiveTab] = useState("users");
   const [users, setUsers] = useState([]);
-  const [selectUser, setSelectUser] = useState(null);
   const [filteredUsers, setFilteredUsers] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [systemStats, setSystemStats] = useState({ admins: 0, workers: 0 });
+
+  const [selectUser, setSelectUser] = useState(null);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [currentRole, setCurrentRole] = useState(null);
   const [currentName, setCurrentName] = useState(null);
@@ -35,15 +40,24 @@ const AdminContainer = () => {
     }
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (currentPage = page) => {
     try {
-      const res = await getUsers();
-      const data = res.data;
-      const userList = data.items || data;
-      setUsers(userList);
-      setFilteredUsers(userList);
+      const res = await getUsers(currentPage, pageSize);
+      const items = res.data.items || [];
+      setUsers(items);
+      setFilteredUsers(items);
+      setTotalCount(res.data.totalCount || 0);
+      if (res.data.stats) {
+        setSystemStats({
+          admins: res.data.stats.totalAdmins,
+          workers: res.data.stats.totalWorkers,
+        });
+      }
+      setPage(res.data.page);
     } catch (error) {
-      console.error(error);
+      console.error("Lỗi lấy danh sách user:", error);
+      setUsers([]);
+      setFilteredUsers([]);
     }
   };
 
@@ -54,21 +68,10 @@ const AdminContainer = () => {
 
   useEffect(() => {
     if (activeTab === "users") {
-      fetchUsers();
+      fetchUsers(page);
       fetchSelf();
     }
-  }, [activeTab]);
-
-  const stats = {
-    total: users.length,
-    admins: users.filter((user) => user.role === "Admin").length,
-    workers: users.filter(
-      (user) =>
-        user.role === "Annotator" ||
-        user.role === "Reviewer" ||
-        user.role === "Manager",
-    ).length,
-  };
+  }, [activeTab, page]);
 
   const handleSearch = (searchTerm) => {
     if (!searchTerm) {
@@ -80,7 +83,6 @@ const AdminContainer = () => {
         user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-
     setFilteredUsers(filtered);
   };
 
@@ -123,8 +125,6 @@ const AdminContainer = () => {
       const res = await importUser(file);
       if (res.data) {
         await fetchUsers();
-        console.log(res.data.successCount);
-        console.log(res.data.failureCount);
       }
       onCloseCreateModal();
     } catch (error) {
@@ -145,13 +145,20 @@ const AdminContainer = () => {
       {activeTab === "users" && (
         <>
           <UserManagementView
-            stats={stats}
+            stats={systemStats}
+            totalCount={totalCount}
             users={filteredUsers}
             onSearch={handleSearch}
             onActive={handleActive}
             onEdit={handleEdit}
             currentRole={currentRole}
             openCreateModal={setIsCreateModalOpen}
+            pagination={{
+              totalCount,
+              page,
+              pageSize,
+              onPageChange: (newPage) => setPage(newPage),
+            }}
           />
           <UserModal
             isOpen={isUserModalOpen}
@@ -169,7 +176,6 @@ const AdminContainer = () => {
         </>
       )}
 
-      {activeTab === "settings" && <SettingsView />}
       {activeTab === "logs" && <LogsView />}
     </Container>
   );
