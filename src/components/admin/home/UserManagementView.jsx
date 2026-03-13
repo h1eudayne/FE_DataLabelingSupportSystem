@@ -7,7 +7,7 @@ import {
   Form,
   Table,
   Badge,
-  Pagination, // Đã thêm
+  Pagination,
 } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 import {
@@ -29,7 +29,6 @@ const UserManagementView = ({
   onEdit,
   currentRole,
   openCreateModal,
-  // Đã thêm các props thiếu
   pagination = { page: 1, pageSize: 10, onPageChange: () => {} },
   totalCount = 0,
 }) => {
@@ -45,33 +44,31 @@ const UserManagementView = ({
 
   return (
     <>
-      {/* Thẻ thống kê */}
       <Row className="mb-4 g-3">
         <StatCard
           icon={<Users size={28} />}
           title={t("userMgmt.totalStaff")}
-          value={stats.total}
+          value={totalCount}
           colorClass="text-primary"
         />
         <StatCard
           icon={<ShieldAlert size={28} />}
           title={t("userMgmt.admins")}
-          value={stats.admins}
+          value={stats?.admins || 0}
           colorClass="text-warning"
         />
         <StatCard
           icon={<Award size={28} />}
           title={t("userMgmt.workers")}
-          value={stats.workers}
+          value={stats?.workers || 0}
           colorClass="text-success"
         />
       </Row>
 
-      {/* Ban Quản Trị */}
       <div className="mb-5">
         <div className="d-flex align-items-center gap-2 mb-3">
           <ShieldAlert className="text-warning" size={24} />
-          <h5 className="fw-bold mb-0">Ban Quản Trị Hệ Thống</h5>
+          <h5 className="fw-bold mb-0">{t("userMgmt.adminBoard")}</h5>
         </div>
         <Row className="g-3">
           {adminUsers.map((admin) => (
@@ -103,7 +100,7 @@ const UserManagementView = ({
                       className="text-muted fst-italic"
                       style={{ fontSize: "10px" }}
                     >
-                      Quản trị viên hệ thống
+                      {t("userMgmt.systemAdmin")}
                     </div>
                   </div>
                 </Card.Body>
@@ -113,14 +110,13 @@ const UserManagementView = ({
         </Row>
       </div>
 
-      {/* Danh sách nhân viên */}
       <Card className="border-0 shadow-sm" style={{ borderRadius: "15px" }}>
         <Card.Header className="bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
           <div>
-            <h5 className="fw-bold mb-0 text-primary">Danh Sách Nhân Viên</h5>
-            <small className="text-muted">
-              Quản lý và cấp quyền cho nhân sự thực hiện dự án.
-            </small>
+            <h5 className="fw-bold mb-0 text-primary">
+              {t("userMgmt.staffList")}
+            </h5>
+            <small className="text-muted">{t("userMgmt.staffListDesc")}</small>
           </div>
           <Button
             variant="primary"
@@ -129,7 +125,7 @@ const UserManagementView = ({
             onClick={() => openCreateModal(true)}
           >
             <UserPlus size={18} />
-            <span className="fw-semibold">Thêm nhân viên</span>
+            <span className="fw-semibold">{t("userMgmt.addStaff")}</span>
           </Button>
         </Card.Header>
 
@@ -139,7 +135,7 @@ const UserManagementView = ({
               <Search size={18} className="text-muted" />
             </InputGroup.Text>
             <Form.Control
-              placeholder="Tìm kiếm theo email, vai trò..."
+              placeholder={t("userMgmt.searchPlaceholder")}
               className="border-0 shadow-none"
               onChange={(e) => onSearch(e.target.value)}
             />
@@ -148,9 +144,9 @@ const UserManagementView = ({
           <Table responsive hover className="align-middle mb-0">
             <thead className="table-light">
               <tr className="text-muted small text-uppercase fw-bold">
-                <th>Người dùng</th>
-                <th>Vai trò</th>
-                <th className="text-center">Thao tác</th>
+                <th>{t("userMgmt.user")}</th>
+                <th>{t("userMgmt.role")}</th>
+                <th className="text-center">{t("userMgmt.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -208,16 +204,16 @@ const UserManagementView = ({
                             >
                               {user.isActive ? (
                                 <>
-                                  <CheckCircle size={14} className="me-1" />{" "}
+                                  <CheckCircle size={14} className="me-1" />
                                   <span style={{ fontSize: "12px" }}>
-                                    Active
+                                    {t("userMgmt.active")}
                                   </span>
                                 </>
                               ) : (
                                 <>
-                                  <Power size={14} className="me-1" />{" "}
+                                  <Power size={14} className="me-1" />
                                   <span style={{ fontSize: "12px" }}>
-                                    Inactive
+                                    {t("userMgmt.inactive")}
                                   </span>
                                 </>
                               )}
@@ -231,19 +227,21 @@ const UserManagementView = ({
               ) : (
                 <tr>
                   <td colSpan="3" className="text-center py-4 text-muted">
-                    Không tìm thấy nhân sự nào.
+                    {t("userMgmt.noStaffFound")}
                   </td>
                 </tr>
               )}
             </tbody>
           </Table>
 
-          {/* Phân trang */}
           {totalPages > 1 && (
             <div className="d-flex justify-content-between align-items-center mt-3 px-3">
               <div className="text-muted small">
-                Hiển thị <b>{fromEntry}</b> đến <b>{toEntry}</b> trên{" "}
-                <b>{totalCount}</b> người dùng
+                {t("userMgmt.showingRange", {
+                  from: fromEntry,
+                  to: toEntry,
+                  total: totalCount,
+                })}
               </div>
               <Pagination className="mb-0">
                 <Pagination.Prev

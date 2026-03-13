@@ -17,23 +17,16 @@ const NavigationTabs = ({ activeTab, setActiveTab }) => {
               eventKey="users"
               className="d-flex align-items-center gap-2 px-4 py-2 fw-bold"
             >
-              <Users size={18} /> {t('adminNavTabs.userManagement')}
+              <Users size={18} /> {t("adminNavTabs.userManagement")}
             </Nav.Link>
           </Nav.Item>
-          <Nav.Item>
-            <Nav.Link
-              eventKey="settings"
-              className="d-flex align-items-center gap-2 px-4 py-2 fw-bold"
-            >
-              <Settings size={18} /> {t('adminNavTabs.systemSettings')}
-            </Nav.Link>
-          </Nav.Item>
+
           <Nav.Item>
             <Nav.Link
               eventKey="logs"
               className="d-flex align-items-center gap-2 px-4 py-2 fw-bold"
             >
-              <History size={18} /> {t('adminNavTabs.activityLogs')}
+              <History size={18} /> {t("adminNavTabs.activityLogs")}
             </Nav.Link>
           </Nav.Item>
         </Nav>
