@@ -1,52 +1,86 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import {
-  startConnection,
-  stopConnection,
-  onReceiveNotification,
-} from "../services/signalrService";
+import { createConnection } from "../services/signalrService";
 
 /**
  * Custom hook for managing real-time notifications via SignalR.
- * Handles React Strict Mode double-mount gracefully.
- * @returns {{ notifications, unreadCount, markAsRead, markAllAsRead, clearAll }}
+ * Each mount creates its own connection instance to avoid
+ * React Strict Mode race conditions with shared singleton.
  */
 const useNotifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const mountedRef = useRef(false);
+  const connectionRef = useRef(null);
 
   useEffect(() => {
-    mountedRef.current = true;
     const token = localStorage.getItem("access_token");
     if (!token) return;
 
-    // Use AbortController to cancel connection if component unmounts
-    const abortController = new AbortController();
+    let cancelled = false;
 
-    // Start SignalR connection with abort signal
-    startConnection(abortController.signal);
+    // Delay to skip the first mount in React Strict Mode
+    const timerId = setTimeout(async () => {
+      if (cancelled) return;
 
-    // Listen for incoming notifications
-    const unsubscribe = onReceiveNotification((message, type, timestamp) => {
-      if (!mountedRef.current) return;
+      // Create a fresh connection for this mount
+      const connection = createConnection();
+      connectionRef.current = connection;
 
-      const newNotification = {
-        id: Date.now() + Math.random(),
-        message: message || "New notification",
-        type: type || "info",
-        timestamp: timestamp || new Date().toISOString(),
-        read: false,
-      };
+      // Register notification handler BEFORE starting
+      connection.on("ReceiveNotification", (notification) => {
+        if (cancelled) return;
+        console.log("[Notification] Received:", notification);
 
-      setNotifications((prev) => [newNotification, ...prev].slice(0, 50));
-      setUnreadCount((prev) => prev + 1);
-    });
+        const newNotification = {
+          id: Date.now() + Math.random(),
+          message:
+            notification?.Message ||
+            notification?.message ||
+            "New notification",
+          type: notification?.Type || notification?.type || "info",
+          timestamp:
+            notification?.Timestamp ||
+            notification?.timestamp ||
+            new Date().toISOString(),
+          read: false,
+        };
+
+        setNotifications((prev) => [newNotification, ...prev].slice(0, 50));
+        setUnreadCount((prev) => prev + 1);
+      });
+
+      // Log state changes for debugging
+      connection.onreconnecting(() =>
+        console.warn("[SignalR] Reconnecting..."),
+      );
+      connection.onreconnected((id) =>
+        console.log("[SignalR] Reconnected:", id),
+      );
+      connection.onclose((err) => {
+        if (!cancelled) console.log("[SignalR] Connection closed", err);
+      });
+
+      try {
+        await connection.start();
+        if (cancelled) {
+          // Component unmounted during start - stop immediately
+          connection.stop();
+          return;
+        }
+        console.log("[SignalR] Connected! State:", connection.state);
+      } catch (err) {
+        if (!cancelled) {
+          console.error("[SignalR] Connection failed:", err);
+        }
+      }
+    }, 200);
 
     return () => {
-      mountedRef.current = false;
-      abortController.abort(); // Cancel any pending connection
-      unsubscribe();
-      stopConnection();
+      cancelled = true;
+      clearTimeout(timerId);
+      if (connectionRef.current) {
+        connectionRef.current.stop().catch(() => {});
+        connectionRef.current = null;
+      }
     };
   }, []);
 
