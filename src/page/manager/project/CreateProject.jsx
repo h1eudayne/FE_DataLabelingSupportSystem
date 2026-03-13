@@ -45,7 +45,14 @@ const CreateProject = () => {
   });
 
   const [labels, setLabels] = useState([
-    { name: "", guideLine: "", color: "#0ab39c", checklist: [""] },
+    {
+      name: "",
+      guideLine: "",
+      color: "#0ab39c",
+      checklist: [""],
+      exampleImage: null,
+      exampleImagePreview: null,
+    },
   ]);
 
   useEffect(() => {
@@ -77,8 +84,33 @@ const CreateProject = () => {
   const addLabel = () =>
     setLabels([
       ...labels,
-      { name: "", guideLine: "", color: "#0ab39c", checklist: [""] },
+      {
+        name: "",
+        guideLine: "",
+        color: "#0ab39c",
+        checklist: [""],
+        exampleImage: null,
+        exampleImagePreview: null,
+      },
     ]);
+
+  const handleLabelImageSelect = (index, file) => {
+    if (!file) return;
+    const clone = [...labels];
+    clone[index].exampleImage = file;
+    clone[index].exampleImagePreview = URL.createObjectURL(file);
+    setLabels(clone);
+  };
+
+  const removeLabelImage = (index) => {
+    const clone = [...labels];
+    if (clone[index].exampleImagePreview) {
+      URL.revokeObjectURL(clone[index].exampleImagePreview);
+    }
+    clone[index].exampleImage = null;
+    clone[index].exampleImagePreview = null;
+    setLabels(clone);
+  };
 
   const removeLabel = (index) => {
     if (labels.length === 1) return toast.info(t("createProject.minOneLabel"));
@@ -163,6 +195,27 @@ const CreateProject = () => {
         ? new Date(projectInfo.deadline).toISOString()
         : new Date().toISOString();
 
+      // Upload sample images for labels to Cloudinary
+      const validLabels = labels.filter((l) => l.name.trim());
+      const labelClassesPayload = [];
+      for (const l of validLabels) {
+        let exampleImageUrl = null;
+        if (l.exampleImage) {
+          try {
+            exampleImageUrl = await uploadToCloudinary(l.exampleImage);
+          } catch (err) {
+            console.error("Failed to upload label sample image:", err);
+          }
+        }
+        labelClassesPayload.push({
+          name: l.name,
+          color: l.color,
+          guideLine: l.guideLine,
+          checklist: l.checklist.filter((c) => c.trim()),
+          exampleImageUrl,
+        });
+      }
+
       const resProj = await projectService.createProject({
         name: projectInfo.name,
         description: projectInfo.description,
@@ -173,14 +226,7 @@ const CreateProject = () => {
         maxTaskDurationHours: Number(projectInfo.maxTaskDurationHours) || 24,
         penaltyUnit: Number(projectInfo.penaltyUnit) || 10,
         annotationGuide: projectInfo.annotationGuide || null,
-        labelClasses: labels
-          .filter((l) => l.name.trim())
-          .map((l) => ({
-            name: l.name,
-            color: l.color,
-            guideLine: l.guideLine,
-            checklist: l.checklist.filter((c) => c.trim()),
-          })),
+        labelClasses: labelClassesPayload,
       });
 
       const projectId = resProj.data?.id || resProj.data?.projectId;
@@ -220,7 +266,9 @@ const CreateProject = () => {
       navigate("/projects-all-projects");
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || t("createProject.createError"));
+      toast.error(
+        err.response?.data?.message || t("createProject.createError"),
+      );
     } finally {
       isSubmittingRef.current = false;
       setLoading(false);
@@ -241,7 +289,9 @@ const CreateProject = () => {
             <Card className="shadow-sm border-0 mb-4">
               <CardBody>
                 <div className="mb-3">
-                  <Label className="fw-bold">{t("createProject.projectName")}</Label>
+                  <Label className="fw-bold">
+                    {t("createProject.projectName")}
+                  </Label>
                   <Input
                     required
                     placeholder={t("createProject.projectNamePlaceholder")}
@@ -252,7 +302,9 @@ const CreateProject = () => {
                   />
                 </div>
                 <div className="mb-3">
-                  <Label className="fw-bold">{t("createProject.description")}</Label>
+                  <Label className="fw-bold">
+                    {t("createProject.description")}
+                  </Label>
                   <Input
                     type="textarea"
                     rows="2"
@@ -268,7 +320,9 @@ const CreateProject = () => {
                 </div>
                 <Row>
                   <Col md={6}>
-                    <Label className="fw-bold">{t("createProject.toolType")}</Label>
+                    <Label className="fw-bold">
+                      {t("createProject.toolType")}
+                    </Label>
                     <select
                       className="form-select"
                       value={projectInfo.type}
@@ -284,7 +338,9 @@ const CreateProject = () => {
                     </select>
                   </Col>
                   <Col md={6}>
-                    <Label className="fw-bold">{t("createProject.deadline")}</Label>
+                    <Label className="fw-bold">
+                      {t("createProject.deadline")}
+                    </Label>
                     <Input
                       type="date"
                       value={projectInfo.deadline}
@@ -300,7 +356,9 @@ const CreateProject = () => {
 
                 <Row className="mt-3">
                   <Col md={6}>
-                    <Label className="fw-bold">{t("createProject.taskDuration")}</Label>
+                    <Label className="fw-bold">
+                      {t("createProject.taskDuration")}
+                    </Label>
                     <Input
                       type="number"
                       min="1"
@@ -314,7 +372,9 @@ const CreateProject = () => {
                     />
                   </Col>
                   <Col md={6}>
-                    <Label className="fw-bold">{t("createProject.penaltyUnit")}</Label>
+                    <Label className="fw-bold">
+                      {t("createProject.penaltyUnit")}
+                    </Label>
                     <Input
                       type="number"
                       min="0"
@@ -330,7 +390,9 @@ const CreateProject = () => {
                 </Row>
 
                 <div className="mt-3">
-                  <Label className="fw-bold">{t("createProject.generalGuide")}</Label>
+                  <Label className="fw-bold">
+                    {t("createProject.generalGuide")}
+                  </Label>
                   <Input
                     type="textarea"
                     rows="2"
@@ -347,7 +409,8 @@ const CreateProject = () => {
 
                 <div className="mt-4">
                   <Label className="fw-bold text-dark">
-                    {t("createProject.inputData")} ({selectedFiles.length} {t("createProject.file")}) *
+                    {t("createProject.inputData")} ({selectedFiles.length}{" "}
+                    {t("createProject.file")}) *
                   </Label>
                   <div
                     className="dropzone border-2 border-dashed rounded-3 p-4 text-center bg-light"
@@ -453,6 +516,56 @@ const CreateProject = () => {
                         }
                         className="mb-2"
                       />
+
+                      {/* Sample image upload */}
+                      <div className="mb-2">
+                        <small className="text-muted fw-semibold d-block mb-1">
+                          <i className="ri-image-add-line me-1"></i>
+                          {t("createProject.sampleImage")}
+                        </small>
+                        {label.exampleImagePreview ? (
+                          <div className="position-relative d-inline-block">
+                            <img
+                              src={label.exampleImagePreview}
+                              alt="Sample"
+                              className="rounded border"
+                              style={{
+                                maxWidth: "120px",
+                                maxHeight: "80px",
+                                objectFit: "cover",
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-danger position-absolute top-0 end-0"
+                              style={{
+                                padding: "1px 5px",
+                                fontSize: "10px",
+                                transform: "translate(30%, -30%)",
+                              }}
+                              onClick={() => removeLabelImage(index)}
+                            >
+                              <i className="ri-close-line"></i>
+                            </button>
+                          </div>
+                        ) : (
+                          <label
+                            className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+                            style={{ cursor: "pointer" }}
+                          >
+                            <i className="ri-upload-2-line"></i>
+                            {t("createProject.uploadSampleImage")}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="d-none"
+                              onChange={(e) =>
+                                handleLabelImageSelect(index, e.target.files[0])
+                              }
+                            />
+                          </label>
+                        )}
+                      </div>
 
                       <div className="mt-2 ps-2 border-start border-2 border-info">
                         <small className="text-danger fw-bold d-block mb-1">

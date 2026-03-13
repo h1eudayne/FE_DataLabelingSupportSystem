@@ -1396,7 +1396,7 @@ footer,
     border-radius: 14px;
     border: 1px solid transparent;
     margin-bottom: 12px;
-    overflow: hidden;
+    overflow: visible;
     transition: border-color 0.2s ease;
 }
 
@@ -1424,17 +1424,36 @@ footer,
 }
 
 [data-bs-theme="dark"] .stitch-ws-card-header {
+    background: rgba(15, 23, 42, 0.4);
     border-bottom: 1px solid rgba(51, 65, 85, 0.3);
     color: #94A3B8;
 }
 
 [data-bs-theme="light"] .stitch-ws-card-header {
-    border-bottom: 1px solid #F1F5F9;
+    background: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
     color: #64748B;
 }
 
 .stitch-ws-card-body {
     padding: 12px 14px;
+}
+
+.stitch-ws-card-footer {
+    padding: 8px 14px;
+    font-size: 0.72rem;
+}
+
+[data-bs-theme="dark"] .stitch-ws-card-footer {
+    background: rgba(15, 23, 42, 0.3);
+    border-top: 1px solid rgba(51, 65, 85, 0.2);
+    color: #94A3B8;
+}
+
+[data-bs-theme="light"] .stitch-ws-card-footer {
+    background: #F8FAFC;
+    border-top: 1px solid #F1F5F9;
+    color: #94A3B8;
 }
 
 /* --- Workspace Status Badge --- */
@@ -1499,8 +1518,8 @@ footer,
 
 /* --- Workspace Progress Bar --- */
 .stitch-ws-progress {
-    height: 5px;
-    border-radius: 3px;
+    height: 8px;
+    border-radius: 4px;
     overflow: hidden;
 }
 
@@ -1514,7 +1533,7 @@ footer,
 
 .stitch-ws-progress-bar {
     height: 100%;
-    border-radius: 3px;
+    border-radius: 4px;
     transition: width 0.4s ease;
     background: linear-gradient(90deg, #3B82F6, #60A5FA);
 }
@@ -1540,6 +1559,7 @@ footer,
 [data-bs-theme="dark"] .stitch-ws-ann-item:hover,
 [data-bs-theme="dark"] .stitch-ws-ann-item.highlighted {
     background: rgba(59, 130, 246, 0.08);
+    border-left: 3px solid #3B82F6;
 }
 
 [data-bs-theme="light"] .stitch-ws-ann-item {
@@ -1549,6 +1569,7 @@ footer,
 [data-bs-theme="light"] .stitch-ws-ann-item:hover,
 [data-bs-theme="light"] .stitch-ws-ann-item.highlighted {
     background: rgba(59, 130, 246, 0.05);
+    border-left: 3px solid #2563EB;
 }
 
 .stitch-ws-ann-item:last-child {
@@ -1898,71 +1919,7 @@ footer,
     color: #2563EB;
 }
 
-/* ================================================================
-   STITCH WORKSPACE — Card System
-   ================================================================ */
-.stitch-ws-card {
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    margin-bottom: 12px;
-    border: none;
-}
-
-[data-bs-theme="dark"] .stitch-ws-card {
-    background: var(--dark-card);
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-[data-bs-theme="light"] .stitch-ws-card {
-    background: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.stitch-ws-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
-[data-bs-theme="dark"] .stitch-ws-card-header {
-    background: rgba(15, 23, 42, 0.4);
-    border-bottom: 1px solid rgba(51, 65, 85, 0.3);
-    color: var(--dark-text-secondary);
-}
-
-[data-bs-theme="light"] .stitch-ws-card-header {
-    background: #F8FAFC;
-    border-bottom: 1px solid #E2E8F0;
-    color: #475569;
-}
-
-.stitch-ws-card-body {
-    padding: 14px;
-}
-
-.stitch-ws-card-footer {
-    padding: 8px 14px;
-    font-size: 0.72rem;
-}
-
-[data-bs-theme="dark"] .stitch-ws-card-footer {
-    background: rgba(15, 23, 42, 0.3);
-    border-top: 1px solid rgba(51, 65, 85, 0.2);
-    color: var(--dark-text-muted);
-}
-
-[data-bs-theme="light"] .stitch-ws-card-footer {
-    background: #F8FAFC;
-    border-top: 1px solid #F1F5F9;
-    color: #94A3B8;
-}
+/* Card System — consolidated into primary rules above (line ~1395) */
 
 /* ================================================================
    STITCH WORKSPACE — Badge System
@@ -2149,13 +2106,12 @@ footer,
 }
 
 /* ================================================================
-   STITCH WORKSPACE — Progress Bar
+   STITCH WORKSPACE — Progress Bar (duplicate override)
    ================================================================ */
 .stitch-ws-progress {
-    height: 6px;
-    border-radius: 3px;
+    height: 8px;
+    border-radius: 4px;
     overflow: hidden;
-    margin-top: 6px;
 }
 
 [data-bs-theme="dark"] .stitch-ws-progress {
@@ -2168,7 +2124,7 @@ footer,
 
 .stitch-ws-progress-bar {
     height: 100%;
-    border-radius: 3px;
+    border-radius: 4px;
     background: linear-gradient(90deg, #3B82F6, #60A5FA);
     transition: width 0.4s ease;
 }
@@ -2224,45 +2180,7 @@ footer,
     color: #DC2626;
 }
 
-/* ================================================================
-   STITCH WORKSPACE — Annotation List Item
-   ================================================================ */
-.stitch-ws-ann-item {
-    display: flex;
-    align-items: center;
-    padding: 6px 14px;
-    cursor: pointer;
-    transition: background 0.15s ease;
-    font-size: 0.78rem;
-}
-
-[data-bs-theme="dark"] .stitch-ws-ann-item {
-    border-bottom: 1px solid rgba(51, 65, 85, 0.2);
-    color: var(--dark-text-primary);
-}
-
-[data-bs-theme="dark"] .stitch-ws-ann-item:hover {
-    background: rgba(59, 130, 246, 0.06);
-}
-
-[data-bs-theme="dark"] .stitch-ws-ann-item.highlighted {
-    background: rgba(59, 130, 246, 0.12);
-    border-left: 3px solid #3B82F6;
-}
-
-[data-bs-theme="light"] .stitch-ws-ann-item {
-    border-bottom: 1px solid #F1F5F9;
-    color: #1E293B;
-}
-
-[data-bs-theme="light"] .stitch-ws-ann-item:hover {
-    background: rgba(59, 130, 246, 0.04);
-}
-
-[data-bs-theme="light"] .stitch-ws-ann-item.highlighted {
-    background: rgba(59, 130, 246, 0.08);
-    border-left: 3px solid #2563EB;
-}
+/* Annotation List Item — consolidated into primary rules above (line ~1527) */
 
 /* ================================================================
    STITCH WORKSPACE — Thumbnail Grid
@@ -2498,8 +2416,24 @@ footer,
    ================================================================ */
 .stitch-ws-checklist-panel {
     padding: 8px 12px;
-    max-height: 180px;
     overflow-y: auto;
+    transition: opacity 0.2s ease;
+}
+
+.stitch-ws-expand-enter {
+    animation: stitch-expand-in 0.2s ease-out;
+}
+
+@keyframes stitch-expand-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 [data-bs-theme="dark"] .stitch-ws-checklist-panel {
