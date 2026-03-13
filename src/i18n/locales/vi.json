@@ -241,6 +241,8 @@
     "loadingUsers": "Không thể tải danh sách nhân viên",
     "minOneLabel": "Phải có ít nhất một nhãn",
     "warnName": "Vui lòng nhập tên dự án!",
+    "warnDeadline": "Vui lòng chọn hạn chót cho dự án!",
+    "warnDeadlineFuture": "Hạn chót phải là ngày trong tương lai!",
     "warnLabel": "Phải có ít nhất một nhãn được định nghĩa!",
     "warnChecklist": "Nhãn \"{{name}}\" phải có ít nhất 1 điều kiện checklist!",
     "warnFiles": "Vui lòng chọn file ảnh!",

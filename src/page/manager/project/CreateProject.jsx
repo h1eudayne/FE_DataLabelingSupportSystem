@@ -153,6 +153,17 @@ const CreateProject = () => {
       toast.warning(t("createProject.warnName"));
       return false;
     }
+    if (!projectInfo.deadline) {
+      toast.warning(t("createProject.warnDeadline"));
+      return false;
+    }
+    const deadlineDate = new Date(projectInfo.deadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (deadlineDate <= today) {
+      toast.warning(t("createProject.warnDeadlineFuture"));
+      return false;
+    }
     const validLabels = labels.filter((l) => l.name.trim());
     if (validLabels.length === 0) {
       toast.warning(t("createProject.warnLabel"));
@@ -191,9 +202,7 @@ const CreateProject = () => {
     setLoading(true);
 
     try {
-      const deadlineISO = projectInfo.deadline
-        ? new Date(projectInfo.deadline).toISOString()
-        : new Date().toISOString();
+      const deadlineISO = new Date(projectInfo.deadline).toISOString();
 
       // Upload sample images for labels to Cloudinary
       const validLabels = labels.filter((l) => l.name.trim());

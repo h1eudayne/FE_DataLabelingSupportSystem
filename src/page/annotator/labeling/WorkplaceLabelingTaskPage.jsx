@@ -185,6 +185,8 @@ const WorkplaceLabelingTaskPage = () => {
   useEffect(() => {
     if (!currentImage) return;
 
+    // Reset selected label when switching images to prevent label persistence bug
+    dispatch(setSelectedLabel(null));
     dispatch(setCurrentTask(currentImage));
 
     let parsedAnnotations = [];
@@ -220,7 +222,7 @@ const WorkplaceLabelingTaskPage = () => {
     } else {
       dispatch(resetChecklist({ assignmentId: currentImage.id }));
     }
-  }, [currentImage, dispatch]);
+  }, [currentImage?.id, dispatch]);
 
   useEffect(() => {
     return () => {
@@ -331,17 +333,6 @@ const WorkplaceLabelingTaskPage = () => {
 
     if (annotations.length === 0) {
       toast.warning(t("workspace.noLabelWarning"));
-      return;
-    }
-
-    const usedLabelIds = new Set(annotations.map((a) => a.labelId));
-    const unusedLabels = labels.filter(
-      (l) => unlockedLabelIds.has(l.id) && !usedLabelIds.has(l.id),
-    );
-
-    if (unusedLabels.length > 0) {
-      const names = unusedLabels.map((l) => l.name).join(", ");
-      toast.error(t("workspace.missingLabels", { names }), { autoClose: 8000 });
       return;
     }
 
@@ -950,7 +941,9 @@ const WorkplaceLabelingTaskPage = () => {
                       className="stitch-ws-text-muted me-2"
                       style={{ fontSize: "0.65rem" }}
                     >
-                      {Math.round(a.width)}×{Math.round(a.height)}
+                      {a.type === "POLYGON" || a.points
+                        ? `${a.points?.length || 0} pts`
+                        : `${Math.round(a.width)}×${Math.round(a.height)}`}
                     </span>
                     {!isReadOnly && (
                       <button
@@ -1110,6 +1103,7 @@ const WorkplaceLabelingTaskPage = () => {
             readOnly={isReadOnly}
             highlightedAnnotationId={highlightedAnnotationId}
             onAnnotationClick={(id) => setHighlightedAnnotationId(id)}
+            projectType={projectInfo?.allowGeometryTypes}
           />
 
           {/* ── Bottom Navigation Bar ── */}

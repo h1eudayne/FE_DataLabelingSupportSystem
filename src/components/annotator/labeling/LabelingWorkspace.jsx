@@ -7,6 +7,7 @@ import {
   Group,
   Text,
   Line,
+  Circle,
 } from "react-konva";
 import useImage from "use-image";
 import { useDispatch, useSelector } from "react-redux";
@@ -29,10 +30,12 @@ const LabelingWorkspace = ({
   readOnly = false,
   highlightedAnnotationId = null,
   onAnnotationClick,
+  projectType = "BBOX",
 }) => {
   const dispatch = useDispatch();
   const containerRef = useRef(null);
   const stageWrapperRef = useRef(null);
+  const lastPolyClickTime = useRef(0);
 
   const { selectedLabel, annotationsByAssignment } = useSelector(
     (state) => state.labeling,
@@ -52,8 +55,40 @@ const LabelingWorkspace = ({
     scale: 1,
     pos: { x: 0, y: 0 },
   });
-  // For crosshair lines
   const [mouseImgPos, setMouseImgPos] = useState(null);
+
+  const projTypeUp = projectType?.toUpperCase() || "";
+  const allowBbox =
+    !projTypeUp ||
+    projTypeUp.includes("BBOX") ||
+    projTypeUp.includes("RECTANGLE");
+  const allowPolygon = projTypeUp.includes("POLYGON");
+  const defaultMode = allowPolygon && !allowBbox ? "polygon" : "bbox";
+  const [drawingMode, setDrawingMode] = useState(defaultMode);
+
+  useEffect(() => {
+    setDrawingMode(allowPolygon && !allowBbox ? "polygon" : "bbox");
+  }, [projectType, allowPolygon, allowBbox]);
+
+  const [currentPolygon, setCurrentPolygon] = useState([]);
+
+  const finishPolygon = useCallback(() => {
+    if (currentPolygon.length >= 3) {
+      dispatch(
+        addAnnotation({
+          id: Date.now().toString(),
+          assignmentId,
+          labelId: selectedLabel.id,
+          labelName: selectedLabel.name,
+          color: selectedLabel.color,
+          type: "POLYGON",
+          points: currentPolygon,
+        }),
+      );
+    }
+    setCurrentPolygon([]);
+    setMouseImgPos(null);
+  }, [currentPolygon, dispatch, assignmentId, selectedLabel]);
 
   const fitImageToStage = useCallback(() => {
     // Use stageWrapperRef for accurate canvas-only dimensions (excludes toolbar/coord-bar)
@@ -89,6 +124,17 @@ const LabelingWorkspace = ({
     const onKeyDown = (e) => {
       if (readOnly) return;
 
+      if (e.key === "Enter" && drawingMode === "polygon") {
+        e.preventDefault();
+        finishPolygon();
+        return;
+      }
+      if (e.key === "Escape" && drawingMode === "polygon") {
+        e.preventDefault();
+        setCurrentPolygon([]);
+        return;
+      }
+
       if (e.ctrlKey && e.key === "z") {
         e.preventDefault();
         dispatch(undoLastAction(assignmentId));
@@ -117,7 +163,7 @@ const LabelingWorkspace = ({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [dispatch, assignmentId]);
+  }, [dispatch, assignmentId, readOnly, drawingMode, finishPolygon]);
 
   const handleWheel = (e) => {
     e.evt.preventDefault();
@@ -174,7 +220,22 @@ const LabelingWorkspace = ({
     }
 
     const imgCoords = getImageCoords(pos);
-    setNewRect({ x: imgCoords.x, y: imgCoords.y, width: 0, height: 0 });
+    if (drawingMode === "polygon") {
+      const now = Date.now();
+      const delta = now - lastPolyClickTime.current;
+      lastPolyClickTime.current = now;
+      // Detect double-click manually (< 350ms between two clicks)
+      if (delta < 350 && currentPolygon.length >= 3) {
+        finishPolygon();
+        return;
+      }
+      setCurrentPolygon((prev) => [
+        ...prev,
+        { x: imgCoords.x, y: imgCoords.y },
+      ]);
+    } else {
+      setNewRect({ x: imgCoords.x, y: imgCoords.y, width: 0, height: 0 });
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -208,26 +269,29 @@ const LabelingWorkspace = ({
       return;
     }
 
-    if (
-      newRect &&
-      Math.abs(newRect.width) > 5 &&
-      Math.abs(newRect.height) > 5
-    ) {
-      dispatch(
-        addAnnotation({
-          id: Date.now().toString(),
-          assignmentId,
-          labelId: selectedLabel.id,
-          labelName: selectedLabel.name,
-          color: selectedLabel.color,
-          x: newRect.width > 0 ? newRect.x : newRect.x + newRect.width,
-          y: newRect.height > 0 ? newRect.y : newRect.y + newRect.height,
-          width: Math.abs(newRect.width),
-          height: Math.abs(newRect.height),
-        }),
-      );
+    if (drawingMode === "bbox") {
+      if (
+        newRect &&
+        Math.abs(newRect.width) > 5 &&
+        Math.abs(newRect.height) > 5
+      ) {
+        dispatch(
+          addAnnotation({
+            id: Date.now().toString(),
+            assignmentId,
+            labelId: selectedLabel.id,
+            labelName: selectedLabel.name,
+            color: selectedLabel.color,
+            type: "BBOX",
+            x: newRect.width > 0 ? newRect.x : newRect.x + newRect.width,
+            y: newRect.height > 0 ? newRect.y : newRect.y + newRect.height,
+            width: Math.abs(newRect.width),
+            height: Math.abs(newRect.height),
+          }),
+        );
+      }
+      setNewRect(null);
     }
-    setNewRect(null);
   };
 
   const handleMouseEnter = () => {
@@ -314,6 +378,28 @@ const LabelingWorkspace = ({
         >
           <i className="ri-zoom-in-line"></i>
         </button>
+        {allowBbox && allowPolygon && !readOnly && (
+          <>
+            <div className="stitch-ws-toolbar-divider"></div>
+            <button
+              className={`stitch-ws-toolbar-btn ${drawingMode === "bbox" ? "primary" : ""}`}
+              onClick={() => setDrawingMode("bbox")}
+              title="Vẽ hình hộp (BBox)"
+            >
+              <i className="ri-shape-line me-1"></i> BBox
+            </button>
+            <button
+              className={`stitch-ws-toolbar-btn ${drawingMode === "polygon" ? "primary" : ""}`}
+              onClick={() => {
+                setDrawingMode("polygon");
+                setNewRect(null);
+              }}
+              title="Vẽ đa giác (Polygon)"
+            >
+              <i className="ri-share-line me-1"></i> Polygon
+            </button>
+          </>
+        )}
         <div className="stitch-ws-toolbar-divider"></div>
         <button
           className="stitch-ws-toolbar-btn"
@@ -336,17 +422,32 @@ const LabelingWorkspace = ({
         {annotations.length > 0 && (
           <span className="stitch-ws-badge stitch-ws-badge-inprogress ms-1">
             <i className="ri-shape-line"></i>
-            {annotations.length} box{annotations.length > 1 ? "es" : ""}
+            {annotations.length} shape{annotations.length > 1 ? "s" : ""}
           </span>
         )}
-        <div className="ms-auto d-flex align-items-center gap-3 stitch-ws-toolbar-hint">
-          <span>
-            <i className="ri-mouse-line"></i>
-            Ctrl+Scroll: Zoom
+        <div
+          className="ms-auto d-flex align-items-center gap-2 stitch-ws-toolbar-hint"
+          style={{
+            fontSize: "0.7rem",
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
+          }}
+        >
+          {drawingMode === "polygon" && !readOnly && (
+            <span style={{ color: "#FACC15", whiteSpace: "nowrap" }}>
+              <i className="ri-corner-down-left-line"></i> Enter: Hoàn tất
+            </span>
+          )}
+          {drawingMode === "polygon" && currentPolygon.length > 0 && (
+            <span style={{ color: "#F87171", whiteSpace: "nowrap" }}>
+              <i className="ri-close-line"></i> Esc: Hủy
+            </span>
+          )}
+          <span style={{ whiteSpace: "nowrap" }}>
+            <i className="ri-mouse-line"></i> Ctrl+Scroll: Zoom
           </span>
-          <span>
-            <i className="ri-drag-move-line"></i>
-            Scroll/Kéo: Di chuyển
+          <span style={{ whiteSpace: "nowrap" }}>
+            <i className="ri-drag-move-line"></i> Scroll: Di chuyển
           </span>
         </div>
       </div>
@@ -380,6 +481,54 @@ const LabelingWorkspace = ({
               const tagWidth =
                 tagText.length * tagFontSize * 0.65 + tagPadding * 2;
               const tagHeight = tagFontSize + tagPadding * 2;
+
+              if (a.type === "POLYGON" || a.points) {
+                const minX = Math.min(...a.points.map((p) => p.x));
+                const minY = Math.min(...a.points.map((p) => p.y));
+                return (
+                  <Group key={a.id}>
+                    <Line
+                      points={a.points.flatMap((p) => [p.x, p.y])}
+                      closed={true}
+                      stroke={isHighlighted ? "#fff" : a.color || "#6c757d"}
+                      strokeWidth={(isHighlighted ? 3 : 2) / stageScale}
+                      fill={
+                        (a.color || "#6c757d") + (isHighlighted ? "55" : "22")
+                      }
+                      dash={
+                        isHighlighted
+                          ? [6 / stageScale, 3 / stageScale]
+                          : undefined
+                      }
+                      onDblClick={() => {
+                        if (!readOnly)
+                          dispatch(
+                            removeAnnotation({ assignmentId, id: a.id }),
+                          );
+                      }}
+                      onClick={() => {
+                        if (onAnnotationClick) onAnnotationClick(a.id);
+                      }}
+                    />
+                    <Rect
+                      x={minX}
+                      y={minY - tagHeight}
+                      width={tagWidth}
+                      height={tagHeight}
+                      fill={a.color || "#6c757d"}
+                      cornerRadius={2 / stageScale}
+                    />
+                    <Text
+                      x={minX + tagPadding}
+                      y={minY - tagHeight + tagPadding}
+                      text={tagText}
+                      fill="white"
+                      fontSize={tagFontSize}
+                      fontStyle="bold"
+                    />
+                  </Group>
+                );
+              }
 
               return (
                 <Group key={a.id}>
@@ -430,13 +579,54 @@ const LabelingWorkspace = ({
             })}
 
             {/* Drawing rect preview */}
-            {newRect && (
+            {newRect && drawingMode === "bbox" && (
               <Rect
                 {...newRect}
                 stroke="yellow"
                 dash={[6, 4]}
                 strokeWidth={2 / stageScale}
               />
+            )}
+
+            {/* Drawing polygon preview */}
+            {drawingMode === "polygon" && currentPolygon.length > 0 && (
+              <Group>
+                <Line
+                  points={currentPolygon.flatMap((p) => [p.x, p.y])}
+                  stroke="yellow"
+                  strokeWidth={2 / stageScale}
+                  closed={false}
+                />
+                {mouseImgPos && (
+                  <Line
+                    points={[
+                      currentPolygon[currentPolygon.length - 1].x,
+                      currentPolygon[currentPolygon.length - 1].y,
+                      mouseImgPos.x,
+                      mouseImgPos.y,
+                    ]}
+                    stroke="yellow"
+                    strokeWidth={2 / stageScale}
+                    dash={[6 / stageScale, 4 / stageScale]}
+                  />
+                )}
+                {currentPolygon.map((p, i) => (
+                  <Circle
+                    key={i}
+                    x={p.x}
+                    y={p.y}
+                    radius={4 / stageScale}
+                    fill={i === 0 ? "#22c55e" : "yellow"}
+                    onDblClick={(e) => {
+                      // Finish if user double clicks the first point
+                      e.cancelBubble = true;
+                      if (!readOnly && i === 0 && currentPolygon.length >= 3) {
+                        finishPolygon();
+                      }
+                    }}
+                  />
+                ))}
+              </Group>
             )}
 
             {/* Crosshair lines */}
@@ -482,7 +672,7 @@ const LabelingWorkspace = ({
           <span style={{ opacity: 0.5 }}>Di chuột vào canvas</span>
         )}
 
-        {newRect && (
+        {newRect && drawingMode === "bbox" && (
           <>
             <div
               className="stitch-ws-toolbar-divider"
@@ -493,6 +683,19 @@ const LabelingWorkspace = ({
               W: <strong>{Math.abs(Math.round(newRect.width))}</strong>
               {" × "}
               H: <strong>{Math.abs(Math.round(newRect.height))}</strong>
+            </span>
+          </>
+        )}
+
+        {drawingMode === "polygon" && currentPolygon.length > 0 && (
+          <>
+            <div
+              className="stitch-ws-toolbar-divider"
+              style={{ height: 16 }}
+            ></div>
+            <span style={{ color: "#FACC15" }}>
+              <i className="ri-share-line me-1"></i>
+              Điểm: <strong>{currentPolygon.length}</strong>
             </span>
           </>
         )}

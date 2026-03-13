@@ -241,6 +241,8 @@
     "loadingUsers": "Unable to load staff list",
     "minOneLabel": "At least one label is required",
     "warnName": "Please enter a project name!",
+    "warnDeadline": "Please select a deadline for the project!",
+    "warnDeadlineFuture": "Deadline must be a future date!",
     "warnLabel": "At least one label must be defined!",
     "warnChecklist": "Label \"{{name}}\" must have at least 1 checklist condition!",
     "warnFiles": "Please select image files!",
