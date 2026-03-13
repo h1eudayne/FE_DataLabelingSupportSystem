@@ -10,16 +10,18 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 
 const PerformanceBarChart = ({ weeklyData }) => {
+  const { t } = useTranslation();
   const defaultData = [
-    { name: "Thứ 2", total: 40 },
-    { name: "Thứ 3", total: 30 },
-    { name: "Thứ 4", total: 65 },
-    { name: "Thứ 5", total: 45 },
-    { name: "Thứ 6", total: 90 },
-    { name: "Thứ 7", total: 55 },
-    { name: "CN", total: 20 },
+    { name: t('performanceBar.mon'), total: 40 },
+    { name: t('performanceBar.tue'), total: 30 },
+    { name: t('performanceBar.wed'), total: 65 },
+    { name: t('performanceBar.thu'), total: 45 },
+    { name: t('performanceBar.fri'), total: 90 },
+    { name: t('performanceBar.sat'), total: 55 },
+    { name: t('performanceBar.sun'), total: 20 },
   ];
 
   const chartData = weeklyData || defaultData;
@@ -28,11 +30,11 @@ const PerformanceBarChart = ({ weeklyData }) => {
     <Card className="border-0 shadow-sm rounded-4 overflow-hidden h-100">
       <Card.Header className="bg-white py-3 border-0 d-flex justify-content-between align-items-center">
         <div>
-          <h6 className="fw-bold mb-0">Hiệu suất gán nhãn</h6>
-          <small className="text-muted">Dữ liệu theo tuần</small>
+          <h6 className="fw-bold mb-0">{t('performanceBar.title')}</h6>
+          <small className="text-muted">{t('performanceBar.weeklyData')}</small>
         </div>
         <Badge bg="primary" className="bg-opacity-10 text-primary px-3">
-          +12% Hiệu suất
+          {t('performanceBar.performanceUp')}
         </Badge>
       </Card.Header>
       <Card.Body className="pt-0">

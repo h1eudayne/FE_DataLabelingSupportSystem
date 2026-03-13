@@ -4,10 +4,12 @@ import { LogOut, User, Settings, Bell } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../store/auth/auth.slice";
+import { useTranslation } from "react-i18next";
 
 const UserHeader = ({ user, role }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     dispatch(logout());
@@ -36,7 +38,7 @@ const UserHeader = ({ user, role }) => {
               bg="primary"
               className="bg-opacity-10 text-primary px-3 py-2 text-uppercase"
             >
-              {role || "Thành viên"}
+              {role || t('profileComp.member')}
             </Badge>
           </div>
 
@@ -68,31 +70,31 @@ const UserHeader = ({ user, role }) => {
                     {user?.email?.split("@")[0]}
                   </div>
                   <div className="text-muted style={{ fontSize: '10px' }}">
-                    Trực tuyến
+                    {t('profileComp.online')}
                   </div>
                 </div>
               </Dropdown.Toggle>
 
               <Dropdown.Menu className="shadow-lg border-0 rounded-3 mt-2">
-                <Dropdown.Header>Tài khoản</Dropdown.Header>
+                <Dropdown.Header>{t('profileComp.account')}</Dropdown.Header>
                 <Dropdown.Item
                   href="#/profile"
                   className="d-flex align-items-center gap-2 py-2"
                 >
-                  <User size={16} /> Hồ sơ cá nhân
+                  <User size={16} /> {t('profileComp.myProfile')}
                 </Dropdown.Item>
                 <Dropdown.Item
                   href="#/settings"
                   className="d-flex align-items-center gap-2 py-2"
                 >
-                  <Settings size={16} /> Cài đặt
+                  <Settings size={16} /> {t('profileComp.settings')}
                 </Dropdown.Item>
                 <Dropdown.Divider />
                 <Dropdown.Item
                   onClick={handleLogout}
                   className="d-flex align-items-center gap-2 py-2 text-danger"
                 >
-                  <LogOut size={16} /> Đăng xuất
+                  <LogOut size={16} /> {t('profileComp.logoutBtn')}
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>

@@ -2,8 +2,11 @@ import AuthLoginForm from "./AuthLoginForm";
 import AuthRegisterLink from "./AuthRegisterLink";
 import "../../../assets/css/AuthRight.css";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const AuthRight = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="col-lg-6 auth-right bg-white p-0 d-flex flex-column h-100">
       <div className="auth-banner-mobile d-lg-none">
@@ -25,8 +28,8 @@ const AuthRight = () => {
             style={{ marginBottom: "35px" }}
           >
             <h1 className="auth-main-title">
-              Label data with <br />
-              <span className="text-precision">precision.</span>
+              {t("auth.labelDataWith")} <br />
+              <span className="text-precision">{t("auth.precision")}</span>
             </h1>
           </div>
           <div
@@ -40,7 +43,7 @@ const AuthRight = () => {
           >
             <span className="annotation-tag" style={{ fontSize: "7px" }}>
               <i className="ri-focus-3-line me-1"></i>
-              Label data with
+              {t("auth.labelDataWith")}
             </span>
 
             <div className="anchor-point" style={{ top: 0, left: 0 }} />
@@ -57,9 +60,9 @@ const AuthRight = () => {
       <div className="auth-form-container flex-grow-1">
         {" "}
         <div className="auth-form-content">
-          <h2 className="mb-1">Chào mừng trở lại!</h2>
+          <h2 className="mb-1">{t("auth.welcomeBack")}</h2>
           <p className="text-muted mb-4">
-            Đăng nhập để tiếp tục với
+            {t("auth.loginToContinue")}{" "}
             <span className="text-primary">AILABEL</span>
           </p>
           <AuthLoginForm />

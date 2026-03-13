@@ -1,5 +1,6 @@
 import { Card, Button } from "react-bootstrap";
 import { Zap, PlayCircle, AlertTriangle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const GuideItem = ({ text }) => (
   <div className="d-flex align-items-start gap-3">
@@ -10,7 +11,9 @@ const GuideItem = ({ text }) => (
   </div>
 );
 
-const ActionSection = () => (
+const ActionSection = () => {
+  const { t } = useTranslation();
+  return (
   <>
     <Card
       className="card-custom border-0 shadow-lg mb-4 text-white rounded-2rem"
@@ -30,15 +33,15 @@ const ActionSection = () => (
           }}
         />
         <div className="z-index-1 position-relative">
-          <h4 className="fw-black mb-2">Workstation</h4>
+          <h4 className="fw-black mb-2">{t('annotatorDashboardComp.workstation')}</h4>
           <p className="small mb-4 opacity-75">
-            Tiếp tục thực hiện gán nhãn để đảm bảo tiến độ dự án.
+            {t('annotatorDashboardComp.workstationDesc')}
           </p>
           <Button
             variant="light"
             className="w-100 fw-bold text-primary rounded-3 py-2 shadow-sm d-flex align-items-center justify-content-center gap-2 border-0"
           >
-            <PlayCircle size={18} /> MỞ WORKSTATION
+            <PlayCircle size={18} /> {t('annotatorDashboardComp.openWorkstation')}
           </Button>
         </div>
       </Card.Body>
@@ -47,15 +50,15 @@ const ActionSection = () => (
     <Card className="card-custom rounded-2rem border-0">
       <Card.Body className="p-4">
         <h6 className="fw-bold text-muted mb-4 small tracking-wider text-uppercase border-bottom pb-2">
-          Hướng dẫn nhanh
+          {t('annotatorDashboardComp.quickGuide')}
         </h6>
         <div className="d-grid gap-3">
-          <GuideItem text="Vẽ khung sát vật thể (Bbox)" />
-          <GuideItem text="Chọn đúng nhãn loại xe tương ứng" />
-          <GuideItem text="Đảm bảo độ sáng ảnh khi gán" />
+          <GuideItem text={t('annotatorDashboardComp.guide1')} />
+          <GuideItem text={t('annotatorDashboardComp.guide2')} />
+          <GuideItem text={t('annotatorDashboardComp.guide3')} />
         </div>
       </Card.Body>
     </Card>
-  </>
-);
+  </>);
+};
 export default ActionSection;

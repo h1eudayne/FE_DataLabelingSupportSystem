@@ -1,7 +1,9 @@
 import React from "react";
 import moment from "moment";
+import { useTranslation } from "react-i18next";
 
 const TaskInfoTable = ({ taskId, status, priority, dueDate }) => {
+  const { t } = useTranslation();
   return (
     <div className="card">
       <div className="card-body">
@@ -9,11 +11,11 @@ const TaskInfoTable = ({ taskId, status, priority, dueDate }) => {
           <table className="table table-borderless align-middle mb-0">
             <tbody>
               <tr>
-                <td className="fw-medium">Mã nhiệm vụ</td>
+                <td className="fw-medium">{t('labeling.taskCode')}</td>
                 <td>{taskId ? `#${taskId}` : "---"}</td>
               </tr>
               <tr>
-                <td className="fw-medium">Độ ưu tiên</td>
+                <td className="fw-medium">{t('labeling.priority')}</td>
                 <td>
                   <span
                     className={`badge ${
@@ -25,7 +27,7 @@ const TaskInfoTable = ({ taskId, status, priority, dueDate }) => {
                 </td>
               </tr>
               <tr>
-                <td className="fw-medium">Trạng thái</td>
+                <td className="fw-medium">{t('labeling.statusLabel')}</td>
                 <td>
                   <span className="badge bg-secondary-subtle text-secondary text-uppercase">
                     {status || "N/A"}
@@ -33,11 +35,11 @@ const TaskInfoTable = ({ taskId, status, priority, dueDate }) => {
                 </td>
               </tr>
               <tr>
-                <td className="fw-medium">Hạn chót</td>
+                <td className="fw-medium">{t('labeling.deadline')}</td>
                 <td>
                   {dueDate
                     ? moment(dueDate).format("DD MMM, YYYY")
-                    : "Không có hạn"}
+                    : t('labeling.noDeadline')}
                 </td>
               </tr>
             </tbody>

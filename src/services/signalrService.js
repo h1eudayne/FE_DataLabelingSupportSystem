@@ -1,11 +1,7 @@
 import * as signalR from "@microsoft/signalr";
 import { BACKEND_URL } from "./axios.customize";
 
-/**
- * Create a NEW SignalR hub connection instance.
- * Each call creates a fresh connection (no singleton).
- * @returns {signalR.HubConnection}
- */
+
 export const createConnection = () => {
   const hubUrl = `${BACKEND_URL}/hubs/notifications`;
 

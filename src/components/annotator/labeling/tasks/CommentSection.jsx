@@ -1,6 +1,8 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 const CommentSection = ({ rejectionReason, status }) => {
+  const { t } = useTranslation();
   if (!rejectionReason || !rejectionReason.trim()) {
     return (
       <div className="stitch-ws-card" style={{ marginTop: 16 }}>
@@ -10,7 +12,7 @@ const CommentSection = ({ rejectionReason, status }) => {
               className="ri-discuss-line me-2"
               style={{ color: "#22D3EE" }}
             ></i>
-            Phản hồi từ Reviewer
+            {t("commentSection.reviewerFeedback")}
           </span>
         </div>
         <div
@@ -22,7 +24,7 @@ const CommentSection = ({ rejectionReason, status }) => {
             style={{ fontSize: 24, opacity: 0.3, marginBottom: 8 }}
           ></i>
           <span className="stitch-ws-text-muted">
-            Chưa có phản hồi nào cho ảnh này.
+            {t("commentSection.noComment")}
           </span>
         </div>
       </div>
@@ -34,7 +36,7 @@ const CommentSection = ({ rejectionReason, status }) => {
       <div className="stitch-ws-card-header">
         <span>
           <i className="ri-discuss-line me-2" style={{ color: "#22D3EE" }}></i>
-          Phản hồi từ Reviewer
+          {t("commentSection.reviewerFeedback")}
         </span>
       </div>
 

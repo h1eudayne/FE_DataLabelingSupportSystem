@@ -1,7 +1,10 @@
 import { Navbar, Container, Nav, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
-const LandingNavbar = ({ onLogin }) => (
+const LandingNavbar = ({ onLogin }) => {
+  const { t } = useTranslation();
+  return (
   <Navbar
     expand="lg"
     className="py-0 sticky-top bg-white bg-opacity-75 border-bottom"
@@ -39,19 +42,19 @@ const LandingNavbar = ({ onLogin }) => (
             className="text-dark fw-bold text-decoration-none px-4 py-2 w-100 w-lg-auto"
             onClick={onLogin}
           >
-            Đăng nhập
+            {t('landing.login')}
           </Button>
           <Button
             className="bg-primary-custom border-0 fw-bold px-4 py-2 shadow-sm w-100 w-lg-auto"
             onClick={onLogin}
             style={{ borderRadius: "12px" }}
           >
-            Bắt đầu ngay
+            {t('landing.getStarted')}
           </Button>
         </Nav>
       </Navbar.Collapse>
     </Container>
-  </Navbar>
-);
+  </Navbar>);
+};
 
 export default LandingNavbar;

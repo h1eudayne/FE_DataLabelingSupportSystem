@@ -40,7 +40,8 @@ const useSignalRRefresh = (onRefresh, options = {}) => {
 
         const message =
           notification?.Message || notification?.message || "Cập nhật mới";
-        const type = notification?.Type || notification?.type || "info";
+        const type =
+          notification?.Type || notification?.type || "info";
 
         console.log("[SignalR Refresh] Received:", message);
 
@@ -64,13 +65,14 @@ const useSignalRRefresh = (onRefresh, options = {}) => {
 
       // State change handlers
       connection.onreconnecting(() =>
-        console.warn("[SignalR Refresh] Reconnecting..."),
+        console.warn("[SignalR Refresh] Reconnecting...")
       );
       connection.onreconnected(() =>
-        console.log("[SignalR Refresh] Reconnected — refetching data..."),
+        console.log("[SignalR Refresh] Reconnected — refetching data...")
       );
       connection.onclose((err) => {
-        if (!cancelled) console.log("[SignalR Refresh] Connection closed", err);
+        if (!cancelled)
+          console.log("[SignalR Refresh] Connection closed", err);
       });
 
       try {

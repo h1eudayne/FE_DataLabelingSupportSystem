@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 import projectService from "../services/manager/project/projectService";
 import datasetService from "../services/manager/dataset/datasetService";
 import analyticsService from "../services/manager/analytics/analyticsService";
@@ -82,6 +83,7 @@ const convertToXML = (data, rootName = "export") => {
 };
 
 const ExportPage = () => {
+  const { t } = useTranslation();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [exportingId, setExportingId] = useState(null);
@@ -100,7 +102,7 @@ const ExportPage = () => {
         setProjects(list);
         checkAllEligibility(list);
       } catch {
-        toast.error("Không thể tải danh sách dự án");
+        toast.error(t("exportPage.loadError"));
       } finally {
         setLoading(false);
       }
@@ -156,14 +158,14 @@ const ExportPage = () => {
       const reasons = [];
       if (!check?.allApproved)
         reasons.push(
-          `Còn ${(check?.totalTasks || 0) - (check?.approved || 0)} task chưa Approved`,
+          t("exportPage.taskNotApprovedReason", { count: (check?.totalTasks || 0) - (check?.approved || 0) }),
         );
       if (!check?.noPendingDisputes)
         reasons.push(
-          `Còn ${check?.pendingDisputeCount || 0} dispute đang chờ xử lý`,
+          t("exportPage.disputePendingReason", { count: check?.pendingDisputeCount || 0 }),
         );
       toast.error(
-        `Không thể Export "${project.name}"! ${reasons.join(". ")}.`,
+        `${t("exportPage.cannotExport")} "${project.name}"! ${reasons.join(". ")}.`,
         { autoClose: 5000 },
       );
       return;
@@ -206,10 +208,10 @@ const ExportPage = () => {
       a.remove();
       window.URL.revokeObjectURL(url);
       toast.success(
-        `Đã xuất "${project.name}" dạng ${format.label} thành công!`,
+        t("exportPage.exportSuccess", { name: project.name, format: format.label }),
       );
     } catch {
-      toast.error("Xuất dữ liệu thất bại.");
+      toast.error(t("exportPage.exportError"));
     } finally {
       setExportingId(null);
     }
@@ -226,11 +228,11 @@ const ExportPage = () => {
       <div className="row">
         <div className="col-12">
           <div className="page-title-box d-sm-flex align-items-center justify-content-between">
-            <h4 className="mb-sm-0">Xuất dữ liệu</h4>
+            <h4 className="mb-sm-0">{t("exportPage.title")}</h4>
             <div className="page-title-right">
               <ol className="breadcrumb m-0">
-                <li className="breadcrumb-item">Quản lý</li>
-                <li className="breadcrumb-item active">Export Data</li>
+                <li className="breadcrumb-item">{t("exportPage.breadcrumbManage")}</li>
+                <li className="breadcrumb-item active">{t("exportPage.breadcrumbExport")}</li>
               </ol>
             </div>
           </div>
@@ -243,7 +245,7 @@ const ExportPage = () => {
             <input
               type="text"
               className="form-control"
-              placeholder="Tìm tên dự án..."
+              placeholder={t("exportPage.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -253,7 +255,7 @@ const ExportPage = () => {
         <div className="col-lg-4">
           <div className="d-flex align-items-center gap-2">
             <label className="form-label mb-0 fw-bold text-nowrap">
-              Định dạng:
+              {t("exportPage.format")}
             </label>
             <select
               className="form-select"
@@ -270,7 +272,7 @@ const ExportPage = () => {
         </div>
         <div className="col-lg-4 text-end d-flex align-items-center justify-content-end">
           <span className="text-muted">
-            Tổng: <b>{filteredProjects.length}</b> dự án
+            {t("exportPage.total")} <b>{filteredProjects.length}</b> {t("exportPage.projects")}
           </span>
         </div>
       </div>
@@ -279,7 +281,7 @@ const ExportPage = () => {
         {loading ? (
           <div className="col-12 text-center p-5">
             <div className="spinner-border text-primary" role="status"></div>
-            <div className="mt-2 text-muted">Đang tải danh sách...</div>
+            <div className="mt-2 text-muted">{t("exportPage.loadingList")}</div>
           </div>
         ) : filteredProjects.length > 0 ? (
           <div className="col-12">
@@ -289,14 +291,14 @@ const ExportPage = () => {
                   <table className="table table-hover align-middle mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>#</th>
-                        <th>Tên dự án</th>
-                        <th>Tổng Data</th>
-                        <th>Tiến độ</th>
-                        <th>Trạng thái</th>
-                        <th>Hạn chót</th>
-                        <th>Export Eligibility</th>
-                        <th className="text-center">Hành động</th>
+                        <th>{t("exportPage.colIndex")}</th>
+                        <th>{t("exportPage.colName")}</th>
+                        <th>{t("exportPage.colTotalData")}</th>
+                        <th>{t("exportPage.colProgress")}</th>
+                        <th>{t("exportPage.colStatus")}</th>
+                        <th>{t("exportPage.colDeadline")}</th>
+                        <th>{t("exportPage.colEligibility")}</th>
+                        <th className="text-center">{t("exportPage.colAction")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -335,7 +337,7 @@ const ExportPage = () => {
                             <span
                               className={`badge ${project.status === "Expired" ? "bg-danger" : "bg-success"}`}
                             >
-                              {project.status || "Active"}
+                              {project.status === "Expired" ? t("statusCommon.expired") : t("statusCommon.active")}
                             </span>
                           </td>
                           <td className="text-muted small">
@@ -343,7 +345,7 @@ const ExportPage = () => {
                               ? new Date(project.deadline).toLocaleDateString(
                                   "vi-VN",
                                 )
-                              : "N/A"}
+                              : t("statusCommon.notAvailable")}
                           </td>
                           <td>
                             {(() => {
@@ -352,7 +354,7 @@ const ExportPage = () => {
                                 return (
                                   <span className="text-muted small">
                                     <span className="spinner-border spinner-border-sm me-1"></span>
-                                    Đang kiểm tra...
+                                    {t("exportPage.checking")}
                                   </span>
                                 );
                               }
@@ -360,7 +362,7 @@ const ExportPage = () => {
                                 return (
                                   <span className="badge bg-success-subtle text-success">
                                     <i className="ri-checkbox-circle-fill me-1"></i>
-                                    Sẵn sàng
+                                    {t("exportPage.ready")}
                                   </span>
                                 );
                               }
@@ -371,14 +373,13 @@ const ExportPage = () => {
                                       <i className="ri-close-circle-fill me-1"></i>
                                       {(check.totalTasks || 0) -
                                         (check.approved || 0)}{" "}
-                                      task chưa Approved
+                                      {t("exportPage.taskNotApproved")}
                                     </small>
                                   )}
                                   {!check.noPendingDisputes && (
                                     <small className="text-danger">
                                       <i className="ri-close-circle-fill me-1"></i>
-                                      {check.pendingDisputeCount} dispute
-                                      pending
+                                      {check.pendingDisputeCount} {t("exportPage.disputePending")}
                                     </small>
                                   )}
                                 </div>
@@ -396,14 +397,14 @@ const ExportPage = () => {
                               }
                               title={
                                 !eligibility[project.id]?.ready
-                                  ? "Chưa đủ điều kiện Export (BR-MNG-21)"
+                                  ? t("exportPage.notEligible")
                                   : `Export ${currentFormat?.label}`
                               }
                             >
                               {exportingId === project.id ? (
                                 <>
                                   <span className="spinner-border spinner-border-sm me-1"></span>
-                                  Đang xuất...
+                                  {t("exportPage.exporting")}
                                 </>
                               ) : !eligibility[project.id]?.ready ? (
                                 <>
@@ -431,9 +432,9 @@ const ExportPage = () => {
             <div className="card py-5 text-center">
               <div className="card-body">
                 <i className="ri-file-download-line display-4 text-muted"></i>
-                <h5 className="mt-3">Không có dự án nào</h5>
+                <h5 className="mt-3">{t("exportPage.noProjects")}</h5>
                 <p className="text-muted">
-                  Bạn chưa có dự án nào để xuất dữ liệu.
+                  {t("exportPage.noProjectsHint")}
                 </p>
               </div>
             </div>

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import projectService from "../../../services/manager/project/projectService";
 import { userService } from "../../../services/manager/project/userService";
 import taskService from "../../../services/manager/project/taskService";
 import Swal from "sweetalert2";
 
 const ProjectAssignTask = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
@@ -44,28 +46,28 @@ const ProjectAssignTask = () => {
   const handleAssign = async () => {
     if (!projectInfo?.labels || projectInfo.labels.length === 0) {
       return Swal.fire(
-        "Chưa đủ điều kiện!",
-        "Dự án chưa định nghĩa nhãn (Label Classes). Vui lòng thêm nhãn trước khi phân công công việc (BR-MNG-03).",
+        t("projectAssign.noLabelsError"),
+        t("projectAssign.noLabelsErrorDesc"),
         "error",
       );
     }
     if (!selectedAnnotator) {
-      return Swal.fire("Cảnh báo", "Vui lòng chọn Annotator!", "warning");
+      return Swal.fire(t("projectAssign.warning"), t("projectAssign.selectAnnotatorWarn"), "warning");
     }
     if (selectedAnnotator === managerId) {
       return Swal.fire(
-        "Không được phép!",
-        "Manager không được tự assign task cho bản thân. Vai trò Manager chỉ tập trung vào quản lý và giám sát.",
+        t("projectAssign.selfAssignError"),
+        t("projectAssign.managerSelfAssign"),
         "error",
       );
     }
     if (!selectedReviewer) {
-      return Swal.fire("Cảnh báo", "Vui lòng chọn Reviewer!", "warning");
+      return Swal.fire(t("projectAssign.warning"), t("projectAssign.selectReviewerWarn"), "warning");
     }
     if (!quantity || Number(quantity) <= 0) {
       return Swal.fire(
-        "Cảnh báo",
-        "Vui lòng nhập số lượng ảnh hợp lệ!",
+        t("projectAssign.warning"),
+        t("projectAssign.invalidQuantity"),
         "warning",
       );
     }
@@ -79,13 +81,13 @@ const ProjectAssignTask = () => {
         reviewerId: String(selectedReviewer),
       });
 
-      Swal.fire("Thành công!", "Giao việc thành công!", "success");
+      Swal.fire(t("projectAssign.assignSuccess"), t("projectAssign.assignSuccessMsg"), "success");
       navigate("/projects-all-projects");
     } catch (error) {
-      console.error("Chi tiết lỗi API:", error.response?.data);
+      console.error("API error details:", error.response?.data);
       Swal.fire(
-        "Lỗi!",
-        error.response?.data?.message || "Không thể giao việc",
+        t("projectAssign.assignError"),
+        error.response?.data?.message || t("projectAssign.assignErrorMsg"),
         "error",
       );
     } finally {
@@ -94,7 +96,7 @@ const ProjectAssignTask = () => {
   };
 
   if (loading && !projectInfo)
-    return <div className="p-5 text-center">Đang tải...</div>;
+    return <div className="p-5 text-center">{t("projectAssign.loading")}</div>;
 
   const totalItems = projectInfo?.totalDataItems ?? 0;
   const assignedItems =
@@ -107,7 +109,7 @@ const ProjectAssignTask = () => {
     <>
       <div className="row">
         <div className="col-12">
-          <h4 className="mb-3">Phân công: {projectInfo?.name}</h4>
+          <h4 className="mb-3">{t("projectAssign.title")} {projectInfo?.name}</h4>
         </div>
       </div>
 
@@ -115,24 +117,24 @@ const ProjectAssignTask = () => {
         <div className="col-lg-8">
           <div className="card shadow-sm">
             <div className="card-header bg-light">
-              <h6 className="card-title mb-0">Thông tin dự án</h6>
+              <h6 className="card-title mb-0">{t("projectAssign.projectInfo")}</h6>
             </div>
             <div className="card-body">
               <div className="row mb-3">
                 <div className="col-md-3">
-                  <p className="text-muted mb-1 small">Tổng ảnh</p>
+                  <p className="text-muted mb-1 small">{t("projectAssign.totalImages")}</p>
                   <h5 className="text-primary">{totalItems}</h5>
                 </div>
                 <div className="col-md-3">
-                  <p className="text-muted mb-1 small">Đã phân công</p>
+                  <p className="text-muted mb-1 small">{t("projectAssign.assigned")}</p>
                   <h5 className="text-warning">{assignedItems}</h5>
                 </div>
                 <div className="col-md-3">
-                  <p className="text-muted mb-1 small">Đã duyệt (Approved)</p>
+                  <p className="text-muted mb-1 small">{t("projectAssign.approved")}</p>
                   <h5 className="text-info">{processedItems}</h5>
                 </div>
                 <div className="col-md-3">
-                  <p className="text-muted mb-1 small">Còn trống (New)</p>
+                  <p className="text-muted mb-1 small">{t("projectAssign.available")}</p>
                   <h5
                     className={
                       availableItems > 0 ? "text-success" : "text-danger"
@@ -147,8 +149,7 @@ const ProjectAssignTask = () => {
               {(!projectInfo?.labels || projectInfo.labels.length === 0) && (
                 <div className="alert alert-danger py-2 small mb-3">
                   <i className="ri-error-warning-line me-1"></i>
-                  <strong>BR-MNG-03:</strong> Dự án chưa định nghĩa nhãn (Label
-                  Classes). Không thể phân công công việc khi chưa có nhãn.
+                  <strong>BR-MNG-03:</strong> {t("projectAssign.noLabelsWarning")}
                 </div>
               )}
 
@@ -156,21 +157,19 @@ const ProjectAssignTask = () => {
               {availableItems === 0 && totalItems > 0 && (
                 <div className="alert alert-warning py-2 small mb-3">
                   <i className="ri-information-line me-1"></i>
-                  Tất cả ảnh đã được phân công hoặc duyệt. Dữ liệu đã duyệt
-                  (Approved) không thể giao lại <strong>(BR-MNG-08)</strong>.
+                  {t("projectAssign.allAssignedWarning")} <strong>(BR-MNG-08)</strong>.
                 </div>
               )}
               {processedItems > 0 && availableItems > 0 && (
                 <div className="alert alert-info py-2 small mb-3">
                   <i className="ri-shield-check-line me-1"></i>
-                  <strong>{processedItems}</strong> ảnh đã được Approved và
-                  không thể phân công lại. Còn <strong>{availableItems}</strong>{" "}
-                  ảnh có thể giao.
+                  <strong>{processedItems}</strong> {t("projectAssign.partialApprovedInfo")} <strong>{availableItems}</strong>{" "}
+                  {t("projectAssign.canAssign")}
                 </div>
               )}
 
               <div className="mb-3">
-                <h6 className="fw-bold mb-2">Nhãn dự án:</h6>
+                <h6 className="fw-bold mb-2">{t("projectAssign.projectLabels")}</h6>
                 <div className="d-flex flex-wrap gap-2">
                   {projectInfo?.labels?.map((l) => (
                     <span
@@ -190,15 +189,15 @@ const ProjectAssignTask = () => {
 
               {projectInfo?.members?.length > 0 && (
                 <div>
-                  <h6 className="fw-bold mb-2">Đã phân công:</h6>
+                  <h6 className="fw-bold mb-2">{t("projectAssign.assignedMembers")}</h6>
                   <div className="table-responsive">
                     <table className="table table-sm table-bordered">
                       <thead className="table-light">
                         <tr>
-                          <th>Tên</th>
-                          <th>Vai trò</th>
-                          <th>Tasks</th>
-                          <th>Hoàn thành</th>
+                          <th>{t("projectAssign.colName")}</th>
+                          <th>{t("projectAssign.colRole")}</th>
+                          <th>{t("projectAssign.colTasks")}</th>
+                          <th>{t("projectAssign.colCompleted")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -225,14 +224,14 @@ const ProjectAssignTask = () => {
           <div className="card mt-3 shadow-sm border-0">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <h6 className="fw-bold mb-0">Hướng dẫn (Guideline):</h6>
+                <h6 className="fw-bold mb-0">{t("projectAssign.guideline")}</h6>
                 <span className="badge bg-soft-primary text-primary fs-12">
                   v{projectInfo?.labels?.length || 0} —{" "}
-                  {projectInfo?.labels?.length || 0} nhãn
+                  {projectInfo?.labels?.length || 0} {t("projectAssign.labels")}
                 </span>
               </div>
               <div className="p-3 bg-light rounded text-muted">
-                {projectInfo?.description || "Không có hướng dẫn."}
+                {projectInfo?.description || t("projectAssign.noGuideline")}
               </div>
             </div>
           </div>
@@ -242,35 +241,33 @@ const ProjectAssignTask = () => {
           <div className="card shadow-sm">
             <div className="card-body">
               <h6 className="fw-bold mb-3 text-uppercase fs-12">
-                Giao việc mới
+                {t("projectAssign.newAssignment")}
               </h6>
 
               <div className="alert alert-info py-2 small mb-3">
                 <i className="ri-shield-user-line me-1"></i>
-                Chỉ Manager mới có quyền phân công.
+                {t("projectAssign.onlyManager")}
               </div>
 
               <div className="alert alert-danger py-2 small mb-3">
                 <i className="ri-forbid-line me-1"></i>
-                Manager không được tự assign task cho bản thân. Vai trò Manager
-                chỉ tập trung vào quản lý và giám sát.
+                {t("projectAssign.managerSelfAssign")}
               </div>
 
               <div className="alert alert-light border py-2 small mb-3">
                 <i className="ri-group-line me-1"></i>
-                Cùng 1 ảnh có thể giao cho nhiều Annotator để đối chiếu chất
-                lượng.
+                {t("projectAssign.multiAssign")}
               </div>
 
               <div className="mb-3">
-                <label className="form-label fw-bold">Chọn Annotator *</label>
+                <label className="form-label fw-bold">{t("projectAssign.selectAnnotator")}</label>
                 <select
                   className="form-select"
                   value={selectedAnnotator}
                   onChange={(e) => setSelectedAnnotator(e.target.value)}
                 >
                   <option value="">
-                    -- Chọn Annotator ({annotators.length}) --
+                    {t("projectAssign.selectAnnotatorOption")} ({annotators.length}) --
                   </option>
                   {annotators.map((u) => (
                     <option key={u.id} value={u.id}>
@@ -281,14 +278,14 @@ const ProjectAssignTask = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label fw-bold">Chọn Reviewer *</label>
+                <label className="form-label fw-bold">{t("projectAssign.selectReviewer")}</label>
                 <select
                   className="form-select"
                   value={selectedReviewer}
                   onChange={(e) => setSelectedReviewer(e.target.value)}
                 >
                   <option value="">
-                    -- Chọn Reviewer ({reviewers.length}) --
+                    {t("projectAssign.selectReviewerOption")} ({reviewers.length}) --
                   </option>
                   {reviewers.map((u) => (
                     <option key={u.id} value={u.id}>
@@ -300,19 +297,19 @@ const ProjectAssignTask = () => {
 
               <div className="mb-4">
                 <label className="form-label fw-bold">
-                  Số lượng ảnh giao *
+                  {t("projectAssign.imageQuantity")}
                 </label>
                 <input
                   type="number"
                   className="form-control"
                   min="1"
                   max={availableItems}
-                  placeholder={`Tối đa: ${availableItems}`}
+                  placeholder={`${t("projectAssign.maxPlaceholder")} ${availableItems}`}
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                 />
                 <small className="text-muted">
-                  Có {availableItems} ảnh chưa phân công
+                  {t("projectAssign.unassignedCount", { count: availableItems })}
                 </small>
               </div>
 
@@ -325,7 +322,7 @@ const ProjectAssignTask = () => {
                   !projectInfo?.labels?.length
                 }
               >
-                {loading ? "Đang xử lý..." : "XÁC NHẬN GIAO VIỆC"}
+                {loading ? t("projectAssign.processingBtn") : t("projectAssign.submitBtn")}
               </button>
             </div>
           </div>

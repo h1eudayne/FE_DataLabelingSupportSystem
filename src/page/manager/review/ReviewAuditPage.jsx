@@ -24,8 +24,10 @@ import { useSelector } from "react-redux";
 import projectService from "../../../services/manager/project/projectService";
 import reviewAuditService from "../../../services/manager/review/reviewAuditService";
 import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
+import { useTranslation } from "react-i18next";
 
 const ReviewAuditPage = () => {
+  const { t } = useTranslation();
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [tasks, setTasks] = useState([]);
@@ -71,7 +73,7 @@ const ReviewAuditPage = () => {
         const res = await projectService.getManagerProjects(managerId);
         setProjects(res.data || []);
       } catch {
-        toast.error("Không thể tải danh sách dự án");
+        toast.error(t("reviewAudit.loadError"));
       }
     };
     fetchProjects();
@@ -93,7 +95,7 @@ const ReviewAuditPage = () => {
       setTasks(resTasks.data || []);
       setProjectDetail(resDetail.data || null);
     } catch {
-      toast.error("Không thể tải danh sách review tasks");
+      toast.error(t("reviewAudit.loadTaskError"));
     } finally {
       setLoading(false);
     }
@@ -103,7 +105,7 @@ const ReviewAuditPage = () => {
   useSignalRRefresh(
     useCallback(() => {
       if (selectedProjectId) handleProjectChange(selectedProjectId);
-    }, [selectedProjectId, handleProjectChange]),
+    }, [selectedProjectId, handleProjectChange])
   );
 
   const openAuditModal = (task) => {
@@ -119,7 +121,7 @@ const ReviewAuditPage = () => {
         t.managerAuditDecision === undefined || t.managerAuditDecision === null,
     );
     if (unaudited.length === 0) {
-      toast.info("Tất cả task đã được audit!");
+      toast.info(t("reviewAudit.allAudited"));
       return;
     }
     const randomTask = unaudited[Math.floor(Math.random() * unaudited.length)];
@@ -130,7 +132,7 @@ const ReviewAuditPage = () => {
     if (!selectedTask) return;
     if (!auditComment.trim()) {
       toast.warning(
-        "Vui lòng nhập nhận xét audit dựa trên Guideline (BR-MNG-15). Không được để trống.",
+        t("reviewAudit.auditCommentWarning"),
       );
       return;
     }
@@ -141,11 +143,11 @@ const ReviewAuditPage = () => {
         isCorrectDecision,
         auditComment,
       });
-      toast.success("Audit đã được ghi nhận thành công!");
+      toast.success(t("reviewAudit.auditSuccess"));
       setModalOpen(false);
       handleProjectChange(selectedProjectId);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Không thể ghi nhận audit");
+      toast.error(err.response?.data?.message || t("reviewAudit.auditError"));
     } finally {
       setSubmitting(false);
     }
@@ -153,10 +155,10 @@ const ReviewAuditPage = () => {
 
   const getDecisionBadge = (task) => {
     if (task.isApproved === true)
-      return <Badge color="success">Approved</Badge>;
+      return <Badge color="success">{t('statusCommon.approved')}</Badge>;
     if (task.isApproved === false)
-      return <Badge color="danger">Rejected</Badge>;
-    return <Badge color="warning">Pending</Badge>;
+      return <Badge color="danger">{t('statusCommon.rejected')}</Badge>;
+    return <Badge color="warning">{t('statusCommon.pending')}</Badge>;
   };
 
   const guidelineVersion = useMemo(() => {
@@ -170,7 +172,7 @@ const ReviewAuditPage = () => {
       version: labelCount,
       date: updatedDate
         ? new Date(updatedDate).toLocaleDateString("vi-VN")
-        : "N/A",
+        : t('statusCommon.notAvailable'),
       labelCount,
     };
   }, [projectDetail]);
@@ -182,7 +184,7 @@ const ReviewAuditPage = () => {
           <div className="page-title-box d-sm-flex align-items-center justify-content-between">
             <h4 className="mb-sm-0 text-uppercase fw-bold text-primary">
               <i className="ri-shield-check-line me-2"></i>
-              Review Audit — Sampling
+              {t("reviewAudit.title")}
             </h4>
           </div>
         </Col>
@@ -192,24 +194,20 @@ const ReviewAuditPage = () => {
         <div className="d-flex align-items-center">
           <i className="ri-information-line fs-4 me-2"></i>
           <div>
-            <strong>Chế độ Sampling</strong> — Manager không chấm toàn bộ bài,
-            mà chỉ chấm <strong>xác suất (sampling)</strong> để đánh giá chất
-            lượng Reviewer. Kết quả audit được dùng để tính{" "}
-            <strong>Override Rate</strong> và{" "}
-            <strong>RQS (Reviewer Quality Score)</strong>.
+            <strong>{t("reviewAudit.samplingInfo")}</strong> — {t("reviewAudit.samplingDesc")}
           </div>
         </div>
       </Alert>
 
       <Row className="mb-3">
         <Col md={4}>
-          <Label className="fw-semibold">Chọn dự án</Label>
+          <Label className="fw-semibold">{t("reviewAudit.selectProjectLabel")}</Label>
           <Input
             type="select"
             value={selectedProjectId}
             onChange={(e) => handleProjectChange(e.target.value)}
           >
-            <option value="">-- Chọn dự án --</option>
+            <option value="">{t("reviewAudit.selectProject")}</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -225,7 +223,7 @@ const ReviewAuditPage = () => {
               onClick={handleRandomPick}
             >
               <i className="ri-shuffle-line me-1"></i>
-              Random Pick (Chọn ngẫu nhiên)
+              {t("reviewAudit.randomPick")}
             </Button>
           </Col>
         )}
@@ -236,7 +234,7 @@ const ReviewAuditPage = () => {
           <Col md={3}>
             <Card className="shadow-sm border-0 text-center">
               <CardBody className="py-3">
-                <div className="text-muted small mb-1">Tổng Reviewed</div>
+                <div className="text-muted small mb-1">{t("reviewAudit.totalReviewed")}</div>
                 <h4 className="mb-0 text-primary">{samplingStats.total}</h4>
               </CardBody>
             </Card>
@@ -244,7 +242,7 @@ const ReviewAuditPage = () => {
           <Col md={3}>
             <Card className="shadow-sm border-0 text-center">
               <CardBody className="py-3">
-                <div className="text-muted small mb-1">Đã Audit</div>
+                <div className="text-muted small mb-1">{t("reviewAudit.audited")}</div>
                 <h4 className="mb-0 text-success">{samplingStats.audited}</h4>
               </CardBody>
             </Card>
@@ -252,7 +250,7 @@ const ReviewAuditPage = () => {
           <Col md={3}>
             <Card className="shadow-sm border-0 text-center">
               <CardBody className="py-3">
-                <div className="text-muted small mb-1">Chưa Audit</div>
+                <div className="text-muted small mb-1">{t("reviewAudit.notAudited")}</div>
                 <h4 className="mb-0 text-warning">
                   {samplingStats.notAudited}
                 </h4>
@@ -262,7 +260,7 @@ const ReviewAuditPage = () => {
           <Col md={3}>
             <Card className="shadow-sm border-0 text-center">
               <CardBody className="py-3">
-                <div className="text-muted small mb-1">Tỷ lệ Sampling</div>
+                <div className="text-muted small mb-1">{t("reviewAudit.samplingRate")}</div>
                 <h4 className="mb-0 text-info">
                   {samplingStats.samplingRate}%
                 </h4>
@@ -286,7 +284,7 @@ const ReviewAuditPage = () => {
               <CardBody className="py-3">
                 <div className="d-flex align-items-center mb-2">
                   <i className="ri-bar-chart-grouped-line fs-4 text-warning me-2"></i>
-                  <h6 className="mb-0 fw-bold">Override Rate (BR-MNG-17)</h6>
+                  <h6 className="mb-0 fw-bold">{t("reviewAudit.overrideRate")}</h6>
                 </div>
                 <div className="d-flex align-items-baseline gap-2">
                   <h3
@@ -295,8 +293,7 @@ const ReviewAuditPage = () => {
                     {reviewerStats.overrideRate}%
                   </h3>
                   <small className="text-muted">
-                    ({reviewerStats.overridden}/{reviewerStats.totalAudited} bị
-                    lật)
+                    ({reviewerStats.overridden}/{reviewerStats.totalAudited} {t("reviewAudit.overridden")})
                   </small>
                 </div>
                 <Progress
@@ -313,10 +310,10 @@ const ReviewAuditPage = () => {
                 />
                 <small className="text-muted d-block mt-2">
                   {Number(reviewerStats.overrideRate) > 30
-                    ? "⚠️ Tỷ lệ Override cao — Cần đánh giá lại Reviewer"
+                    ? t("reviewAudit.overrideHigh")
                     : Number(reviewerStats.overrideRate) > 15
-                      ? "⚠ Tỷ lệ Override trung bình — Cần theo dõi thêm"
-                      : "✅ Tỷ lệ Override thấp — Reviewer đang làm tốt"}
+                      ? t("reviewAudit.overrideMedium")
+                      : t("reviewAudit.overrideLow")}
                 </small>
               </CardBody>
             </Card>
@@ -326,12 +323,12 @@ const ReviewAuditPage = () => {
               <CardBody className="py-3">
                 <div className="d-flex align-items-center mb-2">
                   <i className="ri-thumb-up-line fs-4 text-success me-2"></i>
-                  <h6 className="mb-0 fw-bold">Đồng ý (Correct)</h6>
+                  <h6 className="mb-0 fw-bold">{t("reviewAudit.agreeCorrect")}</h6>
                 </div>
                 <h3 className="mb-0 text-success">
                   {reviewerStats.totalAudited - reviewerStats.overridden}
                 </h3>
-                <small className="text-muted">Reviewer đánh giá đúng</small>
+                <small className="text-muted">{t("reviewAudit.reviewerCorrect")}</small>
               </CardBody>
             </Card>
           </Col>
@@ -340,10 +337,10 @@ const ReviewAuditPage = () => {
               <CardBody className="py-3">
                 <div className="d-flex align-items-center mb-2">
                   <i className="ri-thumb-down-line fs-4 text-danger me-2"></i>
-                  <h6 className="mb-0 fw-bold">Bị Lật (Override)</h6>
+                  <h6 className="mb-0 fw-bold">{t("reviewAudit.overrideLabel")}</h6>
                 </div>
                 <h3 className="mb-0 text-danger">{reviewerStats.overridden}</h3>
-                <small className="text-muted">Manager không đồng ý</small>
+                <small className="text-muted">{t("reviewAudit.managerDisagree")}</small>
               </CardBody>
             </Card>
           </Col>
@@ -353,7 +350,7 @@ const ReviewAuditPage = () => {
       {loading ? (
         <div className="text-center py-5">
           <Spinner color="primary" />
-          <p className="mt-2 text-muted">Đang tải dữ liệu...</p>
+          <p className="mt-2 text-muted">{t("reviewAudit.loadingData")}</p>
         </div>
       ) : selectedProjectId ? (
         <Row>
@@ -361,17 +358,17 @@ const ReviewAuditPage = () => {
             <Card className="shadow-sm border-0">
               <CardHeader className="bg-white border-bottom d-flex justify-content-between align-items-center">
                 <h5 className="mb-0">
-                  Danh sách Reviewed Tasks ({tasks.length})
+                  {t("reviewAudit.reviewedTaskList")} ({tasks.length})
                 </h5>
                 <Badge color="soft-info" className="fs-12">
                   <i className="ri-bar-chart-line me-1"></i>
-                  Sampling: {samplingStats.audited}/{samplingStats.total}
+                  {t('statusCommon.sampling')}: {samplingStats.audited}/{samplingStats.total}
                 </Badge>
               </CardHeader>
               <CardBody>
                 {tasks.length === 0 ? (
                   <Alert color="info" className="text-center">
-                    Không có task nào đã được review cho dự án này.
+                    {t("reviewAudit.noTasks")}
                   </Alert>
                 ) : (
                   <div className="table-responsive">
@@ -379,12 +376,12 @@ const ReviewAuditPage = () => {
                       <thead className="table-light">
                         <tr>
                           <th>#</th>
-                          <th>Assignment ID</th>
-                          <th>Annotator</th>
-                          <th>Reviewer Decision</th>
-                          <th>Comment</th>
-                          <th>Audit Status</th>
-                          <th>Hành động</th>
+                          <th>{t("reviewAudit.colAssignmentId")}</th>
+                          <th>{t("reviewAudit.colAnnotator")}</th>
+                          <th>{t("reviewAudit.colReviewerDecision")}</th>
+                          <th>{t("reviewAudit.colComment")}</th>
+                          <th>{t("reviewAudit.colAuditStatus")}</th>
+                          <th>{t("reviewAudit.colAction")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -411,12 +408,11 @@ const ReviewAuditPage = () => {
                               <td>
                                 {isAudited ? (
                                   <Badge color="success">
-                                    <i className="ri-check-line me-1"></i>Đã
-                                    audit
+                                    <i className="ri-check-line me-1"></i>{t("reviewAudit.statusAudited")}
                                   </Badge>
                                 ) : (
                                   <Badge color="light" className="text-muted">
-                                    Chưa audit
+                                    {t("reviewAudit.statusNotAudited")}
                                   </Badge>
                                 )}
                               </td>
@@ -428,7 +424,7 @@ const ReviewAuditPage = () => {
                                   onClick={() => openAuditModal(t)}
                                 >
                                   <i className="ri-shield-check-line me-1"></i>
-                                  Audit
+                                  {t("reviewAudit.auditBtn")}
                                 </Button>
                               </td>
                             </tr>
@@ -445,8 +441,8 @@ const ReviewAuditPage = () => {
       ) : (
         <div className="text-center py-5 text-muted">
           <i className="ri-shield-check-line display-1 opacity-25"></i>
-          <h5 className="mt-3">Chưa chọn dự án</h5>
-          <p>Chọn một dự án để xem danh sách review cần audit</p>
+          <h5 className="mt-3">{t("reviewAudit.noProjectSelected")}</h5>
+          <p>{t("reviewAudit.noProjectHint")}</p>
         </div>
       )}
 
@@ -458,31 +454,31 @@ const ReviewAuditPage = () => {
       >
         <ModalHeader toggle={() => setModalOpen(false)}>
           <i className="ri-shield-check-line me-2 text-info"></i>
-          Audit Review — Assignment #
+          {t("reviewAudit.modalTitle")} #
           {selectedTask?.assignmentId || selectedTask?.id}
         </ModalHeader>
         <ModalBody>
           {selectedTask && (
             <>
               <div className="mb-3 p-3 bg-light rounded">
-                <h6 className="fw-bold mb-2">Thông tin Review</h6>
+                <h6 className="fw-bold mb-2">{t("reviewAudit.reviewInfo")}</h6>
                 <Row>
                   <Col md={6}>
                     <p className="mb-1">
-                      <strong>Reviewer Decision:</strong>{" "}
+                      <strong>{t("reviewAudit.reviewerDecisionLabel")}</strong>{" "}
                       {getDecisionBadge(selectedTask)}
                     </p>
                   </Col>
                   <Col md={6}>
                     <p className="mb-1">
-                      <strong>Error Category:</strong>{" "}
-                      {selectedTask.errorCategory || "N/A"}
+                      <strong>{t("reviewAudit.errorCategory")}</strong>{" "}
+                      {selectedTask.errorCategory || t('statusCommon.notAvailable')}
                     </p>
                   </Col>
                 </Row>
                 {selectedTask.comment && (
                   <p className="mb-0 mt-2">
-                    <strong>Reviewer Comment:</strong> {selectedTask.comment}
+                    <strong>{t("reviewAudit.reviewerComment")}</strong> {selectedTask.comment}
                   </p>
                 )}
               </div>
@@ -503,13 +499,13 @@ const ReviewAuditPage = () => {
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <h6 className="fw-bold mb-0 text-info">
                       <i className="ri-book-read-line me-1"></i>
-                      Guideline tham khảo
+                      {t("reviewAudit.guidelineRef")}
                     </h6>
                     {guidelineVersion && (
                       <Badge color="soft-primary" className="fs-12">
-                        v{guidelineVersion.version} — Cập nhật:{" "}
+                        v{guidelineVersion.version} — {t("reviewAudit.guidelineVersion")}{" "}
                         {guidelineVersion.date} — {guidelineVersion.labelCount}{" "}
-                        nhãn
+                        {t("reviewAudit.labelCount")}
                       </Badge>
                     )}
                   </div>
@@ -517,9 +513,9 @@ const ReviewAuditPage = () => {
                     <Table size="sm" className="mb-0" bordered>
                       <thead className="table-light">
                         <tr>
-                          <th>Nhãn</th>
-                          <th>Màu</th>
-                          <th>Hướng dẫn</th>
+                          <th>{t("reviewAudit.labelCol")}</th>
+                          <th>{t("reviewAudit.colorCol")}</th>
+                          <th>{t("reviewAudit.guideCol")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -547,7 +543,7 @@ const ReviewAuditPage = () => {
 
               <FormGroup>
                 <Label className="fw-semibold">
-                  Bạn có đồng ý với quyết định của Reviewer?
+                  {t("reviewAudit.agreeQuestion")}
                 </Label>
                 <div className="d-flex gap-3">
                   <FormGroup check>
@@ -559,7 +555,7 @@ const ReviewAuditPage = () => {
                     />
                     <Label check className="text-success fw-semibold">
                       <i className="ri-thumb-up-line me-1"></i>
-                      Đồng ý (Correct)
+                      {t("reviewAudit.agreeLabel")}
                     </Label>
                   </FormGroup>
                   <FormGroup check>
@@ -571,7 +567,7 @@ const ReviewAuditPage = () => {
                     />
                     <Label check className="text-danger fw-semibold">
                       <i className="ri-thumb-down-line me-1"></i>
-                      Không đồng ý (Incorrect — Override)
+                      {t("reviewAudit.disagreeLabel")}
                     </Label>
                   </FormGroup>
                 </div>
@@ -579,9 +575,9 @@ const ReviewAuditPage = () => {
 
               <FormGroup>
                 <Label className="fw-semibold">
-                  Nhận xét Audit (dựa trên Guideline) *
+                  {t("reviewAudit.auditComment")}
                   <small className="text-danger ms-1">
-                    (Bắt buộc - BR-MNG-15)
+                    {t("reviewAudit.auditRequired")}
                   </small>
                 </Label>
                 <Input
@@ -589,13 +585,13 @@ const ReviewAuditPage = () => {
                   rows="3"
                   value={auditComment}
                   onChange={(e) => setAuditComment(e.target.value)}
-                  placeholder="Nhập nhận xét audit (THAM KHẢO Guideline ở trên). Mọi quyết định phải dựa trên Guideline chính thức..."
+                  placeholder={t("reviewAudit.auditPlaceholder")}
                   className={!auditComment.trim() ? "border-danger" : ""}
                 />
                 {!auditComment.trim() && (
                   <small className="text-danger">
                     <i className="ri-error-warning-line me-1"></i>
-                    Bắt buộc phải nhập nhận xét dựa trên Guideline.
+                    {t("reviewAudit.auditCommentRequired")}
                   </small>
                 )}
               </FormGroup>
@@ -604,7 +600,7 @@ const ReviewAuditPage = () => {
         </ModalBody>
         <ModalFooter>
           <Button color="light" onClick={() => setModalOpen(false)}>
-            Hủy
+            {t("reviewAudit.cancel")}
           </Button>
           <Button
             color="info"
@@ -616,7 +612,7 @@ const ReviewAuditPage = () => {
             ) : (
               <i className="ri-check-double-line me-1"></i>
             )}
-            Ghi nhận Audit
+            {t("reviewAudit.confirmAudit")}
           </Button>
         </ModalFooter>
       </Modal>

@@ -1,10 +1,13 @@
+import { useTranslation } from "react-i18next";
+
 const AuthSocialLogin = () => {
+  const { t } = useTranslation();
   return (
     <div className="mt-4 text-center">
       <div className="position-relative mb-4">
         <hr className="text-muted opacity-25" />
         <span className="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small fw-bold uppercase">
-          Hoặc
+          {t('authSocial.or')}
         </span>
       </div>
       <div className="d-flex justify-content-center gap-2">

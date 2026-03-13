@@ -14,6 +14,7 @@ import "remixicon/fonts/remixicon.css";
 import App from "./App.jsx";
 import store from "./store/store.jsx";
 
+import "./i18n";
 import "./index.css";
 
 const queryClient = new QueryClient({

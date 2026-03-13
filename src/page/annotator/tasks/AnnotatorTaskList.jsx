@@ -3,8 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import taskService from "../../../services/annotator/labeling/taskService";
 import { toast } from "react-toastify";
 import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
+import { useTranslation } from "react-i18next";
 
 const AnnotatorTaskList = () => {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -33,7 +35,7 @@ const AnnotatorTaskList = () => {
       setTasks(projects);
     } catch (err) {
       console.error(err);
-      toast.error("Không thể tải danh sách nhiệm vụ");
+      toast.error(t("annotatorTasks.loadError"));
     } finally {
       setLoading(false);
     }
@@ -72,7 +74,7 @@ const AnnotatorTaskList = () => {
 
   return (
     <div className="container-fluid">
-      <h4 className="fw-bold mb-3">Nhiệm vụ gán nhãn của tôi</h4>
+      <h4 className="fw-bold mb-3">{t("annotatorTasks.title")}</h4>
 
       <div className="row">
         {tasks.map((task) => (
@@ -102,12 +104,12 @@ const AnnotatorTaskList = () => {
                 </h5>
 
                 <p className="text-muted small mb-2">
-                  {task.completedImages}/{task.totalImages} ảnh hoàn thành
+                  {task.completedImages}/{task.totalImages} {t("annotatorTasks.imagesCompleted")}
                 </p>
 
                 <div className="mb-3">
                   <div className="d-flex justify-content-between small mb-1">
-                    <span>Tiến độ</span>
+                    <span>{t("annotatorTasks.progress")}</span>
                     <span>{task.progress}%</span>
                   </div>
                   <div className="progress" style={{ height: 6 }}>
@@ -133,10 +135,10 @@ const AnnotatorTaskList = () => {
                   }
                 >
                   {task.status === "Completed" && task.progress >= 100
-                    ? "Đã hoàn thành"
+                    ? t("annotatorTasks.done")
                     : task.status === "Completed"
-                      ? "Xem lại"
-                      : "Tiếp tục"}
+                      ? t("annotatorTasks.review")
+                      : t("annotatorTasks.continue")}
                 </button>
               </div>
             </div>

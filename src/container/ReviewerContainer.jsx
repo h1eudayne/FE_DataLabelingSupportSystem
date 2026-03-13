@@ -16,20 +16,15 @@ import CommonHeader from "../components/home/CommonHeader";
 import projectService from "../services/reviewer/project.service";
 import { useNavigate } from "react-router-dom";
 import useSignalRRefresh from "../hooks/useSignalRRefresh";
+import { useTranslation } from "react-i18next";
 
 const ReviewerContainer = () => {
+  const { t } = useTranslation();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   const navigate = useNavigate();
-
-  const pendingProjectsCount = projects.filter(
-    (p) => p.progressPercent < 100,
-  ).length;
-  const completedProjectsCount = projects.filter(
-    (p) => p.progressPercent >= 100,
-  ).length;
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -38,7 +33,7 @@ const ReviewerContainer = () => {
 
       setProjects(res.data || []);
     } catch (err) {
-      console.error("Lỗi tải dự án:", err);
+      console.error("Error loading projects:", err);
     } finally {
       setLoading(false);
     }
@@ -60,19 +55,16 @@ const ReviewerContainer = () => {
   const getReviewWorkspace = async (projectId) => {
     try {
       const res = await projectService.getReviewWorkspace(projectId);
-      if (res.data && res.data.length > 0) {
-        const allTasks = res.data;
-        const firstTask = allTasks[0];
+      if (res.data) {
+        const data = res.data[0];
+        console.log(data);
 
-        navigate(
-          `/reviewer/review-workspace/${projectId}/${firstTask.assignmentId}`,
-          {
-            state: { workspaceData: firstTask, taskList: allTasks },
-          },
-        );
+        navigate(`/reviewer/review-workspace/${data.assignmentId}`, {
+          state: { workspaceData: data },
+        });
       } else {
         alert(
-          "Hiện tại không còn mục dữ liệu nào cần kiểm duyệt trong dự án này!",
+          t("reviewer.noReviewData"),
         );
       }
     } catch (error) {
@@ -85,48 +77,20 @@ const ReviewerContainer = () => {
       <Container fluid>
         <CommonHeader
           role="Reviewer"
-          title="Bảng điều khiển Kiểm duyệt"
-          subtitle="Theo dõi tiến độ và đảm bảo chất lượng gán nhãn dữ liệu."
+          title={t("reviewer.title")}
+          subtitle={t("reviewer.subtitle")}
         />
 
         <Row className="mb-4 g-3">
-          <Col md={4} sm={6}>
-            <Card className="border-0 shadow-sm rounded-4 h-100">
+          <Col md={4}>
+            <Card className="border-0 shadow-sm rounded-4">
               <Card.Body className="d-flex align-items-center gap-3">
                 <div className="p-3 bg-primary-subtle rounded-3 text-primary">
                   <Clock size={24} />
                 </div>
                 <div>
-                  <div
-                    className="text-muted small fw-bold text-uppercase"
-                    style={{ fontSize: "10px" }}
-                  >
-                    Dự án đang chờ
-                  </div>
-                  <h4 className="fw-bold mb-0 text-primary">
-                    {pendingProjectsCount}
-                  </h4>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-
-          <Col md={4} sm={6}>
-            <Card className="border-0 shadow-sm rounded-4 h-100">
-              <Card.Body className="d-flex align-items-center gap-3">
-                <div className="p-3 bg-success-subtle rounded-3 text-success">
-                  <CheckCircle size={24} />
-                </div>
-                <div>
-                  <div
-                    className="text-muted small fw-bold text-uppercase"
-                    style={{ fontSize: "10px" }}
-                  >
-                    Dự án hoàn thành
-                  </div>
-                  <h4 className="fw-bold mb-0 text-success">
-                    {completedProjectsCount}
-                  </h4>
+                  <div className="text-muted small fw-bold">{t("reviewer.pendingProjects")}</div>
+                  <h4 className="fw-bold mb-0">{projects.length}</h4>
                 </div>
               </Card.Body>
             </Card>
@@ -154,7 +118,7 @@ const ReviewerContainer = () => {
             ) : (
               <div className="text-center py-5 bg-card rounded-4 shadow-sm border">
                 <AlertCircle className="text-muted mb-2" size={40} />
-                <p className="text-muted">Không có nhiệm vụ nào cần xử lý.</p>
+                <p className="text-muted">{t("reviewer.noTasks")}</p>
               </div>
             )}
           </Col>
@@ -168,7 +132,7 @@ const ReviewerContainer = () => {
 };
 
 const ProjectCardItem = ({ project, onReview }) => {
-  const isCompleted = project.progressPercent >= 100;
+  const { t } = useTranslation();
   return (
     <Card className="border-0 shadow-sm rounded-4 overflow-hidden project-card-hover">
       <Card.Body className="p-4">
@@ -184,7 +148,7 @@ const ProjectCardItem = ({ project, onReview }) => {
               <div>
                 <h5 className="fw-bold mb-1">{project.projectName}</h5>
                 <small className="text-muted">
-                  Giao ngày:{" "}
+                  {t("reviewer.assignedDate")}{" "}
                   {new Date(project.assignedDate).toLocaleDateString("vi-VN")}
                 </small>
               </div>
@@ -193,7 +157,7 @@ const ProjectCardItem = ({ project, onReview }) => {
 
           <Col md={4}>
             <div className="mb-1 d-flex justify-content-between small">
-              <span className="text-muted">Tiến độ gán nhãn</span>
+              <span className="text-muted">{t("reviewer.labelProgress")}</span>
               <span className="fw-bold">{project.progressPercent}%</span>
             </div>
             <ProgressBar
@@ -202,31 +166,20 @@ const ProjectCardItem = ({ project, onReview }) => {
               style={{ height: 8 }}
             />
             <small className="text-muted mt-1 d-block">
-              {project.completedImages}/{project.totalImages} ảnh hoàn tất
+              {project.completedImages}/{project.totalImages} {t("reviewer.imagesCompleted")}
             </small>
           </Col>
 
           <Col md={3} className="text-end">
-            {isCompleted ? (
-              <Button
-                variant="light"
-                className="rounded-pill px-4 d-inline-flex align-items-center gap-2 text-success fw-bold border-0"
-                style={{ backgroundColor: "#e1f5fe", cursor: "default" }}
-                disabled
-              >
-                <CheckCircle size={16} /> Completed
-              </Button>
-            ) : (
-              <Button
-                variant="outline-primary"
-                className="rounded-pill px-4 d-inline-flex align-items-center gap-2"
-                onClick={() => {
-                  onReview(project.projectId);
-                }}
-              >
-                Bắt đầu Review <ArrowRight size={16} />
-              </Button>
-            )}
+            <Button
+              variant="outline-primary"
+              className="rounded-pill px-4 d-inline-flex align-items-center gap-2"
+              onClick={() => {
+                onReview(project.projectId);
+              }}
+            >
+              {t("reviewer.startReview")} <ArrowRight size={16} />
+            </Button>
           </Col>
         </Row>
       </Card.Body>

@@ -1,12 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import {
-  Container,
-  Dropdown,
-  Form,
-  InputGroup,
-  Button,
-  Badge,
-} from "react-bootstrap";
+import { useTranslation } from "react-i18next";
+import { Container, Dropdown, Form, InputGroup, Button, Badge } from "react-bootstrap";
 import {
   LogOut,
   User,
@@ -36,6 +30,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { t, i18n } = useTranslation();
 
   const [userData, setUserData] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -45,10 +40,11 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
     return localStorage.getItem("theme") === "dark";
   });
 
-  const [currentLang, setCurrentLang] = useState({
-    code: "vi",
-    flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/vn.svg",
-    name: "Tiếng Việt",
+  const [currentLang, setCurrentLang] = useState(() => {
+    const saved = localStorage.getItem("i18nLang") || "vi";
+    return saved === "en"
+      ? { code: "en", flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/us.svg", name: "English" }
+      : { code: "vi", flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/vn.svg", name: "Tiếng Việt" };
   });
 
   // Apply theme to <html> and persist
@@ -282,7 +278,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                   <Search size={16} className="text-muted me-2" />
                   <Form.Control
                     className="bg-transparent border-0 shadow-none p-0"
-                    placeholder="Tìm kiếm..."
+                    placeholder={t("header.search")}
                     style={{ width: "180px" }}
                   />
                 </InputGroup>
@@ -338,13 +334,14 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                   popperConfig={popperConfig}
                 >
                   <Dropdown.Item
-                    onClick={() =>
+                    onClick={() => {
+                      i18n.changeLanguage("vi");
                       setCurrentLang({
                         code: "vi",
                         name: "Tiếng Việt",
                         flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/vn.svg",
-                      })
-                    }
+                      });
+                    }}
                     className="d-flex align-items-center gap-2 py-2"
                   >
                     <img
@@ -355,13 +352,14 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     Tiếng Việt
                   </Dropdown.Item>
                   <Dropdown.Item
-                    onClick={() =>
+                    onClick={() => {
+                      i18n.changeLanguage("en");
                       setCurrentLang({
                         code: "en",
                         name: "English",
                         flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/us.svg",
-                      })
-                    }
+                      });
+                    }}
                     className="d-flex align-items-center gap-2 py-2"
                   >
                     <img
@@ -409,7 +407,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                   popperConfig={popperConfig}
                 >
                   <div className="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                    <span className="fw-bold small">Thông báo</span>
+                    <span className="fw-bold small">{t("header.notifications")}</span>
                     <div className="d-flex gap-1">
                       {unreadCount > 0 && (
                         <Button
@@ -417,7 +415,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                           size="sm"
                           className="p-0 text-primary text-decoration-none"
                           onClick={markAllAsRead}
-                          title="Đánh dấu tất cả đã đọc"
+                          title={t("header.markAllRead")}
                         >
                           <Check size={14} />
                         </Button>
@@ -428,7 +426,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                           size="sm"
                           className="p-0 text-muted text-decoration-none ms-2"
                           onClick={clearAll}
-                          title="Xoá tất cả"
+                          title={t("header.clearAll")}
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -439,7 +437,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     {notifications.length === 0 ? (
                       <div className="text-center py-4 text-muted">
                         <Bell size={32} className="mb-2 opacity-25" />
-                        <p className="small mb-0">Chưa có thông báo</p>
+                        <p className="small mb-0">{t("header.noNotifications")}</p>
                       </div>
                     ) : (
                       notifications.map((n) => (
@@ -454,9 +452,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                           <div className="d-flex align-items-start gap-2">
                             <div
                               className={`rounded-circle mt-1 flex-shrink-0 ${
-                                !n.read
-                                  ? "bg-primary"
-                                  : "bg-secondary opacity-25"
+                                !n.read ? "bg-primary" : "bg-secondary opacity-25"
                               }`}
                               style={{ width: "8px", height: "8px" }}
                             />
@@ -467,7 +463,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                                 style={{ fontSize: "10px" }}
                               >
                                 <Clock size={10} />
-                                {new Date(n.timestamp).toLocaleString("vi-VN")}
+                                {new Date(n.timestamp).toLocaleString(i18n.language === "vi" ? "vi-VN" : "en-US")}
                               </div>
                             </div>
                           </div>
@@ -507,7 +503,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     </div>
                     <div className="d-none d-lg-block text-start">
                       <div className="fw-bold small lh-1 mb-1 header-user-name">
-                        {user?.fullName || "Người dùng"}
+                        {user?.fullName || t("header.defaultUser")}
                       </div>
                       <small
                         className="text-muted"
@@ -537,7 +533,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                         className="text-muted d-block"
                         style={{ fontSize: "10px" }}
                       >
-                        Tài khoản:
+                        {t("header.account")}
                       </small>
                       <div className="fw-bold text-primary small">
                         {user?.email || "staff1@gmail.com"}
@@ -548,21 +544,21 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                       to="/profile"
                       className="py-2 px-3 d-flex align-items-center gap-2"
                     >
-                      <User size={16} /> Hồ sơ cá nhân
+                      <User size={16} /> {t("header.profile")}
                     </Dropdown.Item>
                     <Dropdown.Item
                       as={Link}
                       to="/settings"
                       className="py-2 px-3 d-flex align-items-center gap-2"
                     >
-                      <Settings size={16} /> Cài đặt hệ thống
+                      <Settings size={16} /> {t("header.settings")}
                     </Dropdown.Item>
                     <Dropdown.Divider className="mx-3" />
                     <Dropdown.Item
                       onClick={handleLogout}
                       className="py-2 px-3 text-danger fw-bold d-flex align-items-center gap-2"
                     >
-                      <LogOut size={16} /> Đăng xuất
+                      <LogOut size={16} /> {t("header.logout")}
                     </Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown>

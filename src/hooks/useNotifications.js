@@ -32,15 +32,9 @@ const useNotifications = () => {
 
         const newNotification = {
           id: Date.now() + Math.random(),
-          message:
-            notification?.Message ||
-            notification?.message ||
-            "New notification",
+          message: notification?.Message || notification?.message || "New notification",
           type: notification?.Type || notification?.type || "info",
-          timestamp:
-            notification?.Timestamp ||
-            notification?.timestamp ||
-            new Date().toISOString(),
+          timestamp: notification?.Timestamp || notification?.timestamp || new Date().toISOString(),
           read: false,
         };
 
@@ -49,12 +43,8 @@ const useNotifications = () => {
       });
 
       // Log state changes for debugging
-      connection.onreconnecting(() =>
-        console.warn("[SignalR] Reconnecting..."),
-      );
-      connection.onreconnected((id) =>
-        console.log("[SignalR] Reconnected:", id),
-      );
+      connection.onreconnecting(() => console.warn("[SignalR] Reconnecting..."));
+      connection.onreconnected((id) => console.log("[SignalR] Reconnected:", id));
       connection.onclose((err) => {
         if (!cancelled) console.log("[SignalR] Connection closed", err);
       });
@@ -86,7 +76,7 @@ const useNotifications = () => {
 
   const markAsRead = useCallback((id) => {
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);

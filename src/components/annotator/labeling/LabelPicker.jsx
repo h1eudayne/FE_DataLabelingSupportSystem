@@ -2,16 +2,18 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setSelectedLabel } from "../../../store/annotator/labelling/labelingSlice";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 const LabelPicker = ({ labels, unlockedLabelIds }) => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
 
   const { selectedLabel } = useSelector((state) => state.labeling);
 
   const handleLabelClick = (label) => {
     if (unlockedLabelIds && !unlockedLabelIds.has(label.id)) {
       toast.warning(
-        `Vui lòng tick hết checklist của nhãn "${label.name}" trước khi sử dụng.`,
+        t('labeling.checklistWarning', { name: label.name }),
       );
       return;
     }
@@ -26,7 +28,7 @@ const LabelPicker = ({ labels, unlockedLabelIds }) => {
   if (!labels || labels.length === 0) {
     return (
       <div className="p-3 text-muted text-center border rounded">
-        Đang tải bộ nhãn...
+        {t('labeling.loadingLabels')}
       </div>
     );
   }
@@ -35,7 +37,7 @@ const LabelPicker = ({ labels, unlockedLabelIds }) => {
     <div className="card shadow-sm border-0">
       <div className="card-header bg-white border-bottom py-3">
         <h6 className="card-title mb-0 text-primary fw-bold">
-          <i className="ri-list-check-2 me-2"></i>BỘ NHÃN
+          <i className="ri-list-check-2 me-2"></i>{t('labeling.labelSetTitle')}
         </h6>
       </div>
       <div className="card-body p-2">
@@ -69,7 +71,7 @@ const LabelPicker = ({ labels, unlockedLabelIds }) => {
                 }
                 title={
                   isLocked
-                    ? "Vui lòng tick hết checklist để mở khóa nhãn này"
+                    ? t('labeling.unlockHint')
                     : ""
                 }
               >
@@ -106,8 +108,8 @@ const LabelPicker = ({ labels, unlockedLabelIds }) => {
           <i className="ri-information-line me-2"></i>
           <small style={{ fontStyle: "italic" }}>
             {selectedLabel
-              ? "Click lại vào nhãn để hủy chọn."
-              : "Tick hết checklist → mở khóa → chọn nhãn để vẽ."}
+              ? t('labeling.clickToDeselect')
+              : t('labeling.checklistToLabel')}
           </small>
         </div>
       </div>
