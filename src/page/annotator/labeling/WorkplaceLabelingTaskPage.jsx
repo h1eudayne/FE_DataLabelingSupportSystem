@@ -15,6 +15,7 @@ import {
   setChecklistState,
   resetChecklist,
   removeAnnotation,
+  setDefaultFlags,
 } from "../../../store/annotator/labelling/labelingSlice";
 
 import { setCurrentTask } from "../../../store/annotator/labelling/taskSlice";
@@ -75,12 +76,20 @@ const WorkplaceLabelingTaskPage = () => {
     (state) => state.labeling.annotationsByAssignment || {},
   );
 
+  const allDefaultFlags = useSelector(
+    (state) => state.labeling.defaultFlagsByAssignment || {},
+  );
+
   const annotations = useSelector(
     (state) => state.labeling.annotationsByAssignment[currentImage?.id] || [],
   );
 
   const checklistState = useSelector(
     (state) => state.labeling.checklistByAssignment[currentImage?.id] || {},
+  );
+
+  const currentDefaultFlags = useSelector(
+    (state) => state.labeling.defaultFlagsByAssignment[currentImage?.id] || [],
   );
 
   const unlockedLabelIds = useMemo(() => {
@@ -104,6 +113,9 @@ const WorkplaceLabelingTaskPage = () => {
     if (!annotationData) return false;
     try {
       const parsed = JSON.parse(annotationData);
+      if (parsed && parsed.__defaultFlags && parsed.__defaultFlags.length > 0) {
+        return true;
+      }
       if (parsed && parsed.annotations) {
         return parsed.annotations.length > 0;
       }
@@ -122,9 +134,11 @@ const WorkplaceLabelingTaskPage = () => {
       if (hasValidAnnotations(img.annotationData)) return true;
       const reduxAnns = allAnnotations[img.id];
       if (reduxAnns && reduxAnns.length > 0) return true;
+      const reduxFlags = allDefaultFlags[img.id];
+      if (reduxFlags && reduxFlags.length > 0) return true;
       return false;
     });
-  }, [images, hasValidAnnotations, allAnnotations]);
+  }, [images, hasValidAnnotations, allAnnotations, allDefaultFlags]);
 
   // Scroll to top when entering the page
   useEffect(() => {
@@ -191,12 +205,14 @@ const WorkplaceLabelingTaskPage = () => {
 
     let parsedAnnotations = [];
     let parsedChecklist = {};
+    let parsedDefaultFlags = [];
     try {
       if (currentImage.annotationData) {
         const parsed = JSON.parse(currentImage.annotationData);
         if (parsed && parsed.__checklist) {
           parsedAnnotations = parsed.annotations || [];
           parsedChecklist = parsed.__checklist || {};
+          parsedDefaultFlags = parsed.__defaultFlags || [];
         } else if (Array.isArray(parsed)) {
           parsedAnnotations = parsed;
         }
@@ -209,6 +225,13 @@ const WorkplaceLabelingTaskPage = () => {
       setAnnotations({
         assignmentId: currentImage.id,
         annotations: parsedAnnotations,
+      }),
+    );
+
+    dispatch(
+      setDefaultFlags({
+        assignmentId: currentImage.id,
+        flags: parsedDefaultFlags,
       }),
     );
 
@@ -267,14 +290,15 @@ const WorkplaceLabelingTaskPage = () => {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [annotations, checklistState]);
+  }, [annotations, checklistState, currentDefaultFlags]);
 
   const buildDataJSON = useCallback(() => {
     return JSON.stringify({
       annotations: annotations,
       __checklist: checklistState,
+      __defaultFlags: currentDefaultFlags,
     });
-  }, [annotations, checklistState]);
+  }, [annotations, checklistState, currentDefaultFlags]);
 
   const saveDraft = useCallback(
     async (silent = false) => {
@@ -331,7 +355,7 @@ const WorkplaceLabelingTaskPage = () => {
   const handleSubmit = async () => {
     if (!currentImage) return;
 
-    if (annotations.length === 0) {
+    if (annotations.length === 0 && currentDefaultFlags.length === 0) {
       toast.warning(t("workspace.noLabelWarning"));
       return;
     }
@@ -1036,9 +1060,11 @@ const WorkplaceLabelingTaskPage = () => {
                   const isEligible =
                     img.status !== "Submitted" && img.status !== "Approved";
                   const reduxAnns = allAnnotations[img.id];
+                  const reduxFlags = allDefaultFlags[img.id];
                   const hasData =
                     hasValidAnnotations(img.annotationData) ||
-                    (reduxAnns && reduxAnns.length > 0);
+                    (reduxAnns && reduxAnns.length > 0) ||
+                    (reduxFlags && reduxFlags.length > 0);
                   return (
                     <div
                       key={img.id}

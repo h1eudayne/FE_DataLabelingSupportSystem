@@ -55,6 +55,25 @@ const CreateProject = () => {
     },
   ]);
 
+  const [defaultLabels, setDefaultLabels] = useState([
+    { name: "Ảnh bị lỗi", color: "#EF4444" },
+    { name: "Task không đạt yêu cầu", color: "#F59E0B" },
+  ]);
+
+  const addDefaultLabel = () =>
+    setDefaultLabels([...defaultLabels, { name: "", color: "#6B7280" }]);
+
+  const removeDefaultLabel = (index) => {
+    if (defaultLabels.length === 0) return;
+    setDefaultLabels(defaultLabels.filter((_, i) => i !== index));
+  };
+
+  const updateDefaultLabel = (index, field, value) => {
+    const clone = [...defaultLabels];
+    clone[index][field] = value;
+    setDefaultLabels(clone);
+  };
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -205,8 +224,20 @@ const CreateProject = () => {
       const deadlineISO = new Date(projectInfo.deadline).toISOString();
 
       // Upload sample images for labels to Cloudinary
+      // Build default labels payload
+      const validDefaultLabels = defaultLabels.filter((l) => l.name.trim());
+      const defaultLabelClassesPayload = validDefaultLabels.map((l) => ({
+        name: l.name,
+        color: l.color,
+        guideLine: "",
+        checklist: [],
+        exampleImageUrl: null,
+        isDefault: true,
+      }));
+
+      // Build custom labels payload
       const validLabels = labels.filter((l) => l.name.trim());
-      const labelClassesPayload = [];
+      const customLabelClassesPayload = [];
       for (const l of validLabels) {
         let exampleImageUrl = null;
         if (l.exampleImage) {
@@ -216,7 +247,7 @@ const CreateProject = () => {
             console.error("Failed to upload label sample image:", err);
           }
         }
-        labelClassesPayload.push({
+        customLabelClassesPayload.push({
           name: l.name,
           color: l.color,
           guideLine: l.guideLine,
@@ -224,6 +255,8 @@ const CreateProject = () => {
           exampleImageUrl,
         });
       }
+
+      const labelClassesPayload = [...defaultLabelClassesPayload, ...customLabelClassesPayload];
 
       const resProj = await projectService.createProject({
         name: projectInfo.name,
@@ -478,6 +511,64 @@ const CreateProject = () => {
           </Col>
 
           <Col lg={5}>
+            {/* Default Labels (Flag) */}
+            <Card className="shadow-sm border-0 mb-3">
+              <div className="card-header bg-soft-warning py-2">
+                <h6 className="card-title mb-0 fs-13 fw-bold">
+                  <i className="ri-flag-line me-1"></i>
+                  {t("createProject.defaultLabelsTitle") || "Nhãn mặc định (Flag)"}
+                </h6>
+                <small className="text-muted">
+                  {t("createProject.defaultLabelsHint") || "Các nhãn dùng để đánh dấu ảnh lỗi / task không đạt yêu cầu. Annotator có thể chọn mà không cần vẽ annotation."}
+                </small>
+              </div>
+              <CardBody className="p-3">
+                {defaultLabels.map((dl, index) => (
+                  <div
+                    key={index}
+                    className="d-flex align-items-center gap-2 mb-2 p-2 border rounded bg-light"
+                  >
+                    <Input
+                      bsSize="sm"
+                      placeholder={t("createProject.defaultLabelName") || "Tên nhãn flag..."}
+                      value={dl.name}
+                      onChange={(e) =>
+                        updateDefaultLabel(index, "name", e.target.value)
+                      }
+                      className="flex-grow-1"
+                    />
+                    <Input
+                      type="color"
+                      className="form-control-color"
+                      style={{ width: "40px", height: "30px", padding: "2px" }}
+                      value={dl.color}
+                      onChange={(e) =>
+                        updateDefaultLabel(index, "color", e.target.value)
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger"
+                      style={{ padding: "2px 6px", lineHeight: 1 }}
+                      onClick={() => removeDefaultLabel(index)}
+                      title={t("createProject.removeDefaultLabel") || "Xóa"}
+                    >
+                      <i className="ri-close-line"></i>
+                    </button>
+                  </div>
+                ))}
+                <Button
+                  color="link"
+                  size="sm"
+                  className="p-0 text-warning"
+                  onClick={addDefaultLabel}
+                >
+                  <i className="ri-add-line me-1"></i>
+                  {t("createProject.addDefaultLabel") || "Thêm nhãn mặc định"}
+                </Button>
+              </CardBody>
+            </Card>
+
             <Card className="shadow-sm border-0 mb-3">
               <div className="card-header bg-soft-info py-2">
                 <h6 className="card-title mb-0 fs-13 fw-bold">

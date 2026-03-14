@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   setSelectedLabel,
   toggleChecklistItem,
+  toggleDefaultFlag,
 } from "../../../store/annotator/labelling/labelingSlice";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -14,14 +15,27 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
   const checklistState = useSelector(
     (state) => state.labeling.checklistByAssignment[assignmentId] || {},
   );
+  const defaultFlags = useSelector(
+    (state) => state.labeling.defaultFlagsByAssignment[assignmentId] || [],
+  );
 
   const [expandedLabelId, setExpandedLabelId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
 
+  // Split labels into default (flag) and custom (drawing)
+  const defaultLabels = useMemo(
+    () => labels.filter((l) => l.isDefault),
+    [labels],
+  );
+  const customLabels = useMemo(
+    () => labels.filter((l) => !l.isDefault),
+    [labels],
+  );
+
   const unlockedLabelIds = useMemo(() => {
     const ids = new Set();
-    labels.forEach((label) => {
+    customLabels.forEach((label) => {
       const items = label.checklist || [];
       if (items.length === 0) {
         ids.add(label.id);
@@ -33,13 +47,13 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
       }
     });
     return ids;
-  }, [labels, checklistState]);
+  }, [customLabels, checklistState]);
 
   const filteredLabels = useMemo(() => {
-    if (!searchTerm.trim()) return labels;
+    if (!searchTerm.trim()) return customLabels;
     const term = searchTerm.toLowerCase();
-    return labels.filter((l) => l.name.toLowerCase().includes(term));
-  }, [labels, searchTerm]);
+    return customLabels.filter((l) => l.name.toLowerCase().includes(term));
+  }, [customLabels, searchTerm]);
 
   // Count annotations per label for current image
   const annotationCountByLabel = useMemo(() => {
@@ -78,7 +92,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
     );
   }
 
-  const showSearch = labels.length > 5;
+  const showSearch = customLabels.length > 5;
   const unlockedCount = unlockedLabelIds.size;
 
   return (
@@ -90,9 +104,90 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
           {t("labeling.labelChecklist")}
         </span>
         <span className="stitch-ws-badge stitch-ws-badge-inprogress">
-          {unlockedCount}/{labels.length} {t("labeling.unlocked")}
+          {unlockedCount}/{customLabels.length} {t("labeling.unlocked")}
         </span>
       </div>
+
+      {/* Default Flag Labels Section */}
+      {defaultLabels.length > 0 && (
+        <div style={{ padding: "10px 14px", borderBottom: "1px solid rgba(51, 65, 85, 0.15)" }}>
+          <div
+            className="d-flex align-items-center gap-1 mb-2"
+            style={{ fontSize: "0.72rem", fontWeight: 600, opacity: 0.7 }}
+          >
+            <i className="ri-flag-line"></i>
+            {t("labeling.defaultFlags") || "Nhãn mặc định (Flag)"}
+          </div>
+          <div className="d-flex flex-column gap-1">
+            {defaultLabels.map((label) => {
+              const isChecked = defaultFlags.includes(label.id);
+              return (
+                <div
+                  key={label.id}
+                  className="d-flex align-items-center gap-2 px-2 py-1 rounded"
+                  style={{
+                    cursor: "pointer",
+                    background: isChecked
+                      ? `${label.color}22`
+                      : "rgba(255,255,255,0.04)",
+                    border: isChecked
+                      ? `1px solid ${label.color}88`
+                      : "1px solid rgba(255,255,255,0.08)",
+                    transition: "all 0.15s ease",
+                  }}
+                  onClick={() =>
+                    dispatch(toggleDefaultFlag({ assignmentId, labelId: label.id }))
+                  }
+                  title={
+                    isChecked
+                      ? (t("labeling.unselectFlag") || "Bỏ chọn flag")
+                      : (t("labeling.selectFlag") || "Chọn flag — không cần vẽ annotation")
+                  }
+                >
+                  <input
+                    className="form-check-input flex-shrink-0"
+                    type="checkbox"
+                    checked={isChecked}
+                    readOnly
+                    style={{ cursor: "pointer", margin: 0 }}
+                  />
+                  <span
+                    className="rounded-circle flex-shrink-0"
+                    style={{
+                      width: 10,
+                      height: 10,
+                      backgroundColor: label.color,
+                    }}
+                  ></span>
+                  <span
+                    className="flex-grow-1"
+                    style={{
+                      fontSize: "0.78rem",
+                      fontWeight: isChecked ? 600 : 400,
+                      opacity: isChecked ? 1 : 0.8,
+                    }}
+                  >
+                    {label.name}
+                  </span>
+                  {isChecked && (
+                    <i
+                      className="ri-checkbox-circle-fill"
+                      style={{ fontSize: 13, color: label.color }}
+                    ></i>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div
+            className="stitch-ws-text-muted mt-1"
+            style={{ fontSize: "0.68rem", fontStyle: "italic" }}
+          >
+            <i className="ri-information-line me-1"></i>
+            {t("labeling.flagHint") || "Chọn flag nếu ảnh bị lỗi hoặc task không đạt. Có thể submit mà không cần vẽ annotation."}
+          </div>
+        </div>
+      )}
 
       {/* Search bar */}
       {showSearch && (
@@ -111,7 +206,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
           <input
             type="text"
             className="stitch-ws-search-input"
-            placeholder={t("labeling.searchLabel", { count: labels.length })}
+            placeholder={t("labeling.searchLabel", { count: customLabels.length })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
