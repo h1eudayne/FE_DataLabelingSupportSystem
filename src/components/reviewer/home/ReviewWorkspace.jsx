@@ -41,6 +41,7 @@ const ReviewWorkspace = () => {
   const [submitting, setSubmitting] = useState(false);
   const [checkedCriteria, setCheckedCriteria] = useState({});
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
   const ERROR_CATEGORIES = [
     {
       id: "CL-01",
@@ -166,8 +167,8 @@ const ReviewWorkspace = () => {
     );
   };
 
-  const handleCriteriaCheck = (labelId, criteriaId) => {
-    const key = `${labelId}-${criteriaId}`;
+  const handleCriteriaCheck = (criteriaId) => {
+    const key = `shared-${criteriaId}`;
     setCheckedCriteria((prev) => ({
       ...prev,
       [key]: !prev[key],
@@ -243,12 +244,13 @@ const ReviewWorkspace = () => {
 
   const isOverdue = new Date(data.deadline) < new Date();
 
-  const totalCLItemsToTick = data.labels?.reduce((acc, label) => {
-    const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
-      label.id
-    ]?.some((v) => v === true);
-    return isLabelUsed ? acc + 10 : acc;
-  }, 0);
+  const hasAnyLabel = data.labels?.some((label) =>
+    data.existingAnnotations[0]?.__checklist?.[label.id]?.some(
+      (val) => val === true,
+    ),
+  );
+
+  const totalCLItemsToTick = hasAnyLabel ? 10 : 0;
 
   const checkedCLCount = Object.values(checkedCriteria).filter(Boolean).length;
 
@@ -369,12 +371,12 @@ const ReviewWorkspace = () => {
               </div>
             </div>
 
-            <div className="p-3 flex-grow-1 overflow-auto bg-light">
+            <div className="p-3 flex-grow-1 overflow-auto bg-light border-bottom">
               <h6
-                className="text-uppercase text-muted fw-bold mb-3 d-flex align-items-center gap-2"
+                className="text-uppercase text-muted fw-bold mb-3"
                 style={{ fontSize: "11px" }}
               >
-                <CheckCircle size={14} /> Đối chiếu Quy định Kiểm duyệt
+                Danh sách nhãn trong ảnh
               </h6>
 
               {data.labels?.map((label) => {
@@ -389,7 +391,7 @@ const ReviewWorkspace = () => {
                     className="border-0 shadow-sm mb-3 rounded-3 overflow-hidden"
                   >
                     <div
-                      className="px-3 py-2 fw-bold d-flex align-items-center justify-content-between"
+                      className="px-3 py-2 fw-bold"
                       style={{
                         backgroundColor: `${label.color}15`,
                         borderLeft: `4px solid ${label.color}`,
@@ -397,31 +399,20 @@ const ReviewWorkspace = () => {
                         fontSize: "13px",
                       }}
                     >
-                      <span>{label.name}</span>
-                      <Badge
-                        pill
-                        style={{
-                          backgroundColor: label.color,
-                          fontSize: "10px",
-                        }}
-                      >
-                        Đang kiểm tra
-                      </Badge>
+                      {label.name}
                     </div>
-
                     <Card.Body className="p-3 bg-white">
                       <div
-                        className="text-muted mb-3 small italic"
+                        className="text-muted mb-2 small italic"
                         style={{ fontSize: "11px" }}
                       >
                         <strong>Mô tả:</strong> {label.guideLine}
                       </div>
-
-                      {label.checklist && label.checklist.length > 0 && (
-                        <div className="mb-3 p-2 rounded bg-light border-start border-2 border-info">
+                      {label.checklist?.length > 0 && (
+                        <div className="p-2 rounded bg-light border-start border-2 border-info">
                           <div
                             className="text-uppercase fw-bold text-info mb-1"
-                            style={{ fontSize: "9px", letterSpacing: "0.5px" }}
+                            style={{ fontSize: "9px" }}
                           >
                             Checklist công việc:
                           </div>
@@ -430,147 +421,66 @@ const ReviewWorkspace = () => {
                               <li
                                 key={index}
                                 className="d-flex align-items-start gap-2"
-                                style={{ fontSize: "11px", color: "#495057" }}
+                                style={{ fontSize: "11px" }}
                               >
-                                <div className="mt-1">
-                                  <div
-                                    style={{
-                                      width: "4px",
-                                      height: "4px",
-                                      borderRadius: "50%",
-                                      backgroundColor: "#0dcaf0",
-                                      marginTop: "4px",
-                                    }}
-                                  ></div>
-                                </div>
+                                <div
+                                  className="mt-1"
+                                  style={{
+                                    width: "4px",
+                                    height: "4px",
+                                    borderRadius: "50%",
+                                    backgroundColor: "#0dcaf0",
+                                  }}
+                                ></div>
                                 <span>{item}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
                       )}
-
-                      <div className="mt-2 pt-2 border-top">
-                        <div
-                          className="text-uppercase text-muted fw-bold mb-2"
-                          style={{ fontSize: "10px", letterSpacing: "0.5px" }}
-                        >
-                          TIÊU CHÍ CHẤT LƯỢNG (CL)
-                        </div>
-
-                        <div className="d-flex flex-column gap-2">
-                          {[
-                            {
-                              id: "CL-01",
-                              title: "Xác định đúng đối tượng",
-                              desc: "Đối tượng được gán nhãn đúng với đối tượng thực tế trong ảnh/dữ liệu.",
-                            },
-                            {
-                              id: "CL-02",
-                              title: "Đúng loại nhãn (Label Class)",
-                              desc: "Nhãn được chọn đúng với danh mục nhãn đã định nghĩa trong dự án.",
-                            },
-                            {
-                              id: "CL-03",
-                              title: "Bounding Box chính xác",
-                              desc: "Khung bao (bounding box) ôm sát đối tượng, không quá lớn hoặc quá nhỏ.",
-                            },
-                            {
-                              id: "CL-04",
-                              title: "Không bỏ sót đối tượng",
-                              desc: "Tất cả các đối tượng cần gán nhãn trong ảnh đều được đánh dấu.",
-                            },
-                            {
-                              id: "CL-05",
-                              title: "Không gán nhãn sai",
-                              desc: "Không có nhãn được gán cho đối tượng không liên quan.",
-                            },
-                            {
-                              id: "CL-06",
-                              title: "Tuân thủ guideline",
-                              desc: "Annotation tuân theo hướng dẫn gán nhãn của dự án.",
-                            },
-                            {
-                              id: "CL-07",
-                              title: "Tính nhất quán",
-                              desc: "Cách gán nhãn giống với các dữ liệu khác trong cùng dự án.",
-                            },
-                            {
-                              id: "CL-08",
-                              title: "Đúng loại công cụ annotation",
-                              desc: "Sử dụng đúng loại công cụ (Bounding Box, Polygon, v.v.).",
-                            },
-                            {
-                              id: "CL-09",
-                              title: "Đối tượng được bao phủ đầy đủ",
-                              desc: "Phần đối tượng hiển thị được bao phủ đầy đủ trong annotation.",
-                            },
-                            {
-                              id: "CL-10",
-                              title: "Chất lượng dữ liệu đủ tốt",
-                              desc: "Hình ảnh/dữ liệu đủ rõ để gán nhãn chính xác.",
-                            },
-                          ].map((item) => {
-                            const isChecked =
-                              !!checkedCriteria[`${label.id}-${item.id}`];
-                            return (
-                              <div
-                                key={item.id}
-                                className={`p-2 rounded-2 border-start border-3 transition-all ${
-                                  isChecked
-                                    ? "border-success bg-success-subtle"
-                                    : "border-light-subtle bg-body-tertiary"
-                                }`}
-                                style={{ cursor: "pointer" }}
-                                onClick={() =>
-                                  handleCriteriaCheck(label.id, item.id)
-                                }
-                              >
-                                <div className="d-flex align-items-start gap-2">
-                                  <div className="mt-1">
-                                    <Form.Check
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={() => {}}
-                                      style={{ cursor: "pointer" }}
-                                    />
-                                  </div>
-
-                                  <div className="flex-grow-1">
-                                    <div className="d-flex align-items-center gap-2 mb-1">
-                                      <span
-                                        className={`badge ${isChecked ? "bg-success" : "bg-secondary"}`}
-                                        style={{ fontSize: "9px" }}
-                                      >
-                                        {item.id}
-                                      </span>
-                                      <span
-                                        className={`fw-bold ${isChecked ? "text-success" : "text-dark"}`}
-                                        style={{ fontSize: "11px" }}
-                                      >
-                                        {item.title}
-                                      </span>
-                                    </div>
-                                    <div
-                                      className="text-muted"
-                                      style={{
-                                        fontSize: "10px",
-                                        lineHeight: "1.2",
-                                      }}
-                                    >
-                                      {item.desc}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
                     </Card.Body>
                   </Card>
                 );
               })}
+            </div>
+
+            {/* SECTION 3: CỤM CHECKLIST CHUNG (LUÔN CỐ ĐỊNH Ở DƯỚI) */}
+            <div
+              className="p-3 bg-white border-top shadow-lg"
+              style={{ zIndex: 5 }}
+            >
+              <h6
+                className="text-uppercase text-muted fw-bold mb-3 d-flex align-items-center gap-2"
+                style={{ fontSize: "11px" }}
+              >
+                <CheckCircle size={14} className="text-success" /> TRẠNG THÁI
+                KIỂM DUYỆT CHUNG
+              </h6>
+
+              <Card
+                className={`border-0 shadow-sm mb-2 rounded-3 ${isChecklistComplete ? "bg-success-subtle" : "bg-light"}`}
+              >
+                <Card.Body className="p-3 text-center">
+                  <div
+                    className={`display-6 fw-bold mb-0 ${isChecklistComplete ? "text-success" : "text-primary"}`}
+                  >
+                    {checkedCLCount}/{totalCLItemsToTick}
+                  </div>
+                  <div className="fw-bold small mb-2 text-muted">
+                    Tiêu chí đã đạt
+                  </div>
+                  <Button
+                    variant={isChecklistComplete ? "success" : "primary"}
+                    size="sm"
+                    className="w-100 fw-bold shadow-sm"
+                    onClick={() => setShowChecklistModal(true)}
+                  >
+                    {isChecklistComplete
+                      ? "Xem lại Checklist"
+                      : "Bắt đầu Kiểm duyệt"}
+                  </Button>
+                </Card.Body>
+              </Card>
             </div>
 
             <div className="mt-3">
@@ -592,6 +502,139 @@ const ReviewWorkspace = () => {
           </Col>
         </Row>
       </Container>
+
+      <Modal
+        show={showChecklistModal}
+        onHide={() => setShowChecklistModal(false)}
+        centered
+        size="lg"
+        scrollable
+      >
+        <Modal.Header closeButton>
+          <Modal.Title className="fw-bold text-primary d-flex align-items-center gap-2">
+            <CheckCircle size={24} /> Kiểm duyệt Tiêu chí Chất lượng
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="bg-light">
+          <div className="alert alert-info py-2" style={{ fontSize: "12px" }}>
+            <AlertCircle size={16} className="me-2" />
+            Xác nhận các tiêu chí chất lượng cho <strong>tất cả</strong> nhãn có
+            trong ảnh.
+          </div>
+
+          <div className="mb-3 d-flex flex-wrap gap-2">
+            <span className="small fw-bold text-muted">Đang kiểm duyệt:</span>
+            {data.labels?.map((label) => {
+              const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
+                label.id
+              ]?.some((v) => v === true);
+              return isLabelUsed ? (
+                <Badge key={label.id} style={{ backgroundColor: label.color }}>
+                  {label.name}
+                </Badge>
+              ) : null;
+            })}
+          </div>
+
+          <hr />
+
+          <Row xs={1} md={2} className="g-2">
+            {[
+              {
+                id: "CL-01",
+                title: "Xác định đúng đối tượng",
+                desc: "Đối tượng gán đúng với thực tế",
+              },
+              {
+                id: "CL-02",
+                title: "Đúng loại nhãn",
+                desc: "Chọn đúng category",
+              },
+              {
+                id: "CL-03",
+                title: "Bounding Box chính xác",
+                desc: "Khung bao ôm sát đối tượng",
+              },
+              {
+                id: "CL-04",
+                title: "Không bỏ sót",
+                desc: "Gán hết đối tượng trong ảnh",
+              },
+              {
+                id: "CL-05",
+                title: "Không gán nhãn sai",
+                desc: "Không gán vào vật thể lạ",
+              },
+              {
+                id: "CL-06",
+                title: "Tuân thủ guideline",
+                desc: "Theo đúng quy định dự án",
+              },
+              {
+                id: "CL-07",
+                title: "Tính nhất quán",
+                desc: "Giống các ảnh đã gán trước đó",
+              },
+              {
+                id: "CL-08",
+                title: "Đúng công cụ",
+                desc: "Dùng đúng Box/Polygon",
+              },
+              {
+                id: "CL-09",
+                title: "Bao phủ đầy đủ",
+                desc: "Không bị cắt mất phần hiển thị",
+              },
+              {
+                id: "CL-10",
+                title: "Dữ liệu đạt chuẩn",
+                desc: "Ảnh đủ rõ để định danh",
+              },
+            ].map((item) => {
+              // Sử dụng key "shared"
+              const isChecked = !!checkedCriteria[`shared-${item.id}`];
+              return (
+                <Col key={item.id}>
+                  <div
+                    className={`p-2 rounded border d-flex align-items-start gap-2 h-100 transition-all ${
+                      isChecked
+                        ? "bg-success-subtle border-success"
+                        : "bg-white border-light-subtle"
+                    }`}
+                    style={{ cursor: "pointer", fontSize: "12px" }}
+                    onClick={() => handleCriteriaCheck(item.id)}
+                  >
+                    <Form.Check type="checkbox" checked={isChecked} readOnly />
+                    <div>
+                      <div
+                        className={`fw-bold ${isChecked ? "text-success" : ""}`}
+                      >
+                        {item.id}: {item.title}
+                      </div>
+                      <div className="text-muted" style={{ fontSize: "10px" }}>
+                        {item.desc}
+                      </div>
+                    </div>
+                  </div>
+                </Col>
+              );
+            })}
+          </Row>
+        </Modal.Body>
+        <Modal.Footer>
+          <div className="me-auto small text-muted">
+            Đã hoàn thành: <strong>{checkedCLCount}</strong> /{" "}
+            <strong>{totalCLItemsToTick}</strong> tiêu chí
+          </div>
+          <Button
+            variant="primary"
+            onClick={() => setShowChecklistModal(false)}
+          >
+            Lưu & Đóng
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       <Modal
         show={showRejectModal}
         onHide={() => setShowRejectModal(false)}
