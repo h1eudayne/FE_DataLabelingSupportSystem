@@ -126,6 +126,11 @@ const WorkplaceLabelingTaskPage = () => {
     });
   }, [images, hasValidAnnotations, allAnnotations]);
 
+  // Scroll to top when entering the page
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [assignmentId]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -180,6 +185,8 @@ const WorkplaceLabelingTaskPage = () => {
   useEffect(() => {
     if (!currentImage) return;
 
+    // Reset selected label when switching images to prevent label persistence bug
+    dispatch(setSelectedLabel(null));
     dispatch(setCurrentTask(currentImage));
 
     let parsedAnnotations = [];
@@ -215,7 +222,7 @@ const WorkplaceLabelingTaskPage = () => {
     } else {
       dispatch(resetChecklist({ assignmentId: currentImage.id }));
     }
-  }, [currentImage, dispatch]);
+  }, [currentImage?.id, dispatch]);
 
   useEffect(() => {
     return () => {
@@ -329,20 +336,6 @@ const WorkplaceLabelingTaskPage = () => {
       return;
     }
 
-    const usedLabelIds = new Set(annotations.map((a) => a.labelId));
-    const unusedLabels = labels.filter(
-      (l) => unlockedLabelIds.has(l.id) && !usedLabelIds.has(l.id),
-    );
-
-    if (unusedLabels.length > 0) {
-      const names = unusedLabels.map((l) => l.name).join(", ");
-      toast.error(
-        t("workspace.missingLabels", { names }),
-        { autoClose: 8000 },
-      );
-      return;
-    }
-
     try {
       const draftSaved = await saveDraft(true);
       if (!draftSaved) {
@@ -372,7 +365,11 @@ const WorkplaceLabelingTaskPage = () => {
       });
 
       const isResubmit = currentImage.status === "Rejected";
-      toast.success(isResubmit ? t("workspace.resubmitSuccess") : t("workspace.submitSuccess"));
+      toast.success(
+        isResubmit
+          ? t("workspace.resubmitSuccess")
+          : t("workspace.submitSuccess"),
+      );
     } catch (err) {
       console.error(err);
       toast.error(t("workspace.submitFailed"));
@@ -451,10 +448,16 @@ const WorkplaceLabelingTaskPage = () => {
       const result = res.data || res;
 
       if (result.successCount > 0 && result.failureCount === 0) {
-        toast.success(t("workspace.batchSuccess", { count: result.successCount }));
+        toast.success(
+          t("workspace.batchSuccess", { count: result.successCount }),
+        );
       } else if (result.successCount > 0 && result.failureCount > 0) {
         toast.warning(
-          t("workspace.batchPartial", { success: result.successCount, total: selectedIds.size, fail: result.failureCount }),
+          t("workspace.batchPartial", {
+            success: result.successCount,
+            total: selectedIds.size,
+            fail: result.failureCount,
+          }),
         );
         if (result.errors && result.errors.length > 0) {
           result.errors.forEach((errMsg) =>
@@ -571,14 +574,16 @@ const WorkplaceLabelingTaskPage = () => {
                 {projectInfo?.annotationGuide && (
                   <div className="alert alert-info mb-4">
                     <h6 className="fw-bold mb-2">
-                      <i className="ri-file-text-line me-1"></i>{t("workspace.guidelineOverview")}
+                      <i className="ri-file-text-line me-1"></i>
+                      {t("workspace.guidelineOverview")}
                     </h6>
                     <p className="mb-0">{projectInfo.annotationGuide}</p>
                   </div>
                 )}
 
                 <h6 className="fw-bold mb-3">
-                  <i className="ri-price-tag-3-line me-1"></i>{t("workspace.labelListCriteria")}
+                  <i className="ri-price-tag-3-line me-1"></i>
+                  {t("workspace.labelListCriteria")}
                 </h6>
 
                 {labels.map((label) => (
@@ -603,6 +608,26 @@ const WorkplaceLabelingTaskPage = () => {
                         <p className="text-muted small mb-1">
                           {label.guideLine}
                         </p>
+                      )}
+                      {label.exampleImageUrl && (
+                        <div className="mb-2">
+                          <small className="fw-bold text-dark d-block mb-1">
+                            <i className="ri-image-line me-1"></i>
+                            {t("workspace.sampleImage")}
+                          </small>
+                          <img
+                            src={label.exampleImageUrl}
+                            alt={`${label.name} sample`}
+                            style={{
+                              maxWidth: "100%",
+                              maxHeight: 160,
+                              objectFit: "contain",
+                              borderRadius: 6,
+                              border: "1px solid #dee2e6",
+                              backgroundColor: "#f8f9fa",
+                            }}
+                          />
+                        </div>
                       )}
                       {label.checklist && label.checklist.length > 0 && (
                         <div className="mt-1">
@@ -663,7 +688,8 @@ const WorkplaceLabelingTaskPage = () => {
         >
           {goingBack ? (
             <>
-              <span className="spinner-border spinner-border-sm" /> {t("workspace.goingBack")}
+              <span className="spinner-border spinner-border-sm" />{" "}
+              {t("workspace.goingBack")}
             </>
           ) : (
             <>
@@ -674,14 +700,12 @@ const WorkplaceLabelingTaskPage = () => {
 
         <span className="stitch-ws-header-title">
           <i className="ri-image-edit-line me-1"></i>
-          {projectInfo?.name || "Workspace"} — {t("workspace.imageOf")} {currentImgIndex + 1}/
-          {images.length}
+          {projectInfo?.name || "Workspace"} — {t("workspace.imageOf")}{" "}
+          {currentImgIndex + 1}/{images.length}
         </span>
 
         <span
-          className={
-            STATUS_CLASSES[currentImage.status] || STATUS_CLASSES.New
-          }
+          className={STATUS_CLASSES[currentImage.status] || STATUS_CLASSES.New}
         >
           {t(STATUS_LABEL_KEYS[currentImage.status] || STATUS_LABEL_KEYS.New)}
         </span>
@@ -770,9 +794,12 @@ const WorkplaceLabelingTaskPage = () => {
           <div className="stitch-ws-card">
             <div
               className="stitch-ws-card-body"
-              style={{ padding: "10px 14px" }}
+              style={{ padding: "12px 14px 14px" }}
             >
-              <div className="d-flex align-items-center justify-content-between mb-2">
+              <div
+                className="d-flex align-items-center justify-content-between"
+                style={{ marginBottom: 8 }}
+              >
                 <span
                   className="stitch-ws-text-muted"
                   style={{ fontWeight: 600, fontSize: "0.78rem" }}
@@ -781,12 +808,12 @@ const WorkplaceLabelingTaskPage = () => {
                 </span>
                 <span
                   className="stitch-ws-text-primary"
-                  style={{ fontSize: "0.78rem" }}
+                  style={{ fontSize: "0.78rem", fontWeight: 600 }}
                 >
                   {doneCount}/{images.length} ({progressPercent}%)
                 </span>
               </div>
-              <div className="stitch-ws-progress">
+              <div className="stitch-ws-progress" style={{ marginTop: 0 }}>
                 <div
                   className={`stitch-ws-progress-bar ${progressPercent === 100 ? "complete" : ""}`}
                   style={{ width: `${progressPercent}%` }}
@@ -804,7 +831,9 @@ const WorkplaceLabelingTaskPage = () => {
                   style={{ fontSize: "1.1rem", marginTop: 2 }}
                 ></i>
                 <div className="flex-grow-1">
-                  <strong className="d-block mb-1">{t("workspace.rejectedAlert")}</strong>
+                  <strong className="d-block mb-1">
+                    {t("workspace.rejectedAlert")}
+                  </strong>
                   <span style={{ opacity: 0.85 }}>
                     {t("workspace.rejectedHint")}
                   </span>
@@ -822,7 +851,8 @@ const WorkplaceLabelingTaskPage = () => {
                       style={{ padding: "4px 12px", fontSize: "0.75rem" }}
                       onClick={() => setShowDisputeForm(true)}
                     >
-                      <i className="ri-questionnaire-line"></i> {t("workspace.disputeBtn")}
+                      <i className="ri-questionnaire-line"></i>{" "}
+                      {t("workspace.disputeBtn")}
                     </button>
                   )}
                 </div>
@@ -911,7 +941,9 @@ const WorkplaceLabelingTaskPage = () => {
                       className="stitch-ws-text-muted me-2"
                       style={{ fontSize: "0.65rem" }}
                     >
-                      {Math.round(a.width)}×{Math.round(a.height)}
+                      {a.type === "POLYGON" || a.points
+                        ? `${a.points?.length || 0} pts`
+                        : `${Math.round(a.width)}×${Math.round(a.height)}`}
                     </span>
                     {!isReadOnly && (
                       <button
@@ -950,7 +982,9 @@ const WorkplaceLabelingTaskPage = () => {
               <i
                 className={`ri-${showBatchPanel ? "close" : "stack"}-line`}
               ></i>
-              {showBatchPanel ? t("workspace.hideBatch") : t("workspace.batchSubmit")}
+              {showBatchPanel
+                ? t("workspace.hideBatch")
+                : t("workspace.batchSubmit")}
             </button>
           </div>
 
@@ -959,7 +993,8 @@ const WorkplaceLabelingTaskPage = () => {
             <div className="stitch-ws-card">
               <div className="stitch-ws-card-header">
                 <span>
-                  <i className="ri-checkbox-multiple-line me-1"></i> {t("workspace.selectImages")}
+                  <i className="ri-checkbox-multiple-line me-1"></i>{" "}
+                  {t("workspace.selectImages")}
                 </span>
                 <span className="stitch-ws-badge stitch-ws-badge-inprogress">
                   {selectedIds.size}
@@ -1050,7 +1085,8 @@ const WorkplaceLabelingTaskPage = () => {
                     </>
                   ) : (
                     <>
-                      <i className="ri-send-plane-fill"></i> {t("workspace.submitCount", { count: selectedIds.size })}
+                      <i className="ri-send-plane-fill"></i>{" "}
+                      {t("workspace.submitCount", { count: selectedIds.size })}
                     </>
                   )}
                 </button>
@@ -1067,6 +1103,7 @@ const WorkplaceLabelingTaskPage = () => {
             readOnly={isReadOnly}
             highlightedAnnotationId={highlightedAnnotationId}
             onAnnotationClick={(id) => setHighlightedAnnotationId(id)}
+            projectType={projectInfo?.allowGeometryTypes}
           />
 
           {/* ── Bottom Navigation Bar ── */}
@@ -1100,7 +1137,7 @@ const WorkplaceLabelingTaskPage = () => {
                     key={img.id}
                     className={`thumb-item ${isCurrent ? "active" : ""}`}
                     onClick={() => setCurrentImgIndex(idx)}
-                    title={`${t("workspace.imageLabel")} ${idx + 1} — ${(STATUS_CONFIG[statusKey] || STATUS_CONFIG.New).label}`}
+                    title={`${t("workspace.imageLabel")} ${idx + 1} — ${statusKey}`}
                   >
                     {idx + 1}
                     {dotColor && (
@@ -1140,7 +1177,9 @@ const WorkplaceLabelingTaskPage = () => {
                     <i
                       className={`ri-${isRejected ? "restart-line" : "check-line"}`}
                     ></i>
-                    {isRejected ? t("workspace.resubmit") : t("workspace.submitTask")}
+                    {isRejected
+                      ? t("workspace.resubmit")
+                      : t("workspace.submitTask")}
                   </button>
                 </>
               )}
@@ -1149,7 +1188,8 @@ const WorkplaceLabelingTaskPage = () => {
                   className="stitch-ws-badge stitch-ws-badge-approved"
                   style={{ fontSize: "0.78rem", padding: "5px 12px" }}
                 >
-                  <i className="ri-check-double-line me-1"></i> {t("workspace.submitted")}
+                  <i className="ri-check-double-line me-1"></i>{" "}
+                  {t("workspace.submitted")}
                 </span>
               )}
             </div>
@@ -1172,7 +1212,8 @@ const WorkplaceLabelingTaskPage = () => {
             >
               <div className="stitch-ws-card-header">
                 <span style={{ color: "#F87171" }}>
-                  <i className="ri-questionnaire-line me-1"></i> {t("workspace.disputeTitle")}
+                  <i className="ri-questionnaire-line me-1"></i>{" "}
+                  {t("workspace.disputeTitle")}
                 </span>
                 <button
                   className="stitch-back-btn"
@@ -1228,7 +1269,8 @@ const WorkplaceLabelingTaskPage = () => {
                       </>
                     ) : (
                       <>
-                        <i className="ri-send-plane-fill"></i> {t("workspace.disputeSendBtn")}
+                        <i className="ri-send-plane-fill"></i>{" "}
+                        {t("workspace.disputeSendBtn")}
                       </>
                     )}
                   </button>

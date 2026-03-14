@@ -95,15 +95,23 @@
     "loadError": "Không tải được dữ liệu dự án"
   },
   "reviewer": {
-    "title": "Bảng điều khiển Kiểm duyệt",
-    "subtitle": "Theo dõi tiến độ và đảm bảo chất lượng gán nhãn dữ liệu.",
-    "pendingProjects": "DỰ ÁN ĐANG CHỜ",
-    "noTasks": "Không có nhiệm vụ nào cần xử lý.",
-    "assignedDate": "Giao ngày:",
-    "labelProgress": "Tiến độ gán nhãn",
-    "imagesCompleted": "ảnh hoàn tất",
+    "title": "Bảng điều khiển Review",
+    "subtitle": "Quản lý và kiểm định chất lượng dữ liệu từ annotators",
+    "noReviewData": "Không có dữ liệu review cho dự án này.",
+    "noTasks": "Không tìm thấy dự án nào phù hợp.",
+    "labelProgress": "Tiến độ Review",
+    "imagesCompleted": "ảnh đã xác minh",
     "startReview": "Bắt đầu Review",
-    "noReviewData": "Hiện tại không còn mục dữ liệu nào cần kiểm duyệt trong dự án này!"
+    "deadline": "Hạn chót",
+    "stats": {
+      "totalProjects": "Tổng dự án",
+      "pending": "Đang chờ",
+      "completed": "Hoàn thành",
+      "overdue": "Quá hạn"
+    },
+    "status": {
+      "overdue": "QUÁ HẠN"
+    }
   },
   "dispute": {
     "title": "Quản lý Tranh chấp (Disputes)",
@@ -435,7 +443,8 @@
     "view": "Xem",
     "download": "Tải xuống",
     "upload": "Tải lên",
-    "refresh": "Làm mới"
+    "refresh": "Làm mới",
+    "welcomeBack":"Chào mừng trở lại!"
   },
   "annotatorDashboardComp": {
     "reviewerFeedback": "Phản hồi từ Reviewer",
@@ -866,18 +875,22 @@
     "noComment": "Chưa có nhận xét cho ảnh này."
   },
   "userMgmt": {
-    "totalStaff": "Tổng nhân viên",
+    "totalStaff": "Tổng nhân sự",
     "admins": "Quản trị viên",
     "workers": "Nhân viên",
-    "staffManagement": "Quản lý nhân sự",
-    "manageDesc": "Quản lý tài khoản và phân quyền hệ thống.",
-    "addEmployee": "Thêm nhân viên",
+    "adminBoard": "Ban Quản Trị Hệ Thống",
+    "systemAdmin": "Quản trị viên hệ thống",
+    "staffList": "Danh Sách Nhân Viên",
+    "staffListDesc": "Quản lý và cấp quyền cho nhân sự thực hiện dự án.",
+    "addStaff": "Thêm nhân viên",
     "searchPlaceholder": "Tìm kiếm theo email, vai trò...",
-    "colUser": "Người dùng",
-    "colRole": "Vai trò",
-    "colAction": "Hành động",
-    "clickToLock": "Click để khóa tài khoản",
-    "clickToActivate": "Click để kích hoạt"
+    "user": "Người dùng",
+    "role": "Vai trò",
+    "actions": "Thao tác",
+    "active": "Hoạt động",
+    "inactive": "Khóa",
+    "noStaffFound": "Không tìm thấy nhân sự nào.",
+    "showingRange": "Hiển thị {{from}} đến {{to}} trên {{total}} người dùng"
   },
   "addUser": {
     "title": "Nhập nhân viên từ Excel",
@@ -1012,13 +1025,18 @@
     "statusExpired": "Hết hạn"
   },
   "userTableComp": {
-    "fullName": "Họ và tên",
-    "email": "Email",
+    "user": "Người dùng",
     "role": "Vai trò",
-    "activity": "Hoạt động",
     "action": "Thao tác",
     "active": "Hoạt động",
-    "inactive": "Đã khoá"
+    "inactive": "Bị khóa",
+    "activate": "Nhấn để kích hoạt",
+    "deactivate": "Nhấn để tạm dừng",
+    "edit": "Chỉnh sửa thông tin",
+    "showingRange": "Hiển thị từ {{from}} đến {{to}} trên tổng số {{total}} nhân sự"
+  },
+  "userFilter":{
+    "searchPlaceholder": "Tìm kiếm theo tên, email hoặc vai trò..."
   },
   "projectCard": {
     "dataItems": "dữ liệu",

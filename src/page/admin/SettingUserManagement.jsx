@@ -9,6 +9,7 @@ import UserTable from "../../components/admin/managementUser/UserTable";
 import { Card, CardBody, CardHeader } from "reactstrap";
 import UserFilter from "../../components/admin/managementUser/UserFilter";
 import UserModal from "../../components/admin/managementUser/UserModal";
+import { useTranslation } from "react-i18next";
 
 const SettingUserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -16,6 +17,12 @@ const SettingUserManagement = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentRole, setCurrentRole] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+  });
+  const [totalCount, setTotalCount] = useState(0);
+  const { t } = useTranslation();
 
   const fetchSelf = async () => {
     try {
@@ -26,13 +33,14 @@ const SettingUserManagement = () => {
     }
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (currentPage = pagination.page) => {
     try {
-      const res = await getUsers();
+      const res = await getUsers(currentPage, pagination.pageSize);
       const data = res.data;
       const userList = data.items || data;
       setUsers(userList);
       setFilteredUsers(userList);
+      setTotalCount(data.totalCount || 0);
     } catch (error) {
       console.error(error);
     }
@@ -91,11 +99,16 @@ const SettingUserManagement = () => {
     }
   };
 
+  const onPageChange = (newPage) => {
+    setPagination((prev) => ({ ...prev, page: newPage }));
+  };
   return (
     <>
       <Card>
         <CardHeader className="d-flex align-items-center">
-          <h4 className="card-title mb-0 flex-grow-1">User Management</h4>
+          <h4 className="card-title mb-0 flex-grow-1">
+            {t("userMgmt.staffList")}
+          </h4>
         </CardHeader>
         <CardBody>
           <UserFilter onSearch={handleSearch} />
@@ -104,6 +117,8 @@ const SettingUserManagement = () => {
             onEdit={handleEdit}
             onActive={handleActive}
             currentRole={currentRole}
+            pagination={{ ...pagination, onPageChange }}
+            totalCount={totalCount}
           />
         </CardBody>
       </Card>
