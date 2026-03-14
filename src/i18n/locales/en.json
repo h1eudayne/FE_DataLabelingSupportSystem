@@ -260,7 +260,14 @@
     "uploadingImages": "Uploading images to Cloudinary...",
     "sampleImage": "Sample Image (optional)",
     "uploadSampleImage": "Upload",
-    "removeSampleImage": "Remove"
+    "removeSampleImage": "Remove",
+    "defaultLabelsTitle": "DEFAULT LABELS (FLAGS)",
+    "defaultLabelsHint": "Labels used to flag defective images / tasks that don't meet requirements. Annotators can select without drawing annotations.",
+    "defaultLabelName": "Flag label name...",
+    "removeDefaultLabel": "Remove",
+    "addDefaultLabel": "Add default label",
+    "collapseDefaultLabels": "Collapse",
+    "editDefaultLabels": "Edit"
   },
   "projectImport": {
     "configTitle": "1. PROJECT CONFIGURATION",
@@ -510,7 +517,11 @@
     "clickToEnlarge": "Click to enlarge",
     "sampleImageFor": "Sample image: {{name}}",
     "clickOutsideToClose": "Click outside to close",
-    "close": "Close"
+    "close": "Close",
+    "defaultFlags": "Default Labels (Flag)",
+    "unselectFlag": "Unselect flag",
+    "selectFlag": "Select flag — no annotation drawing needed",
+    "flagHint": "Select a flag if the image is defective or the task doesn't meet requirements. You can submit without drawing annotations."
   },
   "sysLogs": {
     "activityDetail": "Activity Details",
@@ -670,7 +681,11 @@
     "disputeCancel": "Cancel",
     "disputeSending": "Sending...",
     "disputeSendBtn": "Send",
-    "sampleImage": "Sample image:"
+    "sampleImage": "Sample image:",
+    "flagImage": "Flag image as defective",
+    "flagImageHint": "Image is defective",
+    "flagErrorImage": "Image is defective",
+    "flagTaskNotQualified": "Task doesn't meet requirements"
   },
   "annotatorDash": {
     "title": "Annotator Dashboard",

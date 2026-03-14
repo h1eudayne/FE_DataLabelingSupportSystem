@@ -16,6 +16,7 @@ import {
   resetChecklist,
   removeAnnotation,
   setDefaultFlags,
+  toggleDefaultFlag,
 } from "../../../store/annotator/labelling/labelingSlice";
 
 import { setCurrentTask } from "../../../store/annotator/labelling/taskSlice";
@@ -66,6 +67,16 @@ const WorkplaceLabelingTaskPage = () => {
   const [disputeStatus, setDisputeStatus] = useState(null);
 
   const [highlightedAnnotationId, setHighlightedAnnotationId] = useState(null);
+  const [collapsedPanels, setCollapsedPanels] = useState(new Set());
+
+  const togglePanel = (panelName) => {
+    setCollapsedPanels((prev) => {
+      const next = new Set(prev);
+      if (next.has(panelName)) next.delete(panelName);
+      else next.add(panelName);
+      return next;
+    });
+  };
   const [saveStatus, setSaveStatus] = useState("saved");
   const [lastSavedTime, setLastSavedTime] = useState(null);
   const isDirtyRef = React.useRef(false);
@@ -815,28 +826,27 @@ const WorkplaceLabelingTaskPage = () => {
         {/* ──── LEFT PANEL ──── */}
         <div className="stitch-ws-left-panel">
           {/* Progress */}
-          <div className="stitch-ws-card">
+          <div className={`stitch-ws-card ${collapsedPanels.has("progress") ? "collapsed" : ""}`}>
             <div
-              className="stitch-ws-card-body"
-              style={{ padding: "12px 14px 14px" }}
+              className="stitch-ws-card-header"
+              style={{ cursor: "pointer" }}
+              onClick={() => togglePanel("progress")}
             >
-              <div
-                className="d-flex align-items-center justify-content-between"
-                style={{ marginBottom: 8 }}
-              >
-                <span
-                  className="stitch-ws-text-muted"
-                  style={{ fontWeight: 600, fontSize: "0.78rem" }}
-                >
-                  {t("workspace.progress")}
-                </span>
-                <span
-                  className="stitch-ws-text-primary"
-                  style={{ fontSize: "0.78rem", fontWeight: 600 }}
-                >
+              <span>
+                <i className="ri-bar-chart-line me-1"></i>
+                {t("workspace.progress")}
+              </span>
+              <span className="d-flex align-items-center gap-2">
+                <span className="stitch-ws-text-primary" style={{ fontSize: "0.78rem", fontWeight: 600 }}>
                   {doneCount}/{images.length} ({progressPercent}%)
                 </span>
-              </div>
+                <i className={`ri-arrow-${collapsedPanels.has("progress") ? "down" : "up"}-s-line`} style={{ fontSize: 14, opacity: 0.5 }}></i>
+              </span>
+            </div>
+            <div
+              className="stitch-ws-card-body"
+              style={{ padding: "8px 14px 12px", display: collapsedPanels.has("progress") ? "none" : "block" }}
+            >
               <div className="stitch-ws-progress" style={{ marginTop: 0 }}>
                 <div
                   className={`stitch-ws-progress-bar ${progressPercent === 100 ? "complete" : ""}`}
@@ -898,27 +908,152 @@ const WorkplaceLabelingTaskPage = () => {
               {t("workspace.readOnly")}
             </div>
           )}
+          {/* Image Flag — checklist-style card */}
+          {!isReadOnly && (() => {
+            const isFlagEnabled = currentDefaultFlags.length > 0;
+            // Use actual backend default labels instead of hardcoded ones
+            const defaultLabels = labels.filter((l) => l.isDefault);
+            const flagOptions = defaultLabels.length > 0
+              ? defaultLabels.map((l) => ({ id: l.id, label: l.name, color: l.color }))
+              : [{ id: "__image_flagged", label: t("workspace.flagImage") || "Ảnh bị lỗi", color: "#EF4444" }];
+
+            return (
+              <div className={`stitch-ws-card ${!isFlagEnabled ? "collapsed" : ""}`}>
+                {/* Header — main toggle */}
+                <div
+                  className="stitch-ws-card-header"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    if (isFlagEnabled) {
+                      dispatch(setDefaultFlags({ assignmentId: currentImage.id, flags: [] }));
+                    } else {
+                      // Enable flag mode — user will choose specific error labels
+                      dispatch(setDefaultFlags({ assignmentId: currentImage.id, flags: ["__flag_enabled"] }));
+                    }
+                  }}
+                >
+                  <span className="d-flex align-items-center gap-2">
+                    <input
+                      className="form-check-input flex-shrink-0"
+                      type="checkbox"
+                      checked={isFlagEnabled}
+                      readOnly
+                      style={{ cursor: "pointer", margin: 0 }}
+                    />
+                    <i
+                      className={`ri-flag-${isFlagEnabled ? "fill" : "line"}`}
+                      style={{ color: isFlagEnabled ? "#EF4444" : "inherit" }}
+                    ></i>
+                    {t("workspace.flagImage") || "Đánh dấu ảnh lỗi"}
+                  </span>
+                  <i className={`ri-arrow-${isFlagEnabled ? "up" : "down"}-s-line`} style={{ fontSize: 14, opacity: 0.5 }}></i>
+                </div>
+
+                {/* Body — flag options (shown when enabled) */}
+                <div style={{ display: isFlagEnabled ? "block" : "none", maxHeight: 180, overflowY: "auto" }}>
+                  {flagOptions.map((flag) => {
+                    const isSelected = currentDefaultFlags.includes(flag.id);
+                    return (
+                      <div
+                        key={flag.id}
+                        className="d-flex align-items-center gap-2 px-3 py-2"
+                        style={{
+                          cursor: "pointer",
+                          background: isSelected ? `${flag.color}12` : "transparent",
+                          borderTop: "1px solid rgba(0,0,0,0.04)",
+                          transition: "background 0.15s ease",
+                        }}
+                        onClick={() => {
+                          dispatch(toggleDefaultFlag({ assignmentId: currentImage.id, labelId: flag.id }));
+                        }}
+                      >
+                        <input
+                          className="form-check-input flex-shrink-0"
+                          type="checkbox"
+                          checked={isSelected}
+                          readOnly
+                          style={{ cursor: "pointer", margin: 0 }}
+                        />
+                        <span
+                          style={{
+                            width: 10, height: 10, borderRadius: "50%",
+                            background: flag.color, flexShrink: 0,
+                          }}
+                        ></span>
+                        <span style={{ fontSize: "0.82rem", fontWeight: isSelected ? 600 : 400 }}>
+                          {flag.label}
+                        </span>
+                        {isSelected && (
+                          <i className="ri-check-line ms-auto" style={{ color: flag.color }}></i>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Label Toolbox */}
           {!isReadOnly && (
-            <LabelToolbox
-              labels={labels}
-              assignmentId={currentImage.id}
-              annotations={annotations}
-            />
+            <div className={`stitch-ws-card ${collapsedPanels.has("labels") ? "collapsed" : ""}`}>
+              <div
+                className="stitch-ws-card-header"
+                style={{ cursor: "pointer" }}
+                onClick={() => togglePanel("labels")}
+              >
+                <span>
+                  <i className="ri-tools-line me-1"></i>
+                  {t("labeling.labelChecklist")}
+                </span>
+                <span className="d-flex align-items-center gap-2">
+                  {(() => {
+                    const customLabels = labels.filter((l) => !l.isDefault);
+
+                    let unlocked = 0;
+                    customLabels.forEach((label) => {
+                      const items = label.checklist || [];
+                      if (items.length === 0) { unlocked++; return; }
+                      const checked = checklistState[label.id] || [];
+                      if (items.every((_, idx) => checked[idx] === true)) unlocked++;
+                    });
+                    return (
+                      <span className="stitch-ws-badge stitch-ws-badge-inprogress" style={{ fontSize: "0.68rem" }}>
+                        {unlocked}/{customLabels.length} {t("labeling.unlocked")}
+                      </span>
+                    );
+                  })()}
+                  <i className={`ri-arrow-${collapsedPanels.has("labels") ? "down" : "up"}-s-line`} style={{ fontSize: 14, opacity: 0.5 }}></i>
+                </span>
+              </div>
+              <div style={{ display: collapsedPanels.has("labels") ? "none" : "block", maxHeight: 280, overflowY: "auto" }}>
+                <LabelToolbox
+                  labels={labels}
+                  assignmentId={currentImage.id}
+                  annotations={annotations}
+                />
+              </div>
+            </div>
           )}
 
           {/* Annotations List */}
-          <div className="stitch-ws-card">
-            <div className="stitch-ws-card-header">
+          <div className={`stitch-ws-card ${collapsedPanels.has("annotations") ? "collapsed" : ""}`}>
+            <div
+              className="stitch-ws-card-header"
+              style={{ cursor: "pointer" }}
+              onClick={() => togglePanel("annotations")}
+            >
               <span>
                 <i className="ri-list-check-2 me-1"></i> Annotations
               </span>
-              <span className="stitch-ws-badge stitch-ws-badge-inprogress">
-                {annotations.length}
+              <span className="d-flex align-items-center gap-2">
+                <span className="stitch-ws-badge stitch-ws-badge-inprogress">
+                  {annotations.length}
+                </span>
+                <i className={`ri-arrow-${collapsedPanels.has("annotations") ? "down" : "up"}-s-line`} style={{ fontSize: 14, opacity: 0.5 }}></i>
               </span>
             </div>
-            <div style={{ maxHeight: "200px", overflowY: "auto" }}>
+            <div style={{ maxHeight: "200px", overflowY: "auto", display: collapsedPanels.has("annotations") ? "none" : "block" }}>
               {annotations.length === 0 ? (
                 <div
                   className="stitch-ws-card-body text-center"
