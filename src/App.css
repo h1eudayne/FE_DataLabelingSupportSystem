@@ -1396,8 +1396,13 @@ footer,
     border-radius: 14px;
     border: 1px solid transparent;
     margin-bottom: 12px;
-    overflow: visible;
+    overflow: clip;
     transition: border-color 0.2s ease;
+}
+
+/* When card is collapsed, remove header bottom border */
+.stitch-ws-card.collapsed .stitch-ws-card-header {
+    border-bottom: none !important;
 }
 
 [data-bs-theme="dark"] .stitch-ws-card {

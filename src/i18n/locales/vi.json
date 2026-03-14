@@ -261,7 +261,14 @@
     "uploadingImages": "Đang upload ảnh lên Cloudinary...",
     "sampleImage": "Ảnh mẫu (tùy chọn)",
     "uploadSampleImage": "Tải lên",
-    "removeSampleImage": "Xóa"
+    "removeSampleImage": "Xóa",
+    "defaultLabelsTitle": "NHÃN MẶC ĐỊNH (FLAG)",
+    "defaultLabelsHint": "Các nhãn dùng để đánh dấu ảnh lỗi / task không đạt yêu cầu. Annotator có thể chọn mà không cần vẽ annotation.",
+    "defaultLabelName": "Tên nhãn flag...",
+    "removeDefaultLabel": "Xóa",
+    "addDefaultLabel": "Thêm nhãn mặc định",
+    "collapseDefaultLabels": "Thu gọn",
+    "editDefaultLabels": "Chỉnh sửa"
   },
   "projectImport": {
     "configTitle": "1. CẤU HÌNH DỰ ÁN",
@@ -512,7 +519,11 @@
     "clickToEnlarge": "Click để phóng to",
     "sampleImageFor": "Ảnh mẫu: {{name}}",
     "clickOutsideToClose": "Click bên ngoài để đóng",
-    "close": "Đóng"
+    "close": "Đóng",
+    "defaultFlags": "Nhãn mặc định (Flag)",
+    "unselectFlag": "Bỏ chọn flag",
+    "selectFlag": "Chọn flag — không cần vẽ annotation",
+    "flagHint": "Chọn flag nếu ảnh bị lỗi hoặc task không đạt. Có thể submit mà không cần vẽ annotation."
   },
   "sysLogs": {
     "activityDetail": "Chi tiết hoạt động",
@@ -672,7 +683,11 @@
     "disputeCancel": "Hủy",
     "disputeSending": "Đang gửi...",
     "disputeSendBtn": "Gửi",
-    "sampleImage": "Ảnh mẫu:"
+    "sampleImage": "Ảnh mẫu:",
+    "flagImage": "Đánh dấu ảnh lỗi",
+    "flagImageHint": "Ảnh bị lỗi",
+    "flagErrorImage": "Ảnh bị lỗi",
+    "flagTaskNotQualified": "Task không đạt yêu cầu"
   },
   "annotatorDash": {
     "title": "Dashboard",
