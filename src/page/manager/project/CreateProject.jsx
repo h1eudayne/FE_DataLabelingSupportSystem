@@ -353,6 +353,11 @@ const CreateProject = () => {
                     <Input
                       type="date"
                       value={projectInfo.deadline}
+                      min={(() => {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        return tomorrow.toISOString().split("T")[0];
+                      })()}
                       onChange={(e) =>
                         setProjectInfo({
                           ...projectInfo,
