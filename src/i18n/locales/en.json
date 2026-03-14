@@ -111,7 +111,8 @@
     },
     "status": {
       "overdue": "OVERDUE"
-    }
+    },
+    "completed":"Completed"
   },
   "dispute": {
     "title": "Dispute Management",
