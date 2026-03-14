@@ -253,13 +253,24 @@ const ProjectCardItem = ({ project, onReview }) => {
           </Col>
 
           <Col md={3} className="text-end">
-            <Button
-              variant="outline-primary"
-              className="rounded-pill px-4 d-inline-flex align-items-center gap-2"
-              onClick={() => onReview(project.projectId)}
-            >
-              {t("reviewer.startReview")} <ArrowRight size={16} />
-            </Button>
+            {isCompleted ? (
+              <Button
+                variant="light"
+                className="rounded-pill px-4 d-inline-flex align-items-center gap-2 text-success border-success-subtle"
+                disabled
+                style={{ cursor: "not-allowed", opacity: 0.8 }}
+              >
+                <CheckCircle size={16} /> {t("reviewer.completed")}
+              </Button>
+            ) : (
+              <Button
+                variant="outline-primary"
+                className="rounded-pill px-4 d-inline-flex align-items-center gap-2"
+                onClick={() => onReview(project.projectId)}
+              >
+                {t("reviewer.startReview")} <ArrowRight size={16} />
+              </Button>
+            )}
           </Col>
         </Row>
       </Card.Body>

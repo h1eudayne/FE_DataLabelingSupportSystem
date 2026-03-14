@@ -111,7 +111,8 @@
     },
     "status": {
       "overdue": "QUÁ HẠN"
-    }
+    },
+    "completed":"Hoàn thành"
   },
   "dispute": {
     "title": "Quản lý Tranh chấp (Disputes)",
