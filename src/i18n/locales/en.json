@@ -96,14 +96,22 @@
   },
   "reviewer": {
     "title": "Review Dashboard",
-    "subtitle": "Track progress and ensure data labeling quality.",
-    "pendingProjects": "PENDING PROJECTS",
-    "noTasks": "No tasks to process.",
-    "assignedDate": "Assigned:",
-    "labelProgress": "Labeling Progress",
-    "imagesCompleted": "images completed",
+    "subtitle": "Manage and verify data quality from annotators",
+    "noReviewData": "No review data available for this project.",
+    "noTasks": "No projects found matching your search.",
+    "labelProgress": "Review Progress",
+    "imagesCompleted": "images verified",
     "startReview": "Start Review",
-    "noReviewData": "There are no items left to review in this project!"
+    "deadline": "Deadline",
+    "stats": {
+      "totalProjects": "Total Projects",
+      "pending": "Pending",
+      "completed": "Completed",
+      "overdue": "Overdue"
+    },
+    "status": {
+      "overdue": "OVERDUE"
+    }
   },
   "dispute": {
     "title": "Dispute Management",
@@ -439,7 +447,8 @@
     "view": "View",
     "download": "Download",
     "upload": "Upload",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "welcomeBack":"Welcome back!"
   },
   "annotatorDashboardComp": {
     "reviewerFeedback": "Reviewer Feedback",
@@ -880,15 +889,19 @@
     "totalStaff": "Total Staff",
     "admins": "Administrators",
     "workers": "Workers",
-    "staffManagement": "Staff Management",
-    "manageDesc": "Manage accounts and system permissions.",
-    "addEmployee": "Add Employee",
+    "adminBoard": "System Admin Board",
+    "systemAdmin": "System Administrator",
+    "staffList": "Staff List",
+    "staffListDesc": "Manage and assign permissions for project personnel.",
+    "addStaff": "Add Staff",
     "searchPlaceholder": "Search by email, role...",
-    "colUser": "User",
-    "colRole": "Role",
-    "colAction": "Action",
-    "clickToLock": "Click to lock account",
-    "clickToActivate": "Click to activate"
+    "user": "User",
+    "role": "Role",
+    "actions": "Actions",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noStaffFound": "No staff members found.",
+    "showingRange": "Showing {{from}} to {{to}} of {{total}} users"
   },
   "addUser": {
     "title": "Import Staff from Excel",
@@ -1023,13 +1036,18 @@
     "statusExpired": "Expired"
   },
   "userTableComp": {
-    "fullName": "Full Name",
-    "email": "Email",
+    "user": "User",
     "role": "Role",
-    "activity": "Activity",
-    "action": "Action",
+    "action": "Actions",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "activate": "Click to activate",
+    "deactivate": "Click to deactivate",
+    "edit": "Edit Details",
+    "showingRange": "Showing {{from}} to {{to}} of {{total}} entries"
+  },
+  "userFilter":{
+    "searchPlaceholder": "Search by name, email or role..."
   },
   "projectCard": {
     "dataItems": "data items",
