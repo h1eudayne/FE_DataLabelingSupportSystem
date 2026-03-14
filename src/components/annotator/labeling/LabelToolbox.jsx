@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   setSelectedLabel,
   toggleChecklistItem,
+  toggleDefaultFlag,
 } from "../../../store/annotator/labelling/labelingSlice";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -14,14 +15,27 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
   const checklistState = useSelector(
     (state) => state.labeling.checklistByAssignment[assignmentId] || {},
   );
+  const defaultFlags = useSelector(
+    (state) => state.labeling.defaultFlagsByAssignment[assignmentId] || [],
+  );
 
   const [expandedLabelId, setExpandedLabelId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
 
+  // Split labels into default (flag) and custom (drawing)
+  const defaultLabels = useMemo(
+    () => labels.filter((l) => l.isDefault),
+    [labels],
+  );
+  const customLabels = useMemo(
+    () => labels.filter((l) => !l.isDefault),
+    [labels],
+  );
+
   const unlockedLabelIds = useMemo(() => {
     const ids = new Set();
-    labels.forEach((label) => {
+    customLabels.forEach((label) => {
       const items = label.checklist || [];
       if (items.length === 0) {
         ids.add(label.id);
@@ -33,13 +47,13 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
       }
     });
     return ids;
-  }, [labels, checklistState]);
+  }, [customLabels, checklistState]);
 
   const filteredLabels = useMemo(() => {
-    if (!searchTerm.trim()) return labels;
+    if (!searchTerm.trim()) return customLabels;
     const term = searchTerm.toLowerCase();
-    return labels.filter((l) => l.name.toLowerCase().includes(term));
-  }, [labels, searchTerm]);
+    return customLabels.filter((l) => l.name.toLowerCase().includes(term));
+  }, [customLabels, searchTerm]);
 
   // Count annotations per label for current image
   const annotationCountByLabel = useMemo(() => {
@@ -67,7 +81,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
 
   if (!labels || labels.length === 0) {
     return (
-      <div className="stitch-ws-card">
+      <div>
         <div
           className="stitch-ws-card-body text-center stitch-ws-text-muted"
           style={{ padding: 20 }}
@@ -78,21 +92,14 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
     );
   }
 
-  const showSearch = labels.length > 5;
+  const showSearch = customLabels.length > 5;
   const unlockedCount = unlockedLabelIds.size;
 
   return (
-    <div className="stitch-ws-card">
-      {/* Header */}
-      <div className="stitch-ws-card-header">
-        <span>
-          <i className="ri-tools-line me-1"></i>
-          {t("labeling.labelChecklist")}
-        </span>
-        <span className="stitch-ws-badge stitch-ws-badge-inprogress">
-          {unlockedCount}/{labels.length} {t("labeling.unlocked")}
-        </span>
-      </div>
+    <div>
+
+
+
 
       {/* Search bar */}
       {showSearch && (
@@ -111,7 +118,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
           <input
             type="text"
             className="stitch-ws-search-input"
-            placeholder={t("labeling.searchLabel", { count: labels.length })}
+            placeholder={t("labeling.searchLabel", { count: customLabels.length })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

@@ -8,6 +8,7 @@ const labelingSlice = createSlice({
     selectedLabel: null,
     annotationsByAssignment: {},
     checklistByAssignment: {},
+    defaultFlagsByAssignment: {},
     undoStack: [],
   },
   reducers: {
@@ -93,6 +94,30 @@ const labelingSlice = createSlice({
       const { assignmentId } = action.payload;
       state.checklistByAssignment[assignmentId] = {};
     },
+
+    setDefaultFlags(state, action) {
+      const { assignmentId, flags } = action.payload;
+      state.defaultFlagsByAssignment[assignmentId] = flags || [];
+    },
+
+    toggleDefaultFlag(state, action) {
+      const { assignmentId, labelId } = action.payload;
+      if (!state.defaultFlagsByAssignment[assignmentId]) {
+        state.defaultFlagsByAssignment[assignmentId] = [];
+      }
+      const list = state.defaultFlagsByAssignment[assignmentId];
+      const idx = list.indexOf(labelId);
+      if (idx >= 0) {
+        list.splice(idx, 1);
+      } else {
+        list.push(labelId);
+      }
+    },
+
+    resetDefaultFlags(state, action) {
+      const { assignmentId } = action.payload;
+      state.defaultFlagsByAssignment[assignmentId] = [];
+    },
   },
 });
 
@@ -106,6 +131,10 @@ export const {
   setChecklistState,
   toggleChecklistItem,
   resetChecklist,
+  setDefaultFlags,
+  toggleDefaultFlag,
+  resetDefaultFlags,
 } = labelingSlice.actions;
 
 export default labelingSlice.reducer;
+
