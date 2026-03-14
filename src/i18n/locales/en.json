@@ -249,13 +249,18 @@
     "loadingUsers": "Unable to load staff list",
     "minOneLabel": "At least one label is required",
     "warnName": "Please enter a project name!",
+    "warnDeadline": "Please select a deadline for the project!",
+    "warnDeadlineFuture": "Deadline must be a future date!",
     "warnLabel": "At least one label must be defined!",
     "warnChecklist": "Label \"{{name}}\" must have at least 1 checklist condition!",
     "warnFiles": "Please select image files!",
     "warnAnnotator": "Please select at least one Annotator!",
     "warnReviewer": "Please select at least one Reviewer!",
     "noProjectId": "Unable to get projectId",
-    "uploadingImages": "Uploading images to Cloudinary..."
+    "uploadingImages": "Uploading images to Cloudinary...",
+    "sampleImage": "Sample Image (optional)",
+    "uploadSampleImage": "Upload",
+    "removeSampleImage": "Remove"
   },
   "projectImport": {
     "configTitle": "1. PROJECT CONFIGURATION",
@@ -499,7 +504,13 @@
     "priority": "Priority",
     "statusLabel": "Status",
     "deadline": "Deadline",
-    "noDeadline": "No deadline"
+    "noDeadline": "No deadline",
+    "sampleImage": "Sample image",
+    "hasSampleImage": "This label has a sample image",
+    "clickToEnlarge": "Click to enlarge",
+    "sampleImageFor": "Sample image: {{name}}",
+    "clickOutsideToClose": "Click outside to close",
+    "close": "Close"
   },
   "sysLogs": {
     "activityDetail": "Activity Details",
@@ -658,7 +669,8 @@
     "disputePlaceholder": "Enter dispute reason...",
     "disputeCancel": "Cancel",
     "disputeSending": "Sending...",
-    "disputeSendBtn": "Send"
+    "disputeSendBtn": "Send",
+    "sampleImage": "Sample image:"
   },
   "annotatorDash": {
     "title": "Annotator Dashboard",

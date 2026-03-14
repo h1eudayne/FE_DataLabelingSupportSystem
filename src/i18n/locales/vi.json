@@ -249,13 +249,18 @@
     "loadingUsers": "Không thể tải danh sách nhân viên",
     "minOneLabel": "Phải có ít nhất một nhãn",
     "warnName": "Vui lòng nhập tên dự án!",
+    "warnDeadline": "Vui lòng chọn hạn chót cho dự án!",
+    "warnDeadlineFuture": "Hạn chót phải là ngày trong tương lai!",
     "warnLabel": "Phải có ít nhất một nhãn được định nghĩa!",
     "warnChecklist": "Nhãn \"{{name}}\" phải có ít nhất 1 điều kiện checklist!",
     "warnFiles": "Vui lòng chọn file ảnh!",
     "warnAnnotator": "Vui lòng chọn ít nhất một Annotator!",
     "warnReviewer": "Vui lòng chọn ít nhất một Reviewer!",
     "noProjectId": "Không lấy được projectId",
-    "uploadingImages": "Đang upload ảnh lên Cloudinary..."
+    "uploadingImages": "Đang upload ảnh lên Cloudinary...",
+    "sampleImage": "Ảnh mẫu (tùy chọn)",
+    "uploadSampleImage": "Tải lên",
+    "removeSampleImage": "Xóa"
   },
   "projectImport": {
     "configTitle": "1. CẤU HÌNH DỰ ÁN",
@@ -500,7 +505,13 @@
     "priority": "Độ ưu tiên",
     "statusLabel": "Trạng thái",
     "deadline": "Hạn chót",
-    "noDeadline": "Không có hạn"
+    "noDeadline": "Không có hạn",
+    "sampleImage": "Ảnh mẫu",
+    "hasSampleImage": "Nhãn này có ảnh mẫu",
+    "clickToEnlarge": "Click để phóng to",
+    "sampleImageFor": "Ảnh mẫu: {{name}}",
+    "clickOutsideToClose": "Click bên ngoài để đóng",
+    "close": "Đóng"
   },
   "sysLogs": {
     "activityDetail": "Chi tiết hoạt động",
@@ -659,7 +670,8 @@
     "disputePlaceholder": "Nhập lý do khiếu nại...",
     "disputeCancel": "Hủy",
     "disputeSending": "Đang gửi...",
-    "disputeSendBtn": "Gửi"
+    "disputeSendBtn": "Gửi",
+    "sampleImage": "Ảnh mẫu:"
   },
   "annotatorDash": {
     "title": "Dashboard",

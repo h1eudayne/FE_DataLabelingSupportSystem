@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Navbar from "./Navbar";
-import Footer from "./Footer";
 
 const MainLayouts = () => {
   const [sidebarSize, setSidebarSize] = useState("lg");
@@ -58,14 +57,16 @@ const MainLayouts = () => {
         }}
       ></div>
 
-      <div className="main-content">
-        <div className="page-content">
+      <div className="main-content" style={{ minHeight: "100vh" }}>
+        <div
+          className="page-content"
+          style={{ minHeight: "calc(100vh - 70px)" }}
+        >
           <div className="container-fluid">
             <Outlet />
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 };

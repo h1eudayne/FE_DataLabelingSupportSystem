@@ -17,6 +17,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
 
   const [expandedLabelId, setExpandedLabelId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [previewImage, setPreviewImage] = useState(null);
 
   const unlockedLabelIds = useMemo(() => {
     const ids = new Set();
@@ -53,9 +54,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
 
   const handleLabelClick = (label) => {
     if (!unlockedLabelIds.has(label.id)) {
-      toast.warning(
-        t('labeling.checklistWarning', { name: label.name }),
-      );
+      toast.warning(t("labeling.checklistWarning", { name: label.name }));
       setExpandedLabelId(label.id);
       return;
     }
@@ -73,7 +72,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
           className="stitch-ws-card-body text-center stitch-ws-text-muted"
           style={{ padding: 20 }}
         >
-          {t('labeling.loadingLabels')}
+          {t("labeling.loadingLabels")}
         </div>
       </div>
     );
@@ -87,10 +86,11 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
       {/* Header */}
       <div className="stitch-ws-card-header">
         <span>
-          <i className="ri-tools-line me-1"></i>{t('labeling.labelChecklist')}
+          <i className="ri-tools-line me-1"></i>
+          {t("labeling.labelChecklist")}
         </span>
         <span className="stitch-ws-badge stitch-ws-badge-inprogress">
-          {unlockedCount}/{labels.length} {t('labeling.unlocked')}
+          {unlockedCount}/{labels.length} {t("labeling.unlocked")}
         </span>
       </div>
 
@@ -111,7 +111,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
           <input
             type="text"
             className="stitch-ws-search-input"
-            placeholder={t('labeling.searchLabel', { count: labels.length })}
+            placeholder={t("labeling.searchLabel", { count: labels.length })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -137,11 +137,8 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
         </div>
       )}
 
-      {/* Label list — FIXED 280px max, always scrollable */}
-      <div
-        className="stitch-ws-card-body p-0"
-        style={{ maxHeight: 280, overflowY: "auto" }}
-      >
+      {/* Label list — auto height, sidebar handles scroll */}
+      <div className="stitch-ws-card-body p-0">
         {filteredLabels.length === 0 && (
           <div
             className="text-center stitch-ws-text-muted"
@@ -151,7 +148,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
               className="ri-search-line d-block"
               style={{ fontSize: 20, marginBottom: 4, opacity: 0.5 }}
             ></i>
-            {t('labeling.noLabelFound', { term: searchTerm })}
+            {t("labeling.noLabelFound", { term: searchTerm })}
           </div>
         )}
 
@@ -162,6 +159,9 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
             (_, idx) => checked[idx] === true,
           ).length;
           const hasChecklist = items.length > 0;
+          const hasSampleImage = !!label.exampleImageUrl;
+          const hasExpandableContent =
+            hasChecklist || hasSampleImage || !!label.guideLine;
           const isUnlocked = unlockedLabelIds.has(label.id);
           const isSelected = selectedLabel?.id === label.id;
           const isExpanded = expandedLabelId === label.id;
@@ -180,7 +180,12 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                   className="d-flex align-items-center flex-grow-1 px-2 py-1"
                   style={{ cursor: "pointer" }}
                   onClick={() => handleLabelClick(label)}
-                  title={t('labeling.clickToSelect', { action: isSelected ? t('labeling.deselectAction') : t('labeling.selectAction'), name: label.name })}
+                  title={t("labeling.clickToSelect", {
+                    action: isSelected
+                      ? t("labeling.deselectAction")
+                      : t("labeling.selectAction"),
+                    name: label.name,
+                  })}
                 >
                   <span
                     className="rounded-circle me-2 flex-shrink-0"
@@ -205,11 +210,32 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                     {label.name}
                   </span>
 
+                  {/* Sample image indicator */}
+                  {hasSampleImage && (
+                    <i
+                      className="ri-image-line me-1"
+                      style={{
+                        fontSize: 13,
+                        color: "#22D3EE",
+                        opacity: 0.8,
+                        cursor: "pointer",
+                      }}
+                      title={t("labeling.hasSampleImage")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPreviewImage({
+                          url: label.exampleImageUrl,
+                          name: label.name,
+                        });
+                      }}
+                    ></i>
+                  )}
+
                   {/* Annotation count badge */}
                   {annotationCountByLabel[label.id] > 0 && (
                     <span
                       className="stitch-ws-badge stitch-ws-badge-count me-1"
-                      title={`${annotationCountByLabel[label.id]} ${t('labeling.boxDrawn')}`}
+                      title={`${annotationCountByLabel[label.id]} ${t("labeling.boxDrawn")}`}
                     >
                       {annotationCountByLabel[label.id]}
                     </span>
@@ -234,8 +260,8 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                   )}
                 </div>
 
-                {/* RIGHT ZONE — toggle button for checklist */}
-                {hasChecklist && (
+                {/* RIGHT ZONE — toggle button for expandable content */}
+                {hasExpandableContent && (
                   <button
                     className={`stitch-ws-chevron-btn ${isExpanded ? "expanded" : ""}`}
                     onClick={(e) => {
@@ -244,7 +270,11 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                         prev === label.id ? null : label.id,
                       );
                     }}
-                    title={isExpanded ? t('labeling.collapseChecklist') : t('labeling.expandChecklist')}
+                    title={
+                      isExpanded
+                        ? t("labeling.collapseChecklist")
+                        : t("labeling.expandChecklist")
+                    }
                   >
                     <i
                       className={`ri-arrow-${isExpanded ? "up" : "down"}-s-line`}
@@ -253,10 +283,10 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                 )}
               </div>
 
-              {/* Inline checklist panel */}
-              {isExpanded && hasChecklist && (
+              {/* Inline expanded panel */}
+              {isExpanded && hasExpandableContent && (
                 <div
-                  className="stitch-ws-checklist-panel"
+                  className="stitch-ws-checklist-panel stitch-ws-expand-enter"
                   style={{ borderLeft: `4px solid ${label.color}` }}
                 >
                   {label.guideLine && (
@@ -266,47 +296,112 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                     </div>
                   )}
 
-                  <div className="d-flex flex-column gap-1">
-                    {items.map((item, itemIdx) => {
-                      const isChecked = checked[itemIdx] === true;
-                      return (
+                  {/* Sample image display */}
+                  {hasSampleImage && (
+                    <div
+                      style={{
+                        padding: "6px 0",
+                        marginBottom: hasChecklist ? 6 : 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          cursor: "pointer",
+                          borderRadius: 6,
+                          overflow: "hidden",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                          position: "relative",
+                        }}
+                        onClick={() =>
+                          setPreviewImage({
+                            url: label.exampleImageUrl,
+                            name: label.name,
+                          })
+                        }
+                        title={t("labeling.clickToEnlarge")}
+                      >
+                        <img
+                          src={label.exampleImageUrl}
+                          alt={`${label.name} sample`}
+                          style={{
+                            width: "100%",
+                            maxHeight: 80,
+                            objectFit: "contain",
+                            display: "block",
+                            borderRadius: 5,
+                            background: "rgba(0,0,0,0.03)",
+                          }}
+                        />
                         <div
-                          key={itemIdx}
-                          className={`stitch-ws-checklist-item ${isChecked ? "checked" : ""}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            dispatch(
-                              toggleChecklistItem({
-                                assignmentId,
-                                labelId: label.id,
-                                itemIndex: itemIdx,
-                              }),
-                            );
+                          style={{
+                            position: "absolute",
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            padding: "4px 6px",
+                            background:
+                              "linear-gradient(transparent, rgba(0,0,0,0.55))",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                            justifyContent: "center",
                           }}
                         >
-                          <input
-                            className="form-check-input ms-0 flex-shrink-0"
-                            type="checkbox"
-                            checked={isChecked}
-                            readOnly
-                            style={{ cursor: "pointer" }}
-                          />
-                          <label
-                            style={{
-                              cursor: "pointer",
-                              fontSize: 12,
-                              textDecoration: isChecked
-                                ? "line-through"
-                                : "none",
-                              opacity: isChecked ? 0.6 : 1,
+                          <i
+                            className="ri-zoom-in-line"
+                            style={{ fontSize: 11, color: "#fff" }}
+                          ></i>
+                          <span style={{ fontSize: 10, color: "#e2e8f0" }}>
+                            {t("labeling.clickToEnlarge")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {hasChecklist && (
+                    <div className="d-flex flex-column gap-1">
+                      {items.map((item, itemIdx) => {
+                        const isChecked = checked[itemIdx] === true;
+                        return (
+                          <div
+                            key={itemIdx}
+                            className={`stitch-ws-checklist-item ${isChecked ? "checked" : ""}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              dispatch(
+                                toggleChecklistItem({
+                                  assignmentId,
+                                  labelId: label.id,
+                                  itemIndex: itemIdx,
+                                }),
+                              );
                             }}
                           >
-                            {item}
-                          </label>
-                        </div>
-                      );
-                    })}
-                  </div>
+                            <input
+                              className="form-check-input ms-0 flex-shrink-0"
+                              type="checkbox"
+                              checked={isChecked}
+                              readOnly
+                              style={{ cursor: "pointer" }}
+                            />
+                            <label
+                              style={{
+                                cursor: "pointer",
+                                fontSize: 12,
+                                textDecoration: isChecked
+                                  ? "line-through"
+                                  : "none",
+                                opacity: isChecked ? 0.6 : 1,
+                              }}
+                            >
+                              {item}
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -314,13 +409,84 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
         })}
       </div>
 
-      {/* Footer */}
-      <div className="stitch-ws-card-footer">
-        <i className="ri-information-line me-1"></i>
-        {selectedLabel
-          ? t('labeling.drawingLabel', { name: selectedLabel.name })
-          : t('labeling.checklistGuide')}
-      </div>
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.85)",
+            zIndex: 9999,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            style={{
+              color: "#fff",
+              fontSize: 14,
+              fontWeight: 600,
+              marginBottom: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <i className="ri-image-line"></i>
+            {t("labeling.sampleImageFor", { name: previewImage.name })}
+          </div>
+          <img
+            src={previewImage.url}
+            alt={`${previewImage.name} sample`}
+            style={{
+              maxWidth: "85vw",
+              maxHeight: "80vh",
+              objectFit: "contain",
+              borderRadius: 8,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div
+            style={{
+              color: "rgba(255,255,255,0.5)",
+              fontSize: 12,
+              marginTop: 12,
+            }}
+          >
+            {t("labeling.clickOutsideToClose")}
+          </div>
+          <button
+            style={{
+              position: "absolute",
+              top: 16,
+              right: 16,
+              background: "rgba(255,255,255,0.15)",
+              border: "none",
+              borderRadius: "50%",
+              width: 36,
+              height: 36,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "#fff",
+              fontSize: 18,
+            }}
+            onClick={() => setPreviewImage(null)}
+            title={t("labeling.close")}
+          >
+            <i className="ri-close-line"></i>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

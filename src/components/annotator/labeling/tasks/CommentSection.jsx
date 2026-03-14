@@ -5,7 +5,7 @@ const CommentSection = ({ rejectionReason, status }) => {
   const { t } = useTranslation();
   if (!rejectionReason || !rejectionReason.trim()) {
     return (
-      <div className="stitch-ws-card" style={{ marginTop: 16 }}>
+      <div className="stitch-ws-card" style={{ marginTop: 0 }}>
         <div className="stitch-ws-card-header">
           <span>
             <i
@@ -32,7 +32,7 @@ const CommentSection = ({ rejectionReason, status }) => {
   }
 
   return (
-    <div className="stitch-ws-card" style={{ marginTop: 16 }}>
+    <div className="stitch-ws-card" style={{ marginTop: 0 }}>
       <div className="stitch-ws-card-header">
         <span>
           <i className="ri-discuss-line me-2" style={{ color: "#22D3EE" }}></i>
