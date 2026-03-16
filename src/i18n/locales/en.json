@@ -917,7 +917,8 @@
     "active": "Active",
     "inactive": "Inactive",
     "noStaffFound": "No staff members found.",
-    "showingRange": "Showing {{from}} to {{to}} of {{total}} users"
+    "showingRange": "Showing {{from}} to {{to}} of {{total}} users",
+    "totalProjects":"Total Projects"
   },
   "addUser": {
     "title": "Import Staff from Excel",
@@ -1060,7 +1061,8 @@
     "activate": "Click to activate",
     "deactivate": "Click to deactivate",
     "edit": "Edit Details",
-    "showingRange": "Showing {{from}} to {{to}} of {{total}} entries"
+    "showingRange": "Showing {{from}} to {{to}} of {{total}} entries",
+    "totalProjects":"Total Projects"
   },
   "userFilter":{
     "searchPlaceholder": "Search by name, email or role..."

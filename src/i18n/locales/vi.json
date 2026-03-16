@@ -918,7 +918,8 @@
     "active": "Hoạt động",
     "inactive": "Khóa",
     "noStaffFound": "Không tìm thấy nhân sự nào.",
-    "showingRange": "Hiển thị {{from}} đến {{to}} trên {{total}} người dùng"
+    "showingRange": "Hiển thị {{from}} đến {{to}} trên {{total}} người dùng",
+    "totalProjects":"Tổng dự án"
   },
   "addUser": {
     "title": "Nhập nhân viên từ Excel",
@@ -1061,7 +1062,8 @@
     "activate": "Nhấn để kích hoạt",
     "deactivate": "Nhấn để tạm dừng",
     "edit": "Chỉnh sửa thông tin",
-    "showingRange": "Hiển thị từ {{from}} đến {{to}} trên tổng số {{total}} nhân sự"
+    "showingRange": "Hiển thị từ {{from}} đến {{to}} trên tổng số {{total}} nhân sự",
+    "totalProjects":"Tổng dự án"
   },
   "userFilter":{
     "searchPlaceholder": "Tìm kiếm theo tên, email hoặc vai trò..."
