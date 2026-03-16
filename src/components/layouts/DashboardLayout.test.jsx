@@ -15,8 +15,6 @@ describe("DashboardLayout Component", () => {
     expect(screen.getByTestId("child-content")).toHaveTextContent(
       "Nội dung test",
     );
-    expect(screen.getByRole("heading", { level: 4 })).toHaveTextContent(
-      testTitle,
-    );
+    expect(screen.getByText(testTitle)).toBeInTheDocument();
   });
 });

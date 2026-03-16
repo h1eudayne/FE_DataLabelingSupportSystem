@@ -11,29 +11,39 @@ const analyticsService = {
 
   getDashboardStats: async (managerId) => {
     const [resProjects, resManagerStats] = await Promise.all([
-      axios.get(`/api/projects/managers/${managerId}`),
+      axios.get(`/api/projects/managers/${managerId}`).catch((err) => {
+        throw err;
+      }),
       axios
         .get(`/api/projects/managers/${managerId}/statistics`)
         .catch(() => ({ data: null })),
-    ]);
-    const projects = resProjects.data || [];
-    const managerStats = resManagerStats.data;
+    ]).catch((err) => {
+      if (err.response?.status === 400 || err.response?.status === 404) {
+        return [{ data: [] }, { data: null }];
+      }
+      throw err;
+    });
+
+    const projects = resProjects?.data || [];
+    const managerStats = resManagerStats?.data;
 
     let completed = 0;
     let inProgress = 0;
     let submitted = 0;
     let rejected = 0;
     let newProjects = 0;
+    let totalAssignments = 0;
 
     const activeProjects = [];
 
     for (const project of projects) {
       try {
         const res = await axios.get(`/api/projects/${project.id}/statistics`);
-        const s = res.data;
+        const s = res?.data || {};
 
-        const total = s.totalAssignments ?? 0;
-        const approved = s.approvedAssignments ?? 0;
+        const total = s.totalAssignments ?? s.totalItems ?? 0;
+        totalAssignments += total;
+        const approved = s.approvedAssignments ?? s.approvedItems ?? 0;
         const rej = s.rejectedAssignments ?? 0;
         const sub = s.submittedAssignments ?? 0;
         const pend = s.pendingAssignments ?? 0;
@@ -66,7 +76,7 @@ const analyticsService = {
           deadline: project.deadline,
         });
       } catch (err) {
-        if (err.response?.status === 400) {
+        if (err.response?.status === 400 || err.response?.status === 404) {
           activeProjects.push({
             id: project.id,
             name: project.name,
@@ -86,6 +96,7 @@ const analyticsService = {
     return {
       total: projects.length,
       totalProjects: projects.length,
+      totalAssignments,
       completed,
       inProgress,
       submitted,
@@ -98,8 +109,14 @@ const analyticsService = {
   getManagerStats: (managerId) =>
     axios.get(`/api/projects/managers/${managerId}/statistics`),
 
-  getUsers: (page = 1, pageSize = 100) =>
-    axios.get(`/api/users?page=${page}&pageSize=${pageSize}`),
+  getUsers: (page, pageSize) => {
+    if (page === undefined && pageSize === undefined) {
+      return axios.get(`/api/users`);
+    }
+    const p = page !== undefined ? page : 1;
+    const ps = pageSize !== undefined ? pageSize : 100;
+    return axios.get(`/api/users?page=${p}&pageSize=${ps}`);
+  }
 };
 
 export default analyticsService;

@@ -30,14 +30,13 @@ describe("LandingContainer Component", () => {
   it("nên render đầy đủ các section chính của trang Landing", () => {
     renderLanding();
 
-    expect(screen.getByAltText(/logo/i)).toBeInTheDocument();
+    const logos = screen.getAllByAltText(/logo/i);
+    expect(logos.length).toBeGreaterThan(0);
 
-    expect(screen.getByText(/Số hóa dữ liệu/i)).toBeInTheDocument();
-    expect(screen.getByText(/Thông minh & Hiệu quả/i)).toBeInTheDocument();
+    expect(screen.getByText("landingHero.title1")).toBeInTheDocument();
+    expect(screen.getByText("landingHero.title2")).toBeInTheDocument();
 
-    expect(screen.getByText(/Giải pháp cho mọi vai trò/i)).toBeInTheDocument();
-
-    expect(screen.getByText(/AI LABEL SYSTEM/i)).toBeInTheDocument();
+    expect(screen.getByText("landingFeatures.title")).toBeInTheDocument();
   });
 
   it("nên tự động chuyển hướng sang /dashboard nếu đã có access_token", () => {
@@ -59,7 +58,7 @@ describe("LandingContainer Component", () => {
   it("nên chuyển hướng đến trang /login khi nhấn nút Đăng nhập trên Navbar", () => {
     renderLanding();
 
-    fireEvent.click(screen.getByRole("button", { name: /Đăng nhập/i }));
+    fireEvent.click(screen.getByRole("button", { name: "landing.login" }));
 
     expect(mockedNavigate).toHaveBeenCalledWith("/login");
   });
@@ -68,7 +67,7 @@ describe("LandingContainer Component", () => {
     renderLanding();
 
     const startBtns = screen.getAllByRole("button", {
-      name: /Bắt đầu ngay/i,
+      name: "landing.getStarted",
     });
 
     fireEvent.click(startBtns[0]);

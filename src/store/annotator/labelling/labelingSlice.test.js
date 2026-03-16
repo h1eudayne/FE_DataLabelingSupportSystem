@@ -67,6 +67,7 @@ describe("labelingSlice", () => {
   it("nên xử lý removeAnnotation theo ID", () => {
     const startState = {
       ...initialState,
+      undoStack: [],
       annotationsByAssignment: {
         A1: [{ id: "ann1" }, { id: "ann2" }],
       },
@@ -82,6 +83,7 @@ describe("labelingSlice", () => {
   it("nên xử lý removeLastAnnotation (Undo)", () => {
     const startState = {
       ...initialState,
+      undoStack: [],
       annotationsByAssignment: {
         A1: [{ id: "1" }, { id: "2" }],
       },
