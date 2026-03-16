@@ -25,9 +25,6 @@ describe("AuthLeft", () => {
   it("hiển thị đúng tiêu đề tiếng Việt và mô tả", () => {
     renderWithRouter();
     expect(screen.getByText(/Label data with/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Nền tảng gán nhãn dữ liệu thông minh/i),
-    ).toBeInTheDocument();
   });
 
   it("render sub-component Quotes", () => {

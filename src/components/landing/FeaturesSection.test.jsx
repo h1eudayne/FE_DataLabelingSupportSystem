@@ -6,7 +6,7 @@ import "@testing-library/jest-dom";
 describe("FeaturesSection Component", () => {
   it("nên hiển thị tiêu đề chính của phần giới thiệu giải pháp", () => {
     render(<FeaturesSection />);
-    expect(screen.getByText(/Giải pháp cho mọi vai trò/i)).toBeInTheDocument();
+    expect(screen.getByText("landingFeatures.title")).toBeInTheDocument();
   });
 
   it("nên hiển thị đủ 3 vai trò chính: Manager, Reviewer và Annotator", () => {
@@ -25,17 +25,15 @@ describe("FeaturesSection Component", () => {
     render(<FeaturesSection />);
 
     expect(
-      screen.getByText(/Quản lý nguồn lực và báo cáo hiệu suất/i),
+      screen.getByText("landingFeatures.managerDesc"),
     ).toBeInTheDocument();
 
     expect(
-      screen.getByText(
-        /Kiểm soát chất lượng dữ liệu với các công cụ Approve\/Reject/i,
-      ),
+      screen.getByText("landingFeatures.reviewerDesc"),
     ).toBeInTheDocument();
 
     expect(
-      screen.getByText(/Giao diện làm việc tập trung, tối ưu năng suất/i),
+      screen.getByText("landingFeatures.annotatorDesc"),
     ).toBeInTheDocument();
   });
 });

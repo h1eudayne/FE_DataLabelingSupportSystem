@@ -12,8 +12,8 @@ describe("AuthRegisterLink", () => {
       </BrowserRouter>,
     );
 
-    expect(screen.getByText(/Don't have an account/i)).toBeInTheDocument();
-    const link = screen.getByRole("link", { name: /signup/i });
+    expect(screen.getByText("auth.noAccount")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: "auth.register" });
     expect(link).toHaveAttribute("href", "/register");
   });
 });

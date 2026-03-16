@@ -28,7 +28,7 @@ describe("User API Suite", () => {
 
     const result = await getUsers();
 
-    expect(axios.get).toHaveBeenCalledWith("/api/User");
+    expect(axios.get).toHaveBeenCalledWith("/api/users", { params: { page: 1, pageSize: 10 } });
     expect(result).toEqual(mockData);
   });
 
@@ -38,7 +38,7 @@ describe("User API Suite", () => {
 
     await createUser(newUser);
 
-    expect(axios.post).toHaveBeenCalledWith("/api/User", newUser);
+    expect(axios.post).toHaveBeenCalledWith("/api/users", newUser);
   });
 
   it("updateUser: nên gọi đúng ID và dữ liệu qua phương thức PUT", async () => {
@@ -48,7 +48,7 @@ describe("User API Suite", () => {
 
     await updateUser(id, updateData);
 
-    expect(axios.put).toHaveBeenCalledWith(`/api/User/${id}`, updateData);
+    expect(axios.put).toHaveBeenCalledWith(`/api/users/${id}`, updateData);
   });
 
   it("getUserProfile: nên gọi đúng endpoint profile", async () => {
@@ -57,7 +57,7 @@ describe("User API Suite", () => {
 
     const result = await getUserProfile();
 
-    expect(axios.get).toHaveBeenCalledWith("/api/User/profile");
+    expect(axios.get).toHaveBeenCalledWith("/api/users/me");
     expect(result).toEqual(mockProfile);
   });
 
@@ -69,7 +69,7 @@ describe("User API Suite", () => {
     await updateStatus(id, isActive);
 
     expect(axios.patch).toHaveBeenCalledWith(
-      `/api/User/${id}/status?isActive=true`,
+      `/api/users/${id}/status?isActive=true`,
     );
   });
 

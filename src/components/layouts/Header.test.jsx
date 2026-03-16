@@ -24,7 +24,7 @@ describe("Header Component - Comprehensive Suite", () => {
           state = {
             isAuthenticated: true,
             user: {
-              name: "Nguyễn Văn A",
+              fullName: "Nguyễn Văn A",
               role: "Manager",
               email: "staff1@gmail.com",
             },
@@ -50,13 +50,19 @@ describe("Header Component - Comprehensive Suite", () => {
     );
 
   describe("UI & Profile Dropdown", () => {
-    it("nên hiển thị thông tin User chính xác", () => {
+    it("nên hiển thị thông tin User chính xác", async () => {
       renderHeader();
-      expect(screen.getByText(/Nguyễn Văn A/i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText(/Nguyễn Văn A/i)).toBeInTheDocument();
+      });
     });
 
     it("nên tương tác đầy đủ với Dropdown Profile", async () => {
       renderHeader();
+
+      await waitFor(() => {
+        expect(screen.getByText(/Nguyễn Văn A/i)).toBeInTheDocument();
+      });
 
       const profileToggle = screen.getByText(/Nguyễn Văn A/i);
       fireEvent.click(profileToggle);
@@ -64,8 +70,8 @@ describe("Header Component - Comprehensive Suite", () => {
       await waitFor(() => {
         expect(screen.getByText(/staff1@gmail.com/i)).toBeInTheDocument();
 
-        const profileLink = screen.getByText(/Hồ sơ cá nhân/i);
-        const logoutBtn = screen.getByText(/Đăng xuất/i);
+        const profileLink = screen.getByText("header.profile");
+        const logoutBtn = screen.getByText("header.logout");
 
         expect(profileLink).toBeInTheDocument();
         expect(logoutBtn).toBeInTheDocument();
@@ -76,9 +82,13 @@ describe("Header Component - Comprehensive Suite", () => {
   });
 
   describe("Hệ thống Search & Actions", () => {
-    it("nên cho phép nhập từ khóa vào ô Search", () => {
+    it("nên cho phép nhập từ khóa vào ô Search", async () => {
       renderHeader();
-      const searchInput = screen.getByPlaceholderText(/Tìm kiếm\.\.\./i);
+      await waitFor(() => {
+        const searchInput = screen.getByPlaceholderText("header.search");
+        expect(searchInput).toBeInTheDocument();
+      });
+      const searchInput = screen.getByPlaceholderText("header.search");
       fireEvent.change(searchInput, { target: { value: "Báo cáo" } });
       expect(searchInput.value).toBe("Báo cáo");
     });
@@ -98,9 +108,17 @@ describe("Header Component - Comprehensive Suite", () => {
 
       renderHeader();
 
+      await waitFor(() => {
+        expect(screen.getByText("Nguyễn Văn A")).toBeInTheDocument();
+      });
+
       fireEvent.click(screen.getByText("Nguyễn Văn A"));
 
-      const logoutBtn = screen.getByText(/Đăng xuất/i);
+      await waitFor(() => {
+        expect(screen.getByText("header.logout")).toBeInTheDocument();
+      });
+
+      const logoutBtn = screen.getByText("header.logout");
       fireEvent.click(logoutBtn);
 
       expect(spyDispatch).toHaveBeenCalled();

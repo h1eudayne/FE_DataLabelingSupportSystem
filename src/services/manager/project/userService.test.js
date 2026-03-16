@@ -11,7 +11,7 @@ vi.mock("../../axios.customize", () => ({
 describe("userService", () => {
   it("getUsers: should call /api/users", async () => {
     axios.get.mockResolvedValueOnce({ data: [] });
-    await userService.getUsers();
-    expect(axios.get).toHaveBeenCalledWith("/api/users");
+    await userService.getUsers(undefined, undefined);
+    expect(axios.get).toHaveBeenCalledWith("/api/users?page=1&pageSize=100");
   });
 });
