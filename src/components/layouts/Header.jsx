@@ -89,7 +89,9 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
   };
 
   const popperConfig = {
-    modifiers: [{ name: "offset", options: { offset: [0, 25] } }],
+    modifiers: [
+      { name: "offset", options: { offset: [0, 50] } },
+    ],
   };
 
   return (
@@ -111,12 +113,23 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
         }
         .custom-toggle-btn:hover .toggle-icon { color: white !important; }
 
-        /* ── Dropdown animation ── */
-        .dropdown-menu-animated {
-          display: block !important; visibility: hidden; opacity: 0;
-          transform: translateY(10px); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        /* ── Dropdown styling: pin below header ── */
+        .app-header .dropdown-menu {
+          transform: none !important;
+          margin-top: 55px !important;
+          border: none;
+          border-radius: 12px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+          overflow: hidden;
+          z-index: 1060;
         }
-        .dropdown-menu-animated.show { visibility: visible; opacity: 1; transform: translateY(0); }
+        .app-header .dropdown-menu.show {
+          animation: dropdownFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes dropdownFadeIn {
+          from { opacity: 0; transform: translateY(-6px) !important; }
+          to { opacity: 1; transform: translateY(0) !important; }
+        }
 
         /* ── Theme toggle ── */
         .theme-toggle-btn { transition: all 0.2s ease; }
@@ -399,10 +412,8 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                   align="end"
                   className="shadow-lg border-0 py-0 dropdown-menu-animated"
                   style={{
-                    borderRadius: "12px",
                     minWidth: "340px",
                     maxHeight: "420px",
-                    marginTop: "15px",
                   }}
                   popperConfig={popperConfig}
                 >
@@ -522,9 +533,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     align="end"
                     className="shadow-lg border-0 py-2 dropdown-menu-animated"
                     style={{
-                      borderRadius: "12px",
                       minWidth: "210px",
-                      marginTop: "15px",
                     }}
                     popperConfig={popperConfig}
                   >

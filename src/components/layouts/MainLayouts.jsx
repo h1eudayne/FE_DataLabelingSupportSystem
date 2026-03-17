@@ -57,7 +57,7 @@ const MainLayouts = () => {
         }}
       ></div>
 
-      <div className="main-content" style={{ minHeight: "100vh" }}>
+      <div className="main-content" style={{ minHeight: "100vh", position: "relative", zIndex: 1 }}>
         <div
           className="page-content"
           style={{ minHeight: "calc(100vh - 70px)" }}

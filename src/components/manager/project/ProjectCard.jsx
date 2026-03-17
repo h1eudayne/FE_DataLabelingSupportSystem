@@ -22,8 +22,8 @@ const ProjectCard = ({ project, onDelete }) => {
       <div className="card h-100 shadow-sm border-0 card-animate">
         <div className="card-body">
           <div className="d-flex align-items-center mb-3">
-            <div className="flex-grow-1">
-              <h5 className="fs-15 mb-1 text-dark fw-bold">
+            <div className="flex-grow-1" style={{ overflow: 'hidden' }}>
+              <h5 className="fs-15 mb-1 text-dark fw-bold text-truncate" title={project.name}>
                 <Link to={`/projects/${project.id}`} className="text-dark">
                   {project.name}
                 </Link>
