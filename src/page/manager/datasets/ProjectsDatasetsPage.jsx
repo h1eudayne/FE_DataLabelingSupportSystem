@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -7,6 +7,7 @@ import projectService from "../../../services/manager/project/projectService";
 import datasetService from "../../../services/manager/dataset/datasetService";
 import analyticsService from "../../../services/manager/analytics/analyticsService";
 import disputeService from "../../../services/manager/dispute/disputeService";
+import labelService from "../../../services/manager/project/labelService";
 
 const ProjectsDatasetsPage = () => {
   const { t } = useTranslation();
@@ -26,6 +27,49 @@ const ProjectsDatasetsPage = () => {
   const fileInputRef = useRef(null);
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.id;
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showAddLabel, setShowAddLabel] = useState(false);
+  const [addingLabel, setAddingLabel] = useState(false);
+  const [editingLabel, setEditingLabel] = useState(null);
+  const [newLabel, setNewLabel] = useState({
+    name: "",
+    color: "#3b82f6",
+    guideLine: "",
+    checklist: [""],
+    isDefault: false,
+  });
+  const [collapsedSections, setCollapsedSections] = useState({
+    labelConfig: false,
+    annotators: false,
+    reviewers: false,
+  });
+  const toggleSection = (section) =>
+    setCollapsedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+
+  const startEditLabel = (label) => {
+    setEditingLabel(label);
+    setNewLabel({
+      name: label.name || "",
+      color: label.color || "#3b82f6",
+      guideLine: label.guideLine || "",
+      checklist: label.checklist?.length > 0 ? [...label.checklist] : [""],
+      isDefault: label.isDefault || false,
+    });
+    setShowAddLabel(true);
+  };
+
+  const resetLabelForm = () => {
+    setShowAddLabel(false);
+    setEditingLabel(null);
+    setNewLabel({ name: "", color: "#3b82f6", guideLine: "", checklist: [""], isDefault: false });
+  };
+
+  const filteredProjects = useMemo(() => {
+    if (!searchTerm.trim()) return projects;
+    return projects.filter((p) =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [projects, searchTerm]);
 
   useEffect(() => {
     fetchList();
@@ -187,6 +231,8 @@ const ProjectsDatasetsPage = () => {
               type="text"
               className="form-control bg-light border-light"
               placeholder={t('datasets.searchProject')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
             <i className="ri-search-2-line search-icon" />
           </div>
@@ -196,7 +242,7 @@ const ProjectsDatasetsPage = () => {
             style={{ maxHeight: "100%" }}
           >
             <ul className="list-unstyled file-manager-menu">
-              {projects.map((p) => (
+              {filteredProjects.map((p) => (
                 <li key={p.id} className="mb-1">
                   <a
                     href="#!"
@@ -212,6 +258,12 @@ const ProjectsDatasetsPage = () => {
                   </a>
                 </li>
               ))}
+              {filteredProjects.length === 0 && searchTerm && (
+                <li className="text-center text-muted small py-3">
+                  <i className="ri-search-line d-block fs-20 mb-1 opacity-50" />
+                  {t('datasets.noProjectFound')}
+                </li>
+              )}
             </ul>
           </div>
 
@@ -254,6 +306,7 @@ const ProjectsDatasetsPage = () => {
               className={`btn btn-sm px-3 ${exportCheck.ready ? "btn-success" : "btn-outline-secondary"}`}
               disabled={!selectedProject || exporting || exportCheck.checking}
               onClick={handleExport}
+              style={{ minWidth: '160px' }}
               title={
                 !exportCheck.ready && selectedProject
                   ? `${t('datasets.exportNotReady')}: ${!exportCheck.allApproved ? t('datasets.notAllApproved') : ""} ${!exportCheck.noPendingDisputes ? t('datasets.disputePendingShort') : ""}`
@@ -302,26 +355,55 @@ const ProjectsDatasetsPage = () => {
             <div className="row g-3">
               <div className="col-lg-8">
                 <div className="card shadow-none border mb-3">
-                  <div className="card-header bg-light-subtle">
-                    <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted">
+                  <div
+                    className="card-header bg-light-subtle d-flex align-items-center justify-content-between"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => toggleSection('labelConfig')}
+                  >
+                    <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted d-flex align-items-center">
+                      <i className={`ri-arrow-${collapsedSections.labelConfig ? 'right' : 'down'}-s-line me-1 fs-16`} />
                       {t('datasets.labelConfig')}
+                      <span className="badge bg-primary-subtle text-primary ms-2">
+                        {selectedProject.labels?.length || 0}
+                      </span>
                     </h6>
+                    <button
+                      className="btn btn-sm btn-soft-primary"
+                      onClick={(e) => { e.stopPropagation(); setEditingLabel(null); setNewLabel({ name: "", color: "#3b82f6", guideLine: "", checklist: [""], isDefault: false }); setShowAddLabel(true); }}
+                    >
+                      <i className="ri-add-line align-middle me-1" />
+                      {t('datasets.addLabel')}
+                    </button>
                   </div>
-                  <div className="card-body p-0">
-                    <div className="table-responsive">
-                      <table className="table table-hover align-middle mb-0">
+                  {!collapsedSections.labelConfig && <div className="card-body p-0">
+                      <table className="table table-hover align-middle mb-0" style={{ tableLayout: 'fixed' }}>
                         <thead className="table-light">
                           <tr>
-                            <th>{t('datasets.labelName')}</th>
-                            <th>{t('datasets.color')}</th>
-                            <th>{t('datasets.guideline')}</th>
-                            <th>{t('datasets.checklist')}</th>
+                            <th style={{ width: '16%', whiteSpace: 'nowrap' }}>{t('datasets.labelName')}</th>
+                            <th style={{ width: '15%', whiteSpace: 'nowrap' }}>{t('datasets.labelType')}</th>
+                            <th style={{ width: '12%', whiteSpace: 'nowrap' }}>{t('datasets.color')}</th>
+                            <th style={{ width: '20%', whiteSpace: 'nowrap' }}>{t('datasets.guideline')}</th>
+                            <th style={{ width: '20%', whiteSpace: 'nowrap' }}>{t('datasets.checklist')}</th>
+                            <th style={{ width: '17%', whiteSpace: 'nowrap', textAlign: 'center' }}>{t('common.actions')}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {selectedProject.labels?.map((label) => (
                             <tr key={label.id}>
-                              <td className="fw-semibold">{label.name}</td>
+                              <td className="fw-semibold text-truncate" style={{ maxWidth: 0 }} title={label.name}>{label.name}</td>
+                              <td style={{ whiteSpace: 'nowrap' }}>
+                                {label.isDefault ? (
+                                  <span className="badge bg-warning-subtle text-warning px-2 py-1" style={{ fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
+                                    <i className="ri-error-warning-line me-1" />
+                                    {t('datasets.labelDefault')}
+                                  </span>
+                                ) : (
+                                  <span className="badge bg-info-subtle text-info px-2 py-1" style={{ fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
+                                    <i className="ri-folder-line me-1" />
+                                    {t('datasets.labelProject')}
+                                  </span>
+                                )}
+                              </td>
                               <td>
                                 <span
                                   className="badge px-2 py-1"
@@ -330,14 +412,14 @@ const ProjectsDatasetsPage = () => {
                                   {label.color}
                                 </span>
                               </td>
-                              <td className="text-muted small">
+                              <td className="text-muted small text-truncate" style={{ maxWidth: 0 }} title={label.guideLine}>
                                 {label.guideLine}
                               </td>
                               <td>
                                 {label.checklist?.length > 0 ? (
                                   <ul className="list-unstyled mb-0">
                                     {label.checklist.map((item, idx) => (
-                                      <li key={idx} className="small">
+                                      <li key={idx} className="small text-truncate" title={item}>
                                         <i className="ri-checkbox-circle-line text-success me-1"></i>
                                         {item}
                                       </li>
@@ -347,19 +429,216 @@ const ProjectsDatasetsPage = () => {
                                   <span className="text-muted small">—</span>
                                 )}
                               </td>
+                              <td>
+                                <div className="d-flex gap-1 justify-content-center">
+                                  <button
+                                    className="btn btn-sm btn-soft-primary p-1"
+                                    title={t('common.edit')}
+                                    onClick={() => startEditLabel(label)}
+                                  >
+                                    <i className="ri-pencil-line" />
+                                  </button>
+                                  <button
+                                    className="btn btn-sm btn-soft-danger p-1"
+                                    title={t('common.delete')}
+                                    onClick={async () => {
+                                      if (!window.confirm(t('datasets.confirmDeleteLabel'))) return;
+                                      try {
+                                        await labelService.deleteLabel(label.id);
+                                        toast.success(t('datasets.deleteLabelSuccess'));
+                                        await handleProjectClick(selectedProject.id);
+                                      } catch {
+                                        toast.error(t('datasets.deleteLabelFailed'));
+                                      }
+                                    }}
+                                  >
+                                    <i className="ri-delete-bin-line" />
+                                  </button>
+                                </div>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
+                  </div>}
+
+                  {/* Add Label Modal */}
+                  {showAddLabel && (
+                    <div className="card-footer bg-white border-top p-3">
+                      <h6 className="fw-bold fs-13 mb-3">
+                        <i className={`${editingLabel ? 'ri-pencil-line' : 'ri-add-circle-line'} me-1 text-primary`} />
+                        {editingLabel ? t('datasets.editLabelTitle') : t('datasets.addLabelTitle')}
+                      </h6>
+                      <div className="row g-2">
+                        <div className="col-12 mb-1">
+                          <label className="form-label small fw-semibold">{t('datasets.labelType')}</label>
+                          <div className="d-flex gap-3">
+                            <div className="form-check">
+                              <input
+                                className="form-check-input"
+                                type="radio"
+                                id="labelTypeProject"
+                                checked={!newLabel.isDefault}
+                                onChange={() => setNewLabel({ ...newLabel, isDefault: false })}
+                              />
+                              <label className="form-check-label small" htmlFor="labelTypeProject">
+                                <span className="badge bg-info-subtle text-info me-1"><i className="ri-folder-line" /></span>
+                                {t('datasets.labelProject')}
+                              </label>
+                            </div>
+                            <div className="form-check">
+                              <input
+                                className="form-check-input"
+                                type="radio"
+                                id="labelTypeDefault"
+                                checked={newLabel.isDefault}
+                                onChange={() => setNewLabel({ ...newLabel, isDefault: true })}
+                              />
+                              <label className="form-check-label small" htmlFor="labelTypeDefault">
+                                <span className="badge bg-warning-subtle text-warning me-1"><i className="ri-error-warning-line" /></span>
+                                {t('datasets.labelDefault')}
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-5">
+                          <label className="form-label small fw-semibold">{t('datasets.labelName')}</label>
+                          <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            placeholder={t('datasets.labelNamePlaceholder')}
+                            value={newLabel.name}
+                            onChange={(e) => setNewLabel({ ...newLabel, name: e.target.value })}
+                          />
+                        </div>
+                        <div className="col-md-2">
+                          <label className="form-label small fw-semibold">{t('datasets.labelColorLabel')}</label>
+                          <div className="d-flex align-items-center gap-2">
+                            <input
+                              type="color"
+                              className="form-control form-control-color form-control-sm"
+                              value={newLabel.color}
+                              onChange={(e) => setNewLabel({ ...newLabel, color: e.target.value })}
+                              style={{ width: '40px', height: '32px' }}
+                            />
+                            <span className="small text-muted">{newLabel.color}</span>
+                          </div>
+                        </div>
+                        <div className="col-md-5">
+                          <label className="form-label small fw-semibold">{t('datasets.guideline')}</label>
+                          <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            placeholder={t('datasets.labelGuidelinePlaceholder')}
+                            value={newLabel.guideLine}
+                            onChange={(e) => setNewLabel({ ...newLabel, guideLine: e.target.value })}
+                          />
+                        </div>
+                        <div className="col-12">
+                          <label className="form-label small fw-semibold">{t('datasets.checklist')}</label>
+                          {newLabel.checklist.map((item, idx) => (
+                            <div key={idx} className="d-flex gap-2 mb-1">
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder={`${t('datasets.checklistItem')} ${idx + 1}`}
+                                value={item}
+                                onChange={(e) => {
+                                  const updated = [...newLabel.checklist];
+                                  updated[idx] = e.target.value;
+                                  setNewLabel({ ...newLabel, checklist: updated });
+                                }}
+                              />
+                              {newLabel.checklist.length > 1 && (
+                                <button
+                                  className="btn btn-sm btn-soft-danger"
+                                  onClick={() => {
+                                    const updated = newLabel.checklist.filter((_, i) => i !== idx);
+                                    setNewLabel({ ...newLabel, checklist: updated });
+                                  }}
+                                >
+                                  <i className="ri-close-line" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <button
+                            className="btn btn-sm btn-outline-secondary mt-1"
+                            onClick={() => setNewLabel({ ...newLabel, checklist: [...newLabel.checklist, ""] })}
+                          >
+                            <i className="ri-add-line me-1" />
+                            {t('datasets.addChecklistItem')}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="d-flex gap-2 mt-3">
+                        <button
+                          className="btn btn-sm btn-primary px-3"
+                          disabled={addingLabel || !newLabel.name.trim()}
+                          onClick={async () => {
+                            setAddingLabel(true);
+                            try {
+                              const checklistStr = newLabel.checklist
+                                .filter((c) => c.trim())
+                                .join("|");
+                              if (editingLabel) {
+                                await labelService.updateLabel(editingLabel.id, {
+                                  name: newLabel.name.trim(),
+                                  color: newLabel.color,
+                                  guideLine: newLabel.guideLine.trim() || null,
+                                  defaultChecklist: checklistStr || null,
+                                  isDefault: newLabel.isDefault,
+                                  projectId: selectedProject.id,
+                                });
+                                toast.success(t('datasets.editLabelSuccess'));
+                              } else {
+                                await labelService.createLabel({
+                                  name: newLabel.name.trim(),
+                                  color: newLabel.color,
+                                  guideLine: newLabel.guideLine.trim() || null,
+                                  defaultChecklist: checklistStr || null,
+                                  isDefault: newLabel.isDefault,
+                                  projectId: selectedProject.id,
+                                });
+                                toast.success(t('datasets.addLabelSuccess'));
+                              }
+                              resetLabelForm();
+                              await handleProjectClick(selectedProject.id);
+                            } catch {
+                              toast.error(editingLabel ? t('datasets.editLabelFailed') : t('datasets.addLabelFailed'));
+                            } finally {
+                              setAddingLabel(false);
+                            }
+                          }}
+                        >
+                          {addingLabel ? (
+                            <span className="spinner-border spinner-border-sm me-1" />
+                          ) : (
+                            <i className="ri-check-line me-1" />
+                          )}
+                          {t('common.save')}
+                        </button>
+                        <button
+                          className="btn btn-sm btn-light px-3"
+                          onClick={resetLabelForm}
+                        >
+                          {t('common.cancel')}
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="card shadow-none border">
-                  <div className="card-header bg-light-subtle">
-                    <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted">
+                  <div
+                    className="card-header bg-light-subtle"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => toggleSection('annotators')}
+                  >
+                    <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted d-flex align-items-center">
+                      <i className={`ri-arrow-${collapsedSections.annotators ? 'right' : 'down'}-s-line me-1 fs-16`} />
                       <i className="ri-user-star-line me-1 text-success"></i>
-                      Annotators
+                      {t('datasets.annotatorsSectionTitle')}
                       <span className="badge bg-success-subtle text-success ms-2">
                         {selectedProject.members?.filter(
                           (m) => m.role === "Annotator",
@@ -367,6 +646,7 @@ const ProjectsDatasetsPage = () => {
                       </span>
                     </h6>
                   </div>
+                  {!collapsedSections.annotators && (
                   <div className="card-body">
                     {selectedProject.members?.filter(
                       (m) => m.role === "Annotator",
@@ -397,13 +677,19 @@ const ProjectsDatasetsPage = () => {
                       </p>
                     )}
                   </div>
+                  )}
                 </div>
 
                 <div className="card shadow-none border">
-                  <div className="card-header bg-light-subtle">
-                    <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted">
+                  <div
+                    className="card-header bg-light-subtle"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => toggleSection('reviewers')}
+                  >
+                    <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted d-flex align-items-center">
+                      <i className={`ri-arrow-${collapsedSections.reviewers ? 'right' : 'down'}-s-line me-1 fs-16`} />
                       <i className="ri-shield-star-line me-1 text-info"></i>
-                      Reviewers
+                      {t('datasets.reviewersSectionTitle')}
                       <span className="badge bg-info-subtle text-info ms-2">
                         {selectedProject.members?.filter(
                           (m) => m.role === "Reviewer",
@@ -411,6 +697,7 @@ const ProjectsDatasetsPage = () => {
                       </span>
                     </h6>
                   </div>
+                  {!collapsedSections.reviewers && (
                   <div className="card-body">
                     {selectedProject.members?.filter(
                       (m) => m.role === "Reviewer",
@@ -441,6 +728,7 @@ const ProjectsDatasetsPage = () => {
                       </p>
                     )}
                   </div>
+                  )}
                 </div>
               </div>
 
@@ -481,12 +769,52 @@ const ProjectsDatasetsPage = () => {
                         </span>
                       </div>
                       <div className="d-flex justify-content-between">
+                        <span className="text-muted">{t('datasets.rejected')}:</span>
+                        <span className="fw-bold text-danger">
+                          {projectStats?.rejectedAssignments ?? 0}
+                        </span>
+                      </div>
+                      <div className="d-flex justify-content-between">
                         <span className="text-muted">{t('datasets.deadline')}:</span>
                         <span className="fw-bold text-danger">
                           {new Date(
                             selectedProject.deadline,
                           ).toLocaleDateString()}
                         </span>
+                      </div>
+
+                      <div className="border-top pt-3 mt-1">
+                        <h6 className="mb-2 fw-bold text-uppercase fs-11 text-muted">
+                          <i className="ri-team-line me-1" />
+                          {t('datasets.teamOverview')}
+                        </h6>
+                        <div className="d-flex justify-content-between">
+                          <span className="text-muted">
+                            <i className="ri-group-line me-1 text-primary" />
+                            {t('datasets.totalStaff')}:
+                          </span>
+                          <span className="fw-bold text-primary">
+                            {selectedProject.members?.length || 0}
+                          </span>
+                        </div>
+                        <div className="d-flex justify-content-between mt-2">
+                          <span className="text-muted">
+                            <i className="ri-user-star-line me-1 text-success" />
+                            {t('datasets.totalAnnotators')}:
+                          </span>
+                          <span className="fw-bold text-success">
+                            {selectedProject.members?.filter(m => m.role === "Annotator").length || 0}
+                          </span>
+                        </div>
+                        <div className="d-flex justify-content-between mt-2">
+                          <span className="text-muted">
+                            <i className="ri-shield-star-line me-1 text-info" />
+                            {t('datasets.totalReviewers')}:
+                          </span>
+                          <span className="fw-bold text-info">
+                            {selectedProject.members?.filter(m => m.role === "Reviewer").length || 0}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     {(() => {

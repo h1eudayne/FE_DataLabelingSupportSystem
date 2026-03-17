@@ -57,21 +57,57 @@ const CreateProject = () => {
   ]);
 
   const [defaultLabels, setDefaultLabels] = useState([
-    { name: "Ảnh bị lỗi", color: "#EF4444" },
-    { name: "Task không đạt yêu cầu", color: "#F59E0B" },
+    { name: "Ảnh bị lỗi", color: "#EF4444", guideLine: "", checklist: [""], exampleImage: null, exampleImagePreview: null },
+    { name: "Task không đạt yêu cầu", color: "#F59E0B", guideLine: "", checklist: [""], exampleImage: null, exampleImagePreview: null },
   ]);
 
   const addDefaultLabel = () =>
-    setDefaultLabels([...defaultLabels, { name: "", color: "#6B7280" }]);
+    setDefaultLabels([...defaultLabels, { name: "", color: "#6B7280", guideLine: "", checklist: [""], exampleImage: null, exampleImagePreview: null }]);
 
   const removeDefaultLabel = (index) => {
     if (defaultLabels.length === 0) return;
-    setDefaultLabels(defaultLabels.filter((_, i) => i !== index));
+    const clone = [...defaultLabels];
+    if (clone[index].exampleImagePreview) URL.revokeObjectURL(clone[index].exampleImagePreview);
+    setDefaultLabels(clone.filter((_, i) => i !== index));
   };
 
   const updateDefaultLabel = (index, field, value) => {
     const clone = [...defaultLabels];
     clone[index][field] = value;
+    setDefaultLabels(clone);
+  };
+
+  const addDefaultChecklistItem = (labelIndex) => {
+    const clone = [...defaultLabels];
+    clone[labelIndex].checklist.push("");
+    setDefaultLabels(clone);
+  };
+
+  const removeDefaultChecklistItem = (labelIndex, itemIndex) => {
+    const clone = [...defaultLabels];
+    clone[labelIndex].checklist = clone[labelIndex].checklist.filter((_, i) => i !== itemIndex);
+    setDefaultLabels(clone);
+  };
+
+  const updateDefaultChecklistItem = (labelIndex, itemIndex, value) => {
+    const clone = [...defaultLabels];
+    clone[labelIndex].checklist[itemIndex] = value;
+    setDefaultLabels(clone);
+  };
+
+  const handleDefaultLabelImageSelect = (index, file) => {
+    if (!file) return;
+    const clone = [...defaultLabels];
+    clone[index].exampleImage = file;
+    clone[index].exampleImagePreview = URL.createObjectURL(file);
+    setDefaultLabels(clone);
+  };
+
+  const removeDefaultLabelImage = (index) => {
+    const clone = [...defaultLabels];
+    if (clone[index].exampleImagePreview) URL.revokeObjectURL(clone[index].exampleImagePreview);
+    clone[index].exampleImage = null;
+    clone[index].exampleImagePreview = null;
     setDefaultLabels(clone);
   };
 
@@ -227,14 +263,25 @@ const CreateProject = () => {
       // Upload sample images for labels to Cloudinary
       // Build default labels payload
       const validDefaultLabels = defaultLabels.filter((l) => l.name.trim());
-      const defaultLabelClassesPayload = validDefaultLabels.map((l) => ({
-        name: l.name,
-        color: l.color,
-        guideLine: "",
-        checklist: [],
-        exampleImageUrl: null,
-        isDefault: true,
-      }));
+      const defaultLabelClassesPayload = [];
+      for (const l of validDefaultLabels) {
+        let exampleImageUrl = null;
+        if (l.exampleImage) {
+          try {
+            exampleImageUrl = await uploadToCloudinary(l.exampleImage);
+          } catch (err) {
+            console.error("Failed to upload default label sample image:", err);
+          }
+        }
+        defaultLabelClassesPayload.push({
+          name: l.name,
+          color: l.color,
+          guideLine: l.guideLine || "",
+          checklist: l.checklist?.filter((c) => c.trim()) || [],
+          exampleImageUrl,
+          isDefault: true,
+        });
+      }
 
       // Build custom labels payload
       const validLabels = labels.filter((l) => l.name.trim());
@@ -259,7 +306,7 @@ const CreateProject = () => {
 
       const labelClassesPayload = [...defaultLabelClassesPayload, ...customLabelClassesPayload];
 
-      const resProj = await projectService.createProject({
+      const createPayload = {
         name: projectInfo.name,
         description: projectInfo.description,
         deadline: deadlineISO,
@@ -270,7 +317,9 @@ const CreateProject = () => {
         penaltyUnit: Number(projectInfo.penaltyUnit) || 10,
         annotationGuide: projectInfo.annotationGuide || null,
         labelClasses: labelClassesPayload,
-      });
+      };
+      console.log("=== CREATE PROJECT PAYLOAD ===", JSON.stringify(createPayload, null, 2));
+      const resProj = await projectService.createProject(createPayload);
 
       const projectId = resProj.data?.id || resProj.data?.projectId;
       if (!projectId) throw new Error(t("createProject.noProjectId"));
@@ -308,7 +357,9 @@ const CreateProject = () => {
       toast.success(t("createProject.createSuccess"));
       navigate("/projects-all-projects");
     } catch (err) {
-      console.error(err);
+      console.error("=== CREATE PROJECT ERROR ===", err);
+      console.error("Error response data:", JSON.stringify(err.response?.data, null, 2));
+      console.error("Error response status:", err.response?.status);
       toast.error(
         err.response?.data?.message || t("createProject.createError"),
       );
@@ -552,35 +603,128 @@ const CreateProject = () => {
                   {defaultLabels.map((dl, index) => (
                     <div
                       key={index}
-                      className="d-flex align-items-center gap-2 mb-2 p-2 border rounded bg-light"
+                      className="p-3 border rounded mb-2 bg-light position-relative"
                     >
-                      <Input
-                        bsSize="sm"
-                        placeholder={t("createProject.defaultLabelName") || "Tên nhãn flag..."}
-                        value={dl.name}
-                        onChange={(e) =>
-                          updateDefaultLabel(index, "name", e.target.value)
-                        }
-                        className="flex-grow-1"
-                      />
-                      <Input
-                        type="color"
-                        className="form-control-color"
-                        style={{ width: "40px", height: "30px", padding: "2px" }}
-                        value={dl.color}
-                        onChange={(e) =>
-                          updateDefaultLabel(index, "color", e.target.value)
-                        }
-                      />
                       <button
                         type="button"
-                        className="btn btn-sm btn-outline-danger"
-                        style={{ padding: "2px 6px", lineHeight: 1 }}
+                        className="btn-close position-absolute top-0 end-0 m-2"
                         onClick={() => removeDefaultLabel(index)}
-                        title={t("createProject.removeDefaultLabel") || "Xóa"}
-                      >
-                        <i className="ri-close-line"></i>
-                      </button>
+                        style={{ fontSize: "10px" }}
+                      ></button>
+                      <div className="d-flex gap-2 mb-2">
+                        <Input
+                          placeholder={t("createProject.defaultLabelName") || "Tên nhãn flag..."}
+                          value={dl.name}
+                          onChange={(e) =>
+                            updateDefaultLabel(index, "name", e.target.value)
+                          }
+                        />
+                        <Input
+                          type="color"
+                          className="form-control-color"
+                          style={{ width: "60px" }}
+                          value={dl.color}
+                          onChange={(e) =>
+                            updateDefaultLabel(index, "color", e.target.value)
+                          }
+                        />
+                      </div>
+                      <Input
+                        size="sm"
+                        placeholder={t("createProject.labelGuide")}
+                        value={dl.guideLine}
+                        onChange={(e) =>
+                          updateDefaultLabel(index, "guideLine", e.target.value)
+                        }
+                        className="mb-2"
+                      />
+
+                      {/* Sample image upload */}
+                      <div className="mb-2">
+                        <small className="text-muted fw-semibold d-block mb-1">
+                          <i className="ri-image-add-line me-1"></i>
+                          {t("createProject.sampleImage")}
+                        </small>
+                        {dl.exampleImagePreview ? (
+                          <div className="position-relative d-inline-block">
+                            <img
+                              src={dl.exampleImagePreview}
+                              alt="Sample"
+                              className="rounded border"
+                              style={{
+                                maxWidth: "120px",
+                                maxHeight: "80px",
+                                objectFit: "cover",
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-danger position-absolute top-0 end-0"
+                              style={{
+                                padding: "1px 5px",
+                                fontSize: "10px",
+                                transform: "translate(30%, -30%)",
+                              }}
+                              onClick={() => removeDefaultLabelImage(index)}
+                            >
+                              <i className="ri-close-line"></i>
+                            </button>
+                          </div>
+                        ) : (
+                          <label
+                            className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+                            style={{ cursor: "pointer" }}
+                          >
+                            <i className="ri-upload-2-line"></i>
+                            {t("createProject.uploadSampleImage")}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="d-none"
+                              onChange={(e) =>
+                                handleDefaultLabelImageSelect(index, e.target.files[0])
+                              }
+                            />
+                          </label>
+                        )}
+                      </div>
+
+                      {/* Checklist */}
+                      <div className="mt-2 ps-2 border-start border-2 border-warning">
+                        <small className="text-muted fw-semibold d-block mb-1">
+                          <i className="ri-checkbox-multiple-line me-1"></i>
+                          Checklist
+                        </small>
+                        {dl.checklist.map((item, itemIdx) => (
+                          <div
+                            key={itemIdx}
+                            className="d-flex gap-1 mb-1 align-items-center"
+                          >
+                            <Input
+                              bsSize="sm"
+                              placeholder={`${t("createProject.conditionPlaceholder")} ${itemIdx + 1}...`}
+                              value={item}
+                              onChange={(e) =>
+                                updateDefaultChecklistItem(index, itemIdx, e.target.value)
+                              }
+                            />
+                            {dl.checklist.length > 1 && (
+                              <i
+                                className="ri-close-line text-danger"
+                                style={{ cursor: "pointer", fontSize: "16px" }}
+                                onClick={() => removeDefaultChecklistItem(index, itemIdx)}
+                              ></i>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          className="btn btn-link btn-sm p-0 text-warning"
+                          onClick={() => addDefaultChecklistItem(index)}
+                        >
+                          {t("createProject.addCondition")}
+                        </button>
+                      </div>
                     </div>
                   ))}
                   <Button
