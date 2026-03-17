@@ -23,6 +23,9 @@ const UserTable = (props) => {
           <tr>
             <th style={{ width: "45%" }}>{t("userTableComp.user")}</th>
             <th style={{ width: "25%" }}>{t("userTableComp.role")}</th>
+            <th className="text-center" style={{ width: "20%" }}>
+              {t("userTableComp.totalProjects")}
+            </th>
             <th className="text-end" style={{ width: "30%" }}>
               {t("userTableComp.action")}
             </th>
@@ -62,6 +65,14 @@ const UserTable = (props) => {
                   >
                     {user.role}
                   </span>
+                </td>
+                <td className="text-center">
+                  <div
+                    className="fw-bold text-primary bg-light rounded-pill d-inline-block px-3 py-1"
+                    style={{ fontSize: "13px", minWidth: "40px" }}
+                  >
+                    {user.totalProjects || 0}
+                  </div>
                 </td>
                 <td className="text-end">
                   <div className="d-flex justify-content-end align-items-center gap-2">

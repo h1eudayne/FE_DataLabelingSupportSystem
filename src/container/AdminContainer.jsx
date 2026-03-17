@@ -13,6 +13,7 @@ import AdminHeader from "../components/admin/home/AdminHeader";
 import LogsView from "../components/admin/home/LogsView";
 import UserModal from "../components/admin/managementUser/UserModal";
 import AddUser from "../components/admin/home/AddUser";
+import projectApi from "../services/admin/managementUsers/project.api";
 
 const AdminContainer = () => {
   const [activeTab, setActiveTab] = useState("users");
@@ -28,6 +29,7 @@ const AdminContainer = () => {
   const [currentRole, setCurrentRole] = useState(null);
   const [currentName, setCurrentName] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [userProjects, setUserProjects] = useState([]);
   const [file, setFile] = useState(null);
 
   const fetchSelf = async () => {
@@ -58,6 +60,18 @@ const AdminContainer = () => {
       console.error("Lỗi lấy danh sách user:", error);
       setUsers([]);
       setFilteredUsers([]);
+    }
+  };
+
+  const fetchProjectsUser = async (userId) => {
+    try {
+      const res = await projectApi.getAllProjectsUser(userId);
+      if (res.data) {
+        setUserProjects(res.data);
+      }
+    } catch (error) {
+      console.error(error);
+      setUserProjects([]);
     }
   };
 
@@ -99,7 +113,18 @@ const AdminContainer = () => {
       }
       await fetchUsers();
     } catch (error) {
-      console.error(error);
+      const serverMessage = error.response?.data?.message || error.message;
+
+      if (
+        serverMessage.includes("pending tasks") ||
+        error.response?.status === 400
+      ) {
+        alert(`Không thể đổi vai trò: User này vẫn còn dự án chưa hoàn thành!`);
+      } else {
+        alert("Đã xảy ra lỗi: " + serverMessage);
+      }
+
+      console.error("Lỗi cập nhật:", error);
     }
   };
 
@@ -153,6 +178,8 @@ const AdminContainer = () => {
             onEdit={handleEdit}
             currentRole={currentRole}
             openCreateModal={setIsCreateModalOpen}
+            getProjects={fetchProjectsUser}
+            userProjects={userProjects}
             pagination={{
               totalCount,
               page,

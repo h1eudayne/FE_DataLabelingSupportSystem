@@ -27,7 +27,6 @@ const UserManagementView = ({
   onSearch,
   onActive,
   onEdit,
-  currentRole,
   openCreateModal,
   pagination = { page: 1, pageSize: 10, onPageChange: () => {} },
   totalCount = 0,
@@ -146,6 +145,7 @@ const UserManagementView = ({
               <tr className="text-muted small text-uppercase fw-bold">
                 <th>{t("userMgmt.user")}</th>
                 <th>{t("userMgmt.role")}</th>
+                <th className="text-center">{t("userMgmt.totalProjects")}</th>
                 <th className="text-center">{t("userMgmt.actions")}</th>
               </tr>
             </thead>
@@ -173,54 +173,59 @@ const UserManagementView = ({
                       </div>
                     </td>
                     <td>
-                      <Badge
-                        bg={user.role === "Admin" ? "danger" : "info"}
-                        className="text-uppercase px-2 py-1"
-                      >
+                      <Badge bg="info" className="text-uppercase px-2 py-1">
                         {user.role}
                       </Badge>
                     </td>
                     <td className="text-center">
-                      {user.role !== currentRole && (
-                        <div className="d-flex justify-content-center align-items-center">
-                          <Button
-                            variant="link"
-                            className="text-muted p-1 me-2"
-                            onClick={() => onEdit(user)}
+                      <Badge
+                        pill
+                        bg="secondary"
+                        className="bg-opacity-10 text-secondary fw-bold border"
+                        style={{ fontSize: "13px", minWidth: "35px" }}
+                      >
+                        {user.totalProjects || 0}
+                      </Badge>
+                    </td>
+                    <td className="text-center">
+                      <div className="d-flex justify-content-center align-items-center">
+                        <Button
+                          variant="link"
+                          className="text-muted p-1 me-2"
+                          onClick={() => onEdit(user)}
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="link"
+                          className={`p-1 shadow-none border-0 ${user.isActive ? "text-success" : "text-danger"}`}
+                          onClick={() => onActive(user.id, !user.isActive)}
+                        >
+                          <div
+                            className={`d-flex align-items-center px-2 py-1 rounded ${user.isActive ? "bg-success bg-opacity-10" : "bg-danger bg-opacity-10"}`}
+                            style={{
+                              minWidth: "95px",
+                              justifyContent: "center",
+                            }}
                           >
-                            <Edit2 size={16} />
-                          </Button>
-                          <Button
-                            variant="link"
-                            className={`p-1 shadow-none border-0 ${user.isActive ? "text-success" : "text-danger"}`}
-                            onClick={() => onActive(user.id, !user.isActive)}
-                          >
-                            <div
-                              className={`d-flex align-items-center px-2 py-1 rounded ${user.isActive ? "bg-success bg-opacity-10" : "bg-danger bg-opacity-10"}`}
-                              style={{
-                                minWidth: "95px",
-                                justifyContent: "center",
-                              }}
-                            >
-                              {user.isActive ? (
-                                <>
-                                  <CheckCircle size={14} className="me-1" />
-                                  <span style={{ fontSize: "12px" }}>
-                                    {t("userMgmt.active")}
-                                  </span>
-                                </>
-                              ) : (
-                                <>
-                                  <Power size={14} className="me-1" />
-                                  <span style={{ fontSize: "12px" }}>
-                                    {t("userMgmt.inactive")}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </Button>
-                        </div>
-                      )}
+                            {user.isActive ? (
+                              <>
+                                <CheckCircle size={14} className="me-1" />
+                                <span style={{ fontSize: "12px" }}>
+                                  {t("userMgmt.active")}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <Power size={14} className="me-1" />
+                                <span style={{ fontSize: "12px" }}>
+                                  {t("userMgmt.inactive")}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
