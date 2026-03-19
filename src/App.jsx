@@ -14,7 +14,7 @@ import RegisterPage from "./page/auth/RegisterPage";
 import WorkplaceLabelingTaskPage from "./page/annotator/labeling/WorkplaceLabelingTaskPage";
 import ProjectsAllProjectPage from "./page/manager/project/ProjectsAllProjectsPage";
 import WorkplaceReviewTaskPage from "./page/WorkplaceReviewTaskPage";
-import ExportPage from "./page/ExportPage";
+import ProjectDetailPage from "./page/manager/project/ProjectDetailPage";
 import DashboardProjectStatus from "./page/manager/status/DashboardProjectStatus";
 import SettingUserManagement from "./page/admin/SettingUserManagement";
 import SettingsSystemLogs from "./page/SettingsSystemLogs";
@@ -29,8 +29,7 @@ import ProjectAssignTask from "./page/manager/project/ProjectAssignTask";
 import CreateProject from "./page/manager/project/CreateProject";
 import ProjectsDatasetsPage from "./page/manager/datasets/ProjectsDatasetsPage";
 
-import DisputeManagementPage from "./page/manager/dispute/DisputeManagementPage";
-import ReviewAuditPage from "./page/manager/review/ReviewAuditPage";
+
 import LoginPage from "./page/auth/login/LoginPage";
 import { ROLES } from "./constants/roles";
 import LandingPage from "./page/LandingPage";
@@ -102,13 +101,11 @@ function App() {
                 path="projects-assign/:id"
                 element={<ProjectAssignTask />}
               />
-              <Route path="projects-create" element={<CreateProject />} />
-              <Route path="export" element={<ExportPage />} />
               <Route
-                path="dispute-management"
-                element={<DisputeManagementPage />}
+                path="project-detail/:id"
+                element={<ProjectDetailPage />}
               />
-              <Route path="review-audit" element={<ReviewAuditPage />} />
+              <Route path="projects-create" element={<CreateProject />} />
             </Route>
 
             <Route element={<RoleProtectedRoute allowRoles={["Reviewer"]} />}>

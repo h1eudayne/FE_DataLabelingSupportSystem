@@ -104,7 +104,7 @@ const ProjectCard = ({ project, onDelete }) => {
 
         <div className="card-footer bg-transparent border-top-dashed d-flex gap-2">
           <Link
-            to={`/projects-datasets/${project.id}`}
+            to={`/project-detail/${project.id}`}
             className="btn btn-soft-info btn-sm flex-grow-1"
           >
             <i className="ri-database-2-line me-1"></i> {t('projectCard.dataBtn')}
