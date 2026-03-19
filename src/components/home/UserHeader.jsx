@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../store/auth/auth.slice";
 import { useTranslation } from "react-i18next";
+import { disconnect as disconnectSignalR } from "../../services/signalrManager";
 
 const UserHeader = ({ user, role }) => {
   const dispatch = useDispatch();
@@ -12,6 +13,7 @@ const UserHeader = ({ user, role }) => {
   const { t } = useTranslation();
 
   const handleLogout = () => {
+    disconnectSignalR();
     dispatch(logout());
     navigate("/login", { replace: true });
   };

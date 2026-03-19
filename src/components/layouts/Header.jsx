@@ -25,6 +25,7 @@ import { getUserProfile } from "../../services/admin/managementUsers/user.api";
 import { updateUser } from "../../store/auth/auth.slice";
 import { BACKEND_URL } from "../../services/axios.customize";
 import useNotifications from "../../hooks/useNotifications";
+import { disconnect as disconnectSignalR } from "../../services/signalrManager";
 
 const Header = ({ toggleSidebar, sidebarSize }) => {
   const dispatch = useDispatch();
@@ -84,6 +85,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
   };
 
   const handleLogout = () => {
+    disconnectSignalR();
     dispatch(logout());
     navigate("/login", { replace: true });
   };

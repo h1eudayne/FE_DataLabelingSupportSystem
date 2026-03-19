@@ -20,7 +20,6 @@ instance.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: handle 401 Unauthorized (expired token)
 instance.interceptors.response.use(
   (response) => response,
   (error) => {
