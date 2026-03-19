@@ -1,19 +1,72 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { subscribe } from "../services/signalrManager";
 
 /**
- * Custom hook for managing real-time notifications via SignalR.
- * Uses the singleton SignalR connection manager (no duplicate connections).
+ * LocalStorage key helpers — scoped per user to avoid cross-user leaks.
  */
-const useNotifications = () => {
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+const getStorageKey = (userId) =>
+  userId ? `notifications_${userId}` : null;
 
+const loadFromStorage = (userId) => {
+  const key = getStorageKey(userId);
+  if (!key) return [];
+  try {
+    return JSON.parse(localStorage.getItem(key)) || [];
+  } catch {
+    return [];
+  }
+};
+
+const saveToStorage = (userId, notifications) => {
+  const key = getStorageKey(userId);
+  if (!key) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(notifications.slice(0, 50)));
+  } catch {
+    // Storage full — silently fail
+  }
+};
+
+const clearStorage = (userId) => {
+  const key = getStorageKey(userId);
+  if (key) localStorage.removeItem(key);
+};
+
+/**
+ * Custom hook for managing real-time notifications via SignalR.
+ *
+ * Features:
+ * - Real-time reception via SignalR singleton connection
+ * - **Persistence** via localStorage (per-user) so notifications
+ *   survive page refresh and offline periods
+ *
+ * @param {string} [userId] - Current user ID for scoped persistence
+ */
+const useNotifications = (userId) => {
+  const [notifications, setNotifications] = useState(() =>
+    loadFromStorage(userId)
+  );
+  const [unreadCount, setUnreadCount] = useState(() => {
+    const stored = loadFromStorage(userId);
+    return stored.filter((n) => !n.read).length;
+  });
+
+  // Keep a ref to userId so the storage sync effect can track changes
+  const userIdRef = useRef(userId);
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
+
+  // Persist notifications to localStorage whenever they change
+  useEffect(() => {
+    saveToStorage(userIdRef.current, notifications);
+  }, [notifications]);
+
+  // Subscribe to SignalR real-time events
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) return;
 
-    // Subscribe to the shared singleton connection
     const unsubscribe = subscribe("ReceiveNotification", (notification) => {
       console.log("[Notification] Received:", notification);
 
@@ -51,6 +104,7 @@ const useNotifications = () => {
   const clearAll = useCallback(() => {
     setNotifications([]);
     setUnreadCount(0);
+    clearStorage(userIdRef.current);
   }, []);
 
   return {
