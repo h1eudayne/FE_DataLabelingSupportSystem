@@ -51,6 +51,10 @@ const SettingUserManagement = () => {
     fetchSelf();
   }, []);
 
+  useEffect(() => {
+    fetchUsers(pagination.page);
+  }, [pagination.page]);
+
   const handleEdit = (user) => {
     setSelectUser(user);
     setIsModalOpen(true);

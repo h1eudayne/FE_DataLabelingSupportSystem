@@ -439,12 +439,13 @@ const DashboardAnalytics = () => {
               completedImages: a.tasksCompleted || 0,
               rejectedImages: a.tasksRejected || 0,
               averageQualityScore: a.averageQualityScore ?? 100,
-              annotatorAccuracy: a.annotatorAccuracy ?? 0,
+              annotatorAccuracy: (a.annotatorAccuracy === 0 && (a.tasksCompleted || 0) === 0) ? 100 : (a.annotatorAccuracy ?? 100),
+              _hasManagerDecision: (a.annotatorAccuracy > 0 || (a.tasksCompleted || 0) > 0),
               totalCriticalErrors: a.totalCriticalErrors || 0,
               _qualityScores: [a.averageQualityScore ?? 100],
               _accuracyScores: [
                 {
-                  score: a.annotatorAccuracy ?? 0,
+                  score: (a.annotatorAccuracy === 0 && (a.tasksCompleted || 0) === 0) ? 100 : (a.annotatorAccuracy ?? 100),
                   weight: a.tasksAssigned || 1,
                 },
               ],
@@ -462,8 +463,9 @@ const DashboardAnalytics = () => {
             existing.averageQualityScore =
               existing._qualityScores.reduce((s, v) => s + v, 0) /
               existing._qualityScores.length;
+            existing._hasManagerDecision = existing._hasManagerDecision || (a.annotatorAccuracy > 0 || (a.tasksCompleted || 0) > 0);
             existing._accuracyScores.push({
-              score: a.annotatorAccuracy ?? 0,
+              score: (a.annotatorAccuracy === 0 && (a.tasksCompleted || 0) === 0) ? 100 : (a.annotatorAccuracy ?? 100),
               weight: a.tasksAssigned || 1,
             });
             const totalWeight = existing._accuracyScores.reduce(
@@ -535,7 +537,7 @@ const DashboardAnalytics = () => {
                   (accData.totalCorrect / accData.totalMgrDecisions) *
                   100
                 ).toFixed(1)
-              : "—";
+              : "100.0";
           return {
             ...r,
             totalReviews: effectiveTotalReviews,
@@ -950,9 +952,10 @@ const DashboardAnalytics = () => {
                                         : "danger"
                                   }
                                 >
-                                  {a.annotatorAccuracy > 0
-                                    ? `${a.annotatorAccuracy.toFixed(1)}%`
-                                    : "—"}
+                                  {`${a.annotatorAccuracy.toFixed(1)}%`}
+                                  {!a._hasManagerDecision && (
+                                    <i className="ri-time-line ms-1" title={t('analytics.noReviewYet') || 'No review yet'}></i>
+                                  )}
                                 </Badge>
                               </td>
                               <td style={{ minWidth: "150px" }}>
@@ -1160,7 +1163,7 @@ const DashboardAnalytics = () => {
                                 <Badge
                                   color={
                                     isNaN(accNum)
-                                      ? "secondary"
+                                      ? "success"
                                       : accNum >= 80
                                         ? "success"
                                         : accNum >= 50
@@ -1169,7 +1172,7 @@ const DashboardAnalytics = () => {
                                   }
                                   className="fs-12"
                                 >
-                                  {isNaN(accNum) ? "—" : `${accValue}%`}
+                                  {`${accValue}%`}
                                 </Badge>
                               </td>
                             </tr>
