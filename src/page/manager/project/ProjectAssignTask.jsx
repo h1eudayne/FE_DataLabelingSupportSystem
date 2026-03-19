@@ -7,9 +7,10 @@ import { userService } from "../../../services/manager/project/userService";
 import taskService from "../../../services/manager/project/taskService";
 import Swal from "sweetalert2";
 
-const ProjectAssignTask = () => {
+const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
   const { t } = useTranslation();
-  const { id } = useParams();
+  const { id: paramId } = useParams();
+  const id = embeddedProjectId || paramId;
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.id;

@@ -164,7 +164,8 @@ export const getMyAccuracy = async () => {
       const me = s.annotatorPerformances?.find((a) => a.annotatorId === userId);
       if (me) {
         const weight = me.tasksAssigned || 1;
-        const acc = me.annotatorAccuracy ?? 0;
+        const hasReviewData = (me.tasksCompleted || 0) > 0 || (me.annotatorAccuracy || 0) > 0;
+        const acc = hasReviewData ? (me.annotatorAccuracy ?? 0) : 100;
         perProject.push({
           projectName: p.projectName,
           accuracy: acc,

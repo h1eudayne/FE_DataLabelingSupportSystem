@@ -9,9 +9,10 @@ import analyticsService from "../../../services/manager/analytics/analyticsServi
 import disputeService from "../../../services/manager/dispute/disputeService";
 import labelService from "../../../services/manager/project/labelService";
 
-const ProjectsDatasetsPage = () => {
+const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
   const { t } = useTranslation();
-  const { id: paramId } = useParams();
+  const { id: routeParamId } = useParams();
+  const paramId = embeddedProjectId || routeParamId;
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [projectStats, setProjectStats] = useState(null);

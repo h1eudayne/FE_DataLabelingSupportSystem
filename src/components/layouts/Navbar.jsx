@@ -273,45 +273,6 @@ const Navbar = () => {
                     <span>{t("navbar.datasets")}</span>
                   </Link>
                 </li>
-                <li className="nav-item">
-                  <Link
-                    className="nav-link menu-link fs-18"
-                    to="/export"
-                    style={menuItemStyle}
-                  >
-                    <i
-                      className="ri-file-download-line fs-20 me-2"
-                      style={iconStyle}
-                    ></i>
-                    <span>{t("navbar.exportData")}</span>
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link
-                    className="nav-link menu-link fs-18"
-                    to="/dispute-management"
-                    style={menuItemStyle}
-                  >
-                    <i
-                      className="ri-scales-3-line fs-20 me-2"
-                      style={iconStyle}
-                    ></i>
-                    <span>{t("navbar.disputes")}</span>
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link
-                    className="nav-link menu-link fs-18"
-                    to="/review-audit"
-                    style={menuItemStyle}
-                  >
-                    <i
-                      className="ri-shield-check-line fs-20 me-2"
-                      style={iconStyle}
-                    ></i>
-                    <span>{t("navbar.reviewAudit")}</span>
-                  </Link>
-                </li>
               </>
             )}
 
