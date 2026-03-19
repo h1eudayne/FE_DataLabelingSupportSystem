@@ -18,7 +18,9 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      localStorage.clear();
+      // Selective clear — preserve theme and language preferences
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
     },
     updateUser(state, action) {
       state.user = { ...state.user, ...action.payload };

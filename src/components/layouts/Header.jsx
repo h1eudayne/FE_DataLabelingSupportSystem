@@ -36,7 +36,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
   const [userData, setUserData] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } =
-    useNotifications();
+    useNotifications(user?.id);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
