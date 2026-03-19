@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Modal, Form, Row, Col, Button, Badge } from "react-bootstrap";
 import { BACKEND_URL } from "../../services/axios.customize";
 import { useTranslation } from "react-i18next";
@@ -11,15 +11,19 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
   });
   const [selectFile, setSelectFile] = useState(null);
 
-  useEffect(() => {
-    if (userSelf && isOpen) {
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
+  if (isOpen && !prevIsOpen) {
+    if (userSelf) {
       setFormData({
         fullName: userSelf.fullName || "",
         avatarUrl: userSelf.avatarUrl || "",
       });
       setSelectFile(null);
     }
-  }, [userSelf, isOpen]);
+    setPrevIsOpen(true);
+  } else if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
+  }
 
   const handleChangeAvatar = (e) => {
     if (!e.target.files || e.target.files.length === 0) {

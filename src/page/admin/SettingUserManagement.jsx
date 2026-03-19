@@ -49,6 +49,7 @@ const SettingUserManagement = () => {
   useEffect(() => {
     fetchUsers();
     fetchSelf();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleEdit = (user) => {

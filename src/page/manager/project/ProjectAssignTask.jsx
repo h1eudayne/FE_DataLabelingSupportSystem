@@ -51,7 +51,7 @@ const ProjectAssignTask = () => {
       setAnnotators(annotatorList);
       setReviewers(reviewerList);
     });
-  }, [id, fetchProject]);
+  }, [id, fetchProject, managerId]);
 
   // Get members in project by role
   const projectAnnotators = projectInfo?.members?.filter(
@@ -143,7 +143,6 @@ const ProjectAssignTask = () => {
 
     // Confirm batch assignment
     const totalAssignments = targetAnnotators.length;
-    const totalImages = quantityMode === "all" ? safeAvailable : qtyPerAnnotator * targetAnnotators.length;
     const confirmResult = await Swal.fire({
       title: t("projectAssign.confirmTitle") || "Confirm Assignment",
       html: `

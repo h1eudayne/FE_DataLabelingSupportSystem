@@ -36,7 +36,6 @@ const analyticsService = {
         const approved = s.approvedAssignments ?? 0;
         const rej = s.rejectedAssignments ?? 0;
         const sub = s.submittedAssignments ?? 0;
-        const pend = s.pendingAssignments ?? 0;
 
         let projectStatus = "New";
         if (total === 0) {

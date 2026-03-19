@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Container, Dropdown, Form, InputGroup, Button, Badge } from "react-bootstrap";
 import {
@@ -32,7 +32,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { t, i18n } = useTranslation();
 
-  const [userData, setUserData] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } =
     useNotifications();
@@ -58,20 +57,19 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
     setIsDarkMode((prev) => !prev);
   };
 
-  const fetchSelf = async () => {
-    try {
-      const res = await getUserProfile();
-      dispatch(updateUser(res.data));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   useEffect(() => {
+    const fetchSelf = async () => {
+      try {
+        const res = await getUserProfile();
+        dispatch(updateUser(res.data));
+      } catch (error) {
+        console.error(error);
+      }
+    };
     if (isAuthenticated) {
       fetchSelf();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, dispatch]);
 
   const handleFullscreen = () => {
     if (!document.fullscreenElement) {

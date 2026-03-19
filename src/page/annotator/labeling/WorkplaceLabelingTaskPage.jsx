@@ -103,22 +103,6 @@ const WorkplaceLabelingTaskPage = () => {
     (state) => state.labeling.defaultFlagsByAssignment[currentImage?.id] || [],
   );
 
-  const unlockedLabelIds = useMemo(() => {
-    const ids = new Set();
-    labels.forEach((label) => {
-      const items = label.checklist || [];
-      if (items.length === 0) {
-        ids.add(label.id);
-        return;
-      }
-      const checked = checklistState[label.id] || [];
-      const allChecked = items.every((_, idx) => checked[idx] === true);
-      if (allChecked) {
-        ids.add(label.id);
-      }
-    });
-    return ids;
-  }, [labels, checklistState]);
 
   const hasValidAnnotations = useCallback((annotationData) => {
     if (!annotationData) return false;
@@ -205,7 +189,7 @@ const WorkplaceLabelingTaskPage = () => {
     };
 
     fetchData();
-  }, [assignmentId]);
+  }, [assignmentId, searchParams, t]);
 
   useEffect(() => {
     if (!currentImage) return;
@@ -256,7 +240,7 @@ const WorkplaceLabelingTaskPage = () => {
     } else {
       dispatch(resetChecklist({ assignmentId: currentImage.id }));
     }
-  }, [currentImage?.id, dispatch]);
+  }, [currentImage?.id, dispatch, currentImage]);
 
   useEffect(() => {
     return () => {
@@ -277,7 +261,7 @@ const WorkplaceLabelingTaskPage = () => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [images.length]);
+  }, [images.length, currentImage]);
 
   useEffect(() => {
     setIsInitialLoad(true);
@@ -301,7 +285,7 @@ const WorkplaceLabelingTaskPage = () => {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [annotations, checklistState, currentDefaultFlags]);
+  }, [annotations, checklistState, currentDefaultFlags, currentImage, isInitialLoad, saveDraft]);
 
   const buildDataJSON = useCallback(() => {
     return JSON.stringify({
@@ -348,7 +332,7 @@ const WorkplaceLabelingTaskPage = () => {
         return false;
       }
     },
-    [currentImage, buildDataJSON],
+    [currentImage, buildDataJSON, t],
   );
 
   const handlePrev = () => {
@@ -1191,7 +1175,15 @@ const WorkplaceLabelingTaskPage = () => {
                   </div>
                 </div>
                 {images.map((img, idx) => {
-                  const config = STATUS_CONFIG[img.status] || STATUS_CONFIG.New;
+                  const statusBg = {
+                    New: "bg-secondary",
+                    Assigned: "bg-secondary",
+                    InProgress: "bg-primary",
+                    Submitted: "bg-info",
+                    Approved: "bg-success",
+                    Rejected: "bg-danger",
+                  };
+                  const config = { bg: statusBg[img.status] || statusBg.New, label: img.status };
                   const isEligible =
                     img.status !== "Submitted" && img.status !== "Approved";
                   const reduxAnns = allAnnotations[img.id];

@@ -37,7 +37,6 @@ const ReviewWorkspace = () => {
   const [loading, setLoading] = useState(!data);
   const [rejectComment, setRejectComment] = useState("");
   const [errorCategories, setErrorCategories] = useState([]);
-  const [checkedItems, setCheckedItems] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [checkedCriteria, setCheckedCriteria] = useState({});
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -100,9 +99,32 @@ const ReviewWorkspace = () => {
   );
 
   useEffect(() => {
+    const fetchWorkspaceData = async () => {
+      setLoading(true);
+      try {
+        const res = await projectService.getReviewWorkspace(projectId);
+        const tasks = res.data || [];
+
+        const currentTaskData = tasks.find(
+          (t) => t.assignmentId.toString() === assignmentId.toString(),
+        );
+
+        if (currentTaskData) {
+          setData(currentTaskData);
+          setTaskList(tasks);
+        }
+      } catch (error) {
+        console.error("Lỗi lấy dữ liệu:", error);
+      } finally {
+        setLoading(false);
+        setRejectComment("");
+        setErrorCategories([]);
+      }
+    };
+
     setData(null);
     fetchWorkspaceData();
-  }, [assignmentId]);
+  }, [assignmentId, projectId]);
 
   useEffect(() => {
     if (data?.existingAnnotations) {
@@ -111,41 +133,9 @@ const ReviewWorkspace = () => {
         setAnnotations({ assignmentId: data.assignmentId, annotations }),
       );
 
-      const initialChecks = {};
-      data.labels?.forEach((label) => {
-        const annotatorChecks =
-          data.existingAnnotations[0]?.__checklist?.[label.id] || [];
-        annotatorChecks.forEach((val, idx) => {
-          if (val) initialChecks[`${label.id}-${idx}`] = true;
-        });
-      });
-      setCheckedItems(initialChecks);
+      // Initial checks removed because checkedItems is not used
     }
   }, [data, dispatch]);
-
-  const fetchWorkspaceData = async () => {
-    setLoading(true);
-    try {
-      const res = await projectService.getReviewWorkspace(projectId);
-      const tasks = res.data || [];
-
-      const currentTaskData = tasks.find(
-        (t) => t.assignmentId.toString() === assignmentId.toString(),
-      );
-
-      if (currentTaskData) {
-        setData(currentTaskData);
-        setTaskList(tasks);
-      }
-    } catch (error) {
-      console.error("Lỗi lấy dữ liệu:", error);
-    } finally {
-      setLoading(false);
-      setRejectComment("");
-      setErrorCategories([]);
-      setCheckedItems({});
-    }
-  };
 
   const handleNavigateTask = (direction) => {
     const newIndex = direction === "next" ? currentIndex + 1 : currentIndex - 1;
@@ -222,7 +212,7 @@ const ReviewWorkspace = () => {
           },
         );
       }
-    } catch (error) {
+    } catch {
       alert("Lỗi hệ thống, không thể lưu phán quyết.");
     } finally {
       setSubmitting(false);

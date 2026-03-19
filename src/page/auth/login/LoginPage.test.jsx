@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import LoginPage from "./LoginPage";
@@ -15,7 +15,6 @@ const createMockStore = (preloadedState) => {
     reducer: {
       auth: (
         state = { user: null, token: null, loading: false, error: null },
-        action,
       ) => {
         if (preloadedState.auth) return { ...state, ...preloadedState.auth };
         return state;

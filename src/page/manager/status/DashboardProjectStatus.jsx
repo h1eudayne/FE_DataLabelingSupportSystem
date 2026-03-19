@@ -15,24 +15,24 @@ const DashboardProjectStatus = () => {
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.id;
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const [resStats, resProjects] = await Promise.all([
-        analyticsService.getDashboardStats(managerId),
-        analyticsService.getMyProjects(managerId),
-      ]);
-
-      setStats(resStats.data || resStats);
-      setProjects(resProjects.data || resProjects);
-    } catch (error) {
-      console.error("Error loading dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [resStats, resProjects] = await Promise.all([
+          analyticsService.getDashboardStats(managerId),
+          analyticsService.getMyProjects(managerId),
+        ]);
+
+        setStats(resStats.data || resStats);
+        setProjects(resProjects.data || resProjects);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchDashboardData();
   }, [managerId]);
 
