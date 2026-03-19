@@ -66,9 +66,12 @@ const LabelingWorkspace = ({
   const defaultMode = allowPolygon && !allowBbox ? "polygon" : "bbox";
   const [drawingMode, setDrawingMode] = useState(defaultMode);
 
-  useEffect(() => {
+  // Sync state on open to avoid useEffect sync loop
+  const [prevProjectType, setPrevProjectType] = useState(projectType);
+  if (projectType !== prevProjectType) {
     setDrawingMode(allowPolygon && !allowBbox ? "polygon" : "bbox");
-  }, [projectType, allowPolygon, allowBbox]);
+    setPrevProjectType(projectType);
+  }
 
   const [currentPolygon, setCurrentPolygon] = useState([]);
 
@@ -262,7 +265,7 @@ const LabelingWorkspace = ({
     }));
   };
 
-  const handleMouseUp = (e) => {
+  const handleMouseUp = () => {
     if (isPanning) {
       setIsPanning(false);
       setPanStart(null);

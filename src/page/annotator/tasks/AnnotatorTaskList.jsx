@@ -39,7 +39,7 @@ const AnnotatorTaskList = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchTasks();

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Modal,
   ModalBody,
@@ -14,11 +14,16 @@ const UserModal = (props) => {
 
   const [formData, setFormData] = useState({ role: "Annotator" });
 
-  useEffect(() => {
+  // Sync state on open to avoid useEffect sync loop
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
+  if (isOpen && !prevIsOpen) {
     if (user && formData.role !== user.role) {
       setFormData({ role: user.role || "Annotator" });
     }
-  }, [user]);
+    setPrevIsOpen(true);
+  } else if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
+  }
 
   const handleChange = (e) => {
     setFormData({ role: e.target.value });

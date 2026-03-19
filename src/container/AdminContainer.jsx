@@ -21,7 +21,7 @@ const AdminContainer = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize] = useState(10);
   const [systemStats, setSystemStats] = useState({ admins: 0, workers: 0 });
 
   const [selectUser, setSelectUser] = useState(null);
@@ -81,10 +81,15 @@ const AdminContainer = () => {
   };
 
   useEffect(() => {
+    const fetchData = async () => {
+      await fetchUsers(page);
+      await fetchSelf();
+    };
+
     if (activeTab === "users") {
-      fetchUsers(page);
-      fetchSelf();
+      fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, page]);
 
   const handleSearch = (searchTerm) => {

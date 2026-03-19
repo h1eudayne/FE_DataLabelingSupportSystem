@@ -54,7 +54,7 @@ const authSlice = createSlice({
 
             state.user = finalUser;
             localStorage.setItem("user", JSON.stringify(finalUser));
-          } catch (err) {
+          } catch {
             state.user = null;
           }
         }

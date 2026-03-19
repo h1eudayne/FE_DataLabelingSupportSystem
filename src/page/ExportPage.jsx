@@ -108,7 +108,7 @@ const ExportPage = () => {
       }
     };
     if (managerId) fetchProjects();
-  }, [managerId]);
+  }, [managerId, t]);
 
   const checkAllEligibility = async (projectList) => {
     const checks = {};
@@ -181,7 +181,9 @@ const ExportPage = () => {
       if (typeof rawData === "string") {
         try {
           rawData = JSON.parse(rawData);
-        } catch {}
+        } catch {
+          // Ignore parsing errors
+        }
       }
 
       switch (selectedFormat) {

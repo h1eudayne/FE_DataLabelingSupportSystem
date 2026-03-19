@@ -13,44 +13,43 @@ const LogsView = () => {
   const [selectUserLogs, setSelectUserLogs] = useState(null);
 
   useEffect(() => {
+    const fetchLog = async () => {
+      try {
+        const res = await getSysLogs();
+        if (res.data) {
+          const groupedData = res.data.reduce((acc, currentLog) => {
+            const userId = currentLog.userId;
+
+            if (!acc[userId]) {
+              acc[userId] = {
+                id: userId,
+                avatar: currentLog.user.avatarUrl,
+                email: currentLog.user.email,
+                role: currentLog.user.role,
+                userInfo: currentLog.user,
+                logs: [],
+              };
+            }
+
+            acc[userId].logs.push({
+              id: currentLog.id,
+              actionType: currentLog.actionType,
+              timestamp: currentLog.timestamp,
+              ipAddress: currentLog.ipAddress,
+              description: currentLog.description,
+            });
+
+            return acc;
+          }, {});
+
+          setLogData(Object.values(groupedData));
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
     fetchLog();
   }, []);
-
-  const fetchLog = async () => {
-    try {
-      const res = await getSysLogs();
-      if (res.data) {
-        const groupedData = res.data.reduce((acc, currentLog) => {
-          const userId = currentLog.userId;
-
-          if (!acc[userId]) {
-            acc[userId] = {
-              id: userId,
-              avatar: currentLog.user.avatarUrl,
-              email: currentLog.user.email,
-              role: currentLog.user.role,
-              userInfo: currentLog.user,
-              logs: [],
-            };
-          }
-
-          acc[userId].logs.push({
-            id: currentLog.id,
-            actionType: currentLog.actionType,
-            timestamp: currentLog.timestamp,
-            ipAddress: currentLog.ipAddress,
-            description: currentLog.description,
-          });
-
-          return acc;
-        }, {});
-
-        setLogData(Object.values(groupedData));
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const onCloseModal = () => {
     setSelectUserLogs(null);

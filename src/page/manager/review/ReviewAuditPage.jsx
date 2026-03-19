@@ -76,8 +76,8 @@ const ReviewAuditPage = () => {
         toast.error(t("reviewAudit.loadError"));
       }
     };
-    fetchProjects();
-  }, []);
+    if (managerId) fetchProjects();
+  }, [managerId, t]);
 
   const handleProjectChange = useCallback(async (projectId) => {
     setSelectedProjectId(projectId);
@@ -99,7 +99,7 @@ const ReviewAuditPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Realtime: auto-refetch audit tasks when notification arrives
   useSignalRRefresh(
@@ -175,7 +175,7 @@ const ReviewAuditPage = () => {
         : t('statusCommon.notAvailable'),
       labelCount,
     };
-  }, [projectDetail]);
+  }, [projectDetail, t]);
 
   return (
     <>

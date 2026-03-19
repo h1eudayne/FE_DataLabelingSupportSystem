@@ -1,23 +1,28 @@
 import React, { useEffect, useState } from "react";
 
 const StatCard = ({ title, value = 0, icon: Icon, color = "primary" }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-
   const strVal = String(value);
   const match = strVal.match(/^([\d.]+)(.*)$/);
   const numericPart = match ? parseFloat(match[1]) : 0;
   const suffix = match ? match[2] : "";
   const isNumeric = match !== null && !isNaN(numericPart);
 
+  const [displayValue, setDisplayValue] = useState(isNumeric ? 0 : numericPart);
+
+  // Sync state on prop change if not numeric
+  const [prevVal, setPrevVal] = useState(value);
+  if (!isNumeric && value !== prevVal) {
+    setDisplayValue(numericPart);
+    setPrevVal(value);
+  }
+
   useEffect(() => {
-    if (!isNumeric) {
-      setDisplayValue(numericPart);
-      return;
-    }
+    if (!isNumeric) return;
     const end = numericPart;
     const duration = 1000;
     const startTime = performance.now();
     const hasDecimal = strVal.includes(".");
+    let animationFrameId;
 
     const animate = (currentTime) => {
       const progress = Math.min((currentTime - startTime) / duration, 1);
@@ -25,11 +30,12 @@ const StatCard = ({ title, value = 0, icon: Icon, color = "primary" }) => {
       setDisplayValue(
         hasDecimal ? Math.round(current * 10) / 10 : Math.floor(current),
       );
-      if (progress < 1) requestAnimationFrame(animate);
+      if (progress < 1) animationFrameId = requestAnimationFrame(animate);
     };
 
-    requestAnimationFrame(animate);
-  }, [value]);
+    animationFrameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [isNumeric, numericPart, strVal]);
 
   const renderIcon = () => {
     if (!Icon) return null;

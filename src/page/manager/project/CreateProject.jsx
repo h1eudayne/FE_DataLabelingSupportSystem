@@ -135,7 +135,7 @@ const CreateProject = () => {
       }
     };
     fetchUsers();
-  }, []);
+  }, [t]);
 
   const addLabel = () =>
     setLabels([

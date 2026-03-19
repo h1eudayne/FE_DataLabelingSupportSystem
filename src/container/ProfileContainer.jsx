@@ -27,16 +27,19 @@ const ProfileContainer = () => {
     }
   };
 
+  useEffect(() => {
+    const initFetch = async () => {
+      await fetchSelf();
+    };
+    initFetch();
+  }, []);
+
   const handleEditProfile = () => {
     setIsModalOpen(true);
   };
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   };
-
-  useEffect(() => {
-    fetchSelf();
-  }, []);
 
   const handleSave = async (fullName, avatarData) => {
     try {

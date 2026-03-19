@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   setSelectedLabel,
   toggleChecklistItem,
-  toggleDefaultFlag,
 } from "../../../store/annotator/labelling/labelingSlice";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -15,19 +14,12 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
   const checklistState = useSelector(
     (state) => state.labeling.checklistByAssignment[assignmentId] || {},
   );
-  const defaultFlags = useSelector(
-    (state) => state.labeling.defaultFlagsByAssignment[assignmentId] || [],
-  );
 
   const [expandedLabelId, setExpandedLabelId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
 
   // Split labels into default (flag) and custom (drawing)
-  const defaultLabels = useMemo(
-    () => labels.filter((l) => l.isDefault),
-    [labels],
-  );
   const customLabels = useMemo(
     () => labels.filter((l) => !l.isDefault),
     [labels],
@@ -93,7 +85,6 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
   }
 
   const showSearch = customLabels.length > 5;
-  const unlockedCount = unlockedLabelIds.size;
 
   return (
     <div>

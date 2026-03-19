@@ -71,16 +71,6 @@ const ProjectsDatasetsPage = () => {
     );
   }, [projects, searchTerm]);
 
-  useEffect(() => {
-    fetchList();
-  }, []);
-
-  useEffect(() => {
-    if (paramId && projects.length > 0 && !selectedProject) {
-      handleProjectClick(Number(paramId));
-    }
-  }, [paramId, projects]);
-
   const fetchList = async () => {
     try {
       const res = await projectService.getManagerProjects(managerId);
@@ -89,6 +79,18 @@ const ProjectsDatasetsPage = () => {
       toast.error(t('datasets.loadProjectFailed'), error);
     }
   };
+
+  useEffect(() => {
+    fetchList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [managerId, t]);
+
+  useEffect(() => {
+    if (paramId && projects.length > 0 && !selectedProject) {
+      handleProjectClick(Number(paramId));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paramId, projects, selectedProject]);
 
   const fetchProjectStats = async (id) => {
     try {
@@ -205,7 +207,7 @@ const ProjectsDatasetsPage = () => {
       a.remove();
       window.URL.revokeObjectURL(url);
       toast.success(t('datasets.exportSuccess'));
-    } catch (error) {
+    } catch {
       toast.error(t('datasets.exportFailed'));
     } finally {
       setExporting(false);

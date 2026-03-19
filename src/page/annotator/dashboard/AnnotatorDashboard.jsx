@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import "../../../assets/css/AnnotatorDashboard.css";
 import useAnnotatorDashboard from "../../../hooks/annotator/dashboard/useAnnotatorDashboard";
 import DashboardLayout from "../../../components/layouts/DashboardLayout";
@@ -23,11 +23,11 @@ const AnnotatorDashboard = () => {
     myAccuracy,
   } = useAnnotatorDashboard(projectId);
 
-  useEffect(() => {
-    if (projects.data?.length > 0 && projectId !== projects.data[0].projectId) {
-      setProjectId(projects.data[0].projectId);
-    }
-  }, [projects.data, projectId]);
+  // Initialize state synchronously during render when needed if possible,
+  // or use state initialization.
+  if (projects.data?.length > 0 && !projectId) {
+    setProjectId(projects.data[0].projectId);
+  }
 
   const stats = useMemo(() => {
     const projectList = projects.data || [];

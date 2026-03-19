@@ -36,7 +36,7 @@ const AnnotatorProjectPacks = () => {
     } finally {
       setLoading(false);
     }
-  }, [assignmentId]);
+  }, [assignmentId, t]);
 
   useEffect(() => {
     fetchData();

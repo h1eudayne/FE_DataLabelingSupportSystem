@@ -10,6 +10,7 @@ import PerformanceBarChart from "../components/manager/home/PerformanceBarChart"
 import analyticsService from "../services/manager/analytics/analyticsService";
 
 const ManagerContainer = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.id;
@@ -29,8 +30,6 @@ const ManagerContainer = () => {
         </div>
       </div>
     );
-
-  const { t } = useTranslation();
 
   return (
     <Container fluid className="p-4 bg-light min-vh-100">

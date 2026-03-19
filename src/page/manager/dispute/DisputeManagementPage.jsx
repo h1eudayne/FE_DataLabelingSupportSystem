@@ -51,8 +51,8 @@ const DisputeManagementPage = () => {
         toast.error(t("dispute.loadProjectError"));
       }
     };
-    fetchProjects();
-  }, []);
+    if (managerId) fetchProjects();
+  }, [managerId, t]);
 
   const handleProjectChange = useCallback(async (projectId) => {
     setSelectedProjectId(projectId);
@@ -74,7 +74,7 @@ const DisputeManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Realtime: auto-refetch disputes when notification arrives
   useSignalRRefresh(

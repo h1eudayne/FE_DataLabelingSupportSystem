@@ -122,6 +122,7 @@ const DashboardAnalytics = () => {
             const subAsgn = s.submittedAssignments ?? 0;
 
             if (totalAsgn === 0) {
+              // No assignments
             } else if (approvedAsgn === totalAsgn) {
               completed++;
             } else if (approvedAsgn === 0 && subAsgn === 0 && rejAsgn > 0) {
@@ -334,7 +335,9 @@ const DashboardAnalytics = () => {
               }
               reviewerMap[reviewerKey].projectDetails[project.id].disputes++;
             });
-          } catch {}
+          } catch {
+            // Ignore fetch error
+          }
         }
 
         projectProgressArr.forEach((pp) => {
@@ -591,7 +594,7 @@ const DashboardAnalytics = () => {
     };
 
     fetchAllData();
-  }, [managerId]);
+  }, [managerId, t]);
 
   if (loading) {
     return (
