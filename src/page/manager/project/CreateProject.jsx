@@ -130,7 +130,14 @@ const CreateProject = () => {
           }));
         setAnnotatorOptions(annotators);
         setReviewerOptions(reviewers);
-      } catch {
+        if (annotators.length === 0 && reviewers.length === 0) {
+          toast.warning(
+            t("createProject.noManagedUsers") ||
+              "No annotators or reviewers are assigned to you. Please contact Admin to assign team members."
+          );
+        }
+      } catch (err) {
+        console.error("Failed to fetch managed users:", err);
         toast.error(t("createProject.loadingUsers"));
       }
     };
@@ -337,21 +344,40 @@ const CreateProject = () => {
       const total = uploadedUrls.length;
       let remaining = total;
 
+      let assignSuccess = 0;
+      let assignFail = 0;
       for (let i = 0; i < selectedAnnotators.length; i++) {
         let qty = Math.floor(total / selectedAnnotators.length);
         if (i === selectedAnnotators.length - 1) qty = remaining;
 
         if (qty > 0) {
-          await taskService.assignTask({
+          const assignPayload = {
             projectId: Number(projectId),
             annotatorId: String(selectedAnnotators[i].value),
             quantity: Number(qty),
             reviewerId: String(
               selectedReviewers[i % selectedReviewers.length].value,
             ),
-          });
+          };
+
+          try {
+            await taskService.assignTask(assignPayload);
+            assignSuccess++;
+          } catch (assignErr) {
+            assignFail++;
+            console.error("Assign task failed:", assignErr.response?.data?.message || assignErr.message);
+            toast.warning(
+              `Failed to assign tasks to ${selectedAnnotators[i].label || "annotator"}: ${assignErr.response?.data?.message || assignErr.message}`
+            );
+          }
           remaining -= qty;
         }
+      }
+
+      if (assignFail > 0 && assignSuccess === 0) {
+        toast.warning("Project created but task assignment failed. You can assign tasks later from project settings.");
+      } else if (assignFail > 0) {
+        toast.warning(`Project created. ${assignSuccess} assignments succeeded, ${assignFail} failed.`);
       }
 
       toast.success(t("createProject.createSuccess"));
