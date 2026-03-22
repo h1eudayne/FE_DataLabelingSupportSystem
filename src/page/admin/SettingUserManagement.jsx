@@ -132,6 +132,7 @@ const SettingUserManagement = () => {
         toggle={toggleModal}
         user={selectUser}
         handleSave={handleSave}
+        managers={users.filter((u) => u.role === "Manager")}
       />
     </>
   );
