@@ -14,7 +14,10 @@ const UserModal = (props) => {
   const { isOpen, toggle, user, handleSave, managers = [] } = props;
   const { t } = useTranslation();
 
-  const [formData, setFormData] = useState({ role: "Annotator", managerId: "" });
+  const [formData, setFormData] = useState({
+    role: "Annotator",
+    managerId: "",
+  });
 
   useEffect(() => {
     if (user) {
@@ -30,7 +33,6 @@ const UserModal = (props) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Show manager dropdown only for Annotator/Reviewer roles
   const showManagerField =
     formData.role === "Annotator" || formData.role === "Reviewer";
 
@@ -54,16 +56,14 @@ const UserModal = (props) => {
             </FormGroup>
             {showManagerField && (
               <FormGroup>
-                <Label>{t("userMgmt.assignManager") || "Assign Manager"}</Label>
+                <Label>{t("userMgmt.assignManager")}</Label>
                 <Input
                   type="select"
                   name="managerId"
                   value={formData.managerId}
                   onChange={handleChange}
                 >
-                  <option value="">
-                    {t("userMgmt.noManager") || "-- No Manager --"}
-                  </option>
+                  <option value="">{t("userMgmt.noManager")}</option>
                   {managers.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.fullName} ({m.email})

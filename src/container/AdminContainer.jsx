@@ -7,6 +7,7 @@ import {
   updateUser,
   updateStatus,
   importUser,
+  getAdmins,
 } from "../services/admin/managementUsers/user.api";
 import UserManagementView from "../components/admin/home/UserManagementView";
 import AdminHeader from "../components/admin/home/AdminHeader";
@@ -20,6 +21,9 @@ import { useTranslation } from "react-i18next";
 const AdminContainer = () => {
   const [activeTab, setActiveTab] = useState("users");
   const [users, setUsers] = useState([]);
+  const [admins, setAdmins] = useState([]);
+  const [managers, setManagers] = useState([]);
+
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -50,18 +54,26 @@ const AdminContainer = () => {
   const fetchUsers = async (currentPage = page) => {
     setLoading(true);
     try {
-      const res = await getUsers(currentPage, pageSize);
-      const items = res.data.items || [];
+      const resAdmins = await getAdmins();
+      const adminUsers = resAdmins.data.filter((user) => user.role === "Admin");
+      const managerUsers = resAdmins.data.filter(
+        (user) => user.role === "Manager",
+      );
+
+      const resUser = await getUsers(currentPage, pageSize);
+      const items = resUser.data.items || [];
+      setAdmins(adminUsers);
+      setManagers(managerUsers);
       setUsers(items);
       setFilteredUsers(items);
-      setTotalCount(res.data.totalCount || 0);
-      if (res.data.stats) {
+      setTotalCount(resUser.data.totalCount || 0);
+      if (resUser.data.stats) {
         setSystemStats({
-          admins: res.data.stats.totalAdmins,
-          workers: res.data.stats.totalWorkers,
+          admins: resUser.data.stats.totalAdmins,
+          workers: resUser.data.stats.totalWorkers,
         });
       }
-      setPage(res.data.page);
+      setPage(resUser.data.page);
     } catch (error) {
       console.error("Lỗi lấy danh sách user:", error);
       setUsers([]);
@@ -146,7 +158,11 @@ const AdminContainer = () => {
       }
       await fetchUsers();
     } catch (error) {
-      console.error(error);
+      if (error.response && error.response.status === 400) {
+        alert(t("admin.errorStatus"));
+      } else {
+        console.error(error);
+      }
     }
   };
 
@@ -205,6 +221,7 @@ const AdminContainer = () => {
             openCreateModal={setIsCreateModalOpen}
             getProjects={fetchProjectsUser}
             userProjects={userProjects}
+            admins={admins}
             pagination={{
               totalCount,
               page,
@@ -217,6 +234,7 @@ const AdminContainer = () => {
             toggle={toggleModal}
             user={selectUser}
             handleSave={handleSave}
+            managers={managers}
           />
           <AddUser
             isOpen={isCreateModalOpen}

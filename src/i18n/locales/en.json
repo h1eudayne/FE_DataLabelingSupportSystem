@@ -24,7 +24,8 @@
     "reviewTask": "Review Task",
     "userManagement": "User Management",
     "systemLogs": "System Logs",
-    "settingsMenu": "Settings"
+    "settingsMenu": "Settings",
+    "projects-overview": "Projects"
   },
   "auth": {
     "welcomeBack": "Welcome back!",
@@ -437,6 +438,21 @@
     "saveChanges": "Save Changes"
   },
   "admin": {
+     "project": {
+      "name": "Project Name",
+      "status": "Status",
+      "progress": "Progress",
+      "members": "Members",
+      "actions": "Actions",
+      "viewDetail": "Detail",
+      "statistics": "Statistics"
+    },
+    "stats": {
+      "totalProjects": "Total Projects",
+      "pending": "Pending",
+      "completed": "Completed",
+      "overdue": "Overdue"
+    },
     "userManagement": "User Management",
     "systemLogs": "System Logs",
     "addUser": "Add User",
@@ -454,7 +470,8 @@
     "logDate": "Date",
     "logAction": "Action",
     "logUser": "User",
-    "logDetail": "Detail"
+    "logDetail": "Detail",
+    "errorStatus": "Cannot be inactive: This user still has unfinished projects!"
   },
   "common": {
     "loading": "Loading...",
@@ -974,7 +991,9 @@
     "inactive": "Inactive",
     "noStaffFound": "No staff members found.",
     "showingRange": "Showing {{from}} to {{to}} of {{total}} users",
-    "totalProjects":"Total Projects"
+    "totalProjects":"Total Projects",
+    "assignManager":"Assign Manager",
+    "noManager": "-- No Manager --"
   },
   "addUser": {
     "title": "Import Staff from Excel",

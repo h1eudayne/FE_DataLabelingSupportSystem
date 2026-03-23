@@ -1,3 +1,5 @@
+import { ArrowRight, CheckCircle } from "lucide-react";
+import { Badge, Button, Card, Col, ProgressBar, Row } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 const ProjectCardItem = ({ project, onReview }) => {

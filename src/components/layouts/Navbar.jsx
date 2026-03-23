@@ -205,6 +205,19 @@ const Navbar = () => {
                 <li className="nav-item">
                   <Link
                     className="nav-link menu-link fs-18"
+                    to="/projects-overview"
+                    style={menuItemStyle}
+                  >
+                    <i
+                      className="ri-stack-fill fs-20 me-2"
+                      style={iconStyle}
+                    ></i>
+                    <span>{t("navbar.projects-overview")}</span>
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className="nav-link menu-link fs-18"
                     to="/settings-user-management"
                     style={menuItemStyle}
                   >

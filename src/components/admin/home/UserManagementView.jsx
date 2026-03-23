@@ -28,6 +28,7 @@ const UserManagementView = ({
   onSearch,
   onActive,
   onEdit,
+  admins,
   openCreateModal,
   pagination = { page: 1, pageSize: 10, onPageChange: () => {} },
   totalCount = 0,
@@ -38,8 +39,6 @@ const UserManagementView = ({
   const totalPages = Math.ceil(totalCount / pageSize);
   const fromEntry = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
   const toEntry = Math.min(page * pageSize, totalCount);
-
-  const adminUsers = users.filter((user) => user.role === "Admin");
 
   const regularUsers = users.filter((user) => user.role !== "Admin");
 
@@ -72,7 +71,7 @@ const UserManagementView = ({
           <h5 className="fw-bold mb-0">{t("userMgmt.adminBoard")}</h5>
         </div>
         <Row className="g-3">
-          {adminUsers.map((admin) => (
+          {admins.map((admin) => (
             <Col md={4} key={admin.id}>
               <Card
                 className="border-0 shadow-sm position-relative overflow-hidden"
