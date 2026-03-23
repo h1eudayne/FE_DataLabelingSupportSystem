@@ -25,12 +25,14 @@ import {
   Clock,
   Lock,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ReviewWorkspace = () => {
   const { assignmentId, projectId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
 
   const [taskList, setTaskList] = useState(location.state?.taskList || []);
   const [data, setData] = useState(location.state?.workspaceData || null);
@@ -444,7 +446,6 @@ const ReviewWorkspace = () => {
               })}
             </div>
 
-            {/* SECTION 3: CỤM CHECKLIST CHUNG (LUÔN CỐ ĐỊNH Ở DƯỚI) */}
             <div
               className="p-3 bg-white border-top shadow-lg"
               style={{ zIndex: 5 }}
@@ -591,7 +592,6 @@ const ReviewWorkspace = () => {
                 desc: "Ảnh đủ rõ để định danh",
               },
             ].map((item) => {
-              // Sử dụng key "shared"
               const isChecked = !!checkedCriteria[`shared-${item.id}`];
               return (
                 <Col key={item.id}>

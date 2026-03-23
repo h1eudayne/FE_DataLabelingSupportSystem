@@ -1072,7 +1072,8 @@
     "securityAuth": "Bảo mật & Auth",
     "require2FA": "Bắt buộc xác thực 2 lớp khi Login",
     "require2FADesc": "Áp dụng cho luồng /api/Auth/login",
-    "saveConfig": "Lưu cấu hình"
+    "saveConfig": "Lưu cấu hình",
+    "loading":"Đang tải..."
   },
   "adminNavTabs": {
     "userManagement": "Quản lý người dùng",

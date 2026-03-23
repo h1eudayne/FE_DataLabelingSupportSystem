@@ -5,18 +5,21 @@ import { getSysLogs } from "../../../services/admin/managementSystem/systemLog.a
 import SysLogsModal from "../managementSystem/SysLogsModal";
 import { BACKEND_URL } from "../../../services/axios.customize";
 import { useTranslation } from "react-i18next";
+import { Spinner } from "reactstrap";
 
 const LogsView = () => {
   const { t } = useTranslation();
   const [logData, setLogData] = useState(null);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [selectUserLogs, setSelectUserLogs] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchLog();
   }, []);
 
   const fetchLog = async () => {
+    setLoading(true);
     try {
       const res = await getSysLogs();
       if (res.data) {
@@ -49,6 +52,10 @@ const LogsView = () => {
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+      }, 300);
     }
   };
 
@@ -57,6 +64,21 @@ const LogsView = () => {
     setIsOpenModal(false);
   };
 
+  if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "400px" }}
+      >
+        <div className="text-center">
+          <Spinner animation="border" variant="primary" role="status" />
+          <p className="mt-2 text-muted fw-medium">
+            {t("adminSettings.loading")}
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <>
       <Card

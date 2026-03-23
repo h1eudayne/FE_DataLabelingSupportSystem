@@ -1071,7 +1071,8 @@
     "securityAuth": "Security & Auth",
     "require2FA": "Require 2-factor authentication on Login",
     "require2FADesc": "Applies to flow /api/Auth/login",
-    "saveConfig": "Save Configuration"
+    "saveConfig": "Save Configuration",
+    "loading":"Loading..."
   },
   "adminNavTabs": {
     "userManagement": "User Management",

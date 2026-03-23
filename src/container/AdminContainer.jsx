@@ -14,6 +14,8 @@ import LogsView from "../components/admin/home/LogsView";
 import UserModal from "../components/admin/managementUser/UserModal";
 import AddUser from "../components/admin/home/AddUser";
 import projectApi from "../services/admin/managementUsers/project.api";
+import { Spinner } from "reactstrap";
+import { useTranslation } from "react-i18next";
 
 const AdminContainer = () => {
   const [activeTab, setActiveTab] = useState("users");
@@ -31,6 +33,9 @@ const AdminContainer = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [userProjects, setUserProjects] = useState([]);
   const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const { t } = useTranslation();
 
   const fetchSelf = async () => {
     try {
@@ -43,6 +48,7 @@ const AdminContainer = () => {
   };
 
   const fetchUsers = async (currentPage = page) => {
+    setLoading(true);
     try {
       const res = await getUsers(currentPage, pageSize);
       const items = res.data.items || [];
@@ -60,6 +66,10 @@ const AdminContainer = () => {
       console.error("Lỗi lấy danh sách user:", error);
       setUsers([]);
       setFilteredUsers([]);
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+      }, 300);
     }
   };
 
@@ -157,6 +167,21 @@ const AdminContainer = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "400px" }}
+      >
+        <div className="text-center">
+          <Spinner animation="border" variant="primary" role="status" />
+          <p className="mt-2 text-muted fw-medium">
+            {t("adminSettings.loading")}
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <Container
       fluid
