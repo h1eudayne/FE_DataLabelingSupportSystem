@@ -6,7 +6,7 @@ import "@testing-library/jest-dom";
 describe("FeaturesSection Component", () => {
   it("nên hiển thị tiêu đề chính của phần giới thiệu giải pháp", () => {
     render(<FeaturesSection />);
-    expect(screen.getByText(/Giải pháp cho mọi vai trò/i)).toBeInTheDocument();
+    expect(screen.getByText(/landing.featuresTitle/i)).toBeInTheDocument();
   });
 
   it("nên hiển thị đủ 3 vai trò chính: Manager, Reviewer và Annotator", () => {

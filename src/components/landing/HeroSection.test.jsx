@@ -6,7 +6,7 @@ describe("HeroSection Component", () => {
   it("nên hiển thị tiêu đề chính và hình ảnh minh họa", () => {
     render(<HeroSection onExplore={() => {}} />);
 
-    expect(screen.getByText(/Số hóa dữ liệu/i)).toBeInTheDocument();
+    expect(screen.getByText(/landing.heroTitle1/i)).toBeInTheDocument();
     expect(screen.getByText(/Thông minh & Hiệu quả/i)).toBeInTheDocument();
     expect(screen.getByRole("img")).toBeInTheDocument();
   });
@@ -16,7 +16,7 @@ describe("HeroSection Component", () => {
     render(<HeroSection onExplore={onExploreMock} />);
 
     const exploreBtn = screen.getByText(/Khám phá Dashboard/i);
-    const startBtn = screen.getByText(/Bắt đầu ngay/i);
+    const startBtn = screen.getByText(/landing.getStarted/i);
 
     fireEvent.click(exploreBtn);
     fireEvent.click(startBtn);

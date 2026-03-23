@@ -91,7 +91,7 @@ describe("App Integration - Security & Roles", () => {
   });
 
   it("nên hiển thị Header và Dashboard khi Admin đã đăng nhập", async () => {
-    const adminUser = { role: "Admin", name: "Anna", email: "admin@test.com" };
+    const adminUser = { role: "Admin", name: "header.user", email: "admin@test.com" };
     const store = createMockStore({
       user: adminUser,
       token: "admin-token",
@@ -110,7 +110,7 @@ describe("App Integration - Security & Roles", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText(/Anna/i)).toBeInTheDocument();
+        expect(screen.getByText(/header.user/i)).toBeInTheDocument();
       },
       { timeout: 8000 },
     );
