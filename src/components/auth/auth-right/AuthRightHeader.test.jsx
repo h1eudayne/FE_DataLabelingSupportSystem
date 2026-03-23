@@ -7,12 +7,12 @@ describe("AuthRightHeader", () => {
   it("nên hiển thị tiêu đề chính (Heading)", () => {
     render(<AuthRightHeader />);
     const heading = screen.getByRole("heading", { level: 2 });
-    expect(heading).toHaveTextContent(/Chào mừng trở lại/i);
+    expect(heading).toHaveTextContent(/auth.welcomeBack/i);
   });
 
   it("nên hiển thị sub-title phù hợp với nội dung tiếng Việt", () => {
     render(<AuthRightHeader />);
-    const subTitle = screen.getByText(/Đăng nhập để tiếp tục với AILABEL/i);
+    const subTitle = screen.getByText(/auth.loginToContinue/i);
     expect(subTitle).toBeInTheDocument();
   });
 

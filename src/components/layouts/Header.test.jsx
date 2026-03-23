@@ -1,6 +1,10 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Provider } from "react-redux";
+import vi from "vitest";
+vi.mock("@/services/axios.customize", () => ({
+  default: { get: vi.fn().mockResolvedValue({ data: { user: { fullName: "Nguyễn Văn A" } } }) }
+}));
 import { BrowserRouter } from "react-router-dom";
 import { configureStore } from "@reduxjs/toolkit";
 import Header from "./Header";
@@ -24,7 +28,7 @@ describe("Header Component - Comprehensive Suite", () => {
           state = {
             isAuthenticated: true,
             user: {
-              name: "Nguyễn Văn A",
+              name: "header.user",
               role: "Manager",
               email: "staff1@gmail.com",
             },
@@ -52,20 +56,20 @@ describe("Header Component - Comprehensive Suite", () => {
   describe("UI & Profile Dropdown", () => {
     it("nên hiển thị thông tin User chính xác", () => {
       renderHeader();
-      expect(screen.getByText(/Nguyễn Văn A/i)).toBeInTheDocument();
+      expect(screen.getByText(/header.user/i)).toBeInTheDocument();
     });
 
     it("nên tương tác đầy đủ với Dropdown Profile", async () => {
       renderHeader();
 
-      const profileToggle = screen.getByText(/Nguyễn Văn A/i);
+      const profileToggle = screen.getByText(/header.user/i);
       fireEvent.click(profileToggle);
 
       await waitFor(() => {
         expect(screen.getByText(/staff1@gmail.com/i)).toBeInTheDocument();
 
         const profileLink = screen.getByText(/Hồ sơ cá nhân/i);
-        const logoutBtn = screen.getByText(/Đăng xuất/i);
+        const logoutBtn = screen.getByText(/header.logout/i);
 
         expect(profileLink).toBeInTheDocument();
         expect(logoutBtn).toBeInTheDocument();
@@ -98,9 +102,9 @@ describe("Header Component - Comprehensive Suite", () => {
 
       renderHeader();
 
-      fireEvent.click(screen.getByText("Nguyễn Văn A"));
+      fireEvent.click(screen.getByText("header.user"));
 
-      const logoutBtn = screen.getByText(/Đăng xuất/i);
+      const logoutBtn = screen.getByText(/header.logout/i);
       fireEvent.click(logoutBtn);
 
       expect(spyDispatch).toHaveBeenCalled();
