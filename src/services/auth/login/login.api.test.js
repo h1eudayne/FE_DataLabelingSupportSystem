@@ -44,10 +44,23 @@ describe("authSlice - Comprehensive Testing", () => {
   });
 
   it("nên xử lý loginThunk.fulfilled và lưu đúng thông tin", () => {
-    const mockUser = { id: "123", email: "test@gmail.com", role: "Admin" };
-    vi.mocked(jwtDecode).mockReturnValue(mockUser);
+    const mockDecode = {
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier": "123",
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": "test@gmail.com",
+      "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Admin",
+      "FullName": "Test User",
+      "AvatarUrl": "http://avatar.com/1"
+    };
+    const mockUser = {
+      id: "123",
+      email: "test@gmail.com",
+      role: "Admin",
+      fullName: "Test User",
+      avatarUrl: "http://avatar.com/1"
+    };
+    vi.mocked(jwtDecode).mockReturnValue(mockDecode);
 
-    const fakePayload = { accessToken: "valid_token" };
+    const fakePayload = { token: "valid_token" };
     const action = { type: loginThunk.fulfilled.type, payload: fakePayload };
 
     const state = authReducer(initialStateStatic, action);
@@ -66,7 +79,7 @@ describe("authSlice - Comprehensive Testing", () => {
 
     const action = {
       type: loginThunk.fulfilled.type,
-      payload: { accessToken: "bad_token" },
+      payload: { token: "bad_token" },
     };
     const state = authReducer(initialStateStatic, action);
 

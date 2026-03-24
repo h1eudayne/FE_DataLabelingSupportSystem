@@ -41,7 +41,7 @@ describe("AuthLoginForm - Đồng bộ UI", () => {
 
   it("nên cho phép nhập tài khoản và mật khẩu", () => {
     renderUI();
-    const emailInput = screen.getByPlaceholderText(/Nhập tài khoản/i);
+    const emailInput = screen.getByPlaceholderText(/auth.emailPlaceholder/i);
     const passwordInput = screen.getByPlaceholderText(/••••••••/i);
 
     fireEvent.change(emailInput, { target: { value: "admin@test.com" } });

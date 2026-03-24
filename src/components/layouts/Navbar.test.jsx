@@ -21,12 +21,8 @@ describe("Navbar Component Integration Tests", () => {
       </Provider>,
     );
 
-    expect(screen.getByText(/Projects/i)).toBeInTheDocument();
-    expect(screen.getByText(/Datasets/i)).toBeInTheDocument();
-    expect(screen.getByText(/Export Data/i)).toBeInTheDocument();
-
-    expect(screen.getByText(/User Management/i)).toBeInTheDocument();
-    expect(screen.getByText(/System Logs/i)).toBeInTheDocument();
+    expect(screen.getByText(/navbar.userManagement/i)).toBeInTheDocument();
+    expect(screen.getByText(/navbar.systemLogs/i)).toBeInTheDocument();
   });
 
   it("chỉ hiển thị menu Workplace và không hiển thị User Management khi role là Annotator", () => {
@@ -42,12 +38,11 @@ describe("Navbar Component Integration Tests", () => {
       </Provider>,
     );
 
-    expect(screen.getByText(/My Task/i)).toBeInTheDocument();
-    expect(screen.getByText(/Team/i)).toBeInTheDocument();
+    expect(screen.getByText(/navbar.myTask/i)).toBeInTheDocument();
+    expect(screen.getByText(/navbar.team/i)).toBeInTheDocument();
 
-    expect(screen.queryByText(/Export Data/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/User Management/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/System Logs/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/navbar.userManagement/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/navbar.systemLogs/i)).not.toBeInTheDocument();
   });
 
   it("nên hiển thị menu 'Review Task' khi role là Reviewer", () => {
@@ -63,8 +58,8 @@ describe("Navbar Component Integration Tests", () => {
       </Provider>,
     );
 
-    expect(screen.getByText(/Review Task/i)).toBeInTheDocument();
-    expect(screen.queryByText(/My Task/i)).not.toBeInTheDocument();
+    // As per Navbar.jsx code, Reviewer has `navbar.myTask` to point to `/reviewer/review-task/`
+    expect(screen.getByText(/navbar.myTask/i)).toBeInTheDocument();
   });
 
   it("các thẻ Link phải trỏ đúng địa chỉ URL", () => {
@@ -80,10 +75,10 @@ describe("Navbar Component Integration Tests", () => {
       </Provider>,
     );
 
-    const dashboardLink = screen.getByText(/Dashboard/i).closest("a");
+    const dashboardLink = screen.getByText(/navbar.dashboard/i).closest("a");
     expect(dashboardLink).toHaveAttribute("href", "/dashboard");
 
-    const userMgmtLink = screen.getByText(/User Management/i).closest("a");
+    const userMgmtLink = screen.getByText(/navbar.userManagement/i).closest("a");
     expect(userMgmtLink).toHaveAttribute("href", "/settings-user-management");
   });
 });

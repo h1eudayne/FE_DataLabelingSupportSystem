@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import axios from "../../axios.customize";
 import projectService from "./projectService";
 
@@ -10,7 +10,7 @@ describe("projectService", () => {
   it("getById: nên gọi đúng URL với ID dự án", async () => {
     axios.get.mockResolvedValue({ data: { id: "P1", name: "Project 1" } });
     const res = await projectService.getById("P1");
-    expect(axios.get).toHaveBeenCalledWith("/api/Project/P1");
+    expect(axios.get).toHaveBeenCalledWith("/api/projects/P1");
     expect(res.data.name).toBe("Project 1");
   });
 });

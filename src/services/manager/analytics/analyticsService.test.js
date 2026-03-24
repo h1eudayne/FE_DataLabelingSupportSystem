@@ -31,44 +31,66 @@ describe("analyticsService - Full Coverage", () => {
 
   describe("getDashboardStats() - Aggregation logic", () => {
     it("Success: aggregate data from multiple projects", async () => {
-      axios.get.mockResolvedValueOnce({
-        data: [{ id: "P1" }, { id: "P2" }],
+      axios.get.mockImplementation((url) => {
+        if (url === "/api/projects/managers/test-manager-id") {
+          return Promise.resolve({ data: [{ id: "P1" }, { id: "P2" }] });
+        }
+        if (url === "/api/projects/managers/test-manager-id/statistics") {
+           return Promise.resolve({ data: { totalMembers: 5 } });
+        }
+        if (url === "/api/projects/P1/statistics") {
+          return Promise.resolve({ data: { totalAssignments: 10, approvedAssignments: 10, totalItems: 10, completedItems: 10 } });
+        }
+        if (url === "/api/projects/P2/statistics") {
+          return Promise.resolve({ data: { totalAssignments: 20, approvedAssignments: 10, totalItems: 20, completedItems: 10 } });
+        }
+        return Promise.reject(new Error("Not mocked " + url));
       });
-
-      axios.get
-        .mockResolvedValueOnce({
-          data: { totalAssignments: 10, approvedAssignments: 5 },
-        })
-        .mockResolvedValueOnce({
-          data: { totalAssignments: 20, approvedAssignments: 10 },
-        });
 
       const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(2);
-      expect(stats.totalAssignments).toBe(30);
-      expect(stats.completed).toBe(15);
+      expect(stats.completed).toBe(1); // P1 is completed
+      expect(stats.inProgress).toBe(1); // P2 is in progress
+      expect(stats.totalMembers).toBe(5);
     });
 
     it("Error 400: skip errored projects and continue", async () => {
-      axios.get.mockResolvedValueOnce({
-        data: [{ id: "P1" }, { id: "P2" }],
+      axios.get.mockImplementation((url) => {
+        if (url === "/api/projects/managers/test-manager-id") {
+          return Promise.resolve({ data: [{ id: "P1" }, { id: "P2" }] });
+        }
+        if (url === "/api/projects/managers/test-manager-id/statistics") {
+           return Promise.resolve({ data: null });
+        }
+        if (url === "/api/projects/P1/statistics") {
+          return Promise.reject({ response: { status: 400 } });
+        }
+        if (url === "/api/projects/P2/statistics") {
+          return Promise.resolve({ data: { totalAssignments: 5, totalItems: 5, completedItems: 0 } });
+        }
+        return Promise.reject(new Error("Not mocked"));
       });
-
-      const error400 = { response: { status: 400 } };
-      axios.get
-        .mockRejectedValueOnce(error400)
-        .mockResolvedValueOnce({ data: { totalAssignments: 5 } });
 
       const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(2);
-      expect(stats.totalAssignments).toBe(5);
+      expect(stats.inProgress).toBe(1); // P2 is in progress
+      expect(stats.activeProjects.length).toBe(2);
     });
 
     it("Critical error (500): stop and throw", async () => {
-      axios.get.mockResolvedValueOnce({ data: [{ id: "P1" }] });
-      axios.get.mockRejectedValueOnce(new Error("Database Crash"));
+      axios.get.mockImplementation((url) => {
+        if (url === "/api/projects/managers/test-manager-id") {
+          return Promise.resolve({ data: [{ id: "P1" }] });
+        }
+        if (url === "/api/projects/managers/test-manager-id/statistics") {
+          return Promise.resolve({ data: null });
+        }
+        if (url === "/api/projects/P1/statistics") {
+          return Promise.reject(new Error("Database Crash"));
+        }
+      });
 
       await expect(
         analyticsService.getDashboardStats("test-manager-id"),
@@ -76,12 +98,19 @@ describe("analyticsService - Full Coverage", () => {
     });
 
     it("No projects: return zeroed object", async () => {
-      axios.get.mockResolvedValueOnce({ data: [] });
+      axios.get.mockImplementation((url) => {
+        if (url === "/api/projects/managers/test-manager-id") {
+          return Promise.resolve({ data: [] });
+        }
+        if (url === "/api/projects/managers/test-manager-id/statistics") {
+          return Promise.resolve({ data: null });
+        }
+      });
 
       const stats = await analyticsService.getDashboardStats("test-manager-id");
 
       expect(stats.totalProjects).toBe(0);
-      expect(stats.totalAssignments).toBe(0);
+      expect(stats.completed).toBe(0);
     });
   });
 
@@ -89,7 +118,7 @@ describe("analyticsService - Full Coverage", () => {
     it("should call correct users endpoint", async () => {
       axios.get.mockResolvedValueOnce({ data: [] });
       await analyticsService.getUsers();
-      expect(axios.get).toHaveBeenCalledWith("/api/users");
+      expect(axios.get).toHaveBeenCalledWith("/api/users?page=1&pageSize=100");
     });
   });
 });

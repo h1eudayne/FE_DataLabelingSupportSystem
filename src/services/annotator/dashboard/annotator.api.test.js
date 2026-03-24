@@ -65,7 +65,7 @@ describe("Annotator API Suite - Full Coverage", () => {
       axios.get.mockResolvedValueOnce({ data: [{ id: 1 }] });
       await getMyTasks("PROJ_001");
       expect(axios.get).toHaveBeenCalledWith(
-        "/api/Task/project/PROJ_001/images",
+        "/api/tasks/projects/PROJ_001/images",
       );
     });
   });

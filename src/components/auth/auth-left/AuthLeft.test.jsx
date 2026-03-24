@@ -26,7 +26,7 @@ describe("AuthLeft", () => {
     renderWithRouter();
     expect(screen.getByText(/Label data with/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Nền tảng gán nhãn dữ liệu thông minh/i),
+      screen.getByText(/authLeft.subtitle/i),
     ).toBeInTheDocument();
   });
 

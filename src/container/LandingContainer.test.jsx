@@ -59,7 +59,7 @@ describe("LandingContainer Component", () => {
   it("nên chuyển hướng đến trang /login khi nhấn nút Đăng nhập trên Navbar", () => {
     renderLanding();
 
-    fireEvent.click(screen.getByRole("button", { name: /Đăng nhập/i }));
+    fireEvent.click(screen.getByRole("button", { name: /landing.login/i }));
 
     expect(mockedNavigate).toHaveBeenCalledWith("/login");
   });
@@ -68,7 +68,7 @@ describe("LandingContainer Component", () => {
     renderLanding();
 
     const startBtns = screen.getAllByRole("button", {
-      name: /Bắt đầu ngay/i,
+      name: /landing.getStarted/i,
     });
 
     fireEvent.click(startBtns[0]);
