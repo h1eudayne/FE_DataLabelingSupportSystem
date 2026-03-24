@@ -47,52 +47,52 @@ const ReviewWorkspace = () => {
   const ERROR_CATEGORIES = [
     {
       id: "CL-01",
-      label: "CL-01: Xác định sai đối tượng",
+      title: "CL-01: Xác định sai đối tượng",
       desc: "Đối tượng gán nhãn không đúng thực tế",
     },
     {
       id: "CL-02",
-      label: "CL-02: Sai loại nhãn (Label Class)",
+      title: "CL-02: Sai loại nhãn (Label Class)",
       desc: "Chọn sai danh mục nhãn",
     },
     {
       id: "CL-03",
-      label: "CL-03: Bounding Box chưa chính xác",
+      title: "CL-03: Bounding Box chưa chính xác",
       desc: "Khung bao không ôm sát, quá rộng/hẹp",
     },
     {
       id: "CL-04",
-      label: "CL-04: Còn bỏ sót đối tượng",
+      title: "CL-04: Còn bỏ sót đối tượng",
       desc: "Chưa gán nhãn hết các đối tượng trong ảnh",
     },
     {
       id: "CL-05",
-      label: "CL-05: Gán nhãn sai",
+      title: "CL-05: Gán nhãn sai",
       desc: "Gán nhãn cho đối tượng không liên quan",
     },
     {
       id: "CL-06",
-      label: "CL-06: Không tuân thủ guideline",
+      title: "CL-06: Không tuân thủ guideline",
       desc: "Sai quy định đặc thù của dự án",
     },
     {
       id: "CL-07",
-      label: "CL-07: Chưa có tính nhất quán",
+      title: "CL-07: Chưa có tính nhất quán",
       desc: "Gán nhãn không đồng nhất với các ảnh khác",
     },
     {
       id: "CL-08",
-      label: "CL-08: Dùng sai loại công cụ",
+      title: "CL-08: Dùng sai loại công cụ",
       desc: "Dùng sai công cụ (VD: dùng Box thay vì Polygon)",
     },
     {
       id: "CL-09",
-      label: "CL-09: Chưa bao phủ đầy đủ",
+      title: "CL-09: Chưa bao phủ đầy đủ",
       desc: "Phần hiển thị của đối tượng bị cắt mất",
     },
     {
       id: "CL-10",
-      label: "CL-10: Chất lượng dữ liệu",
+      title: "CL-10: Chất lượng dữ liệu",
       desc: "Ảnh quá mờ/lỗi không thể gán nhãn",
     },
   ];
@@ -190,11 +190,11 @@ const ReviewWorkspace = () => {
     }
   };
 
-  const handleToggleError = (errorId) => {
+  const handleToggleError = (errorTitle) => {
     setErrorCategories((prev) =>
-      prev.includes(errorId)
-        ? prev.filter((id) => id !== errorId)
-        : [...prev, errorId],
+      prev.includes(errorTitle)
+        ? prev.filter((title) => title !== errorTitle)
+        : [...prev, errorTitle],
     );
   };
 
@@ -222,8 +222,10 @@ const ReviewWorkspace = () => {
         assignmentId: parseInt(assignmentId),
         isApproved,
         comment: rejectComment,
-        errorCategories: isApproved ? [] : errorCategories,
+        errorCategory: isApproved ? null : JSON.stringify(errorCategories),
       };
+
+      console.log(payload);
 
       await projectService.submitReview(payload);
       console.log("Submit Payload:", payload);
@@ -723,43 +725,27 @@ const ReviewWorkspace = () => {
                 <Col key={err.id}>
                   <div
                     className={`d-flex align-items-start p-3 rounded-3 border h-100 transition-all ${
-                      errorCategories.includes(err.id)
+                      errorCategories.includes(err.title)
                         ? "border-danger bg-danger-subtle shadow-sm"
                         : "border-secondary-subtle bg-white shadow-sm-hover"
                     }`}
-                    style={{
-                      cursor: "pointer",
-                      borderWidth: "1.5px",
-                      transition: "all 0.2s ease",
-                      minHeight: "80px",
-                    }}
-                    onClick={() => handleToggleError(err.id)}
+                    style={{ cursor: "pointer", borderWidth: "1.5px" }}
+                    onClick={() => handleToggleError(err.title)}
                   >
                     <Form.Check
                       type="checkbox"
-                      checked={errorCategories.includes(err.id)}
+                      checked={errorCategories.includes(err.title)}
                       onChange={() => {}}
-                      className="me-3 mt-1 flex-shrink-0"
-                      style={{ transform: "scale(1.2)" }}
+                      className="me-3 mt-1"
                     />
                     <div className="flex-grow-1">
                       <div
                         className="fw-bolder mb-1"
-                        style={{
-                          fontSize: "14px",
-                          color: errorCategories.includes(err.id)
-                            ? "#d93025"
-                            : "#1a1a1a",
-                          letterSpacing: "-0.2px",
-                          lineHeight: "1.2",
-                        }}
+                        style={{ fontSize: "14px" }}
                       >
-                        {err.label}
+                        {err.title}
                       </div>
-                      <div
-                        className="text-muted"
-                        style={{ fontSize: "11px", lineHeight: "1.4" }}
-                      >
+                      <div className="text-muted" style={{ fontSize: "11px" }}>
                         {err.desc}
                       </div>
                     </div>

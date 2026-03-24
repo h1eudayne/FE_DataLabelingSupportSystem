@@ -36,6 +36,7 @@ import Profile from "./page/Profile";
 import ReviewWorkspace from "./components/reviewer/home/ReviewWorkspace";
 import WorkplaceReviewTask from "./components/reviewer/home/WorkplaceReviewTask";
 import ProjectUserManagement from "./page/admin/ProjectUserManagement";
+import DetailProject from "./components/admin/home/DetailProject";
 
 function App() {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -83,6 +84,10 @@ function App() {
               <Route
                 path="/projects-overview"
                 element={<ProjectUserManagement />}
+              />
+              <Route
+                path="/view-detail-project/:id"
+                element={<DetailProject />}
               />
             </Route>
 

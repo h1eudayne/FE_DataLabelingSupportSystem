@@ -439,6 +439,11 @@
   },
   "admin": {
      "project": {
+      "listTitle": "Project List",
+      "searchPlaceholder": "Search project name...",
+      "searching": "Searching...",
+      "noResult": "No projects found matching \"{{searchTerm}}\"",
+      "paginationInfo": "Showing {{current}} of {{total}} results",
       "name": "Project Name",
       "status": "Status",
       "progress": "Progress",
@@ -451,7 +456,25 @@
       "totalProjects": "Total Projects",
       "pending": "Pending",
       "completed": "Completed",
-      "overdue": "Overdue"
+      "overdue": "Overdue",
+      "new":"New Projects"
+    },
+    "projectDetail": {
+      "type": "Type",
+      "description": "Project Description",
+      "noDescription": "No description provided.",
+      "labelConfig": "Label Configuration",
+      "defaultLabel": "DEFAULT",
+      "memberPerformance": "Member Performance",
+      "tableMember": "Member",
+      "tableRole": "Role",
+      "tableTasks": "Tasks (Assigned/Done)",
+      "tableProgress": "Progress",
+      "totalProgress": "Total Progress",
+      "items": "Items",
+      "processed": "Processed",
+      "deadline": "Deadline",
+      "manager": "Responsible Manager"
     },
     "userManagement": "User Management",
     "systemLogs": "System Logs",
