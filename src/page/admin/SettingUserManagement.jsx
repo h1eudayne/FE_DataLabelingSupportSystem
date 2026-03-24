@@ -6,7 +6,7 @@ import {
   updateStatus,
 } from "../../services/admin/managementUsers/user.api";
 import UserTable from "../../components/admin/managementUser/UserTable";
-import { Card, CardBody, CardHeader } from "reactstrap";
+import { Card, CardBody, CardHeader, Spinner } from "reactstrap";
 import UserFilter from "../../components/admin/managementUser/UserFilter";
 import UserModal from "../../components/admin/managementUser/UserModal";
 import { useTranslation } from "react-i18next";
@@ -22,6 +22,7 @@ const SettingUserManagement = () => {
     pageSize: 10,
   });
   const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
 
   const fetchSelf = async () => {
@@ -34,6 +35,7 @@ const SettingUserManagement = () => {
   };
 
   const fetchUsers = async (currentPage = pagination.page) => {
+    setLoading(true);
     try {
       const res = await getUsers(currentPage, pagination.pageSize);
       const data = res.data;
@@ -43,6 +45,10 @@ const SettingUserManagement = () => {
       setTotalCount(data.totalCount || 0);
     } catch (error) {
       console.error(error);
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+      }, 300);
     }
   };
 
@@ -106,6 +112,22 @@ const SettingUserManagement = () => {
   const onPageChange = (newPage) => {
     setPagination((prev) => ({ ...prev, page: newPage }));
   };
+
+  if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "400px" }}
+      >
+        <div className="text-center">
+          <Spinner animation="border" variant="primary" role="status" />
+          <p className="mt-2 text-muted fw-medium">
+            {t("adminSettings.loading")}
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <>
       <Card>

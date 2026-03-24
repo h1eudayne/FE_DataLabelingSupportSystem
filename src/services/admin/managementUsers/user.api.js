@@ -6,6 +6,10 @@ export const getUsers = (page = 1, pageSize = 10) => {
   });
 };
 
+export const getAdmins = () => {
+  return axios.get(`/api/users/management-board`);
+};
+
 export const createUser = (data) => {
   return axios.post("/api/users", data);
 };

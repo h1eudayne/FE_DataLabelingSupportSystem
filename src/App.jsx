@@ -29,13 +29,13 @@ import ProjectAssignTask from "./page/manager/project/ProjectAssignTask";
 import CreateProject from "./page/manager/project/CreateProject";
 import ProjectsDatasetsPage from "./page/manager/datasets/ProjectsDatasetsPage";
 
-
 import LoginPage from "./page/auth/login/LoginPage";
 import { ROLES } from "./constants/roles";
 import LandingPage from "./page/LandingPage";
 import Profile from "./page/Profile";
 import ReviewWorkspace from "./components/reviewer/home/ReviewWorkspace";
 import WorkplaceReviewTask from "./components/reviewer/home/WorkplaceReviewTask";
+import ProjectUserManagement from "./page/admin/ProjectUserManagement";
 
 function App() {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -79,6 +79,10 @@ function App() {
               <Route
                 path="settings-system-logs"
                 element={<SettingsSystemLogs />}
+              />
+              <Route
+                path="/projects-overview"
+                element={<ProjectUserManagement />}
               />
             </Route>
 

@@ -20,6 +20,7 @@ import {
   Power,
   UserPlus,
 } from "lucide-react";
+import StatCard from "./StatCard";
 
 const UserManagementView = ({
   stats,
@@ -27,6 +28,7 @@ const UserManagementView = ({
   onSearch,
   onActive,
   onEdit,
+  admins,
   openCreateModal,
   pagination = { page: 1, pageSize: 10, onPageChange: () => {} },
   totalCount = 0,
@@ -38,7 +40,6 @@ const UserManagementView = ({
   const fromEntry = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
   const toEntry = Math.min(page * pageSize, totalCount);
 
-  const adminUsers = users.filter((user) => user.role === "Admin");
   const regularUsers = users.filter((user) => user.role !== "Admin");
 
   return (
@@ -70,7 +71,7 @@ const UserManagementView = ({
           <h5 className="fw-bold mb-0">{t("userMgmt.adminBoard")}</h5>
         </div>
         <Row className="g-3">
-          {adminUsers.map((admin) => (
+          {admins.map((admin) => (
             <Col md={4} key={admin.id}>
               <Card
                 className="border-0 shadow-sm position-relative overflow-hidden"
@@ -274,23 +275,5 @@ const UserManagementView = ({
     </>
   );
 };
-
-const StatCard = ({ icon, title, value, colorClass }) => (
-  <Col md={4}>
-    <Card
-      className="border-0 shadow-sm text-center p-3"
-      style={{ borderRadius: "15px" }}
-    >
-      <div className={`${colorClass} mb-2`}>{icon}</div>
-      <div
-        className="text-muted small fw-bold text-uppercase"
-        style={{ fontSize: "10px" }}
-      >
-        {title}
-      </div>
-      <h2 className="fw-bold m-0">{value}</h2>
-    </Card>
-  </Col>
-);
 
 export default UserManagementView;

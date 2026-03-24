@@ -25,12 +25,14 @@ import {
   Clock,
   Lock,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ReviewWorkspace = () => {
   const { assignmentId, projectId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
 
   const [taskList, setTaskList] = useState(location.state?.taskList || []);
   const [data, setData] = useState(location.state?.workspaceData || null);
@@ -94,6 +96,35 @@ const ReviewWorkspace = () => {
       desc: "Ảnh quá mờ/lỗi không thể gán nhãn",
     },
   ];
+  const CHECKLIST_IDS = [
+    "CL-01",
+    "CL-02",
+    "CL-03",
+    "CL-04",
+    "CL-05",
+    "CL-06",
+    "CL-07",
+    "CL-08",
+    "CL-09",
+    "CL-10",
+  ];
+
+  const handleSelectAllCriteria = () => {
+    const isAllChecked = CHECKLIST_IDS.every(
+      (id) => checkedCriteria[`shared-${id}`],
+    );
+
+    const newCheckedState = { ...checkedCriteria };
+    CHECKLIST_IDS.forEach((id) => {
+      newCheckedState[`shared-${id}`] = !isAllChecked;
+    });
+
+    setCheckedCriteria(newCheckedState);
+  };
+
+  const isAllCriteriaSelected = CHECKLIST_IDS.every(
+    (id) => checkedCriteria[`shared-${id}`],
+  );
 
   const currentIndex = taskList.findIndex(
     (t) => t.assignmentId.toString() === assignmentId,
@@ -211,6 +242,7 @@ const ReviewWorkspace = () => {
             : "Đã từ chối, chuyển ảnh tiếp theo...",
         );
 
+        setCheckedCriteria({});
         navigate(
           `/reviewer/review-workspace/${projectId}/${nextTask.assignmentId}`,
           {
@@ -444,7 +476,6 @@ const ReviewWorkspace = () => {
               })}
             </div>
 
-            {/* SECTION 3: CỤM CHECKLIST CHUNG (LUÔN CỐ ĐỊNH Ở DƯỚI) */}
             <div
               className="p-3 bg-white border-top shadow-lg"
               style={{ zIndex: 5 }}
@@ -521,6 +552,15 @@ const ReviewWorkspace = () => {
             Xác nhận các tiêu chí chất lượng cho <strong>tất cả</strong> nhãn có
             trong ảnh.
           </div>
+          <div
+            className="mb-3 px-1 d-flex align-items-center gap-1 animate-pulse"
+            style={{ fontSize: "11px", color: "#dc3545", fontWeight: "600" }}
+          >
+            <AlertTriangle size={14} />
+            <span>
+              Lưu ý: Bạn phải hoàn thành 10/10 tiêu chí thì mới được Approve.
+            </span>
+          </div>
 
           <div className="mb-3 d-flex flex-wrap gap-2">
             <span className="small fw-bold text-muted">Đang kiểm duyệt:</span>
@@ -537,6 +577,30 @@ const ReviewWorkspace = () => {
           </div>
 
           <hr />
+
+          <div
+            className={`p-2 mb-3 rounded border d-flex align-items-center gap-2 transition-all ${
+              isAllCriteriaSelected
+                ? "bg-primary text-white border-primary"
+                : "bg-white border-secondary-subtle"
+            }`}
+            style={{ cursor: "pointer", fontSize: "13px" }}
+            onClick={handleSelectAllCriteria}
+          >
+            <Form.Check
+              type="checkbox"
+              id="select-all-checklist"
+              checked={isAllCriteriaSelected}
+            />
+            <span
+              className={`fw-bold mb-0 ${isAllCriteriaSelected ? "text-white" : "text-primary"}`}
+              style={{ userSelect: "none" }}
+            >
+              {isAllCriteriaSelected
+                ? "Bỏ chọn tất cả tiêu chí"
+                : "Chọn tất cả tiêu chí đạt chuẩn"}
+            </span>
+          </div>
 
           <Row xs={1} md={2} className="g-2">
             {[
@@ -591,7 +655,6 @@ const ReviewWorkspace = () => {
                 desc: "Ảnh đủ rõ để định danh",
               },
             ].map((item) => {
-              // Sử dụng key "shared"
               const isChecked = !!checkedCriteria[`shared-${item.id}`];
               return (
                 <Col key={item.id}>

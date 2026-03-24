@@ -24,7 +24,8 @@
     "reviewTask": "Kiểm duyệt",
     "userManagement": "Quản lý người dùng",
     "systemLogs": "Nhật ký hệ thống",
-    "settingsMenu": "Cài đặt"
+    "settingsMenu": "Cài đặt",
+    "projects-overview": "Tổng dự án"
   },
   "auth": {
     "welcomeBack": "Chào mừng trở lại!",
@@ -438,6 +439,21 @@
     "saveChanges": "Lưu thay đổi"
   },
   "admin": {
+    "project": {
+      "name": "Tên dự án",
+      "status": "Trạng thái",
+      "progress": "Tiến độ",
+      "members": "Thành viên",
+      "actions": "Thao tác",
+      "viewDetail": "Xem chi tiết",
+      "statistics": "Thống kê"
+    },
+    "stats": {
+      "totalProjects": "Tổng dự án",
+      "pending": "Đang chờ",
+      "completed": "Hoàn thành",
+      "overdue": "Quá hạn"
+    },
     "userManagement": "Quản lý người dùng",
     "systemLogs": "Nhật ký hệ thống",
     "addUser": "Thêm người dùng",
@@ -455,7 +471,8 @@
     "logDate": "Ngày",
     "logAction": "Hành động",
     "logUser": "Người thực hiện",
-    "logDetail": "Chi tiết"
+    "logDetail": "Chi tiết",
+    "errorStatus": "Không thể vô hiệu hóa: User này vẫn còn dự án chưa hoàn thành!"
   },
   "common": {
     "loading": "Đang tải...",
@@ -975,7 +992,9 @@
     "inactive": "Khóa",
     "noStaffFound": "Không tìm thấy nhân sự nào.",
     "showingRange": "Hiển thị {{from}} đến {{to}} trên {{total}} người dùng",
-    "totalProjects":"Tổng dự án"
+    "totalProjects":"Tổng dự án",
+    "assignManager":"Phân công quản lý",
+    "noManager":"-- Chưa có quản lý --"
   },
   "addUser": {
     "title": "Nhập nhân viên từ Excel",
@@ -1072,7 +1091,8 @@
     "securityAuth": "Bảo mật & Auth",
     "require2FA": "Bắt buộc xác thực 2 lớp khi Login",
     "require2FADesc": "Áp dụng cho luồng /api/Auth/login",
-    "saveConfig": "Lưu cấu hình"
+    "saveConfig": "Lưu cấu hình",
+    "loading":"Đang tải..."
   },
   "adminNavTabs": {
     "userManagement": "Quản lý người dùng",

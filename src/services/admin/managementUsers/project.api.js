@@ -1,7 +1,7 @@
 import axios from "../../axios.customize";
 
 const projectApi = {
-  getAllProjectsUser: (id) => axios.get(`/api/projects/user/${id}`),
+  getAllProjectsUser: () => axios.get("/api/projects/all"),
 };
 
 export default projectApi;
