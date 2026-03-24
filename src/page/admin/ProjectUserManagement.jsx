@@ -20,8 +20,10 @@ import {
   CheckCircle,
   Clock,
   Eye,
+  PlusCircle,
   Search,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ProjectUserManagement = () => {
   const [projects, setProjects] = useState([]);
@@ -31,6 +33,7 @@ const ProjectUserManagement = () => {
   const [itemsPerPage] = useState(10);
   const [isSearching, setIsSearching] = useState(false);
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
@@ -68,16 +71,16 @@ const ProjectUserManagement = () => {
     );
   }, [projects, searchTerm]);
 
-  const today = new Date();
   const pendingProjectsCount = projects.filter(
-    (p) => p.progress < 100 && new Date(p.deadline) >= today,
+    (p) => p.status === "In Process",
   ).length;
   const completedProjectsCount = projects.filter(
-    (p) => p.progress >= 100,
+    (p) => p.status === "Completed",
   ).length;
   const overdueProjectsCount = projects.filter(
-    (p) => p.progress < 100 && new Date(p.deadline) < today,
+    (p) => p.status === "Expired",
   ).length;
+  const newProjectsCount = projects.filter((p) => p.status === "New").length;
 
   const statsConfig = [
     {
@@ -85,6 +88,12 @@ const ProjectUserManagement = () => {
       value: projects.length,
       icon: <Briefcase size={22} />,
       color: "primary",
+    },
+    {
+      label: t("admin.stats.new"),
+      value: newProjectsCount,
+      icon: <PlusCircle size={22} />,
+      color: "warning",
     },
     {
       label: t("admin.stats.pending"),
@@ -106,6 +115,21 @@ const ProjectUserManagement = () => {
     },
   ];
 
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "New":
+        return { bg: "primary", label: "New" };
+      case "Completed":
+        return { bg: "success", label: "Completed" };
+      case "Expired":
+        return { bg: "danger", label: "Expired" };
+      case "In Process":
+        return { bg: "warning", label: "In Process" };
+      default:
+        return { bg: "secondary", label: status };
+    }
+  };
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentProjects = filteredProjects.slice(
@@ -117,6 +141,10 @@ const ProjectUserManagement = () => {
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
+  };
+
+  const handleViewDetail = (id) => {
+    navigate(`/view-detail-project/${id}`);
   };
 
   if (loading) {
@@ -139,7 +167,14 @@ const ProjectUserManagement = () => {
       <div className="p-3">
         <Row className="mb-4 g-3">
           {statsConfig.map((stat, index) => (
-            <Col key={index} xs={12} sm={6} lg={3}>
+            <Col
+              key={index}
+              xs={12}
+              sm={6}
+              md={4}
+              className="col-lg-custom"
+              style={{ flex: "0 0 auto", width: "20%" }}
+            >
               <Card
                 className="border-0 shadow-sm"
                 style={{ borderRadius: "12px" }}
@@ -167,13 +202,15 @@ const ProjectUserManagement = () => {
         </Row>
 
         <div className="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
-          <h5 className="mb-0 fw-bold text-dark">Danh sách dự án</h5>
+          <h5 className="mb-0 fw-bold text-dark">
+            {t("admin.project.listTitle")}
+          </h5>
           <InputGroup style={{ maxWidth: "300px" }} className="shadow-sm">
             <InputGroup.Text className="bg-white border-end-0">
               <Search size={18} className="text-muted" />
             </InputGroup.Text>
             <Form.Control
-              placeholder="Tìm tên dự án..."
+              placeholder={t("admin.project.searchPlaceholder")}
               className="border-start-0 ps-0"
               value={searchTerm}
               onChange={handleSearch}
@@ -208,68 +245,74 @@ const ProjectUserManagement = () => {
                         size="sm"
                         className="me-2"
                       />
-                      <span className="text-muted">Đang tìm kiếm...</span>
+                      <span className="text-muted">
+                        {t("admin.project.searching")}
+                      </span>
                     </td>
                   </tr>
                 ) : currentProjects.length > 0 ? (
-                  currentProjects.map((project) => (
-                    <tr key={project.id}>
-                      <td className="ps-4 fw-bold">{project.name}</td>
-                      <td>
-                        <Badge
-                          bg={
-                            project.status === "Active"
-                              ? "success"
-                              : "secondary"
-                          }
-                        >
-                          {project.status}
-                        </Badge>
-                      </td>
-                      <td>
-                        <div
-                          className="d-flex align-items-center gap-2"
-                          style={{ minWidth: "120px" }}
-                        >
+                  currentProjects.map((project) => {
+                    const statusInfo = getStatusBadge(project.status);
+                    return (
+                      <tr key={project.id}>
+                        <td className="ps-4 fw-bold">{project.name}</td>
+                        <td>
+                          <Badge
+                            bg={statusInfo.bg}
+                            className={
+                              statusInfo.bg === "warning" ? "text-dark" : ""
+                            }
+                            style={{ padding: "6px 12px", borderRadius: "6px" }}
+                          >
+                            {statusInfo.label}
+                          </Badge>
+                        </td>
+                        <td>
                           <div
-                            className="progress flex-grow-1"
-                            style={{ height: "6px" }}
+                            className="d-flex align-items-center gap-2"
+                            style={{ minWidth: "120px" }}
                           >
                             <div
-                              className="progress-bar bg-primary"
-                              style={{ width: `${project.progress}%` }}
-                            ></div>
+                              className="progress flex-grow-1"
+                              style={{ height: "6px" }}
+                            >
+                              <div
+                                className="progress-bar bg-primary"
+                                style={{ width: `${project.progress}%` }}
+                              ></div>
+                            </div>
+                            <small className="fw-medium">
+                              {project.progress}%
+                            </small>
                           </div>
-                          <small className="fw-medium">
-                            {project.progress}%
-                          </small>
-                        </div>
-                      </td>
-                      <td>
-                        {project.totalMembers} {t("admin.project.members")}
-                      </td>
-                      <td className="text-center">
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="text-primary p-0 me-2 shadow-none"
-                        >
-                          <Eye size={18} />
-                        </Button>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="text-info p-0 shadow-none"
-                        >
-                          <BarChart2 size={18} />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                        <td>
+                          {project.totalMembers} {t("admin.project.members")}
+                        </td>
+                        <td className="text-center">
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="text-primary p-0 me-2 shadow-none"
+                            onClick={() => handleViewDetail(project.id)}
+                          >
+                            <Eye size={18} />
+                          </Button>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="text-info p-0 shadow-none"
+                          >
+                            <BarChart2 size={18} />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan="5" className="text-center py-4 text-muted">
-                      Không tìm thấy dự án nào phù hợp với "{searchTerm}"
+                      {t("admin.project.noResult", { searchTerm: searchTerm })}
                     </td>
                   </tr>
                 )}
@@ -280,8 +323,10 @@ const ProjectUserManagement = () => {
           {totalPages > 1 && (
             <Card.Footer className="bg-white border-0 py-3 d-flex justify-content-between align-items-center">
               <div className="text-muted small">
-                Hiển thị {currentProjects.length} trên {filteredProjects.length}{" "}
-                kết quả
+                {t("admin.project.paginationInfo", {
+                  current: currentProjects.length,
+                  total: filteredProjects.length,
+                })}
               </div>
               <Pagination className="mb-0">
                 <Pagination.Prev

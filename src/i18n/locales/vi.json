@@ -440,6 +440,11 @@
   },
   "admin": {
     "project": {
+      "listTitle": "Danh sách dự án",
+      "searchPlaceholder": "Tìm tên dự án...",
+      "searching": "Đang tìm kiếm...",
+      "noResult": "Không tìm thấy dự án nào phù hợp với \"{{searchTerm}}\"",
+      "paginationInfo": "Hiển thị {{current}} trên {{total}} kết quả",
       "name": "Tên dự án",
       "status": "Trạng thái",
       "progress": "Tiến độ",
@@ -452,7 +457,25 @@
       "totalProjects": "Tổng dự án",
       "pending": "Đang chờ",
       "completed": "Hoàn thành",
-      "overdue": "Quá hạn"
+      "overdue": "Quá hạn",
+      "new":"Dự án mới"
+    },
+    "projectDetail": {
+      "type": "Loại",
+      "description": "Mô tả dự án",
+      "noDescription": "Không có mô tả nào được cung cấp.",
+      "labelConfig": "Cấu hình nhãn",
+      "defaultLabel": "MẶC ĐỊNH",
+      "memberPerformance": "Hiệu suất thành viên",
+      "tableMember": "Thành viên",
+      "tableRole": "Vai trò",
+      "tableTasks": "Công việc (Giao/Xong)",
+      "tableProgress": "Tiến độ",
+      "totalProgress": "Tiến độ tổng thể",
+      "items": "Dữ liệu",
+      "processed": "Đã xử lý",
+      "deadline": "Hạn chót",
+      "manager": "Người quản lý phụ trách"
     },
     "userManagement": "Quản lý người dùng",
     "systemLogs": "Nhật ký hệ thống",

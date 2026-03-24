@@ -34,6 +34,7 @@ const ReviewerContainer = () => {
   const navigate = useNavigate();
 
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const pendingProjectsCount = projects.filter(
     (p) => p.progressPercent < 100 && new Date(p.deadline) >= today,
   ).length;

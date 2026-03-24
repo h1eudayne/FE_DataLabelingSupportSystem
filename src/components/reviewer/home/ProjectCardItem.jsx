@@ -5,7 +5,9 @@ import { useTranslation } from "react-i18next";
 const ProjectCardItem = ({ project, onReview }) => {
   const { t, i18n } = useTranslation();
   const isCompleted = project.progressPercent >= 100;
-  const isOverdue = !isCompleted && new Date(project.deadline) < new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isOverdue = !isCompleted && new Date(project.deadline) < today;
 
   const dateFormat = i18n.language === "vi" ? "vi-VN" : "en-US";
 
