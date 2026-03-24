@@ -5,14 +5,14 @@ import CTASection from "./CTASection";
 describe("CTASection Component", () => {
   it("nên hiển thị lời kêu gọi bắt đầu", () => {
     render(<CTASection onExplore={() => {}} />);
-    expect(screen.getByText(/Sẵn sàng để bắt đầu/i)).toBeInTheDocument();
+    expect(screen.getByText(/landingCTA.title/i)).toBeInTheDocument();
   });
 
   it("nên gọi onExplore khi nhấn nút Dùng thử miễn phí", () => {
     const onExploreMock = vi.fn();
     render(<CTASection onExplore={onExploreMock} />);
 
-    fireEvent.click(screen.getByText(/Dùng thử miễn phí/i));
+    fireEvent.click(screen.getByText(/landingCTA.tryFree/i));
     expect(onExploreMock).toHaveBeenCalled();
   });
 });

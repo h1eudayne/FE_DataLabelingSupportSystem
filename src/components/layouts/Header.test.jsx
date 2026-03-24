@@ -12,6 +12,12 @@ vi.mock("react-router-dom", async () => {
   return { ...actual, useNavigate: () => mockedNavigate };
 });
 
+vi.mock("../../services/axios.customize", () => ({
+  default: {
+    get: vi.fn().mockResolvedValue({ data: { avatarUrl: "" } }),
+  },
+}));
+
 describe("Header Component - Comprehensive Suite", () => {
   let store;
 
@@ -24,7 +30,7 @@ describe("Header Component - Comprehensive Suite", () => {
           state = {
             isAuthenticated: true,
             user: {
-              name: "Nguyễn Văn A",
+              fullName: "Nguyễn Văn A",
               role: "Manager",
               email: "staff1@gmail.com",
             },
@@ -62,23 +68,24 @@ describe("Header Component - Comprehensive Suite", () => {
       fireEvent.click(profileToggle);
 
       await waitFor(() => {
+        // Dropdown content should appear
         expect(screen.getByText(/staff1@gmail.com/i)).toBeInTheDocument();
-
-        const profileLink = screen.getByText(/Hồ sơ cá nhân/i);
-        const logoutBtn = screen.getByText(/Đăng xuất/i);
-
-        expect(profileLink).toBeInTheDocument();
-        expect(logoutBtn).toBeInTheDocument();
-
-        expect(profileLink.closest("a")).toHaveAttribute("href", "/profile");
       });
+
+      const profileLink = screen.getByText(/header.profile/i);
+      const logoutBtn = screen.getByText(/header.logout/i);
+
+      expect(profileLink).toBeInTheDocument();
+      expect(logoutBtn).toBeInTheDocument();
+
+      expect(profileLink.closest("a")).toHaveAttribute("href", "/profile");
     });
   });
 
   describe("Hệ thống Search & Actions", () => {
     it("nên cho phép nhập từ khóa vào ô Search", () => {
       renderHeader();
-      const searchInput = screen.getByPlaceholderText(/Tìm kiếm\.\.\./i);
+      const searchInput = screen.getByPlaceholderText(/header.search/i);
       fireEvent.change(searchInput, { target: { value: "Báo cáo" } });
       expect(searchInput.value).toBe("Báo cáo");
     });
@@ -100,7 +107,11 @@ describe("Header Component - Comprehensive Suite", () => {
 
       fireEvent.click(screen.getByText("Nguyễn Văn A"));
 
-      const logoutBtn = screen.getByText(/Đăng xuất/i);
+      await waitFor(() => {
+        expect(screen.getByText(/header.logout/i)).toBeInTheDocument();
+      });
+
+      const logoutBtn = screen.getByText(/header.logout/i);
       fireEvent.click(logoutBtn);
 
       expect(spyDispatch).toHaveBeenCalled();

@@ -26,8 +26,8 @@ test("render AuthRight layout và kiểm tra tiêu đề", () => {
     </Provider>,
   );
 
-  expect(screen.getByText(/Chào mừng trở lại/i)).toBeInTheDocument();
+  expect(screen.getByText(/auth.welcomeBack/i)).toBeInTheDocument();
   expect(
-    screen.getByRole("button", { name: /Đăng nhập/i }),
+    screen.getByRole("button", { name: /auth.login/i }),
   ).toBeInTheDocument();
 });

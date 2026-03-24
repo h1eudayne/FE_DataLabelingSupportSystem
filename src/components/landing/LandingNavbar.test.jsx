@@ -18,14 +18,14 @@ describe("LandingNavbar Component", () => {
   it("nên hiển thị nút Đăng nhập", () => {
     renderWithRouter(<LandingNavbar onLogin={() => {}} />);
 
-    const loginBtn = screen.getByRole("button", { name: /Đăng nhập/i });
+    const loginBtn = screen.getByRole("button", { name: /landing.login/i });
     expect(loginBtn).toBeInTheDocument();
   });
 
   it("nên hiển thị nút Bắt đầu ngay", () => {
     renderWithRouter(<LandingNavbar onLogin={() => {}} />);
 
-    const startBtn = screen.getByRole("button", { name: /Bắt đầu ngay/i });
+    const startBtn = screen.getByRole("button", { name: /landing.getStarted/i });
     expect(startBtn).toBeInTheDocument();
   });
 
@@ -33,7 +33,7 @@ describe("LandingNavbar Component", () => {
     const onLoginMock = vi.fn();
     renderWithRouter(<LandingNavbar onLogin={onLoginMock} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Đăng nhập/i }));
+    fireEvent.click(screen.getByRole("button", { name: /landing.login/i }));
 
     expect(onLoginMock).toHaveBeenCalledTimes(1);
   });
@@ -42,7 +42,7 @@ describe("LandingNavbar Component", () => {
     const onLoginMock = vi.fn();
     renderWithRouter(<LandingNavbar onLogin={onLoginMock} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Bắt đầu ngay/i }));
+    fireEvent.click(screen.getByRole("button", { name: /landing.getStarted/i }));
 
     expect(onLoginMock).toHaveBeenCalledTimes(1);
   });
