@@ -108,7 +108,8 @@
       "totalProjects": "Total Projects",
       "pending": "Pending",
       "completed": "Completed",
-      "overdue": "Overdue"
+      "overdue": "Overdue",
+      "accuracy":"Accuracy"
     },
     "status": {
       "overdue": "OVERDUE"

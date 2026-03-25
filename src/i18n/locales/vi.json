@@ -108,7 +108,8 @@
       "totalProjects": "Tổng dự án",
       "pending": "Đang chờ",
       "completed": "Hoàn thành",
-      "overdue": "Quá hạn"
+      "overdue": "Quá hạn",
+      "accuracy":"Độ chính xác"
     },
     "status": {
       "overdue": "QUÁ HẠN"
