@@ -20,6 +20,7 @@ import {
   Clock,
   BarChart3,
   Calendar,
+  AlertTriangle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import projectService from "../../../services/reviewer/project.service";
@@ -111,86 +112,127 @@ const WorkplaceReviewTask = () => {
           </div>
         ) : (
           <Row className="g-4">
-            {filteredProjects.map((project) => (
-              <Col key={project.projectId} xl={4} lg={6}>
-                <Card className="border-0 shadow-sm rounded-4 h-100 hover-lift overflow-hidden">
-                  <Card.Body className="p-4 d-flex flex-column">
-                    <div className="d-flex justify-content-between align-items-start mb-3">
-                      <div
-                        className="bg-info-subtle text-info p-3 rounded-4 d-flex align-items-center justify-content-center"
-                        style={{ width: "56px", height: "56px" }}
-                      >
-                        <span className="fw-bold h5 mb-0">
-                          #{project.projectId}
-                        </span>
+            {filteredProjects.map((project) => {
+              const isOverdue =
+                new Date() > new Date(project.deadline) &&
+                project.progressPercent < 100;
+              const isFinished = project.progressPercent >= 100;
+              return (
+                <Col key={project.projectId} xl={4} lg={6}>
+                  <Card className="border-0 shadow-sm rounded-4 h-100 hover-lift overflow-hidden">
+                    <Card.Body className="p-4 d-flex flex-column">
+                      <div className="d-flex justify-content-between align-items-start mb-3">
+                        <div
+                          className="bg-info-subtle text-info p-3 rounded-4 d-flex align-items-center justify-content-center"
+                          style={{ width: "56px", height: "56px" }}
+                        >
+                          <span className="fw-bold h5 mb-0">
+                            #{project.projectId}
+                          </span>
+                        </div>
+                        <Badge
+                          bg={
+                            isFinished
+                              ? "success-subtle"
+                              : isOverdue
+                                ? "danger-subtle"
+                                : "warning-subtle"
+                          }
+                          className={`${isFinished ? "text-success" : isOverdue ? "text-danger" : "text-warning"} border-0 px-3 py-2 rounded-pill`}
+                        >
+                          {isFinished
+                            ? "Finished"
+                            : isOverdue
+                              ? "Overdue"
+                              : "Processing"}
+                        </Badge>
                       </div>
-                      <Badge
-                        bg={
-                          project.progressPercent >= 100
-                            ? "success-subtle"
-                            : "warning-subtle"
-                        }
-                        className={`${project.progressPercent >= 100 ? "text-success" : "text-warning"} border-0 px-3 py-2 rounded-pill`}
-                      >
-                        {project.progressPercent >= 100
-                          ? "Finished"
-                          : "Processing"}
-                      </Badge>
-                    </div>
 
-                    <h5 className="fw-bold text-dark mb-2">
-                      {project.projectName}
-                    </h5>
+                      <h5 className="fw-bold text-dark mb-2">
+                        {project.projectName}
+                      </h5>
 
-                    <div className="d-flex align-items-center gap-2 text-muted small mb-4">
-                      <Calendar size={14} />
-                      <span>
-                        Giao ngày:{" "}
-                        {new Date(project.assignedDate).toLocaleDateString(
-                          "vi-VN",
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="mt-auto">
-                      <div className="d-flex justify-content-between align-items-end mb-2">
-                        <span className="small text-muted fw-bold">
-                          Tiến độ tổng thể
-                        </span>
-                        <span className="h6 mb-0 fw-bold">
-                          {project.progressPercent}%
-                        </span>
+                      <div className="text-muted small mb-4">
+                        <div className="d-flex align-items-center gap-2 mb-1">
+                          <Calendar size={14} className="text-primary" />
+                          <span>
+                            <strong>Giao:</strong>{" "}
+                            {new Date(project.assignedDate).toLocaleDateString(
+                              "vi-VN",
+                            )}
+                          </span>
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                          <Clock
+                            size={14}
+                            className={isOverdue ? "text-danger" : "text-muted"}
+                          />
+                          <span
+                            className={isOverdue ? "text-danger fw-bold" : ""}
+                          >
+                            <strong>Deadline:</strong>{" "}
+                            {new Date(project.deadline).toLocaleDateString(
+                              "vi-VN",
+                            )}
+                            {isOverdue && (
+                              <AlertTriangle size={12} className="ms-1" />
+                            )}
+                          </span>
+                        </div>
                       </div>
-                      <ProgressBar
-                        now={project.progressPercent}
-                        variant={
-                          project.progressPercent >= 100 ? "success" : "primary"
-                        }
-                        className="rounded-pill mb-4"
-                        style={{ height: "8px" }}
-                      />
 
-                      <Button
-                        variant={
-                          project.progressPercent >= 100
-                            ? "outline-success"
-                            : "primary"
-                        }
-                        className="w-100 rounded-3 py-2 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm"
-                        onClick={() => {
-                          getReviewWorkspace(project.projectId);
-                        }}
-                      >
-                        {project.progressPercent >= 100
-                          ? "Xem kết quả"
-                          : "Vào kiểm duyệt"}
-                        <ArrowRight size={18} />
-                      </Button>
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
+                      <div className="mt-auto">
+                        <div className="d-flex justify-content-between align-items-end mb-2">
+                          <span className="small text-muted fw-bold">
+                            Tiến độ tổng thể
+                          </span>
+                          <span className="h6 mb-0 fw-bold">
+                            {project.progressPercent}%
+                          </span>
+                        </div>
+                        <ProgressBar
+                          now={project.progressPercent}
+                          variant={
+                            isFinished
+                              ? "success"
+                              : isOverdue
+                                ? "danger"
+                                : "primary"
+                          }
+                          className="rounded-pill mb-4"
+                          style={{ height: "8px" }}
+                        />
+
+                        <Button
+                          variant={
+                            project.progressPercent >= 100
+                              ? "outline-success"
+                              : "primary"
+                          }
+                          className="w-100 rounded-3 py-2 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm"
+                          disabled={project.progressPercent >= 100}
+                          onClick={() => {
+                            getReviewWorkspace(project.projectId);
+                          }}
+                        >
+                          {project.progressPercent >= 100 ? (
+                            <>
+                              <CheckCircle2 size={18} />
+                              Đã hoàn thành
+                            </>
+                          ) : (
+                            <>
+                              Vào kiểm duyệt
+                              <ArrowRight size={18} />
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              );
+            })}
           </Row>
         )}
       </Container>

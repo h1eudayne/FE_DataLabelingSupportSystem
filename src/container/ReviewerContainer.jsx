@@ -1,20 +1,11 @@
 import React, { useEffect, useState } from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Spinner,
-  Badge,
-  Card,
-  ProgressBar,
-  Button,
-} from "react-bootstrap";
+import { Container, Row, Col, Spinner, Card } from "react-bootstrap";
 import {
   CheckCircle,
   Clock,
   AlertCircle,
-  ArrowRight,
   Briefcase,
+  Target,
 } from "lucide-react";
 import ReviewerActionBar from "../components/reviewer/home/ReviewerActionBar";
 import ShortcutSidebar from "../components/reviewer/home/ShortcutSidebar";
@@ -30,11 +21,11 @@ const ReviewerContainer = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [globalAccuracy, setGlobalAccuracy] = useState(100);
 
   const navigate = useNavigate();
 
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
   const pendingProjectsCount = projects.filter(
     (p) => p.progressPercent < 100 && new Date(p.deadline) >= today,
   ).length;
@@ -49,7 +40,27 @@ const ReviewerContainer = () => {
     setLoading(true);
     try {
       const res = await projectService.getReviewProjects();
-      setProjects(res.data || []);
+      const projectsData = res.data || [];
+      setProjects(projectsData);
+
+      if (projectsData.length > 0) {
+        const statsPromises = projectsData.map((p) =>
+          projectService.getProjectStatistics(p.projectId),
+        );
+
+        const statsResponses = await Promise.all(statsPromises);
+
+        const accuracyList = statsResponses
+          .map((response) => {
+            return response.data?.reviewerPerformances?.[0]?.reviewerAccuracy;
+          })
+          .filter((acc) => acc !== undefined && acc !== null);
+
+        if (accuracyList.length > 0) {
+          const totalAccuracy = accuracyList.reduce((sum, acc) => sum + acc, 0);
+          setGlobalAccuracy((totalAccuracy / accuracyList.length).toFixed(1));
+        }
+      }
     } catch (err) {
       console.error("Error loading projects:", err);
     } finally {
@@ -114,6 +125,17 @@ const ReviewerContainer = () => {
       icon: <AlertCircle size={22} />,
       color: "danger",
     },
+    {
+      label: t("reviewer.stats.accuracy"),
+      value: `${globalAccuracy}%`,
+      icon: <Target size={22} />,
+      color:
+        globalAccuracy < 80
+          ? "danger"
+          : globalAccuracy < 90
+            ? "warning"
+            : "success",
+    },
   ];
 
   return (
@@ -125,38 +147,41 @@ const ReviewerContainer = () => {
           subtitle={t("reviewer.subtitle")}
         />
 
-        <Row className="mb-4 g-3">
+        <div
+          className="mb-4 d-grid gap-3"
+          style={{
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          }}
+        >
           {statsConfig.map((stat, idx) => (
-            <Col key={idx} xl={3} md={6} sm={6}>
-              <Card
-                className={`border-0 shadow-sm rounded-4 h-100 transition-all ${
-                  stat.color === "danger"
-                    ? "border-start border-danger border-4"
-                    : ""
-                }`}
-              >
-                <Card.Body className="p-3 d-flex align-items-center gap-3">
+            <Card
+              key={idx}
+              className={`border-0 shadow-sm rounded-4 transition-all hover-lift ${
+                stat.color === "danger"
+                  ? "border-start border-danger border-4"
+                  : ""
+              }`}
+            >
+              <Card.Body className="p-3 d-flex align-items-center gap-3">
+                <div
+                  className={`p-3 bg-${stat.color}-subtle rounded-4 text-${stat.color} d-flex align-items-center justify-content-center shadow-sm`}
+                  style={{ minWidth: "52px", height: "52px" }}
+                >
+                  {stat.icon}
+                </div>
+                <div className="overflow-hidden">
                   <div
-                    className={`p-3 bg-${stat.color}-subtle rounded-4 text-${stat.color} d-flex align-items-center justify-content-center`}
+                    className="text-muted fw-bold text-uppercase text-truncate"
+                    style={{ fontSize: "10px", letterSpacing: "1px" }}
                   >
-                    {stat.icon}
+                    {stat.label}
                   </div>
-                  <div>
-                    <div
-                      className="text-muted fw-bold text-uppercase"
-                      style={{ fontSize: "10px", letterSpacing: "0.5px" }}
-                    >
-                      {stat.label}
-                    </div>
-                    <h3 className={`fw-bold mb-0 text-${stat.color}`}>
-                      {stat.value}
-                    </h3>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
+                  <h4 className={`fw-bold mb-0 text-dark`}>{stat.value}</h4>
+                </div>
+              </Card.Body>
+            </Card>
           ))}
-        </Row>
+        </div>
 
         <ReviewerActionBar onSearchChange={setSearchTerm} />
 

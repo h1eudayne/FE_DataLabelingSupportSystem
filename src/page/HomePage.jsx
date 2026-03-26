@@ -45,7 +45,6 @@ const RoleBasedRenderer = ({ role }) => {
   const { t } = useTranslation();
   switch (role) {
     case "Admin":
-      // return <AdminContainer />;
       return <AdminDashboard />;
     case "Manager":
       // return <ManagerContainer />;
@@ -56,7 +55,9 @@ const RoleBasedRenderer = ({ role }) => {
     case "Reviewer":
       return <ReviewerContainer />;
     default:
-      return <div className="text-center p-5">{t("homePage.invalidAccess")}</div>;
+      return (
+        <div className="text-center p-5">{t("homePage.invalidAccess")}</div>
+      );
   }
 };
 
