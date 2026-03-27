@@ -53,7 +53,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
     });
   }, [id, fetchProject]);
 
-  // Get members in project by role
+  
   const projectAnnotators = projectInfo?.members?.filter(
     (m) => m.role === "Annotator"
   ) || [];
@@ -70,16 +70,16 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
       );
     }
 
-    // Determine annotator list
+    
     let targetAnnotators = [];
     if (annotatorMode === "all") {
-      // All annotators already in the project
+      
       targetAnnotators = projectAnnotators.map((m) => ({
         id: m.id || m.userId,
         name: m.fullName,
       }));
       if (targetAnnotators.length === 0) {
-        // Fall back to all annotators from system
+        
         targetAnnotators = annotators.map((u) => ({
           id: u.id,
           name: u.fullName,
@@ -99,7 +99,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
       return Swal.fire(t("projectAssign.warning"), t("projectAssign.selectAnnotatorWarn"), "warning");
     }
 
-    // Determine reviewer list
+    
     let targetReviewers = [];
     if (reviewerMode === "all") {
       targetReviewers = projectReviewers.map((m) => ({
@@ -126,7 +126,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
       return Swal.fire(t("projectAssign.warning"), t("projectAssign.selectReviewerWarn"), "warning");
     }
 
-    // Determine quantity per annotator
+    
     const safeAvailable = Math.max(availableItems, 0);
     let qtyPerAnnotator;
     if (quantityMode === "all") {
@@ -141,7 +141,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
       qtyPerAnnotator = Number(quantity);
     }
 
-    // Confirm batch assignment
+    
     const totalAssignments = targetAnnotators.length;
     const totalImages = quantityMode === "all" ? safeAvailable : qtyPerAnnotator * targetAnnotators.length;
     const confirmResult = await Swal.fire({
@@ -171,11 +171,11 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
     try {
       for (let i = 0; i < targetAnnotators.length; i++) {
         const ann = targetAnnotators[i];
-        // Round-robin reviewer assignment
+        
         const rev = targetReviewers[i % targetReviewers.length];
 
         let qty = qtyPerAnnotator;
-        // For "all" mode, give remainder to last annotator
+        
         if (quantityMode === "all" && i === targetAnnotators.length - 1) {
           qty = remaining;
         }
@@ -217,7 +217,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
         );
       }
 
-      // Reset form
+      
       setSelectedAnnotators([]);
       setSelectedReviewers([]);
       setQuantity("");
@@ -247,7 +247,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
   const progressPercent = totalItems > 0 ? Math.round((processedItems / totalItems) * 100) : 0;
   const assignPercent = totalItems > 0 ? Math.min(Math.round((assignedItems / totalItems) * 100), 100) : 0;
 
-  // Separate default labels and project labels
+  
   const defaultLabels = projectInfo?.labels?.filter((l) => l.isDefault) || [];
   const projectLabels = projectInfo?.labels?.filter((l) => !l.isDefault) || [];
 
@@ -277,7 +277,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
               </button>
             </div>
             <div className="card-body">
-              {/* Stats cards */}
+              {}
               <div className="row mb-3 g-2">
                 <div className="col-md-3 col-6">
                   <div className="border rounded p-2 text-center bg-primary-subtle">
@@ -307,7 +307,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                 </div>
               </div>
 
-              {/* Progress bars */}
+              {}
               <div className="mb-3">
                 <div className="d-flex justify-content-between mb-1 small">
                   <span className="text-muted">{t("projectAssign.assignProgress") || "Assignment Progress"}</span>
@@ -331,7 +331,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                 </div>
               </div>
 
-              {/* Warnings */}
+              {}
               {(!projectInfo?.labels || projectInfo.labels.length === 0) && (
                 <div className="alert alert-danger py-2 small mb-3">
                   <i className="ri-error-warning-line me-1"></i>
@@ -358,7 +358,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                 </div>
               )}
 
-              {/* Labels section */}
+              {}
               <div className="mb-3">
                 <h6 className="fw-bold mb-2">{t("projectAssign.projectLabels")}</h6>
                 {defaultLabels.length > 0 && (
@@ -402,7 +402,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                 )}
               </div>
 
-              {/* Members table */}
+              {}
               {projectInfo?.members?.length > 0 && (
                 <div>
                   <h6 className="fw-bold mb-2">{t("projectAssign.assignedMembers")}</h6>
@@ -515,7 +515,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
             </div>
           </div>
 
-          {/* Guideline card */}
+          {}
           <div className="card mt-3 shadow-sm border-0">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
@@ -530,7 +530,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
             </div>
           </div>
 
-          {/* Assignment Log */}
+          {}
           {assignLog.length > 0 && (
             <div className="card mt-3 shadow-sm border-0">
               <div className="card-header bg-light d-flex justify-content-between align-items-center">
@@ -576,7 +576,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
           )}
         </div>
 
-        {/* ===== SIDEBAR: NEW ASSIGNMENT FORM ===== */}
+        {}
         <div className="col-lg-4">
           <div className="card shadow-sm border-0">
             <div className="card-body">
@@ -594,7 +594,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                 {t("projectAssign.multiAssign")}
               </div>
 
-              {/* ── Annotator Section ── */}
+              {}
               <div className="mb-3">
                 <label className="form-label fw-bold mb-1">
                   <i className="ri-user-line me-1 text-success"></i>
@@ -685,7 +685,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                 )}
               </div>
 
-              {/* ── Reviewer Section ── */}
+              {}
               <div className="mb-3">
                 <label className="form-label fw-bold mb-1">
                   <i className="ri-user-star-line me-1 text-info"></i>
@@ -776,7 +776,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                 )}
               </div>
 
-              {/* ── Quantity Section ── */}
+              {}
               <div className="mb-3">
                 <label className="form-label fw-bold mb-1">
                   <i className="ri-image-line me-1 text-primary"></i>
@@ -831,7 +831,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                 )}
               </div>
 
-              {/* Summary before submit */}
+              {}
               <div className="border rounded p-2 mb-3 bg-light">
                 <small className="fw-bold d-block mb-1">{t("projectAssign.summary") || "Summary"}:</small>
                 <small className="text-muted d-block">

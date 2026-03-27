@@ -30,13 +30,13 @@ import { disconnect as disconnectSignalR } from "../../services/signalrManager";
 const Header = ({ toggleSidebar, sidebarSize }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { isAuthenticated, user, unreadNotifications } = useSelector((state) => state.auth);
   const { t, i18n } = useTranslation();
 
   const [userData, setUserData] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } =
-    useNotifications(user?.id);
+    useNotifications(user?.id, unreadNotifications);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
@@ -48,7 +48,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
       : { code: "vi", flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/vn.svg", name: "Tiếng Việt" };
   });
 
-  // Apply theme to <html> and persist
+  
   useEffect(() => {
     const theme = isDarkMode ? "dark" : "light";
     document.documentElement.setAttribute("data-bs-theme", theme);

@@ -45,7 +45,7 @@ const AnnotatorTaskList = () => {
     fetchTasks();
   }, [location.key, fetchTasks]);
 
-  // Realtime: auto-refetch when notification arrives
+  
   useSignalRRefresh(fetchTasks);
 
   const getRemainingTime = (deadline) => {
@@ -100,7 +100,7 @@ const AnnotatorTaskList = () => {
     <div className="container-fluid">
       <h4 className="fw-bold mb-3">{t("annotatorTasks.title")}</h4>
 
-      {/* Summary Stats Bar */}
+      {}
       {tasks.length > 0 && (
         <div className="row g-3 mb-4">
           <div className="col-md-3 col-6">
@@ -142,7 +142,7 @@ const AnnotatorTaskList = () => {
         </div>
       )}
 
-      {/* Empty State */}
+      {}
       {tasks.length === 0 ? (
         <div className="text-center py-5">
           <div className="mb-3">

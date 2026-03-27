@@ -9,6 +9,7 @@ vi.mock("jwt-decode", () => ({
 describe("authSlice - Synced with Backend JWT Contract", () => {
   let authReducer;
   let logout;
+  let setUnreadNotifications;
 
   const initialStateStatic = {
     user: null,
@@ -16,6 +17,7 @@ describe("authSlice - Synced with Backend JWT Contract", () => {
     loading: false,
     error: null,
     isAuthenticated: false,
+    unreadNotifications: 0,
   };
 
   beforeEach(async () => {
@@ -28,12 +30,14 @@ describe("authSlice - Synced with Backend JWT Contract", () => {
     const module = await import("./auth.slice");
     authReducer = module.default;
     logout = module.logout;
+    setUnreadNotifications = module.setUnreadNotifications;
   });
 
   it("should restore state from localStorage on init", async () => {
     const mockUser = { id: "99", email: "persist@test.com" };
     localStorage.setItem("user", JSON.stringify(mockUser));
     localStorage.setItem("access_token", "persisted-token");
+    localStorage.setItem("unreadNotifications", "5");
 
     vi.resetModules();
     const { default: freshReducer } = await import("./auth.slice");
@@ -42,6 +46,7 @@ describe("authSlice - Synced with Backend JWT Contract", () => {
     expect(state.token).toBe("persisted-token");
     expect(state.user).toEqual(mockUser);
     expect(state.isAuthenticated).toBe(true);
+    expect(state.unreadNotifications).toBe(5);
   });
 
   it("should set user to null but keep token if jwtDecode throws", () => {
@@ -51,7 +56,7 @@ describe("authSlice - Synced with Backend JWT Contract", () => {
 
     const action = {
       type: loginThunk.fulfilled.type,
-      payload: { token: "bad-token" },
+      payload: { token: "bad-token", unreadNotifications: 0 },
     };
     const state = authReducer(initialStateStatic, action);
 
@@ -86,7 +91,7 @@ describe("authSlice - Synced with Backend JWT Contract", () => {
 
     const action = {
       type: loginThunk.fulfilled.type,
-      payload: { token: "valid-jwt-token" },
+      payload: { token: "valid-jwt-token", unreadNotifications: 3 },
     };
     const state = authReducer(initialStateStatic, action);
 
@@ -99,16 +104,27 @@ describe("authSlice - Synced with Backend JWT Contract", () => {
     });
     expect(localStorage.getItem("access_token")).toBe("valid-jwt-token");
     expect(state.isAuthenticated).toBe(true);
+    expect(state.unreadNotifications).toBe(3);
   });
 
   it("should clear all state and storage on logout", () => {
-    const loggedState = { user: { id: 1 }, token: "tk", isAuthenticated: true };
+    const loggedState = { user: { id: 1 }, token: "tk", isAuthenticated: true, unreadNotifications: 10 };
     localStorage.setItem("access_token", "tk");
+    localStorage.setItem("unreadNotifications", "10");
 
     const state = authReducer(loggedState, logout());
 
     expect(state.isAuthenticated).toBe(false);
     expect(state.token).toBeNull();
+    expect(state.unreadNotifications).toBe(0);
     expect(localStorage.getItem("access_token")).toBeNull();
+    expect(localStorage.getItem("unreadNotifications")).toBeNull();
+  });
+
+  it("should set unreadNotifications via setUnreadNotifications action", () => {
+    const state = authReducer(initialStateStatic, setUnreadNotifications(15));
+
+    expect(state.unreadNotifications).toBe(15);
+    expect(localStorage.getItem("unreadNotifications")).toBe("15");
   });
 });

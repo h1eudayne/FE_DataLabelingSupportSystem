@@ -257,7 +257,12 @@ const ReviewWorkspace = () => {
         );
       }
     } catch (error) {
-      alert("Lỗi hệ thống, không thể lưu phán quyết.");
+      const errorMsg = error?.response?.data || error?.message || "";
+      if (errorMsg.includes("already reviewed") || errorMsg.includes("Duplicate")) {
+        alert("Bạn đã thực hiện kiểm duyệt nhiệm vụ này trước đó. Không thể kiểm duyệt trùng lặp.");
+      } else {
+        alert("Lỗi hệ thống, không thể lưu phán quyết.");
+      }
     } finally {
       setSubmitting(false);
     }

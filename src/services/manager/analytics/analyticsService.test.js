@@ -31,13 +31,13 @@ describe("analyticsService - Full Coverage", () => {
 
   describe("getDashboardStats() - Aggregation logic", () => {
     it("Success: aggregate data from multiple projects", async () => {
-      // First call: get projects list
+      
       axios.get.mockResolvedValueOnce({
         data: [{ id: "P1" }, { id: "P2" }],
       });
-      // Second call (Promise.all): manager stats (can fail gracefully)
+      
       axios.get.mockResolvedValueOnce({ data: null });
-      // Third call: stats for P1
+      
       axios.get.mockResolvedValueOnce({
         data: {
           totalAssignments: 10,
@@ -49,7 +49,7 @@ describe("analyticsService - Full Coverage", () => {
           completedItems: 5,
         },
       });
-      // Fourth call: stats for P2
+      
       axios.get.mockResolvedValueOnce({
         data: {
           totalAssignments: 20,
@@ -67,7 +67,7 @@ describe("analyticsService - Full Coverage", () => {
       );
 
       expect(stats.totalProjects).toBe(2);
-      // P1: inProgress (approved < total), P2: completed (approved === total)
+      
       expect(stats.completed).toBe(1);
     });
 

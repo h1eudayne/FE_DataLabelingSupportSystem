@@ -138,7 +138,7 @@ const DisputeTab = ({ projectId }) => {
 
   return (
     <>
-      {/* ── Stat Cards (Stitch-aligned: no icon, left-aligned) ── */}
+      {}
       <Row className="mb-3 g-3">
         <Col md={3}>
           <div className="pd-stat-card stat-primary">
@@ -166,7 +166,7 @@ const DisputeTab = ({ projectId }) => {
         </Col>
       </Row>
 
-      {/* ── Disputes Table (Stitch-aligned: Dispute Log header, monospace IDs) ── */}
+      {}
       <Row>
         <Col xl={12}>
           <Card>
@@ -261,7 +261,7 @@ const DisputeTab = ({ projectId }) => {
                       </tbody>
                     </Table>
                   </div>
-                  {/* Pagination footer (Stitch-aligned) */}
+                  {}
                   <div
                     className="d-flex align-items-center justify-content-between px-3 py-3 border-top"
                     style={{
@@ -289,7 +289,7 @@ const DisputeTab = ({ projectId }) => {
         </Col>
       </Row>
 
-      {/* ── Resolve Modal ── */}
+      {}
       <Modal isOpen={modalOpen} toggle={() => setModalOpen(false)} size="lg" centered>
         <ModalHeader toggle={() => setModalOpen(false)}>
           <i className="ri-scales-3-line me-2 text-primary"></i>

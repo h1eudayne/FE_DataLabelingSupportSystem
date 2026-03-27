@@ -42,7 +42,7 @@ const AnnotatorProjectPacks = () => {
     fetchData();
   }, [fetchData]);
 
-  // Realtime: auto-refetch packs when notification arrives (approve/reject)
+  
   useSignalRRefresh(fetchData);
 
   const packs = useMemo(() => {
@@ -108,7 +108,7 @@ const AnnotatorProjectPacks = () => {
 
   return (
     <div className="container-fluid">
-      {/* Header */}
+      {}
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
           <button
@@ -120,7 +120,7 @@ const AnnotatorProjectPacks = () => {
         </div>
       </div>
 
-      {/* Project Summary Card */}
+      {}
       <div className="card shadow-sm border-0 mb-4">
         <div className="card-body">
           <div className="row align-items-center">
@@ -172,7 +172,7 @@ const AnnotatorProjectPacks = () => {
         </div>
       </div>
 
-      {/* Pack Grid */}
+      {}
       <h5 className="fw-bold mb-3">
         <i className="ri-stack-line me-2"></i>{t("annotatorPacks.packList")} ({packs.length}{" "}
         {t("annotatorPacks.pack")})

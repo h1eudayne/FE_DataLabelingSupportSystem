@@ -179,7 +179,7 @@ export const getMyAccuracy = async () => {
         }
       }
     } catch {
-      //
+      
     }
   }
 

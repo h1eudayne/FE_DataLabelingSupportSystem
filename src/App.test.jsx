@@ -25,11 +25,11 @@ vi.mock("simplebar-react", () => ({
 beforeEach(() => {
   window.ResizeObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
-    // theo dõi e
+    
     unobserve: vi.fn(),
-    //  ng theo dõi e
+    
     disconnect: vi.fn(),
-    // clean
+    
   }));
   window.scrollTo = vi.fn();
   vi.clearAllMocks();
