@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import axios from "../../axios.customize";
 import labelService from "./labelService";
+import projectService from "./projectService";
 
 vi.mock("../../axios.customize", () => ({
   default: {
@@ -10,39 +11,58 @@ vi.mock("../../axios.customize", () => ({
   },
 }));
 
+vi.mock("./projectService", () => ({
+  default: {
+    getProjectDetail: vi.fn(),
+  },
+}));
+
 describe("labelService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("createLabel: should POST to /api/labels", async () => {
+  it("getLabels: should call projectService.getProjectDetail", async () => {
+    const projectId = "P1";
+    projectService.getProjectDetail.mockResolvedValueOnce({ labels: [{ id: "L1" }] });
+
+    const labels = await labelService.getLabels(projectId);
+
+    expect(projectService.getProjectDetail).toHaveBeenCalledWith(projectId);
+    expect(labels).toEqual([{ id: "L1" }]);
+  });
+
+  it("createLabel: should POST to /api/managers/projects/{projectId}/labels", async () => {
+    const projectId = "P1";
     const labelData = { name: "Dog", color: "#ff0000" };
     axios.post.mockResolvedValueOnce({ data: { id: "L1" } });
 
-    await labelService.createLabel(labelData);
+    await labelService.createLabel(projectId, labelData);
 
-    expect(axios.post).toHaveBeenCalledWith("/api/labels", labelData);
+    expect(axios.post).toHaveBeenCalledWith(`/api/managers/projects/${projectId}/labels`, labelData);
   });
 
-  it("updateLabel: should PUT to /api/labels/{id}", async () => {
+  it("updateLabel: should PUT to /api/managers/projects/{projectId}/labels/{id}", async () => {
+    const projectId = "P1";
     const labelId = "L1";
     const updateData = { name: "Cat" };
     axios.put.mockResolvedValueOnce({ data: "Updated" });
 
-    await labelService.updateLabel(labelId, updateData);
+    await labelService.updateLabel(projectId, labelId, updateData);
 
     expect(axios.put).toHaveBeenCalledWith(
-      `/api/labels/${labelId}`,
+      `/api/managers/projects/${projectId}/labels/${labelId}`,
       updateData,
     );
   });
 
-  it("deleteLabel: should DELETE /api/labels/{id}", async () => {
+  it("deleteLabel: should DELETE /api/managers/projects/{projectId}/labels/{id}", async () => {
+    const projectId = "P1";
     const labelId = "L1";
     axios.delete.mockResolvedValueOnce({ data: "Deleted" });
 
-    await labelService.deleteLabel(labelId);
+    await labelService.deleteLabel(projectId, labelId);
 
-    expect(axios.delete).toHaveBeenCalledWith(`/api/labels/${labelId}`);
+    expect(axios.delete).toHaveBeenCalledWith(`/api/managers/projects/${projectId}/labels/${labelId}`);
   });
 });

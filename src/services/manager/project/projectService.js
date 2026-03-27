@@ -25,7 +25,23 @@ const projectService = {
       headers: { "Content-Type": "multipart/form-data" },
     }),
 
+  getBuckets: (projectId) => axios.get(`/api/projects/${projectId}/buckets`),
+
+  exportData: (projectId) =>
+    axios.get(`/api/projects/${projectId}/exports`, { responseType: "blob" }),
+
+  exportCsv: (projectId) =>
+    axios.get(`/api/projects/${projectId}/export-csv`, { responseType: "blob" }),
+
   getProjectStats: (id) => axios.get(`/api/projects/${id}/statistics`),
+
+  assignReviewers: (data) => axios.post("/api/projects/assign-reviewers", data),
+
+  removeUserFromProject: (projectId, userId) =>
+    axios.delete(`/api/projects/${projectId}/users/${userId}`),
+
+  toggleUserLock: (projectId, userId) =>
+    axios.post(`/api/projects/${projectId}/users/${userId}/toggle-lock`),
 };
 
 export default projectService;
