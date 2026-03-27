@@ -40,7 +40,7 @@ describe("cloudinaryService", () => {
     cloudinaryAxios.post.mockRejectedValueOnce(new Error("Network Error"));
 
     await expect(uploadToCloudinary(mockFile)).rejects.toThrow(
-      "Upload Cloudinary thất bại",
+      "Cloudinary upload failed",
     );
   });
 });

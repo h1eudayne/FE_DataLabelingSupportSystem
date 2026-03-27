@@ -377,7 +377,7 @@ const Navbar = () => {
               <li className="nav-item">
                 <Link
                   className="nav-link menu-link fs-18"
-                  to="/annotator-settings"
+                  to="/profile"
                   style={menuItemStyle}
                 >
                   <i

@@ -44,19 +44,30 @@ describe("authSlice - Comprehensive Testing", () => {
   });
 
   it("nên xử lý loginThunk.fulfilled và lưu đúng thông tin", () => {
-    const mockUser = { id: "123", email: "test@gmail.com", role: "Admin" };
-    vi.mocked(jwtDecode).mockReturnValue(mockUser);
+    const mockDecoded = {
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier": "123",
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": "test@gmail.com",
+      "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Admin",
+      "FullName": "Test User",
+      "AvatarUrl": "",
+    };
+    vi.mocked(jwtDecode).mockReturnValue(mockDecoded);
 
-    const fakePayload = { accessToken: "valid_token" };
+    const fakePayload = { token: "valid_token" };
     const action = { type: loginThunk.fulfilled.type, payload: fakePayload };
 
     const state = authReducer(initialStateStatic, action);
 
     expect(state.token).toBe("valid_token");
     expect(state.isAuthenticated).toBe(true);
-    expect(state.user).toEqual(mockUser);
+    expect(state.user).toEqual({
+      id: "123",
+      email: "test@gmail.com",
+      role: "Admin",
+      fullName: "Test User",
+      avatarUrl: "",
+    });
     expect(localStorage.getItem("access_token")).toBe("valid_token");
-    expect(JSON.parse(localStorage.getItem("user"))).toEqual(mockUser);
   });
 
   it("nên đặt user = null nếu token hợp lệ nhưng jwtDecode bị lỗi", () => {
@@ -66,7 +77,7 @@ describe("authSlice - Comprehensive Testing", () => {
 
     const action = {
       type: loginThunk.fulfilled.type,
-      payload: { accessToken: "bad_token" },
+      payload: { token: "bad_token" },
     };
     const state = authReducer(initialStateStatic, action);
 

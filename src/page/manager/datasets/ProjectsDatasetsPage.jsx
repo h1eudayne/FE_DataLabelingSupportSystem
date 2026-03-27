@@ -445,7 +445,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                                     onClick={async () => {
                                       if (!window.confirm(t('datasets.confirmDeleteLabel'))) return;
                                       try {
-                                        await labelService.deleteLabel(label.id);
+                                        await labelService.deleteLabel(selectedProject.id, label.id);
                                         toast.success(t('datasets.deleteLabelSuccess'));
                                         await handleProjectClick(selectedProject.id);
                                       } catch {
@@ -583,23 +583,21 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                                 .filter((c) => c.trim())
                                 .join("|");
                               if (editingLabel) {
-                                await labelService.updateLabel(editingLabel.id, {
+                                await labelService.updateLabel(selectedProject.id, editingLabel.id, {
                                   name: newLabel.name.trim(),
                                   color: newLabel.color,
                                   guideLine: newLabel.guideLine.trim() || null,
                                   defaultChecklist: checklistStr || null,
                                   isDefault: newLabel.isDefault,
-                                  projectId: selectedProject.id,
                                 });
                                 toast.success(t('datasets.editLabelSuccess'));
                               } else {
-                                await labelService.createLabel({
+                                await labelService.createLabel(selectedProject.id, {
                                   name: newLabel.name.trim(),
                                   color: newLabel.color,
                                   guideLine: newLabel.guideLine.trim() || null,
                                   defaultChecklist: checklistStr || null,
                                   isDefault: newLabel.isDefault,
-                                  projectId: selectedProject.id,
                                 });
                                 toast.success(t('datasets.addLabelSuccess'));
                               }

@@ -1,34 +1,65 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import axios from "/src/services/axios.customize";
+import axios from "../../axios.customize";
 import taskService from "./taskService";
 
-vi.mock("/src/services/axios.customize", () => ({
-  default: { get: vi.fn(), post: vi.fn() },
+vi.mock("../../axios.customize", () => ({
+  default: { get: vi.fn(), post: vi.fn(), put: vi.fn() },
 }));
 
-describe("taskService", () => {
+describe("taskService (annotator)", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("getMyProjects: nên gọi đúng endpoint", async () => {
+  it("getMyProjects: should GET /api/tasks/projects", async () => {
     axios.get.mockResolvedValue({ data: [] });
     await taskService.getMyProjects();
-    expect(axios.get).toHaveBeenCalledWith("/api/Task/my-projects");
+    expect(axios.get).toHaveBeenCalledWith("/api/tasks/projects");
   });
 
-  it("getProjectImages: nên truyền đúng projectId vào URL", async () => {
-    await taskService.getProjectImages("ABC");
-    expect(axios.get).toHaveBeenCalledWith("/api/Task/project/ABC/images");
+  it("getProjectImages: should GET /api/tasks/projects/{id}/images", async () => {
+    axios.get.mockResolvedValue({ data: [] });
+    await taskService.getProjectImages(5);
+    expect(axios.get).toHaveBeenCalledWith("/api/tasks/projects/5/images");
   });
 
-  it("saveDraft: nên gửi đúng dữ liệu payload", async () => {
-    const payload = { taskId: 1, labels: [] };
+  it("saveDraft: should PUT /api/tasks/drafts with correct payload", async () => {
+    const payload = { assignmentId: 1, dataJSON: '{"objects":[]}' };
+    axios.put.mockResolvedValue({ data: { message: "OK" } });
     await taskService.saveDraft(payload);
-    expect(axios.post).toHaveBeenCalledWith("/api/Task/save-draft", payload);
+    expect(axios.put).toHaveBeenCalledWith("/api/tasks/drafts", payload);
   });
 
-  it("submitTask: nên gọi đúng API submit", async () => {
-    const payload = { taskId: 1 };
+  it("submitTask: should POST /api/tasks/submissions", async () => {
+    const payload = { assignmentId: 1, dataJSON: '{"objects":[]}' };
+    axios.post.mockResolvedValue({ data: { message: "OK" } });
     await taskService.submitTask(payload);
-    expect(axios.post).toHaveBeenCalledWith("/api/Task/submit", payload);
+    expect(axios.post).toHaveBeenCalledWith(
+      "/api/tasks/submissions",
+      payload,
+    );
+  });
+
+  it("submitMultiple: should POST /api/tasks/submissions/batch", async () => {
+    const payload = { assignmentIds: [1, 2, 3] };
+    axios.post.mockResolvedValue({ data: { message: "OK" } });
+    await taskService.submitMultiple(payload);
+    expect(axios.post).toHaveBeenCalledWith(
+      "/api/tasks/submissions/batch",
+      payload,
+    );
+  });
+
+  it("createDispute: should POST /api/disputes", async () => {
+    const payload = { assignmentId: 10, reason: "Incorrect rejection" };
+    axios.post.mockResolvedValue({ data: { message: "OK" } });
+    await taskService.createDispute(payload);
+    expect(axios.post).toHaveBeenCalledWith("/api/disputes", payload);
+  });
+
+  it("getMyDisputes: should GET /api/disputes with projectId param", async () => {
+    axios.get.mockResolvedValue({ data: [] });
+    await taskService.getMyDisputes(5);
+    expect(axios.get).toHaveBeenCalledWith("/api/disputes", {
+      params: { projectId: 5 },
+    });
   });
 });

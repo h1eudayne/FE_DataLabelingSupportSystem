@@ -29,6 +29,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
   const [assignLog, setAssignLog] = useState([]);
   const [annotatorSearch, setAnnotatorSearch] = useState("");
   const [reviewerSearch, setReviewerSearch] = useState("");
+  const [lockingUserId, setLockingUserId] = useState(null);
 
   const fetchProject = useCallback(() => {
     setLoading(true);
@@ -415,6 +416,8 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                           <th className="text-center">{t("projectAssign.colTasks")}</th>
                           <th className="text-center">{t("projectAssign.colCompleted")}</th>
                           <th className="text-center">{t("projectAssign.colProgress")}</th>
+                          <th className="text-center">{t("projectAssign.colStatus", { defaultValue: "Status" })}</th>
+                          <th className="text-center">{t("projectAssign.colAction", { defaultValue: "Action" })}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -435,6 +438,72 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                                   </div>
                                   <small className="fw-semibold" style={{ minWidth: '30px' }}>{memberProgress}%</small>
                                 </div>
+                              </td>
+                              <td className="text-center">
+                                {m.isLocked ? (
+                                  <span className="badge bg-danger-subtle text-danger">
+                                    <i className="ri-lock-line me-1"></i>
+                                    {t("projectAssign.locked", { defaultValue: "Locked" })}
+                                  </span>
+                                ) : (
+                                  <span className="badge bg-success-subtle text-success">
+                                    <i className="ri-lock-unlock-line me-1"></i>
+                                    {t("projectAssign.active", { defaultValue: "Active" })}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="text-center">
+                                <button
+                                  className={`btn btn-sm ${m.isLocked ? 'btn-soft-success' : 'btn-soft-warning'} border-0`}
+                                  disabled={lockingUserId === (m.id || m.userId)}
+                                  title={m.isLocked
+                                    ? t("projectAssign.unlockUser", { defaultValue: "Unlock user" })
+                                    : t("projectAssign.lockUser", { defaultValue: "Lock user" })
+                                  }
+                                  onClick={async () => {
+                                    const userId = m.id || m.userId;
+                                    const newLock = !m.isLocked;
+                                    const confirm = await Swal.fire({
+                                      title: newLock
+                                        ? t("projectAssign.confirmLock", { defaultValue: "Lock this user?" })
+                                        : t("projectAssign.confirmUnlock", { defaultValue: "Unlock this user?" }),
+                                      text: newLock
+                                        ? t("projectAssign.lockDesc", { defaultValue: "Locked users cannot work on tasks in this project." })
+                                        : t("projectAssign.unlockDesc", { defaultValue: "This user will be able to work on tasks again." }),
+                                      icon: "question",
+                                      showCancelButton: true,
+                                      confirmButtonText: newLock
+                                        ? t("projectAssign.lockBtn", { defaultValue: "Lock" })
+                                        : t("projectAssign.unlockBtn", { defaultValue: "Unlock" }),
+                                    });
+                                    if (!confirm.isConfirmed) return;
+                                    setLockingUserId(userId);
+                                    try {
+                                      await projectService.toggleUserLock(id, userId, newLock);
+                                      fetchProject();
+                                      Swal.fire({
+                                        icon: "success",
+                                        title: newLock
+                                          ? t("projectAssign.lockSuccess", { defaultValue: "User locked" })
+                                          : t("projectAssign.unlockSuccess", { defaultValue: "User unlocked" }),
+                                        timer: 1500,
+                                        showConfirmButton: false,
+                                      });
+                                    } catch (err) {
+                                      Swal.fire("Error", err.response?.data?.message || err.message, "error");
+                                    } finally {
+                                      setLockingUserId(null);
+                                    }
+                                  }}
+                                >
+                                  {lockingUserId === (m.id || m.userId) ? (
+                                    <span className="spinner-border spinner-border-sm"></span>
+                                  ) : m.isLocked ? (
+                                    <i className="ri-lock-unlock-line"></i>
+                                  ) : (
+                                    <i className="ri-lock-line"></i>
+                                  )}
+                                </button>
                               </td>
                             </tr>
                           );
