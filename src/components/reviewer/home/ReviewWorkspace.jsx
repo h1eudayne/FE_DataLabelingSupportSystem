@@ -44,58 +44,7 @@ const ReviewWorkspace = () => {
   const [checkedCriteria, setCheckedCriteria] = useState({});
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
-  const ERROR_CATEGORIES = [
-    {
-      id: "CL-01",
-      title: "CL-01: Xác định sai đối tượng",
-      desc: "Đối tượng gán nhãn không đúng thực tế",
-    },
-    {
-      id: "CL-02",
-      title: "CL-02: Sai loại nhãn (Label Class)",
-      desc: "Chọn sai danh mục nhãn",
-    },
-    {
-      id: "CL-03",
-      title: "CL-03: Bounding Box chưa chính xác",
-      desc: "Khung bao không ôm sát, quá rộng/hẹp",
-    },
-    {
-      id: "CL-04",
-      title: "CL-04: Còn bỏ sót đối tượng",
-      desc: "Chưa gán nhãn hết các đối tượng trong ảnh",
-    },
-    {
-      id: "CL-05",
-      title: "CL-05: Gán nhãn sai",
-      desc: "Gán nhãn cho đối tượng không liên quan",
-    },
-    {
-      id: "CL-06",
-      title: "CL-06: Không tuân thủ guideline",
-      desc: "Sai quy định đặc thù của dự án",
-    },
-    {
-      id: "CL-07",
-      title: "CL-07: Chưa có tính nhất quán",
-      desc: "Gán nhãn không đồng nhất với các ảnh khác",
-    },
-    {
-      id: "CL-08",
-      title: "CL-08: Dùng sai loại công cụ",
-      desc: "Dùng sai công cụ (VD: dùng Box thay vì Polygon)",
-    },
-    {
-      id: "CL-09",
-      title: "CL-09: Chưa bao phủ đầy đủ",
-      desc: "Phần hiển thị của đối tượng bị cắt mất",
-    },
-    {
-      id: "CL-10",
-      title: "CL-10: Chất lượng dữ liệu",
-      desc: "Ảnh quá mờ/lỗi không thể gán nhãn",
-    },
-  ];
+
   const CHECKLIST_IDS = [
     "CL-01",
     "CL-02",
@@ -108,6 +57,12 @@ const ReviewWorkspace = () => {
     "CL-09",
     "CL-10",
   ];
+
+  const ERROR_CATEGORIES = CHECKLIST_IDS.map((id) => ({
+    id,
+    title: `${id}: ${t(`review.modalChecklist.items.${id}.title`)}`,
+    desc: t(`review.modalChecklist.items.${id}.desc`),
+  }));
 
   const handleSelectAllCriteria = () => {
     const isAllChecked = CHECKLIST_IDS.every(
@@ -209,11 +164,9 @@ const ReviewWorkspace = () => {
   const submitReview = async (isApproved) => {
     if (!isApproved) {
       if (errorCategories.length === 0)
-        return alert(
-          "Quy định: Phải chọn ít nhất một Phân loại lỗi khi Reject!",
-        );
+        return alert(t("review.messages.rejectRuleCategory"));
       if (!rejectComment.trim())
-        return alert("Quy định: Phải ghi rõ lý do để Annotator sửa bài!");
+        return alert(t("review.messages.rejectRuleComment"));
     }
 
     setSubmitting(true);
@@ -233,16 +186,10 @@ const ReviewWorkspace = () => {
       const isLastTask = currentIndex === taskList.length - 1;
 
       if (isLastTask) {
-        alert("Chúc mừng! Bạn đã hoàn thành mục kiểm duyệt cuối cùng.");
+        alert(t("review.messages.congrats"));
         navigate("/");
       } else {
         const nextTask = taskList[currentIndex + 1];
-
-        console.log(
-          isApproved
-            ? "Đã duyệt, chuyển ảnh tiếp theo..."
-            : "Đã từ chối, chuyển ảnh tiếp theo...",
-        );
 
         setCheckedCriteria({});
         navigate(
@@ -257,7 +204,7 @@ const ReviewWorkspace = () => {
         );
       }
     } catch (error) {
-      alert("Lỗi hệ thống, không thể lưu phán quyết.");
+      alert(t("review.messages.systemError"));
     } finally {
       setSubmitting(false);
     }
@@ -271,9 +218,7 @@ const ReviewWorkspace = () => {
     );
   if (!data)
     return (
-      <div className="text-center py-5 text-white">
-        Không tìm thấy dữ liệu nhiệm vụ.
-      </div>
+      <div className="text-center py-5 text-white">{t("review.nav.back")}</div>
     );
 
   const isOverdue = new Date(data.deadline) < new Date();
@@ -307,7 +252,7 @@ const ReviewWorkspace = () => {
               size="sm"
               onClick={() => navigate("/")}
             >
-              <ArrowLeft size={14} /> Quay lại
+              <ArrowLeft size={14} /> {t("review.nav.project")}
             </Button>
             <div className="d-flex align-items-center bg-light rounded-pill px-2 py-1 border">
               <Button
@@ -387,14 +332,14 @@ const ReviewWorkspace = () => {
                 className="text-uppercase text-muted fw-bold mb-3"
                 style={{ fontSize: "11px" }}
               >
-                Thông tin nhiệm vụ
+                {t("review.info.title")}
               </h6>
               <div className="d-flex justify-content-between mb-2">
-                <span className="text-muted">Người gán:</span>
+                <span className="text-muted">{t("review.info.assignee")}</span>
                 <span className="fw-semibold">{data.reviewerName}</span>
               </div>
               <div className="d-flex justify-content-between align-items-center">
-                <span className="text-muted">Hạn chót:</span>
+                <span className="text-muted">{t("review.info.deadline")}</span>
                 <Badge
                   bg={isOverdue ? "danger" : "light"}
                   className={`border ${isOverdue ? "text-white" : "text-primary"} fw-bold px-2`}
@@ -410,7 +355,7 @@ const ReviewWorkspace = () => {
                 className="text-uppercase text-muted fw-bold mb-3"
                 style={{ fontSize: "11px" }}
               >
-                Danh sách nhãn trong ảnh
+                {t("review.status.title")}
               </h6>
 
               {data.labels?.map((label) => {

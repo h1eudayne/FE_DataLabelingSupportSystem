@@ -1020,11 +1020,16 @@
     "noManager": "-- No Manager --"
   },
   "addUser": {
-    "title": "Import Staff from Excel",
-    "dropHint": "Click or drag and drop an Excel file here",
+    "title": "Import Users from Excel",
+    "dropHint": "Click to select or drag and drop Excel file here",
     "noFileSelected": "No file selected",
     "cancelBtn": "Cancel",
-    "confirmImport": "Confirm Import"
+    "confirmImport": "Confirm Import",
+    "errorSize": "File size exceeds 5MB. Please check again.",
+    "errorType": "Unsupported file format. Only .xlsx or .xls are accepted",
+    "maxSizeLabel": "Maximum size:",
+    "maxRowLabel": "Row limit:",
+    "rows":"rows"
   },
   "annotatorContainerComp": {
     "workboard": "Workboard",
@@ -1195,6 +1200,25 @@
     "priorityMedium": "Medium",
     "priorityLow": "Low"
   },
+  "workplace": {
+    "title": "Review Projects",
+    "subtitle": "Manage and track the progress of assigned labeling projects.",
+    "searchPlaceholder": "Search project name...",
+    "noTaskAlert": "There are currently no items needing review in this project!",
+    "projectCard": {
+      "assigned": "Assigned:",
+      "deadline": "Deadline:",
+      "overallProgress": "Overall Progress",
+      "status": {
+        "finished": "Finished",
+        "overdue": "Overdue",
+        "processing": "Processing"
+      },
+      "button": {
+        "enter": "Enter Review",
+        "completed": "Completed"
+      }
+    }},
   "statusCommon": {
     "active": "Active",
     "expired": "Expired",

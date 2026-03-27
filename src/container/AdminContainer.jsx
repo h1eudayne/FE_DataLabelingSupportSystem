@@ -175,11 +175,14 @@ const AdminContainer = () => {
     try {
       const res = await importUser(file);
       if (res.data) {
-        await fetchUsers();
+        if (res.data.successCount > 0) {
+          await fetchUsers();
+          alert("Import successfully");
+        }
       }
       onCloseCreateModal();
     } catch (error) {
-      console.error(error);
+      alert(`Import fail: `, error);
     }
   };
 

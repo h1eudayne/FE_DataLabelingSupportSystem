@@ -116,6 +116,64 @@
     },
     "completed":"Hoàn thành"
   },
+  "review": {
+    "nav": {
+      "back": "Quay lại",
+      "project": "DỰ ÁN"
+    },
+    "info": {
+      "title": "Thông tin nhiệm vụ",
+      "assignee": "Người gán:",
+      "deadline": "Hạn chót:",
+      "labelList": "Danh sách nhãn trong ảnh",
+      "guide": "Mô tả:",
+      "workChecklist": "Checklist công việc:"
+    },
+    "status": {
+      "title": "TRẠNG THÁI KIỂM DUYỆT CHUNG",
+      "criteriaMet": "Tiêu chí đã đạt",
+      "btnReview": "Bắt đầu Kiểm duyệt",
+      "btnReviewAgain": "Xem lại Checklist",
+      "hintReject": "* Nếu có lỗi, hãy nhấn vào nút bên dưới để chọn mã lỗi.",
+      "btnSetReject": "THIẾT LẬP LỖI REJECT"
+    },
+    "modalChecklist": {
+      "title": "Kiểm duyệt Tiêu chí Chất lượng",
+      "alertInfo": "Xác nhận các tiêu chí chất lượng cho tất cả nhãn có trong ảnh.",
+      "alertNote": "Lưu ý: Bạn phải hoàn thành 10/10 tiêu chí thì mới được Approve.",
+      "labeling": "Đang kiểm duyệt:",
+      "selectAll": "Chọn tất cả tiêu chí đạt chuẩn",
+      "deselectAll": "Bỏ chọn tất cả tiêu chí",
+      "footer": "Đã hoàn thành: {{count}} / {{total}} tiêu chí",
+      "items": {
+        "CL-01": { "title": "Xác định đúng đối tượng", "desc": "Đối tượng gán đúng với thực tế" },
+        "CL-02": { "title": "Đúng loại nhãn", "desc": "Chọn đúng category" },
+        "CL-03": { "title": "Bounding Box chính xác", "desc": "Khung bao ôm sát đối tượng" },
+        "CL-04": { "title": "Không bỏ sót", "desc": "Gán hết đối tượng trong ảnh" },
+        "CL-05": { "title": "Không gán nhãn sai", "desc": "Không gán vào vật thể lạ" },
+        "CL-06": { "title": "Tuân thủ guideline", "desc": "Theo đúng quy định dự án" },
+        "CL-07": { "title": "Tính nhất quán", "desc": "Giống các ảnh đã gán trước đó" },
+        "CL-08": { "title": "Đúng công cụ", "desc": "Dùng đúng Box/Polygon" },
+        "CL-09": { "title": "Bao phủ đầy đủ", "desc": "Không bị cắt mất phần hiển thị" },
+        "CL-10": { "title": "Dữ liệu đạt chuẩn", "desc": "Ảnh đủ rõ để định danh" }
+      }
+    },
+    "modalReject": {
+      "title": "Xác nhận lỗi vi phạm",
+      "step1": "1. Phân loại các tiêu chí vi phạm (Chọn nhiều):",
+      "step2": "2. Ghi chú cụ thể cho Annotator:",
+      "placeholder": "Mô tả chi tiết vị trí lỗi...",
+      "btnCancel": "Hủy bỏ",
+      "btnConfirm": "Xác nhận Reject"
+    },
+    "messages": {
+      "noData": "Không tìm thấy dữ liệu nhiệm vụ.",
+      "rejectRuleCategory": "Quy định: Phải chọn ít nhất một Phân loại lỗi khi Reject!",
+      "rejectRuleComment": "Quy định: Phải ghi rõ lý do để Annotator sửa bài!",
+      "congrats": "Chúc mừng! Bạn đã hoàn thành mục kiểm duyệt cuối cùng.",
+      "systemError": "Lỗi hệ thống, không thể lưu phán quyết."
+    }
+  },
   "dispute": {
     "title": "Quản lý Tranh chấp (Disputes)",
     "selectProjectLabel": "Chọn dự án",
@@ -1021,11 +1079,16 @@
     "noManager":"-- Chưa có quản lý --"
   },
   "addUser": {
-    "title": "Nhập nhân viên từ Excel",
-    "dropHint": "Nhấp hoặc kéo thả file Excel vào đây",
-    "noFileSelected": "Chưa chọn file",
-    "cancelBtn": "Hủy",
-    "confirmImport": "Xác nhận Import"
+    "title": "Nhập người dùng từ Excel",
+    "dropHint": "Nhấp để chọn hoặc kéo thả file Excel vào đây",
+    "noFileSelected": "Chưa có file nào được chọn",
+    "cancelBtn": "Hủy bỏ",
+    "confirmImport": "Xác nhận nhập",
+    "errorSize": "File vượt quá dung lượng 5MB. Vui lòng kiểm tra lại.",
+    "errorType": "Định dạng file không hỗ trợ. Chỉ chấp nhận .xlsx hoặc .xls",
+    "maxSizeLabel": "Dung lượng tối đa:",
+    "maxRowLabel": "Giới hạn dòng:",
+    "rows":"dòng"
   },
   "annotatorContainerComp": {
     "workboard": "Bảng công việc",
@@ -1195,6 +1258,26 @@
     "priorityHigh": "Cao",
     "priorityMedium": "Trung bình",
     "priorityLow": "Thấp"
+  },
+  "workplace": {
+    "title": "Dự án Kiểm duyệt",
+    "subtitle": "Quản lý và theo dõi tiến độ các dự án gán nhãn được phân công.",
+    "searchPlaceholder": "Tìm tên dự án...",
+    "noTaskAlert": "Hiện tại không còn mục dữ liệu nào cần kiểm duyệt trong dự án này!",
+    "projectCard": {
+      "assigned": "Giao:",
+      "deadline": "Deadline:",
+      "overallProgress": "Tiến độ tổng thể",
+      "status": {
+        "finished": "Hoàn thành",
+        "overdue": "Quá hạn",
+        "processing": "Đang xử lý"
+      },
+      "button": {
+        "enter": "Vào kiểm duyệt",
+        "completed": "Đã hoàn thành"
+      }
+    }
   },
   "statusCommon": {
     "active": "Đang hoạt động",
