@@ -166,18 +166,32 @@ const WorkplaceLabelingTaskPage = () => {
           taskService.getProjectImages(assignmentId),
         ]);
 
-        const projectData = projectRes.data || projectRes;
+        const projectData = projectRes?.data || projectRes;
         setProjectInfo(projectData);
         setLabels(projectData?.labels || []);
 
-        const allImages = imgRes.data || imgRes || [];
+        let allImages = imgRes?.data;
+        if (Array.isArray(imgRes)) {
+          allImages = imgRes;
+        } else if (imgRes?.data && Array.isArray(imgRes.data)) {
+          allImages = imgRes.data;
+        } else {
+          allImages = [];
+        }
+        
+        if (!Array.isArray(allImages)) {
+          allImages = [];
+        }
 
         const packStart = parseInt(searchParams.get("packStart"), 10);
         const packEnd = parseInt(searchParams.get("packEnd"), 10);
-        const sliced =
-          !isNaN(packStart) && !isNaN(packEnd)
-            ? allImages.slice(packStart, packEnd)
-            : allImages;
+        
+        let sliced;
+        if (!isNaN(packStart) && !isNaN(packEnd) && packEnd > packStart) {
+          sliced = allImages.slice(packStart, packEnd);
+        } else {
+          sliced = allImages;
+        }
 
         const sortedSlice = [...sliced].sort((a, b) => {
           const priority = {
@@ -437,14 +451,29 @@ const WorkplaceLabelingTaskPage = () => {
   const refetchImages = useCallback(async () => {
     try {
       const imgRes = await taskService.getProjectImages(assignmentId);
-      const allImages = imgRes.data || imgRes || [];
+      
+      let allImages = imgRes?.data;
+      if (Array.isArray(imgRes)) {
+        allImages = imgRes;
+      } else if (imgRes?.data && Array.isArray(imgRes.data)) {
+        allImages = imgRes.data;
+      } else {
+        allImages = [];
+      }
+      
+      if (!Array.isArray(allImages)) {
+        allImages = [];
+      }
 
       const packStart = parseInt(searchParams.get("packStart"), 10);
       const packEnd = parseInt(searchParams.get("packEnd"), 10);
-      const sliced =
-        !isNaN(packStart) && !isNaN(packEnd)
-          ? allImages.slice(packStart, packEnd)
-          : allImages;
+      
+      let sliced;
+      if (!isNaN(packStart) && !isNaN(packEnd) && packEnd > packStart) {
+        sliced = allImages.slice(packStart, packEnd);
+      } else {
+        sliced = allImages;
+      }
 
       const sortedSlice = [...sliced].sort((a, b) => {
         const priority = {
@@ -924,6 +953,7 @@ const WorkplaceLabelingTaskPage = () => {
           )}
           {}
           {!isReadOnly && (() => {
+            const isFlagEnabled = currentDefaultFlags.includes("__flag_enabled");
             
             const defaultLabels = labels.filter((l) => l.isDefault);
             const flagOptions = defaultLabels.length > 0
@@ -932,7 +962,6 @@ const WorkplaceLabelingTaskPage = () => {
 
             return (
               <div className={`stitch-ws-card ${!isFlagEnabled ? "collapsed" : ""}`}>
-                {}
                 <div
                   className="stitch-ws-card-header"
                   style={{ cursor: "pointer" }}
@@ -940,7 +969,6 @@ const WorkplaceLabelingTaskPage = () => {
                     if (isFlagEnabled) {
                       dispatch(setDefaultFlags({ assignmentId: currentImage.id, flags: [] }));
                     } else {
-                      
                       dispatch(setDefaultFlags({ assignmentId: currentImage.id, flags: ["__flag_enabled"] }));
                     }
                   }}
@@ -961,8 +989,6 @@ const WorkplaceLabelingTaskPage = () => {
                   </span>
                   <i className={`ri-arrow-${isFlagEnabled ? "up" : "down"}-s-line`} style={{ fontSize: 14, opacity: 0.5 }}></i>
                 </div>
-
-                {}
                 <div style={{ display: isFlagEnabled ? "block" : "none", maxHeight: 180, overflowY: "auto" }}>
                   {flagOptions.map((flag) => {
                     const isSelected = currentDefaultFlags.includes(flag.id);
@@ -1007,7 +1033,6 @@ const WorkplaceLabelingTaskPage = () => {
             );
           })()}
 
-          {}
           {!isReadOnly && (
             <div className={`stitch-ws-card ${collapsedPanels.has("labels") ? "collapsed" : ""}`}>
               <div

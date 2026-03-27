@@ -59,13 +59,6 @@ function App() {
           }
         />
 
-        <Route
-          path="/register"
-          element={
-            isLoggedIn ? <Navigate to="/dashboard" replace /> : <RegisterPage />
-          }
-        />
-
         <Route path="/access-denied" element={<AccessDenied />} />
 
         <Route element={<PrivateRoute />}>

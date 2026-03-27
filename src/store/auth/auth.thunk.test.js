@@ -157,4 +157,75 @@ describe("authThunk - Synced with Backend API Contract", () => {
     expect(localStorage.getItem("unreadNotifications")).toBe("10");
     expect(result.payload.unreadNotifications).toBe(10);
   });
+
+  // Test for BUG FIX: Notification count after login
+  // Backend now returns unreadNotifications (camelCase) instead of UnreadNotifications (PascalCase)
+  it("BUG-FIX: should correctly read unreadNotifications from backend response (camelCase)", async () => {
+    // This test verifies the fix for the notification bug where backend was returning
+    // "UnreadNotifications" (PascalCase) but frontend was reading "unreadNotifications" (camelCase)
+    const mockRes = {
+      data: {
+        message: "Login successful.",
+        accessToken: "token_fixed_bug",
+        refreshToken: "refresh_fixed_bug",
+        tokenType: "Bearer",
+        unreadNotifications: 7, // camelCase as expected by frontend
+      },
+    };
+    loginAPI.mockResolvedValue(mockRes);
+
+    const result = await loginThunk({ email: "fix@test.com", password: "123" })(
+      dispatch,
+      getState,
+      undefined,
+    );
+
+    // Verify unreadNotifications is correctly extracted and saved
+    expect(localStorage.getItem("unreadNotifications")).toBe("7");
+    expect(result.payload.unreadNotifications).toBe(7);
+  });
+
+  it("BUG-FIX: should handle zero notifications after login", async () => {
+    const mockRes = {
+      data: {
+        message: "Login successful.",
+        accessToken: "token_zero_notifs",
+        refreshToken: "refresh_zero_notifs",
+        tokenType: "Bearer",
+        unreadNotifications: 0,
+      },
+    };
+    loginAPI.mockResolvedValue(mockRes);
+
+    const result = await loginThunk({ email: "zero@test.com", password: "123" })(
+      dispatch,
+      getState,
+      undefined,
+    );
+
+    expect(localStorage.getItem("unreadNotifications")).toBe("0");
+    expect(result.payload.unreadNotifications).toBe(0);
+  });
+
+  it("BUG-FIX: should handle large notification count", async () => {
+    const mockRes = {
+      data: {
+        message: "Login successful.",
+        accessToken: "token_many_notifs",
+        refreshToken: "refresh_many_notifs",
+        tokenType: "Bearer",
+        unreadNotifications: 999,
+      },
+    };
+    loginAPI.mockResolvedValue(mockRes);
+
+    const result = await loginThunk({ email: "many@test.com", password: "123" })(
+      dispatch,
+      getState,
+      undefined,
+    );
+
+    expect(localStorage.getItem("unreadNotifications")).toBe("999");
+    expect(result.payload.unreadNotifications).toBe(999);
+  });
 });
