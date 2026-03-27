@@ -9,7 +9,7 @@ describe("logout.api", () => {
   });
 
   it("should not make any HTTP request", async () => {
-    // logoutApi is purely client-side — no axios dependency
+    
     const result = await logoutApi();
 
     expect(result.success).toBe(true);

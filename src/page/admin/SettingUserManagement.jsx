@@ -45,7 +45,7 @@ const SettingUserManagement = () => {
   const [importError, setImportError] = useState("");
   const { t } = useTranslation();
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (BR-ADM-25)
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; 
   const ALLOWED_EXTENSIONS = [".xlsx", ".xls"];
 
   const handleImportFileChange = (e) => {
@@ -222,7 +222,7 @@ const SettingUserManagement = () => {
         </CardBody>
       </Card>
 
-      {/* Import Excel Modal (BR-ADM-14, 16, 25, 26) */}
+      {}
       <Modal isOpen={importModalOpen} toggle={closeImportModal} size="lg">
         <ModalHeader toggle={closeImportModal}>
           <i className="ri-file-excel-2-line me-2 text-success"></i>

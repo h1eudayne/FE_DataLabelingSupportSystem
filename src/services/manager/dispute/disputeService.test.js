@@ -9,7 +9,7 @@ vi.mock("../../axios.customize", () => ({
 describe("disputeService", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  // ── getDisputes ──────────────────────────────────────────────
+  
 
   describe("getDisputes()", () => {
     it("should GET /api/disputes with projectId param", async () => {
@@ -62,7 +62,7 @@ describe("disputeService", () => {
     });
   });
 
-  // ── resolveDispute ───────────────────────────────────────────
+  
 
   describe("resolveDispute()", () => {
     it("should POST /api/disputes/resolve with accept payload", async () => {

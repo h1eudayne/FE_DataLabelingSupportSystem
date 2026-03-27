@@ -91,7 +91,7 @@ const LabelingWorkspace = ({
   }, [currentPolygon, dispatch, assignmentId, selectedLabel]);
 
   const fitImageToStage = useCallback(() => {
-    // Use stageWrapperRef for accurate canvas-only dimensions (excludes toolbar/coord-bar)
+    
     const el = stageWrapperRef.current || containerRef.current;
     if (!el || !image) return;
     const w = el.offsetWidth;
@@ -111,7 +111,7 @@ const LabelingWorkspace = ({
     fitImageToStage();
   }, [fitImageToStage]);
 
-  // Auto-resize when stage wrapper changes size
+  
   useEffect(() => {
     const el = stageWrapperRef.current || containerRef.current;
     if (!el) return;
@@ -129,9 +129,15 @@ const LabelingWorkspace = ({
         finishPolygon();
         return;
       }
-      if (e.key === "Escape" && drawingMode === "polygon") {
+      
+      
+      
+      if (e.key === "Escape") {
         e.preventDefault();
-        setCurrentPolygon([]);
+        if (drawingMode === "polygon" && currentPolygon.length > 0) {
+          setCurrentPolygon([]);
+        }
+        
         return;
       }
 
@@ -141,8 +147,15 @@ const LabelingWorkspace = ({
         return;
       }
 
-      if (e.key === "Backspace" || e.key === "Delete") {
-        if (!readOnly) dispatch(removeLastAnnotation(assignmentId));
+      
+      
+      
+      
+      if ((e.key === "Backspace" || e.key === "Delete")) {
+        if (!newRect && currentPolygon.length === 0 && !isPanning) {
+          e.preventDefault();
+          dispatch(removeLastAnnotation(assignmentId));
+        }
         return;
       }
 
@@ -163,7 +176,7 @@ const LabelingWorkspace = ({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [dispatch, assignmentId, readOnly, drawingMode, finishPolygon]);
+  }, [dispatch, assignmentId, readOnly, drawingMode, finishPolygon, newRect, currentPolygon, isPanning]);
 
   const handleWheel = (e) => {
     e.evt.preventDefault();
@@ -224,7 +237,7 @@ const LabelingWorkspace = ({
       const now = Date.now();
       const delta = now - lastPolyClickTime.current;
       lastPolyClickTime.current = now;
-      // Detect double-click manually (< 350ms between two clicks)
+      
       if (delta < 350 && currentPolygon.length >= 3) {
         finishPolygon();
         return;
@@ -349,14 +362,14 @@ const LabelingWorkspace = ({
 
   const zoomPercent = Math.round((stageScale / (defaultView.scale || 1)) * 100);
 
-  // Calculate crosshair bounds
+  
   const imgW = image ? image.width : 0;
   const imgH = image ? image.height : 0;
   const showCrosshair = !readOnly && selectedLabel && mouseImgPos && !isPanning;
 
   return (
     <div ref={containerRef} className="stitch-ws-canvas-container">
-      {/* Toolbar */}
+      {}
       <div className="stitch-ws-toolbar">
         <button
           className="stitch-ws-toolbar-btn"
@@ -452,7 +465,7 @@ const LabelingWorkspace = ({
         </div>
       </div>
 
-      {/* Canvas wrapper — this div is measured for accurate image centering */}
+      {}
       <div ref={stageWrapperRef} className="stitch-ws-stage-wrapper">
         <Stage
           width={size.width}
@@ -471,13 +484,13 @@ const LabelingWorkspace = ({
           <Layer>
             {image && <KonvaImage image={image} />}
 
-            {/* Existing annotations */}
+            {}
             {annotations.map((a) => {
               const isHighlighted = highlightedAnnotationId === a.id;
               const tagFontSize = 11 / stageScale;
               const tagPadding = 3 / stageScale;
               const tagText = a.labelName || "Box";
-              // Approximate tag width
+              
               const tagWidth =
                 tagText.length * tagFontSize * 0.65 + tagPadding * 2;
               const tagHeight = tagFontSize + tagPadding * 2;
@@ -532,7 +545,7 @@ const LabelingWorkspace = ({
 
               return (
                 <Group key={a.id}>
-                  {/* Bounding box rect */}
+                  {}
                   <Rect
                     x={a.x}
                     y={a.y}
@@ -556,7 +569,7 @@ const LabelingWorkspace = ({
                       if (onAnnotationClick) onAnnotationClick(a.id);
                     }}
                   />
-                  {/* Label tag background */}
+                  {}
                   <Rect
                     x={a.x}
                     y={a.y - tagHeight}
@@ -565,7 +578,7 @@ const LabelingWorkspace = ({
                     fill={a.color || "#6c757d"}
                     cornerRadius={2 / stageScale}
                   />
-                  {/* Label tag text */}
+                  {}
                   <Text
                     x={a.x + tagPadding}
                     y={a.y - tagHeight + tagPadding}
@@ -578,7 +591,7 @@ const LabelingWorkspace = ({
               );
             })}
 
-            {/* Drawing rect preview */}
+            {}
             {newRect && drawingMode === "bbox" && (
               <Rect
                 {...newRect}
@@ -588,7 +601,7 @@ const LabelingWorkspace = ({
               />
             )}
 
-            {/* Drawing polygon preview */}
+            {}
             {drawingMode === "polygon" && currentPolygon.length > 0 && (
               <Group>
                 <Line
@@ -618,7 +631,7 @@ const LabelingWorkspace = ({
                     radius={4 / stageScale}
                     fill={i === 0 ? "#22c55e" : "yellow"}
                     onDblClick={(e) => {
-                      // Finish if user double clicks the first point
+                      
                       e.cancelBubble = true;
                       if (!readOnly && i === 0 && currentPolygon.length >= 3) {
                         finishPolygon();
@@ -629,10 +642,10 @@ const LabelingWorkspace = ({
               </Group>
             )}
 
-            {/* Crosshair lines */}
+            {}
             {showCrosshair && (
               <>
-                {/* Vertical line */}
+                {}
                 <Line
                   points={[mouseImgPos.x, 0, mouseImgPos.x, imgH]}
                   stroke="rgba(255,255,255,0.35)"
@@ -640,7 +653,7 @@ const LabelingWorkspace = ({
                   dash={[4 / stageScale, 4 / stageScale]}
                   listening={false}
                 />
-                {/* Horizontal line */}
+                {}
                 <Line
                   points={[0, mouseImgPos.y, imgW, mouseImgPos.y]}
                   stroke="rgba(255,255,255,0.35)"
@@ -654,7 +667,7 @@ const LabelingWorkspace = ({
         </Stage>
       </div>
 
-      {/* Coordinate bar */}
+      {}
       <div className="stitch-ws-coord-bar">
         <span className="fw-bold" style={{ color: "#22D3EE" }}>
           <i className="ri-crosshair-2-line me-1"></i>Toạ độ:

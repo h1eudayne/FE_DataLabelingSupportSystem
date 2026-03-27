@@ -583,7 +583,7 @@ const CreateProject = () => {
           </Col>
 
           <Col lg={5}>
-            {/* Default Labels (Flag) */}
+            {}
             <Card className="shadow-sm border-0 mb-3">
               <div
                 className="card-header bg-soft-warning py-2 d-flex justify-content-between align-items-center"
@@ -659,7 +659,7 @@ const CreateProject = () => {
                         className="mb-2"
                       />
 
-                      {/* Sample image upload */}
+                      {}
                       <div className="mb-2">
                         <small className="text-muted fw-semibold d-block mb-1">
                           <i className="ri-image-add-line me-1"></i>
@@ -709,7 +709,7 @@ const CreateProject = () => {
                         )}
                       </div>
 
-                      {/* Checklist */}
+                      {}
                       <div className="mt-2 ps-2 border-start border-2 border-warning">
                         <small className="text-muted fw-semibold d-block mb-1">
                           <i className="ri-checkbox-multiple-line me-1"></i>
@@ -813,7 +813,7 @@ const CreateProject = () => {
                         className="mb-2"
                       />
 
-                      {/* Sample image upload */}
+                      {}
                       <div className="mb-2">
                         <small className="text-muted fw-semibold d-block mb-1">
                           <i className="ri-image-add-line me-1"></i>

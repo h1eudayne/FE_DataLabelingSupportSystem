@@ -9,7 +9,7 @@ vi.mock("../../axios.customize", () => ({
 describe("reviewAuditService", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  // ── getTasksForReview ────────────────────────────────────────
+  
 
   describe("getTasksForReview()", () => {
     it("should GET /api/reviews/projects/{id}/tasks", async () => {
@@ -55,7 +55,7 @@ describe("reviewAuditService", () => {
     });
   });
 
-  // ── auditReview ──────────────────────────────────────────────
+  
 
   describe("auditReview()", () => {
     it("should POST /api/reviews/audits with correct decision", async () => {

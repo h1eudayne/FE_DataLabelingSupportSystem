@@ -15,9 +15,9 @@ const Navbar = () => {
     whiteSpace: "nowrap",
     overflow: "hidden",
     transition: "all 0.3s ease",
-    // padding: "12px 20px",
+    
     borderRadius: "8px",
-    // margin: "4px 10px",
+    
     marginTop: "12px",
   };
 
@@ -141,7 +141,7 @@ const Navbar = () => {
       </style>
 
       <div className="navbar-brand-box" style={{ textAlign: "left" }}>
-        {/* Logo cho Dark Mode sidebar (text trắng) */}
+        {}
         <Link to="/" className="logo logo-dark">
           <span className="logo-sm">
             <img
@@ -158,7 +158,7 @@ const Navbar = () => {
             />
           </span>
         </Link>
-        {/* Logo cho Light Mode sidebar (text đen) */}
+        {}
         <Link to="/" className="logo logo-light">
           <span className="logo-sm">
             <img

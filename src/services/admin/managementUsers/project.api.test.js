@@ -9,7 +9,7 @@ vi.mock("../../axios.customize", () => ({
 describe("admin/project.api", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  // ── getAllProjectsUser ────────────────────────────────────────
+  
 
   describe("getAllProjectsUser()", () => {
     it("should GET /api/projects", async () => {
@@ -35,7 +35,7 @@ describe("admin/project.api", () => {
     });
   });
 
-  // ── getProjectById ───────────────────────────────────────────
+  
 
   describe("getProjectById()", () => {
     it("should GET /api/projects/{id}", async () => {

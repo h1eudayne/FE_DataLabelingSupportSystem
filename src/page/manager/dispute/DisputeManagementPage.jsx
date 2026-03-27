@@ -76,7 +76,7 @@ const DisputeManagementPage = () => {
     }
   }, []);
 
-  // Realtime: auto-refetch disputes when notification arrives
+  
   useSignalRRefresh(
     useCallback(() => {
       if (selectedProjectId) handleProjectChange(selectedProjectId);

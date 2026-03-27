@@ -92,7 +92,7 @@ function App() {
             </Route>
 
             <Route
-              element={<RoleProtectedRoute allowRoles={["Admin", "Manager"]} />}
+              element={<RoleProtectedRoute allowRoles={["Manager"]} />}
             >
               <Route
                 path="projects-all-projects"
@@ -110,11 +110,19 @@ function App() {
                 path="projects-assign/:id"
                 element={<ProjectAssignTask />}
               />
+              <Route path="projects-create" element={<CreateProject />} />
+            </Route>
+
+            {}
+            <Route
+              element={
+                <RoleProtectedRoute allowRoles={["Manager", "Admin"]} />
+              }
+            >
               <Route
                 path="project-detail/:id"
                 element={<ProjectDetailPage />}
               />
-              <Route path="projects-create" element={<CreateProject />} />
             </Route>
 
             <Route element={<RoleProtectedRoute allowRoles={["Reviewer"]} />}>
