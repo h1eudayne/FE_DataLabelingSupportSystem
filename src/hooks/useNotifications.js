@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { subscribe } from "../services/signalrManager";
+import notificationService from "../services/notificationService";
 
 /**
  * LocalStorage key helpers — scoped per user to avoid cross-user leaks.
@@ -33,12 +34,24 @@ const clearStorage = (userId) => {
 };
 
 /**
- * Custom hook for managing real-time notifications via SignalR.
+ * Normalize a server notification object to the local shape.
+ */
+const normalizeServerNotification = (n) => ({
+  id: n.id,
+  message: n.message || "New notification",
+  type: n.type || "info",
+  timestamp: n.createdAt || new Date().toISOString(),
+  read: !!n.isRead,
+});
+
+/**
+ * Custom hook for managing notifications via REST API + SignalR real-time.
  *
  * Features:
- * - Real-time reception via SignalR singleton connection
- * - **Persistence** via localStorage (per-user) so notifications
- *   survive page refresh and offline periods
+ * - **Initial load** from REST API (GET /api/notifications)
+ * - **Real-time push** via SignalR singleton connection
+ * - **Server-sync** for mark-as-read actions (PUT endpoints)
+ * - **localStorage cache** as offline fallback
  *
  * @param {string} [userId] - Current user ID for scoped persistence
  */
@@ -57,6 +70,24 @@ const useNotifications = (userId) => {
     userIdRef.current = userId;
   }, [userId]);
 
+  // Fetch notifications from REST API on mount
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    notificationService
+      .getMyNotifications()
+      .then((res) => {
+        const serverNotifs = (res.data || []).map(normalizeServerNotification);
+        setNotifications(serverNotifs);
+        setUnreadCount(serverNotifs.filter((n) => !n.read).length);
+      })
+      .catch((err) => {
+        console.warn("[Notifications] Failed to fetch from server, using localStorage cache:", err?.message);
+        // Keep localStorage data as fallback — already loaded in useState init
+      });
+  }, [userId]);
+
   // Persist notifications to localStorage whenever they change
   useEffect(() => {
     saveToStorage(userIdRef.current, notifications);
@@ -71,11 +102,12 @@ const useNotifications = (userId) => {
       console.log("[Notification] Received:", notification);
 
       const newNotification = {
-        id: Date.now() + Math.random(),
+        id: notification?.Id || notification?.id || Date.now() + Math.random(),
         message:
           notification?.Message || notification?.message || "New notification",
         type: notification?.Type || notification?.type || "info",
         timestamp:
+          notification?.CreatedAt ||
           notification?.Timestamp ||
           notification?.timestamp ||
           new Date().toISOString(),
@@ -94,11 +126,21 @@ const useNotifications = (userId) => {
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    // Sync to server (fire-and-forget)
+    notificationService.markAsRead(id).catch((err) => {
+      console.warn("[Notifications] Failed to sync markAsRead:", err?.message);
+    });
   }, []);
 
   const markAllAsRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
+
+    // Sync to server (fire-and-forget)
+    notificationService.markAllAsRead().catch((err) => {
+      console.warn("[Notifications] Failed to sync markAllAsRead:", err?.message);
+    });
   }, []);
 
   const clearAll = useCallback(() => {

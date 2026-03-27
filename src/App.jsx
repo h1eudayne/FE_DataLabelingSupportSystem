@@ -147,27 +147,7 @@ function App() {
               />
               <Route
                 path="annotator-team"
-                element={
-                  <div className="container-fluid">
-                    <h4 className="fw-bold mb-3">Team</h4>
-                    <div className="alert alert-info">
-                      <i className="ri-team-line me-2"></i>
-                      Tính năng đang được phát triển.
-                    </div>
-                  </div>
-                }
-              />
-              <Route
-                path="annotator-settings"
-                element={
-                  <div className="container-fluid">
-                    <h4 className="fw-bold mb-3">Cài đặt</h4>
-                    <div className="alert alert-info">
-                      <i className="ri-settings-3-line me-2"></i>
-                      Tính năng đang được phát triển.
-                    </div>
-                  </div>
-                }
+                element={<Navigate to="/dashboard" replace />}
               />
             </Route>
           </Route>

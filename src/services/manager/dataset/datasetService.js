@@ -15,10 +15,25 @@ const datasetService = {
     });
   },
 
+  uploadDirect: (projectId, files) => {
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append("files", file);
+    }
+    return axios.post(`/api/projects/${projectId}/uploads/direct`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+
   getStats: (id) => axios.get(`/api/projects/${id}/statistics`),
 
   exportData: (id) =>
     axios.get(`/api/projects/${id}/exports`, { responseType: "blob" }),
+
+  exportCsv: (id) =>
+    axios.get(`/api/projects/${id}/export-csv`, { responseType: "blob" }),
 };
 
 export default datasetService;
