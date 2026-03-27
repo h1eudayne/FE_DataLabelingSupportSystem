@@ -267,8 +267,6 @@ const CreateProject = () => {
     try {
       const deadlineISO = new Date(projectInfo.deadline).toISOString();
 
-      // Upload sample images for labels to Cloudinary
-      // Build default labels payload
       const validDefaultLabels = defaultLabels.filter((l) => l.name.trim());
       const defaultLabelClassesPayload = [];
       for (const l of validDefaultLabels) {
@@ -281,16 +279,15 @@ const CreateProject = () => {
           }
         }
         defaultLabelClassesPayload.push({
-          name: l.name,
-          color: l.color,
-          guideLine: l.guideLine || "",
+          name: l.name?.trim() || "",
+          color: l.color || "#EF4444",
+          guideLine: l.guideLine?.trim() || "",
           checklist: l.checklist?.filter((c) => c.trim()) || [],
           exampleImageUrl,
           isDefault: true,
         });
       }
 
-      // Build custom labels payload
       const validLabels = labels.filter((l) => l.name.trim());
       const customLabelClassesPayload = [];
       for (const l of validLabels) {
@@ -303,26 +300,27 @@ const CreateProject = () => {
           }
         }
         customLabelClassesPayload.push({
-          name: l.name,
-          color: l.color,
-          guideLine: l.guideLine,
-          checklist: l.checklist.filter((c) => c.trim()),
+          name: l.name?.trim() || "",
+          color: l.color || "#0ab39c",
+          guideLine: l.guideLine?.trim() || "",
+          checklist: l.checklist?.filter((c) => c.trim()) || [],
           exampleImageUrl,
+          isDefault: false,
         });
       }
 
       const labelClassesPayload = [...defaultLabelClassesPayload, ...customLabelClassesPayload];
 
       const createPayload = {
-        name: projectInfo.name,
-        description: projectInfo.description,
+        name: projectInfo.name?.trim() || "",
+        description: projectInfo.description?.trim() || "",
         deadline: deadlineISO,
         startDate: new Date().toISOString(),
         endDate: deadlineISO,
-        allowGeometryTypes: projectInfo.type,
+        allowGeometryTypes: projectInfo.type || "Rectangle",
         maxTaskDurationHours: Number(projectInfo.maxTaskDurationHours) || 24,
         penaltyUnit: Number(projectInfo.penaltyUnit) || 10,
-        annotationGuide: projectInfo.annotationGuide || null,
+        annotationGuide: projectInfo.annotationGuide?.trim() || "",
         labelClasses: labelClassesPayload,
       };
       console.log("=== CREATE PROJECT PAYLOAD ===", JSON.stringify(createPayload, null, 2));
@@ -341,43 +339,39 @@ const CreateProject = () => {
 
       await projectService.importData(projectId, uploadedUrls);
 
-      const total = uploadedUrls.length;
-      let remaining = total;
-
-      let assignSuccess = 0;
-      let assignFail = 0;
-      for (let i = 0; i < selectedAnnotators.length; i++) {
-        let qty = Math.floor(total / selectedAnnotators.length);
-        if (i === selectedAnnotators.length - 1) qty = remaining;
-
-        if (qty > 0) {
+      if (selectedAnnotators.length > 0 && selectedReviewers.length > 0) {
+        try {
           const assignPayload = {
             projectId: Number(projectId),
-            annotatorId: String(selectedAnnotators[i].value),
-            quantity: Number(qty),
-            reviewerId: String(
-              selectedReviewers[i % selectedReviewers.length].value,
-            ),
+            annotatorIds: selectedAnnotators.map(ann => String(ann.value || ann.id || ann)),
+            totalQuantity: uploadedUrls.length,
+            reviewerIds: selectedReviewers.map(rev => String(rev.value || rev.id || rev)),
           };
-
-          try {
-            await taskService.assignTask(assignPayload);
-            assignSuccess++;
-          } catch (assignErr) {
-            assignFail++;
-            console.error("Assign task failed:", assignErr.response?.data?.message || assignErr.message);
-            toast.warning(
-              `Failed to assign tasks to ${selectedAnnotators[i].label || "annotator"}: ${assignErr.response?.data?.message || assignErr.message}`
-            );
+          
+          if (!Array.isArray(assignPayload.annotatorIds)) {
+            throw new Error("annotatorIds must be an array");
           }
-          remaining -= qty;
+          if (!Array.isArray(assignPayload.reviewerIds)) {
+            throw new Error("reviewerIds must be an array");
+          }
+          if (typeof assignPayload.totalQuantity !== 'number') {
+            throw new Error("totalQuantity must be a number");
+          }
+          
+          console.log("=== TASK ASSIGNMENT PAYLOAD ===", new Date().toISOString());
+          console.log("Payload:", JSON.stringify(assignPayload, null, 2));
+          console.log("Selected Annotators:", selectedAnnotators);
+          console.log("Selected Reviewers:", selectedReviewers);
+          
+          await taskService.assignTask(assignPayload);
+          console.log("=== TASK ASSIGNMENT SUCCESS ===");
+        } catch (assignErr) {
+          console.error("=== TASK ASSIGNMENT ERROR ===", assignErr);
+          console.error("Assignment error data:", assignErr.response?.data);
+          toast.warning(
+            `Project created but task assignment failed: ${assignErr.response?.data?.message || assignErr.message}. You can assign tasks manually from project settings.`
+          );
         }
-      }
-
-      if (assignFail > 0 && assignSuccess === 0) {
-        toast.warning("Project created but task assignment failed. You can assign tasks later from project settings.");
-      } else if (assignFail > 0) {
-        toast.warning(`Project created. ${assignSuccess} assignments succeeded, ${assignFail} failed.`);
       }
 
       toast.success(t("createProject.createSuccess"));

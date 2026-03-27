@@ -193,6 +193,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
           successCount++;
           remaining -= qty;
         } catch (err) {
+          console.error("Task assignment error:", err);
           log.push({
             annotator: ann.name,
             reviewer: rev.name,
