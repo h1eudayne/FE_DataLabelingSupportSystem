@@ -36,12 +36,26 @@ const DisputeTab = ({ projectId }) => {
   const [managerComment, setManagerComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const ESCALATION_DAYS = 3;
+
+  const isEscalated = (dispute) => {
+    if (dispute.status !== "Pending" || !dispute.createdAt) return false;
+    const diffMs = new Date() - new Date(dispute.createdAt);
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24)) >= ESCALATION_DAYS;
+  };
+
+  const getDaysPending = (createdAt) => {
+    if (!createdAt) return 0;
+    return Math.floor((new Date() - new Date(createdAt)) / (1000 * 60 * 60 * 24));
+  };
+
   const stats = useMemo(() => {
     const total = disputes.length;
     const pending = disputes.filter((d) => d.status === "Pending").length;
     const resolved = disputes.filter((d) => d.status === "Resolved").length;
     const rejected = disputes.filter((d) => d.status === "Rejected").length;
-    return { total, pending, resolved, rejected };
+    const escalated = disputes.filter((d) => isEscalated(d)).length;
+    return { total, pending, resolved, rejected, escalated };
   }, [disputes]);
 
   const fetchDisputes = useCallback(async () => {
@@ -210,11 +224,26 @@ const DisputeTab = ({ projectId }) => {
                                 </small>
                               )}
                             </td>
-                            <td>{getStatusBadge(d.status)}</td>
+                            <td>
+                              <div className="d-flex align-items-center gap-1">
+                                {getStatusBadge(d.status)}
+                                {isEscalated(d) && (
+                                  <span className="badge bg-danger bg-opacity-10 text-danger" style={{ fontSize: "10px" }}>
+                                    <i className="ri-alarm-warning-line me-1"></i>
+                                    {t("dispute.escalated", "Escalated")}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
                             <td style={{ color: "var(--pd-text-muted)" }}>
                               {d.createdAt
                                 ? new Date(d.createdAt).toLocaleDateString("vi-VN")
                                 : "—"}
+                              {d.status === "Pending" && d.createdAt && (
+                                <div style={{ fontSize: "10px", color: isEscalated(d) ? "var(--bs-danger)" : "var(--pd-text-muted)" }}>
+                                  {getDaysPending(d.createdAt)}d {t("dispute.ago", "ago")}
+                                </div>
+                              )}
                             </td>
                             <td className="text-end">
                               {d.status === "Pending" ? (
@@ -272,6 +301,21 @@ const DisputeTab = ({ projectId }) => {
         <ModalBody>
           {selectedDispute && (
             <>
+              {isEscalated(selectedDispute) && (
+                <Alert color="danger" className="d-flex align-items-start gap-2 mb-3">
+                  <i className="ri-alarm-warning-line fs-5 mt-1"></i>
+                  <div>
+                    <strong>{t("dispute.escalationWarning", "Escalation Warning")}</strong>
+                    <p className="mb-0 small">
+                      {t("dispute.escalationDesc", {
+                        days: getDaysPending(selectedDispute.createdAt),
+                        defaultValue: `This dispute has been pending for ${getDaysPending(selectedDispute.createdAt)} days. It may be escalated to Admin if not resolved soon.`
+                      })}
+                    </p>
+                  </div>
+                </Alert>
+              )}
+
               <div className="mb-3 p-3 rounded" style={{ background: "var(--pd-table-header-bg)" }}>
                 <h6 className="fw-bold mb-2" style={{ color: "var(--pd-text-primary)" }}>
                   {t("dispute.complaintInfo")}
@@ -283,9 +327,26 @@ const DisputeTab = ({ projectId }) => {
                 <p className="mb-1" style={{ color: "var(--pd-text-primary)" }}>
                   <strong>{t("dispute.reason")}</strong> {selectedDispute.reason}
                 </p>
+                <p className="mb-1">
+                  <strong>{t("dispute.colCreatedAt")}:</strong>{" "}
+                  {selectedDispute.createdAt
+                    ? new Date(selectedDispute.createdAt).toLocaleString("vi-VN")
+                    : "—"}
+                  {selectedDispute.status === "Pending" && (
+                    <span className={`ms-2 small fw-semibold ${isEscalated(selectedDispute) ? "text-danger" : "text-muted"}`}>
+                      ({getDaysPending(selectedDispute.createdAt)}d {t("dispute.pending", "pending")})
+                    </span>
+                  )}
+                </p>
                 <p className="mb-0">
                   <strong>{t("dispute.colStatus")}:</strong>{" "}
                   {getStatusBadge(selectedDispute.status)}
+                  {isEscalated(selectedDispute) && (
+                    <Badge color="danger" className="ms-2">
+                      <i className="ri-alarm-warning-line me-1"></i>
+                      {t("dispute.escalated", "Escalated")}
+                    </Badge>
+                  )}
                 </p>
               </div>
 

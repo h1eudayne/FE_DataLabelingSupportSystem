@@ -1,7 +1,7 @@
 import axios from "../../axios.customize";
 
 const taskService = {
-  assignTask: (data) => axios.post("/api/tasks/assignments", data),
+  assignTask: (data) => axios.post("/api/tasks/assign-team", data),
 
   getMyTasks: () => axios.get("/api/tasks/projects"),
 

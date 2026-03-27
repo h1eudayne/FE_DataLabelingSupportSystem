@@ -25,7 +25,7 @@ describe("taskService", () => {
 
     await taskService.assignTask(mockData);
 
-    expect(axios.post).toHaveBeenCalledWith("/api/tasks/assignments", mockData);
+    expect(axios.post).toHaveBeenCalledWith("/api/tasks/assign-team", mockData);
   });
 
   it("getMyTasks: should GET /api/tasks/projects", async () => {
