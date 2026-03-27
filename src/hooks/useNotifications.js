@@ -46,13 +46,14 @@ const useNotifications = (userId, initialUnreadCount) => {
     loadFromStorage(userId)
   );
   const [unreadCount, setUnreadCount] = useState(() => {
-    
     if (typeof initialUnreadCount === "number") {
       return initialUnreadCount;
     }
     const stored = loadFromStorage(userId);
     return stored.filter((n) => !n.read).length;
   });
+  
+  const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
 
   
   const userIdRef = useRef(userId);
@@ -69,14 +70,32 @@ const useNotifications = (userId, initialUnreadCount) => {
       .getMyNotifications()
       .then((res) => {
         const serverNotifs = (res.data || []).map(normalizeServerNotification);
+        
         setNotifications(serverNotifs);
-        setUnreadCount(serverNotifs.filter((n) => !n.read).length);
+        
+        const serverUnreadCount = serverNotifs.filter((n) => !n.read).length;
+        
+        if (!hasFetchedOnce && typeof initialUnreadCount === "number" && initialUnreadCount > 0) {
+          if (serverUnreadCount === 0 && initialUnreadCount > 0) {
+            console.log("[Notifications] Server returned 0 unread, keeping initial count:", initialUnreadCount);
+            setUnreadCount(initialUnreadCount);
+          } else {
+            setUnreadCount(serverUnreadCount);
+          }
+          setHasFetchedOnce(true);
+        } else {
+          setUnreadCount(serverUnreadCount);
+          setHasFetchedOnce(true);
+        }
       })
       .catch((err) => {
         console.warn("[Notifications] Failed to fetch from server, using localStorage cache:", err?.message);
-        
+        if (!hasFetchedOnce && typeof initialUnreadCount === "number" && initialUnreadCount > 0) {
+          setUnreadCount(initialUnreadCount);
+          setHasFetchedOnce(true);
+        }
       });
-  }, [userId]);
+  }, [userId, hasFetchedOnce, initialUnreadCount]);
 
   
   useEffect(() => {

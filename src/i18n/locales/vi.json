@@ -35,6 +35,7 @@
     "password": "Mật khẩu",
     "rememberMe": "Ghi nhớ đăng nhập",
     "forgotPassword": "Quên mật khẩu?",
+    "contactAdminForAccount": "Liên hệ Admin để tạo tài khoản",
     "login": "Đăng nhập",
     "loginProcessing": "Đang xử lý...",
     "loginFailed": "Đăng nhập thất bại",
@@ -1018,7 +1019,14 @@
     "showingRange": "Hiển thị {{from}} đến {{to}} trên {{total}} người dùng",
     "totalProjects":"Tổng dự án",
     "assignManager":"Phân công quản lý",
-    "noManager":"-- Chưa có quản lý --"
+    "noManager":"-- Chưa có quản lý --",
+    "resetPassword": "Đặt lại mật khẩu",
+    "resetPasswordFor": "Đặt lại mật khẩu cho",
+    "newPassword": "Mật khẩu mới",
+    "enterNewPassword": "Nhập mật khẩu mới",
+    "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
+    "passwordResetSuccess": "Mật khẩu đã được đặt lại thành công",
+    "passwordResetFailed": "Đặt lại mật khẩu thất bại"
   },
   "addUser": {
     "title": "Nhập nhân viên từ Excel",

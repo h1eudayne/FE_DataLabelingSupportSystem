@@ -25,10 +25,22 @@ const AnnotatorProjectPacks = () => {
         taskService.getProjectImages(assignmentId),
       ]);
 
-      const projectData = projectRes.data || projectRes;
+      const projectData = projectRes?.data || projectRes;
       setProjectInfo(projectData);
 
-      const allImages = imgRes.data || imgRes || [];
+      let allImages = imgRes?.data;
+      if (Array.isArray(imgRes)) {
+        allImages = imgRes;
+      } else if (imgRes?.data && Array.isArray(imgRes.data)) {
+        allImages = imgRes.data;
+      } else {
+        allImages = [];
+      }
+      
+      if (!Array.isArray(allImages)) {
+        allImages = [];
+      }
+      
       setImages(allImages);
     } catch (err) {
       console.error(err);

@@ -16,7 +16,14 @@ const AnnotatorTaskList = () => {
     try {
       const res = await taskService.getMyProjects();
 
-      const projects = (res.data || []).map((p) => ({
+      let projects = [];
+      if (Array.isArray(res.data)) {
+        projects = res.data;
+      } else if (Array.isArray(res)) {
+        projects = res;
+      }
+      
+      const mappedProjects = projects.map((p) => ({
         assignmentId: p.projectId,
         projectName: p.projectName,
         description: p.description,
@@ -24,7 +31,7 @@ const AnnotatorTaskList = () => {
         assignedDate: p.assignedDate,
 
         status: p.status,
-        progress: Number(p.progressPercent ?? 0),
+        progress: Number(p.progressPercent ?? p.progress ?? 0),
 
         totalImages: p.totalImages ?? 0,
         completedImages: p.completedImages ?? 0,
@@ -32,7 +39,7 @@ const AnnotatorTaskList = () => {
         thumbnailUrl: p.thumbnailUrl,
       }));
 
-      setTasks(projects);
+      setTasks(mappedProjects);
     } catch (err) {
       console.error(err);
       toast.error(t("annotatorTasks.loadError"));
