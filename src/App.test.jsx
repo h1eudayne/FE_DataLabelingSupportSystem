@@ -91,14 +91,14 @@ describe("App Integration - Security & Roles", () => {
   });
 
   it("nên hiển thị Header và Dashboard khi Admin đã đăng nhập", async () => {
-    const adminUser = { role: "Admin", name: "Anna", email: "admin@test.com" };
+    const adminUser = { role: "Admin", fullName: "Anna", email: "admin@test.com" };
     const store = createMockStore({
       user: adminUser,
       token: "admin-token",
       isAuthenticated: true,
     });
 
-    localStorage.setItem("accessToken", "admin-token");
+    localStorage.setItem("access_token", "admin-token");
 
     render(
       <Provider store={store}>

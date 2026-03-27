@@ -24,7 +24,7 @@ describe("Header Component - Comprehensive Suite", () => {
           state = {
             isAuthenticated: true,
             user: {
-              name: "Nguyễn Văn A",
+              fullName: "Nguyễn Văn A",
               role: "Manager",
               email: "staff1@gmail.com",
             },
@@ -99,6 +99,10 @@ describe("Header Component - Comprehensive Suite", () => {
       renderHeader();
 
       fireEvent.click(screen.getByText("Nguyễn Văn A"));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Đăng xuất/i)).toBeInTheDocument();
+      });
 
       const logoutBtn = screen.getByText(/Đăng xuất/i);
       fireEvent.click(logoutBtn);
