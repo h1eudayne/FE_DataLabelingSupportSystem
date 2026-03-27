@@ -156,7 +156,8 @@
         "CL-08": { "title": "Đúng công cụ", "desc": "Dùng đúng Box/Polygon" },
         "CL-09": { "title": "Bao phủ đầy đủ", "desc": "Không bị cắt mất phần hiển thị" },
         "CL-10": { "title": "Dữ liệu đạt chuẩn", "desc": "Ảnh đủ rõ để định danh" }
-      }
+      },
+      "saveAndClose": "Lưu & Đóng"
     },
     "modalReject": {
       "title": "Xác nhận lỗi vi phạm",
@@ -164,7 +165,49 @@
       "step2": "2. Ghi chú cụ thể cho Annotator:",
       "placeholder": "Mô tả chi tiết vị trí lỗi...",
       "btnCancel": "Hủy bỏ",
-      "btnConfirm": "Xác nhận Reject"
+      "btnConfirm": "Xác nhận Reject",
+      "items": {
+        "CL-01": {
+          "title": "Xác định sai đối tượng",
+          "desc": "Đối tượng gán nhãn không đúng thực tế"
+        },
+        "CL-02": {
+          "title": "Sai loại nhãn (Label Class)",
+          "desc": "Chọn sai danh mục hoặc phân loại nhãn"
+        },
+        "CL-03": {
+          "title": "Bounding Box chưa chính xác",
+          "desc": "Khung bao không ôm sát, quá rộng hoặc quá hẹp"
+        },
+        "CL-04": {
+          "title": "Còn bỏ sót đối tượng",
+          "desc": "Chưa gán nhãn hết các đối tượng mục tiêu trong ảnh"
+        },
+        "CL-05": {
+          "title": "Gán nhãn thừa/sai",
+          "desc": "Gán nhãn cho các đối tượng không liên quan hoặc vật thể lạ"
+        },
+        "CL-06": {
+          "title": "Không tuân thủ guideline",
+          "desc": "Vi phạm các quy định đặc thù của dự án"
+        },
+        "CL-07": {
+          "title": "Thiếu tính nhất quán",
+          "desc": "Gán nhãn không đồng nhất với các tiêu chuẩn của các ảnh khác"
+        },
+        "CL-08": {
+          "title": "Dùng sai loại công cụ",
+          "desc": "Sử dụng sai công cụ vẽ (Ví dụ: dùng Box thay vì Polygon)"
+        },
+        "CL-09": {
+          "title": "Chưa bao phủ đầy đủ",
+          "desc": "Phần hiển thị của đối tượng bị cắt mất, không bao phủ hết"
+        },
+        "CL-10": {
+          "title": "Lỗi chất lượng dữ liệu",
+          "desc": "Ảnh quá mờ, lỗi hiển thị hoặc không thể định danh đối tượng"
+        }
+      }
     },
     "messages": {
       "noData": "Không tìm thấy dữ liệu nhiệm vụ.",

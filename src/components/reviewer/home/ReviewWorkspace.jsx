@@ -60,8 +60,8 @@ const ReviewWorkspace = () => {
 
   const ERROR_CATEGORIES = CHECKLIST_IDS.map((id) => ({
     id,
-    title: `${id}: ${t(`review.modalChecklist.items.${id}.title`)}`,
-    desc: t(`review.modalChecklist.items.${id}.desc`),
+    title: `${id}: ${t(`review.modalReject.items.${id}.title`)}`,
+    desc: t(`review.modalReject.items.${id}.desc`),
   }));
 
   const handleSelectAllCriteria = () => {
@@ -550,61 +550,14 @@ const ReviewWorkspace = () => {
           </div>
 
           <Row xs={1} md={2} className="g-2">
-            {[
-              {
-                id: "CL-01",
-                title: "Xác định đúng đối tượng",
-                desc: "Đối tượng gán đúng với thực tế",
-              },
-              {
-                id: "CL-02",
-                title: "Đúng loại nhãn",
-                desc: "Chọn đúng category",
-              },
-              {
-                id: "CL-03",
-                title: "Bounding Box chính xác",
-                desc: "Khung bao ôm sát đối tượng",
-              },
-              {
-                id: "CL-04",
-                title: "Không bỏ sót",
-                desc: "Gán hết đối tượng trong ảnh",
-              },
-              {
-                id: "CL-05",
-                title: "Không gán nhãn sai",
-                desc: "Không gán vào vật thể lạ",
-              },
-              {
-                id: "CL-06",
-                title: "Tuân thủ guideline",
-                desc: "Theo đúng quy định dự án",
-              },
-              {
-                id: "CL-07",
-                title: "Tính nhất quán",
-                desc: "Giống các ảnh đã gán trước đó",
-              },
-              {
-                id: "CL-08",
-                title: "Đúng công cụ",
-                desc: "Dùng đúng Box/Polygon",
-              },
-              {
-                id: "CL-09",
-                title: "Bao phủ đầy đủ",
-                desc: "Không bị cắt mất phần hiển thị",
-              },
-              {
-                id: "CL-10",
-                title: "Dữ liệu đạt chuẩn",
-                desc: "Ảnh đủ rõ để định danh",
-              },
-            ].map((item) => {
-              const isChecked = !!checkedCriteria[`shared-${item.id}`];
+            {CHECKLIST_IDS.map((id) => {
+              const isChecked = !!checkedCriteria[`shared-${id}`];
+
+              const title = t(`review.modalChecklist.items.${id}.title`);
+              const desc = t(`review.modalChecklist.items.${id}.desc`);
+
               return (
-                <Col key={item.id}>
+                <Col key={id}>
                   <div
                     className={`p-2 rounded border d-flex align-items-start gap-2 h-100 transition-all ${
                       isChecked
@@ -612,17 +565,17 @@ const ReviewWorkspace = () => {
                         : "bg-white border-light-subtle"
                     }`}
                     style={{ cursor: "pointer", fontSize: "12px" }}
-                    onClick={() => handleCriteriaCheck(item.id)}
+                    onClick={() => handleCriteriaCheck(id)}
                   >
                     <Form.Check type="checkbox" checked={isChecked} readOnly />
                     <div>
                       <div
                         className={`fw-bold ${isChecked ? "text-success" : ""}`}
                       >
-                        {item.id}: {item.title}
+                        {id}: {title}
                       </div>
                       <div className="text-muted" style={{ fontSize: "10px" }}>
-                        {item.desc}
+                        {desc}
                       </div>
                     </div>
                   </div>
@@ -633,14 +586,16 @@ const ReviewWorkspace = () => {
         </Modal.Body>
         <Modal.Footer>
           <div className="me-auto small text-muted">
-            Đã hoàn thành: <strong>{checkedCLCount}</strong> /{" "}
-            <strong>{totalCLItemsToTick}</strong> tiêu chí
+            {t("review.modalChecklist.footer", {
+              count: checkedCLCount,
+              total: totalCLItemsToTick,
+            })}
           </div>
           <Button
             variant="primary"
             onClick={() => setShowChecklistModal(false)}
           >
-            Lưu & Đóng
+            {t("review.modalChecklist.saveAndClose")}
           </Button>
         </Modal.Footer>
       </Modal>
