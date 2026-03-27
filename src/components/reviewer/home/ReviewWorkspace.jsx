@@ -355,7 +355,7 @@ const ReviewWorkspace = () => {
                 className="text-uppercase text-muted fw-bold mb-3"
                 style={{ fontSize: "11px" }}
               >
-                {t("review.status.title")}
+                {t("review.info.labelList")}
               </h6>
 
               {data.labels?.map((label) => {
@@ -385,7 +385,8 @@ const ReviewWorkspace = () => {
                         className="text-muted mb-2 small italic"
                         style={{ fontSize: "11px" }}
                       >
-                        <strong>Mô tả:</strong> {label.guideLine}
+                        <strong>{t("review.info.guide")}</strong>{" "}
+                        {label.guideLine}
                       </div>
                       {label.checklist?.length > 0 && (
                         <div className="p-2 rounded bg-light border-start border-2 border-info">
@@ -393,7 +394,7 @@ const ReviewWorkspace = () => {
                             className="text-uppercase fw-bold text-info mb-1"
                             style={{ fontSize: "9px" }}
                           >
-                            Checklist công việc:
+                            {t("review.info.workChecklist")}
                           </div>
                           <ul className="list-unstyled mb-0 d-flex flex-column gap-1">
                             {label.checklist.map((item, index) => (
@@ -431,8 +432,8 @@ const ReviewWorkspace = () => {
                 className="text-uppercase text-muted fw-bold mb-3 d-flex align-items-center gap-2"
                 style={{ fontSize: "11px" }}
               >
-                <CheckCircle size={14} className="text-success" /> TRẠNG THÁI
-                KIỂM DUYỆT CHUNG
+                <CheckCircle size={14} className="text-success" />{" "}
+                {t("review.status.title")}
               </h6>
 
               <Card
@@ -445,7 +446,7 @@ const ReviewWorkspace = () => {
                     {checkedCLCount}/{totalCLItemsToTick}
                   </div>
                   <div className="fw-bold small mb-2 text-muted">
-                    Tiêu chí đã đạt
+                    {t("review.status.criteriaMet")}
                   </div>
                   <Button
                     variant={isChecklistComplete ? "success" : "primary"}
@@ -454,8 +455,8 @@ const ReviewWorkspace = () => {
                     onClick={() => setShowChecklistModal(true)}
                   >
                     {isChecklistComplete
-                      ? "Xem lại Checklist"
-                      : "Bắt đầu Kiểm duyệt"}
+                      ? t("review.status.btnReviewAgain")
+                      : t("review.status.btnReview")}
                   </Button>
                 </Card.Body>
               </Card>
@@ -466,7 +467,7 @@ const ReviewWorkspace = () => {
                 className="text-muted mb-2 italic"
                 style={{ fontSize: "11px" }}
               >
-                * Nếu có lỗi, hãy nhấn vào nút bên dưới để chọn mã lỗi.
+                {t("review.status.hintReject")}
               </p>
               <Button
                 variant="danger"
@@ -474,7 +475,7 @@ const ReviewWorkspace = () => {
                 style={{ fontSize: "12px", padding: "10px" }}
                 onClick={() => setShowRejectModal(true)}
               >
-                <AlertCircle size={16} /> THIẾT LẬP LỖI REJECT
+                <AlertCircle size={16} /> {t("review.status.btnSetReject")}
               </Button>
             </div>
           </Col>
@@ -490,27 +491,26 @@ const ReviewWorkspace = () => {
       >
         <Modal.Header closeButton>
           <Modal.Title className="fw-bold text-primary d-flex align-items-center gap-2">
-            <CheckCircle size={24} /> Kiểm duyệt Tiêu chí Chất lượng
+            <CheckCircle size={24} /> {t("review.modalChecklist.title")}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="bg-light">
           <div className="alert alert-info py-2" style={{ fontSize: "12px" }}>
             <AlertCircle size={16} className="me-2" />
-            Xác nhận các tiêu chí chất lượng cho <strong>tất cả</strong> nhãn có
-            trong ảnh.
+            {t("review.modalChecklist.alertInfo")}
           </div>
           <div
             className="mb-3 px-1 d-flex align-items-center gap-1 animate-pulse"
             style={{ fontSize: "11px", color: "#dc3545", fontWeight: "600" }}
           >
             <AlertTriangle size={14} />
-            <span>
-              Lưu ý: Bạn phải hoàn thành 10/10 tiêu chí thì mới được Approve.
-            </span>
+            <span>{t("review.modalChecklist.alertNote")}</span>
           </div>
 
           <div className="mb-3 d-flex flex-wrap gap-2">
-            <span className="small fw-bold text-muted">Đang kiểm duyệt:</span>
+            <span className="small fw-bold text-muted">
+              {t("review.modalChecklist.labeling")}
+            </span>
             {data.labels?.map((label) => {
               const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
                 label.id
@@ -544,8 +544,8 @@ const ReviewWorkspace = () => {
               style={{ userSelect: "none" }}
             >
               {isAllCriteriaSelected
-                ? "Bỏ chọn tất cả tiêu chí"
-                : "Chọn tất cả tiêu chí đạt chuẩn"}
+                ? t("review.modalChecklist.deselectAll")
+                : t("review.modalChecklist.selectAll")}
             </span>
           </div>
 
