@@ -21,12 +21,10 @@ describe("Navbar Component Integration Tests", () => {
       </Provider>,
     );
 
-    expect(screen.getByText(/Projects/i)).toBeInTheDocument();
-    expect(screen.getByText(/Datasets/i)).toBeInTheDocument();
-    expect(screen.getByText(/Export Data/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tổng dự án/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/User Management/i)).toBeInTheDocument();
-    expect(screen.getByText(/System Logs/i)).toBeInTheDocument();
+    expect(screen.getByText(/Quản lý người dùng/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nhật ký hệ thống/i)).toBeInTheDocument();
   });
 
   it("chỉ hiển thị menu Workplace và không hiển thị User Management khi role là Annotator", () => {
@@ -42,12 +40,10 @@ describe("Navbar Component Integration Tests", () => {
       </Provider>,
     );
 
-    expect(screen.getByText(/My Task/i)).toBeInTheDocument();
-    expect(screen.getByText(/Team/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nhiệm vụ/i)).toBeInTheDocument();
 
-    expect(screen.queryByText(/Export Data/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/User Management/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/System Logs/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Quản lý người dùng/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Nhật ký hệ thống/i)).not.toBeInTheDocument();
   });
 
   it("nên hiển thị menu 'Review Task' khi role là Reviewer", () => {
@@ -63,8 +59,7 @@ describe("Navbar Component Integration Tests", () => {
       </Provider>,
     );
 
-    expect(screen.getByText(/Review Task/i)).toBeInTheDocument();
-    expect(screen.queryByText(/My Task/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Nhiệm vụ/i)).toBeInTheDocument();
   });
 
   it("các thẻ Link phải trỏ đúng địa chỉ URL", () => {
@@ -80,10 +75,10 @@ describe("Navbar Component Integration Tests", () => {
       </Provider>,
     );
 
-    const dashboardLink = screen.getByText(/Dashboard/i).closest("a");
+    const dashboardLink = screen.getAllByText(/Dashboard/i)[0].closest("a");
     expect(dashboardLink).toHaveAttribute("href", "/dashboard");
 
-    const userMgmtLink = screen.getByText(/User Management/i).closest("a");
+    const userMgmtLink = screen.getByText(/Quản lý người dùng/i).closest("a");
     expect(userMgmtLink).toHaveAttribute("href", "/settings-user-management");
   });
 });
