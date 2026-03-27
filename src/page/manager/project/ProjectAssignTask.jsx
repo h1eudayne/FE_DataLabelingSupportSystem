@@ -16,12 +16,10 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
   const managerId = user?.id;
   const [annotators, setAnnotators] = useState([]);
   const [reviewers, setReviewers] = useState([]);
-  // Mode: "all" or "individual"
   const [annotatorMode, setAnnotatorMode] = useState("all");
   const [reviewerMode, setReviewerMode] = useState("all");
   const [selectedAnnotators, setSelectedAnnotators] = useState([]);
   const [selectedReviewers, setSelectedReviewers] = useState([]);
-  // Quantity mode: "all" or "custom"
   const [quantityMode, setQuantityMode] = useState("all");
   const [quantity, setQuantity] = useState("");
   const [loading, setLoading] = useState(false);
@@ -187,9 +185,9 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
         try {
           await taskService.assignTask({
             projectId: Number(id),
-            annotatorId: String(ann.id),
-            quantity: Number(qty),
-            reviewerId: String(rev.id),
+            annotatorIds: [String(ann.id)],
+            totalQuantity: Number(qty),
+            reviewerIds: rev.id ? [String(rev.id)] : [],
           });
           log.push({ annotator: ann.name, reviewer: rev.name, qty, status: "success" });
           successCount++;
