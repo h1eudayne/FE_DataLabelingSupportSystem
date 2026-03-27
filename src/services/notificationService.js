@@ -1,38 +1,39 @@
-import api from '../api';
+import axios from "./axios.customize";
 
 const NotificationService = {
-  // Lấy các thông báo mới nhất của người dùng
+  // Get the latest notifications for the current user
   getMyNotifications: async () => {
     try {
-      const response = await api.get('/notifications');
+      const response = await axios.get('/api/notifications');
       return response.data;
     } catch (error) {
-      console.error('Lỗi khi lấy thông báo:', error);
+      console.error('Error fetching notifications:', error);
       throw error;
     }
   },
 
-  // Đánh dấu 1 thông báo là đã đọc
+  // Mark a single notification as read
   markAsRead: async (id) => {
     try {
-      const response = await api.put(`/notifications/${id}/read`);
+      const response = await axios.put(`/api/notifications/${id}/read`);
       return response.data;
     } catch (error) {
-      console.error(`Lỗi khi đánh dấu đã đọc thông báo ${id}:`, error);
+      console.error(`Error marking notification ${id} as read:`, error);
       throw error;
     }
   },
 
-  // Đánh dấu tất cả thông báo là đã đọc
+  // Mark all notifications as read
   markAllAsRead: async () => {
     try {
-      const response = await api.put('/notifications/read-all');
+      const response = await axios.put('/api/notifications/read-all');
       return response.data;
     } catch (error) {
-      console.error('Lỗi khi đánh dấu đã đọc tất cả thông báo:', error);
+      console.error('Error marking all notifications as read:', error);
       throw error;
     }
   }
 };
 
 export default NotificationService;
+

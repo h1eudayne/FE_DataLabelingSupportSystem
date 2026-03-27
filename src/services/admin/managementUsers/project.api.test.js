@@ -12,7 +12,7 @@ describe("admin/project.api", () => {
   // ── getAllProjectsUser ────────────────────────────────────────
 
   describe("getAllProjectsUser()", () => {
-    it("should GET /api/projects/all", async () => {
+    it("should GET /api/projects", async () => {
       const mockProjects = [
         { id: 1, name: "Project A", status: "Active" },
         { id: 2, name: "Project B", status: "Completed" },
@@ -21,7 +21,7 @@ describe("admin/project.api", () => {
 
       const result = await projectApi.getAllProjectsUser();
 
-      expect(axios.get).toHaveBeenCalledWith("/api/projects/all");
+      expect(axios.get).toHaveBeenCalledWith("/api/projects");
       expect(result.data).toHaveLength(2);
       expect(result.data[0].name).toBe("Project A");
     });

@@ -302,6 +302,8 @@ const ProjectUserManagement = () => {
                             variant="link"
                             size="sm"
                             className="text-info p-0 shadow-none"
+                            onClick={() => navigate(`/view-detail-project/${project.id}?tab=statistics`)}
+                            title={t("admin.project.statistics", { defaultValue: "View Statistics" })}
                           >
                             <BarChart2 size={18} />
                           </Button>

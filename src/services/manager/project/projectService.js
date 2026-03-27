@@ -40,8 +40,8 @@ const projectService = {
   removeUserFromProject: (projectId, userId) =>
     axios.delete(`/api/projects/${projectId}/users/${userId}`),
 
-  toggleUserLock: (projectId, userId) =>
-    axios.post(`/api/projects/${projectId}/users/${userId}/toggle-lock`),
+  toggleUserLock: (projectId, userId, lockStatus) =>
+    axios.post(`/api/projects/${projectId}/users/${userId}/toggle-lock?lockStatus=${lockStatus}`),
 };
 
 export default projectService;
