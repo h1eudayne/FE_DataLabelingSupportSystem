@@ -137,7 +137,6 @@ const ExportTab = ({ projectId, project }) => {
   return (
     <div className="d-flex justify-content-center py-3">
       <div className="export-tab-card">
-        {/* ── Header ── */}
         <div className="export-header">
           <div className="export-icon">
             <i className="ri-file-download-line"></i>
@@ -150,7 +149,6 @@ const ExportTab = ({ projectId, project }) => {
           </div>
         </div>
 
-        {/* ── Eligibility ── */}
         <div className="export-section">
           <div className="export-section-title">
             <i className="ri-checkbox-circle-line"></i>
@@ -185,7 +183,6 @@ const ExportTab = ({ projectId, project }) => {
           )}
         </div>
 
-        {/* ── Format Selection ── */}
         <div className="export-section">
           <div className="export-section-title">
             <i className="ri-settings-3-line"></i>
@@ -204,7 +201,6 @@ const ExportTab = ({ projectId, project }) => {
           </div>
         </div>
 
-        {/* ── Export Button ── */}
         <div className="export-action">
           <button
             className={`btn-export ${eligibility.ready ? "ready" : "locked"}`}

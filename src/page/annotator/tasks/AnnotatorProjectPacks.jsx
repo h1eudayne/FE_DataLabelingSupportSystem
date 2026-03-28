@@ -235,7 +235,7 @@ const AnnotatorProjectPacks = () => {
                     <div>
                       <small className="text-muted d-block">{t("annotatorPacks.imageLabel")}</small>
                       <span className="fw-bold">
-                        {pack.startIdx + 1} – {pack.endIdx}
+                        {pack.startIdx + 1} – {Math.min(pack.endIdx, images.length)}
                       </span>
                     </div>
                     <div className="text-end">

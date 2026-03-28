@@ -99,11 +99,9 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
   return (
     <>
       <style>{`
-        /* ── Base resets ── */
         .hide-extra-icon::after, .hide-extra-icon::before { display: none !important; content: none !important; }
         .no-caret::after { display: none !important; }
 
-        /* ── Toggle sidebar button ── */
         .custom-toggle-btn {
           background-color: #f5f7ff !important;
           border-radius: 10px !important;
@@ -115,7 +113,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
         }
         .custom-toggle-btn:hover .toggle-icon { color: white !important; }
 
-        /* ── Dropdown styling: pin below header ── */
         .app-header .dropdown-menu {
           transform: none !important;
           margin-top: 55px !important;
@@ -133,11 +130,9 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           to { opacity: 1; transform: translateY(0) !important; }
         }
 
-        /* ── Theme toggle ── */
         .theme-toggle-btn { transition: all 0.2s ease; }
         .theme-toggle-btn:hover { background-color: #f8f9fa !important; }
 
-        /* ── Avatar ── */
         .avatar-wrapper { position: relative; }
         .status-indicator {
           position: absolute; bottom: 0; right: 0;
@@ -145,7 +140,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           border: 2px solid #fff; border-radius: 50%;
         }
 
-        /* ── Header dropdown items ── */
         .header-dropdown .dropdown-item {
           margin: 0 8px; width: calc(100% - 16px);
           border-radius: 6px; transition: 0.2s ease;
@@ -156,7 +150,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           transform: translateX(4px);
         }
 
-        /* ── Notification pulse ── */
         .pulse-animation { animation: pulse 2s infinite; }
         @keyframes pulse {
           0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
@@ -164,18 +157,12 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
         }
 
-        /* ================================================================
-           DARK MODE - Stitch Design System Overrides
-           ================================================================ */
-
-        /* Header container */
         [data-bs-theme="dark"] .app-header {
           background-color: #1E293B !important;
           border-color: #334155 !important;
           backdrop-filter: blur(16px);
         }
 
-        /* Toggle sidebar button */
         [data-bs-theme="dark"] .custom-toggle-btn {
           background-color: #1F2937 !important;
           border: 1px solid #334155 !important;
@@ -188,7 +175,6 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           color: #94A3B8 !important;
         }
 
-        /* Search input */
         [data-bs-theme="dark"] .header-search-input {
           background-color: #1F2937 !important;
           border: 1px solid #334155 !important;
@@ -200,12 +186,21 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           color: #64748B !important;
         }
 
-        /* Theme toggle */
+        [data-bs-theme="dark"] .header-search-input {
+          background-color: #1F2937 !important;
+          border: 1px solid #334155 !important;
+        }
+        [data-bs-theme="dark"] .header-search-input .form-control {
+          color: #E2E8F0 !important;
+        }
+        [data-bs-theme="dark"] .header-search-input .form-control::placeholder {
+          color: #64748B !important;
+        }
+
         [data-bs-theme="dark"] .theme-toggle-btn:hover {
           background-color: rgba(59, 130, 246, 0.1) !important;
         }
 
-        /* Icon buttons */
         [data-bs-theme="dark"] .btn-light.bg-transparent {
           color: #94A3B8 !important;
         }
@@ -214,22 +209,18 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           color: #3B82F6 !important;
         }
 
-        /* Status indicator in dark mode */
         [data-bs-theme="dark"] .status-indicator {
           border-color: #1E293B !important;
         }
 
-        /* Avatar border */
         [data-bs-theme="dark"] .avatar-wrapper img {
           border-color: #334155 !important;
         }
 
-        /* User name */
         [data-bs-theme="dark"] .header-user-name {
           color: #E2E8F0 !important;
         }
 
-        /* Dropdown glassmorphism */
         [data-bs-theme="dark"] .dropdown-menu-animated {
           background: rgba(30, 41, 59, 0.95) !important;
           border: 1px solid rgba(51, 65, 85, 0.5) !important;
@@ -237,18 +228,15 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
           box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4) !important;
         }
 
-        /* Dropdown items in dark mode */
         [data-bs-theme="dark"] .header-dropdown .dropdown-item:hover {
           background-color: rgba(59, 130, 246, 0.1) !important;
           color: #3B82F6 !important;
         }
 
-        /* Notification badge in dark mode */
         [data-bs-theme="dark"] .pulse-animation {
           border-color: #1E293B !important;
         }
 
-        /* Vertical divider */
         [data-bs-theme="dark"] .vr {
           background-color: #475569 !important;
           opacity: 0.4 !important;

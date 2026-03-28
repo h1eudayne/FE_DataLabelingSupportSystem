@@ -22,7 +22,6 @@ const saveToStorage = (userId, notifications) => {
   try {
     localStorage.setItem(key, JSON.stringify(notifications.slice(0, 50)));
   } catch {
-    
   }
 };
 
@@ -52,64 +51,45 @@ const useNotifications = (userId, initialUnreadCount) => {
     const stored = loadFromStorage(userId);
     return stored.filter((n) => !n.read).length;
   });
-  
-  const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
 
-  
+  const hasFetchedRef = useRef(false);
   const userIdRef = useRef(userId);
+
   useEffect(() => {
     userIdRef.current = userId;
   }, [userId]);
 
-  
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    if (!token) return;
+    if (!token || !userId || hasFetchedRef.current) return;
+
+    hasFetchedRef.current = true;
 
     notificationService
       .getMyNotifications()
       .then((res) => {
         const serverNotifs = (res.data || []).map(normalizeServerNotification);
-        
+
         setNotifications(serverNotifs);
-        
+
         const serverUnreadCount = serverNotifs.filter((n) => !n.read).length;
-        
-        if (!hasFetchedOnce && typeof initialUnreadCount === "number" && initialUnreadCount > 0) {
-          if (serverUnreadCount === 0 && initialUnreadCount > 0) {
-            console.log("[Notifications] Server returned 0 unread, keeping initial count:", initialUnreadCount);
-            setUnreadCount(initialUnreadCount);
-          } else {
-            setUnreadCount(serverUnreadCount);
-          }
-          setHasFetchedOnce(true);
-        } else {
-          setUnreadCount(serverUnreadCount);
-          setHasFetchedOnce(true);
-        }
+        setUnreadCount(serverUnreadCount);
       })
       .catch((err) => {
-        console.warn("[Notifications] Failed to fetch from server, using localStorage cache:", err?.message);
-        if (!hasFetchedOnce && typeof initialUnreadCount === "number" && initialUnreadCount > 0) {
-          setUnreadCount(initialUnreadCount);
-          setHasFetchedOnce(true);
-        }
+        console.warn("[Notifications] Failed to fetch from server:", err?.message);
       });
-  }, [userId, hasFetchedOnce, initialUnreadCount]);
+  }, [userId]);
 
-  
   useEffect(() => {
     saveToStorage(userIdRef.current, notifications);
   }, [notifications]);
 
-  
+
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) return;
 
     const unsubscribe = subscribe("ReceiveNotification", (notification) => {
-      console.log("[Notification] Received:", notification);
-
       const newNotification = {
         id: notification?.Id || notification?.id || Date.now() + Math.random(),
         message:
@@ -136,7 +116,7 @@ const useNotifications = (userId, initialUnreadCount) => {
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
 
-    
+
     notificationService.markAsRead(id).catch((err) => {
       console.warn("[Notifications] Failed to sync markAsRead:", err?.message);
     });
@@ -146,7 +126,7 @@ const useNotifications = (userId, initialUnreadCount) => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
 
-    
+
     notificationService.markAllAsRead().catch((err) => {
       console.warn("[Notifications] Failed to sync markAllAsRead:", err?.message);
     });
