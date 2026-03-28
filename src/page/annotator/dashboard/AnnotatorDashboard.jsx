@@ -244,7 +244,7 @@ const AnnotatorDashboard = () => {
         </div>
       )}
 
-      {/* ===== Project Progress (Collapsible & Scrollable) ===== */}
+      {}
       <div className="row mt-4">
         <div className="col-12">
           <div className="card stitch-card">
@@ -300,7 +300,7 @@ const AnnotatorDashboard = () => {
                             key={pp.projectId}
                             className="stitch-progress-item"
                           >
-                            {/* Project header - clickable to toggle */}
+                            {}
                             <div
                               className="d-flex justify-content-between align-items-center mb-2 stitch-progress-item__header"
                               onClick={() =>
@@ -345,10 +345,10 @@ const AnnotatorDashboard = () => {
                               </span>
                             </div>
 
-                            {/* Progress bars - collapsible */}
+                            {}
                             {!isCollapsed && (
                               <div className="ps-3">
-                                {/* Annotator progress */}
+                                {}
                                 <div className="mb-2">
                                   <div className="d-flex justify-content-between align-items-center mb-1">
                                     <small className="fw-semibold">
@@ -381,7 +381,7 @@ const AnnotatorDashboard = () => {
                                   </div>
                                 </div>
 
-                                {/* Reviewer progress */}
+                                {}
                                 <div className="mb-2">
                                   <div className="d-flex justify-content-between align-items-center mb-1">
                                     <small className="fw-semibold">
@@ -414,7 +414,7 @@ const AnnotatorDashboard = () => {
                                   </div>
                                 </div>
 
-                                {/* Overall progress */}
+                                {}
                                 <div>
                                   <div className="d-flex justify-content-between align-items-center mb-1">
                                     <small className="fw-semibold">
@@ -511,7 +511,7 @@ const AnnotatorDashboard = () => {
                   </select>
                 </div>
 
-                {/* Task Table with lock logic */}
+                {}
                 <div
                   className="annotator-dash-scroll"
                   style={{ maxHeight: 420 }}
@@ -616,7 +616,7 @@ const AnnotatorDashboard = () => {
         </div>
       </div>
 
-      {/* ===== Reviewer Feedback (Collapsible & Scrollable) ===== */}
+      {}
       <div className="row mt-4 mb-4">
         <div className="col-12">
           <div className="card stitch-card">

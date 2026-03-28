@@ -658,7 +658,7 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
-      {/* 1. Cảnh báo Chất lượng */}
+      {}
       {qualityAlerts.length > 0 && (
         <Row className="mt-3">
           <Col xl={12}>
@@ -682,7 +682,7 @@ const DashboardAnalytics = () => {
         </Row>
       )}
 
-      {/* 2. Charts: So sánh quy mô + Cơ cấu trạng thái */}
+      {}
       <Row className="mt-3">
         <Col xl={8}>
           <Card className="shadow-sm border-0 h-100">
@@ -750,7 +750,7 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
-      {/* 3. Độ chính xác dự án (PA) */}
+      {}
       {projectAccuracies.length > 0 && (
         <Row className="mt-3">
           <Col xl={12}>
@@ -851,7 +851,7 @@ const DashboardAnalytics = () => {
         </Row>
       )}
 
-      {/* 4. Hiệu suất Annotator */}
+      {}
       <Row className="mt-3">
         <Col xl={12}>
           <Card className="shadow-sm border-0">
@@ -893,7 +893,7 @@ const DashboardAnalytics = () => {
                         const isExpanded = expandedAnnotators[a.annotatorId];
                         return (
                           <React.Fragment key={a.annotatorId}>
-                            {/* Summary row - per person */}
+                            {}
                             <tr
                               style={{ cursor: "pointer" }}
                               onClick={() =>
@@ -978,7 +978,7 @@ const DashboardAnalytics = () => {
                                 </div>
                               </td>
                             </tr>
-                            {/* Expanded: per-project detail rows */}
+                            {}
                             {isExpanded &&
                               a.projectDetails?.map((pd) => {
                                 const pdRate =
@@ -1069,7 +1069,7 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
-      {/* 5. Đánh giá Reviewer */}
+      {}
       <Row className="mt-3">
         <Col xl={12}>
           <Card className="shadow-sm border-0">
@@ -1108,7 +1108,7 @@ const DashboardAnalytics = () => {
                         const isExpanded = expandedReviewers[r.name];
                         return (
                           <React.Fragment key={idx}>
-                            {/* Summary row */}
+                            {}
                             <tr
                               style={{ cursor: "pointer" }}
                               onClick={() =>
@@ -1176,7 +1176,7 @@ const DashboardAnalytics = () => {
                                 </Badge>
                               </td>
                             </tr>
-                            {/* Expanded: per-project detail */}
+                            {}
                             {isExpanded &&
                               r.projectDetailsList?.map((pd, pdIdx) => (
                                 <tr
@@ -1231,7 +1231,7 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
-      {/* 6. Error Breakdown + Label Distribution + Top 5 */}
+      {}
       <Row className="mt-3">
         {errorBreakdown.length > 0 && (
           <Col xl={6}>
@@ -1358,7 +1358,7 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
-      {/* Section: Tiến độ cá nhân theo dự án */}
+      {}
       <Row className="mt-3">
         <Col xl={12}>
           <Card className="shadow-sm border-0">
@@ -1392,7 +1392,7 @@ const DashboardAnalytics = () => {
                         const isExpanded = expandedProjects[pp.projectId];
                         return (
                           <React.Fragment key={pp.projectId}>
-                            {/* Project summary row */}
+                            {}
                             <tr
                               style={{ cursor: "pointer" }}
                               onClick={() =>
@@ -1448,7 +1448,7 @@ const DashboardAnalytics = () => {
                                 </div>
                               </td>
                             </tr>
-                            {/* Expanded: per-person rows */}
+                            {}
                             {isExpanded && (
                               <>
                                 {pp.annotators.map((person) => (
@@ -1539,7 +1539,7 @@ const DashboardAnalytics = () => {
                                     </td>
                                   </tr>
                                 ))}
-                                {/* Overall row */}
+                                {}
                                 <tr
                                   className="bg-light border-bottom"
                                   style={{ fontSize: "0.85em" }}

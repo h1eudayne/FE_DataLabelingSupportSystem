@@ -1,12 +1,11 @@
 import axios from "../../axios.customize";
 
-const loginApi = (email, password) => {
-  const URL_BACKEND = "/api/auth/login";
+const forgotPasswordApi = (email) => {
+  const URL_BACKEND = "/api/auth/forgot-password";
   const data = {
     email: email,
-    password,
   };
   return axios.post(URL_BACKEND, data);
 };
 
-export default loginApi;
+export default forgotPasswordApi;

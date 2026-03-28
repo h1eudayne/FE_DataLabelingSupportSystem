@@ -11,14 +11,14 @@ export default function StatCard({
     <div className="col">
       <div className="card stitch-stat-card h-100">
         <div className="card-body d-flex align-items-center gap-3 p-3">
-          {/* Gradient icon */}
+          {}
           {icon && (
             <div className={`stat-icon-gradient ${color}`}>
               <i className={icon}></i>
             </div>
           )}
 
-          {/* Text content */}
+          {}
           <div className="flex-grow-1 min-width-0">
             <p className="stitch-stat-title">{title}</p>
 

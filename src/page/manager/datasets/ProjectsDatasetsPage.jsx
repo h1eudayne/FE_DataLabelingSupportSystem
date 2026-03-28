@@ -9,7 +9,7 @@ import analyticsService from "../../../services/manager/analytics/analyticsServi
 import disputeService from "../../../services/manager/dispute/disputeService";
 import labelService from "../../../services/manager/project/labelService";
 
-const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
+const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
   const { t } = useTranslation();
   const { id: routeParamId } = useParams();
   const paramId = embeddedProjectId || routeParamId;
@@ -331,6 +331,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                     ? t('datasets.exportNotEligible')
                     : "Export JSON"}
             </button>
+            {!readOnly && (
             <button
               className="btn btn-primary btn-sm px-3"
               disabled={!selectedProject || uploading}
@@ -343,6 +344,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
               )}
               {uploading ? t('datasets.uploading') : "Upload Data"}
             </button>
+            )}
           </div>
         </div>
 
@@ -368,6 +370,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                         {selectedProject.labels?.length || 0}
                       </span>
                     </h6>
+                    {!readOnly && (
                     <button
                       className="btn btn-sm btn-soft-primary"
                       onClick={(e) => { e.stopPropagation(); setEditingLabel(null); setNewLabel({ name: "", color: "#3b82f6", guideLine: "", checklist: [""], isDefault: false }); setShowAddLabel(true); }}
@@ -375,6 +378,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                       <i className="ri-add-line align-middle me-1" />
                       {t('datasets.addLabel')}
                     </button>
+                    )}
                   </div>
                   {!collapsedSections.labelConfig && <div className="card-body p-0">
                       <table className="table table-hover align-middle mb-0" style={{ tableLayout: 'fixed' }}>
@@ -385,7 +389,9 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                             <th style={{ width: '12%', whiteSpace: 'nowrap' }}>{t('datasets.color')}</th>
                             <th style={{ width: '20%', whiteSpace: 'nowrap' }}>{t('datasets.guideline')}</th>
                             <th style={{ width: '20%', whiteSpace: 'nowrap' }}>{t('datasets.checklist')}</th>
+                            {!readOnly && (
                             <th style={{ width: '17%', whiteSpace: 'nowrap', textAlign: 'center' }}>{t('common.actions')}</th>
+                            )}
                           </tr>
                         </thead>
                         <tbody>
@@ -430,6 +436,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                                   <span className="text-muted small">—</span>
                                 )}
                               </td>
+                              {!readOnly && (
                               <td>
                                 <div className="d-flex gap-1 justify-content-center">
                                   <button
@@ -445,7 +452,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                                     onClick={async () => {
                                       if (!window.confirm(t('datasets.confirmDeleteLabel'))) return;
                                       try {
-                                        await labelService.deleteLabel(selectedProject.id, label.id);
+                                        await labelService.deleteLabel(label.id);
                                         toast.success(t('datasets.deleteLabelSuccess'));
                                         await handleProjectClick(selectedProject.id);
                                       } catch {
@@ -457,14 +464,15 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                                   </button>
                                 </div>
                               </td>
+                              )}
                             </tr>
                           ))}
                         </tbody>
                       </table>
                   </div>}
 
-                  {/* Add Label Modal */}
-                  {showAddLabel && (
+                  {}
+                  {!readOnly && showAddLabel && (
                     <div className="card-footer bg-white border-top p-3">
                       <h6 className="fw-bold fs-13 mb-3">
                         <i className={`${editingLabel ? 'ri-pencil-line' : 'ri-add-circle-line'} me-1 text-primary`} />
@@ -579,15 +587,16 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                           onClick={async () => {
                             setAddingLabel(true);
                             try {
-                              const checklistStr = newLabel.checklist
-                                .filter((c) => c.trim())
-                                .join("|");
+                              
+                              const filteredChecklist = newLabel.checklist
+                                .map((c) => c.trim())
+                                .filter((c) => c);
                               if (editingLabel) {
-                                await labelService.updateLabel(selectedProject.id, editingLabel.id, {
+                                await labelService.updateLabel(editingLabel.id, {
                                   name: newLabel.name.trim(),
                                   color: newLabel.color,
                                   guideLine: newLabel.guideLine.trim() || null,
-                                  defaultChecklist: checklistStr || null,
+                                  checklist: filteredChecklist.length > 0 ? filteredChecklist : null,
                                   isDefault: newLabel.isDefault,
                                 });
                                 toast.success(t('datasets.editLabelSuccess'));
@@ -596,7 +605,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                                   name: newLabel.name.trim(),
                                   color: newLabel.color,
                                   guideLine: newLabel.guideLine.trim() || null,
-                                  defaultChecklist: checklistStr || null,
+                                  checklist: filteredChecklist.length > 0 ? filteredChecklist : null,
                                   isDefault: newLabel.isDefault,
                                 });
                                 toast.success(t('datasets.addLabelSuccess'));

@@ -1,5 +1,4 @@
 import AuthLoginForm from "./AuthLoginForm";
-import AuthRegisterLink from "./AuthRegisterLink";
 import "../../../assets/css/AuthRight.css";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -66,8 +65,11 @@ const AuthRight = () => {
             <span className="text-primary">AILABEL</span>
           </p>
           <AuthLoginForm />
-          <div className="mt-3 text-center text-md-start">
-            <AuthRegisterLink />
+          <div className="mt-4 text-center text-muted small">
+            <p className="mb-0">
+              <i className="ri-information-line me-1"></i>
+              {t("auth.contactAdminForAccount") || "Liên hệ Admin để được tạo tài khoản"}
+            </p>
           </div>
         </div>
       </div>

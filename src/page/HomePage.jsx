@@ -47,10 +47,10 @@ const RoleBasedRenderer = ({ role }) => {
     case "Admin":
       return <AdminDashboard />;
     case "Manager":
-      // return <ManagerContainer />;
+      
       return <DashboardAnalytics />;
     case "Annotator":
-      // return <AnnotatorContainer />;
+      
       return <AnnotatorDashboard />;
     case "Reviewer":
       return <ReviewerContainer />;

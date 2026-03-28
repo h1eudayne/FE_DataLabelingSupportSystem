@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Pagination, PaginationItem, PaginationLink } from "reactstrap";
 
 const UserTable = (props) => {
-  const { users, onEdit, currentRole, onActive, pagination, totalCount } =
+  const { users, onEdit, currentRole, onActive, onResetPassword, pagination, totalCount } =
     props;
   const { page, pageSize, onPageChange } = pagination || {
     page: 1,
@@ -116,6 +116,15 @@ const UserTable = (props) => {
                         <i className="ri-edit-2-line"></i>
                       </button>
                     )}
+
+                    <button
+                      className="btn btn-sm btn-soft-warning border-0 shadow-none"
+                      style={{ padding: "0.4rem 0.6rem" }}
+                      onClick={() => onResetPassword(user)}
+                      title={t("userTableComp.resetPassword")}
+                    >
+                      <i className="ri-lock-password-line"></i>
+                    </button>
                   </div>
                 </td>
               </tr>

@@ -5,6 +5,7 @@ import {
   updateUser,
   updateStatus,
   importUser,
+  adminResetPassword,
 } from "../../services/admin/managementUsers/user.api";
 import UserTable from "../../components/admin/managementUser/UserTable";
 import {
@@ -25,6 +26,7 @@ import {
 import UserFilter from "../../components/admin/managementUser/UserFilter";
 import UserModal from "../../components/admin/managementUser/UserModal";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 
 const SettingUserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -43,9 +45,16 @@ const SettingUserManagement = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const [importError, setImportError] = useState("");
+
+  // Reset password state
+  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
+  const [resetPasswordUser, setResetPasswordUser] = useState(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
   const { t } = useTranslation();
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (BR-ADM-25)
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; 
   const ALLOWED_EXTENSIONS = [".xlsx", ".xls"];
 
   const handleImportFileChange = (e) => {
@@ -173,6 +182,32 @@ const SettingUserManagement = () => {
     }
   };
 
+  const handleResetPassword = (user) => {
+    setResetPasswordUser(user);
+    setNewPassword("");
+    setResetPasswordModalOpen(true);
+  };
+
+  const handleSubmitResetPassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error(t("userMgmt.passwordMinLength", { defaultValue: "Password must be at least 6 characters" }));
+      return;
+    }
+
+    setResetPasswordLoading(true);
+    try {
+      await adminResetPassword(resetPasswordUser.id, newPassword);
+      toast.success(t("userMgmt.passwordResetSuccess", { defaultValue: "Password has been reset successfully" }));
+      setResetPasswordModalOpen(false);
+      setResetPasswordUser(null);
+      setNewPassword("");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message || t("userMgmt.passwordResetFailed", { defaultValue: "Failed to reset password" }));
+    } finally {
+      setResetPasswordLoading(false);
+    }
+  };
+
   const onPageChange = (newPage) => {
     setPagination((prev) => ({ ...prev, page: newPage }));
   };
@@ -215,6 +250,7 @@ const SettingUserManagement = () => {
             users={filteredUsers}
             onEdit={handleEdit}
             onActive={handleActive}
+            onResetPassword={handleResetPassword}
             currentRole={currentRole}
             pagination={{ ...pagination, onPageChange }}
             totalCount={totalCount}
@@ -222,7 +258,56 @@ const SettingUserManagement = () => {
         </CardBody>
       </Card>
 
-      {/* Import Excel Modal (BR-ADM-14, 16, 25, 26) */}
+      {/* Reset Password Modal */}
+      <Modal isOpen={resetPasswordModalOpen} toggle={() => setResetPasswordModalOpen(false)}>
+        <ModalHeader toggle={() => setResetPasswordModalOpen(false)}>
+          <i className="ri-lock-password-line me-2 text-warning"></i>
+          {t("userMgmt.resetPassword", { defaultValue: "Reset Password" })}
+        </ModalHeader>
+        <ModalBody>
+          <p className="mb-3">
+            {t("userMgmt.resetPasswordFor", { defaultValue: "Reset password for" })}: <strong>{resetPasswordUser?.fullName}</strong>
+            <br />
+            <small className="text-muted">{resetPasswordUser?.email}</small>
+          </p>
+          <div className="mb-3">
+            <label className="form-label fw-medium">
+              {t("userMgmt.newPassword", { defaultValue: "New Password" })}
+            </label>
+            <input
+              type="password"
+              className="form-control"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder={t("userMgmt.enterNewPassword", { defaultValue: "Enter new password" })}
+              minLength={6}
+            />
+            <small className="text-muted">
+              {t("userMgmt.passwordMinLength", { defaultValue: "Minimum 6 characters" })}
+            </small>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="secondary" onClick={() => setResetPasswordModalOpen(false)}>
+            {t("common.cancel", { defaultValue: "Cancel" })}
+          </Button>
+          <Button color="warning" onClick={handleSubmitResetPassword} disabled={resetPasswordLoading}>
+            {resetPasswordLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-1"></span>
+                {t("common.loading", { defaultValue: "Loading..." })}
+              </>
+            ) : (
+              <>
+                <i className="ri-lock-password-line me-1"></i>
+                {t("userMgmt.resetPassword", { defaultValue: "Reset Password" })}
+              </>
+            )}
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {}
       <Modal isOpen={importModalOpen} toggle={closeImportModal} size="lg">
         <ModalHeader toggle={closeImportModal}>
           <i className="ri-file-excel-2-line me-2 text-success"></i>
