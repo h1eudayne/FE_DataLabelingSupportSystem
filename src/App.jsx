@@ -30,6 +30,7 @@ import CreateProject from "./page/manager/project/CreateProject";
 import ProjectsDatasetsPage from "./page/manager/datasets/ProjectsDatasetsPage";
 
 import LoginPage from "./page/auth/login/LoginPage";
+import ForgotPasswordPage from "./page/auth/ForgotPasswordPage";
 import { ROLES } from "./constants/roles";
 import LandingPage from "./page/LandingPage";
 import Profile from "./page/Profile";
@@ -59,7 +60,21 @@ function App() {
           }
         />
 
+        <Route
+          path="/forgot-password"
+          element={
+            isLoggedIn ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />
+          }
+        />
+
         <Route path="/access-denied" element={<AccessDenied />} />
+
+        <Route
+          path="/register"
+          element={
+            isLoggedIn ? <Navigate to="/dashboard" replace /> : <RegisterPage />
+          }
+        />
 
         <Route element={<PrivateRoute />}>
           <Route element={<MainLayouts />}>
@@ -106,12 +121,7 @@ function App() {
               <Route path="projects-create" element={<CreateProject />} />
             </Route>
 
-            {}
-            <Route
-              element={
-                <RoleProtectedRoute allowRoles={["Manager", "Admin"]} />
-              }
-            >
+            <Route element={<RoleProtectedRoute allowRoles={["Manager", "Admin"]} />}>
               <Route
                 path="project-detail/:id"
                 element={<ProjectDetailPage />}

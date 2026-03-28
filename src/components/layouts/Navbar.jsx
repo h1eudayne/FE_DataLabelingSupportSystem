@@ -31,7 +31,6 @@ const Navbar = () => {
     <div className="app-menu navbar-menu">
       <style>
         {`
-          /* ── Light mode defaults ── */
           .nav-item .menu-link {
             color: #495057 !important;
             transition: all 0.2s ease;
@@ -53,23 +52,16 @@ const Navbar = () => {
             color: #adb5bd !important;
           }
 
-          /* ================================================================
-             DARK MODE - Stitch Design System
-             ================================================================ */
-
-          /* Sidebar background */
           [data-bs-theme="dark"] .app-menu.navbar-menu {
             background-color: #111827 !important;
             border-right: 1px solid rgba(51, 65, 85, 0.4) !important;
           }
 
-          /* Brand box */
           [data-bs-theme="dark"] .navbar-brand-box {
             background-color: #111827 !important;
             border-bottom: 1px solid rgba(51, 65, 85, 0.3) !important;
           }
 
-          /* Menu links in dark mode */
           [data-bs-theme="dark"] .nav-item .menu-link {
             color: #94A3B8 !important;
             border-radius: 8px !important;
@@ -87,7 +79,6 @@ const Navbar = () => {
             color: #3B82F6 !important;
           }
 
-          /* Active state */
           [data-bs-theme="dark"] .nav-item .menu-link.active {
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05)) !important;
             color: #3B82F6 !important;
@@ -95,7 +86,6 @@ const Navbar = () => {
             font-weight: 600 !important;
           }
 
-          /* Menu title */
           [data-bs-theme="dark"] .menu-title {
             color: #64748B !important;
             text-transform: uppercase !important;
@@ -104,13 +94,11 @@ const Navbar = () => {
             font-weight: 700 !important;
           }
 
-          /* Divider in dark mode */
           [data-bs-theme="dark"] hr {
             border-color: #334155 !important;
             opacity: 0.3;
           }
 
-          /* Scrollbar within sidebar */
           [data-bs-theme="dark"] .app-menu ::-webkit-scrollbar {
             width: 4px;
           }
@@ -119,10 +107,6 @@ const Navbar = () => {
             border-radius: 2px;
           }
 
-          /* ================================================================
-             LOGO TOGGLE - Override based on data-bs-theme
-             ================================================================ */
-          /* Dark mode: show logo-dark, hide logo-light */
           [data-bs-theme="dark"] .navbar-brand-box .logo-dark {
             display: block !important;
           }
@@ -130,7 +114,6 @@ const Navbar = () => {
             display: none !important;
           }
 
-          /* Light mode: show logo-light, hide logo-dark */
           [data-bs-theme="light"] .navbar-brand-box .logo-dark {
             display: none !important;
           }
