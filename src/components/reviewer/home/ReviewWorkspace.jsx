@@ -223,13 +223,7 @@ const ReviewWorkspace = () => {
 
   const isOverdue = new Date(data.deadline) < new Date();
 
-  const hasAnyLabel = data.labels?.some((label) =>
-    data.existingAnnotations[0]?.__checklist?.[label.id]?.some(
-      (val) => val === true,
-    ),
-  );
-
-  const totalCLItemsToTick = hasAnyLabel ? 10 : 0;
+  const totalCLItemsToTick = CHECKLIST_IDS?.length || 10;
 
   const checkedCLCount = Object.values(checkedCriteria).filter(Boolean).length;
 
@@ -612,13 +606,13 @@ const ReviewWorkspace = () => {
             className="fw-bold d-flex align-items-center gap-2"
             style={{ color: "#d93025" }}
           >
-            <AlertTriangle size={24} /> Xác nhận lỗi vi phạm
+            <AlertTriangle size={24} /> {t("review.modalReject.title")}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="bg-light">
           <Form.Group className="mb-4">
             <Form.Label className="fw-bold text-secondary small mb-3">
-              1. Phân loại các tiêu chí vi phạm (Chọn nhiều):
+              {t("review.modalReject.step1")}
             </Form.Label>
             <Row xs={1} md={2} className="g-2">
               {ERROR_CATEGORIES.map((err) => (
@@ -657,12 +651,12 @@ const ReviewWorkspace = () => {
 
           <Form.Group>
             <Form.Label className="fw-bold text-secondary small mb-2">
-              2. Ghi chú cụ thể cho Annotator:
+              {t("review.modalReject.step2")}
             </Form.Label>
             <Form.Control
               as="textarea"
               rows={4}
-              placeholder="Mô tả chi tiết vị trí lỗi..."
+              placeholder={t("review.modalReject.placeholder")}
               style={{ fontSize: "13px" }}
               value={rejectComment}
               onChange={(e) => setRejectComment(e.target.value)}
@@ -675,7 +669,7 @@ const ReviewWorkspace = () => {
             size="sm"
             onClick={() => setShowRejectModal(false)}
           >
-            Hủy bỏ
+            {t("review.modalReject.btnCancel")}
           </Button>
           <Button
             variant="danger"
@@ -686,7 +680,7 @@ const ReviewWorkspace = () => {
               setShowRejectModal(false);
             }}
           >
-            Xác nhận Reject
+            {t("review.modalReject.btnConfirm")}
           </Button>
         </Modal.Footer>
       </Modal>

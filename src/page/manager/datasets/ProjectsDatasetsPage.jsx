@@ -62,13 +62,19 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
   const resetLabelForm = () => {
     setShowAddLabel(false);
     setEditingLabel(null);
-    setNewLabel({ name: "", color: "#3b82f6", guideLine: "", checklist: [""], isDefault: false });
+    setNewLabel({
+      name: "",
+      color: "#3b82f6",
+      guideLine: "",
+      checklist: [""],
+      isDefault: false,
+    });
   };
 
   const filteredProjects = useMemo(() => {
     if (!searchTerm.trim()) return projects;
     return projects.filter((p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase())
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [projects, searchTerm]);
 
@@ -87,7 +93,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
       const res = await projectService.getManagerProjects(managerId);
       setProjects(res.data || []);
     } catch (error) {
-      toast.error(t('datasets.loadProjectFailed'), error);
+      toast.error(t("datasets.loadProjectFailed"), error);
     }
   };
 
@@ -117,7 +123,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
       setSelectedProject(res.data);
       checkExportEligibility(id);
     } catch (error) {
-      toast.error(t('datasets.projectDetailError'), error);
+      toast.error(t("datasets.projectDetailError"), error);
     } finally {
       setLoading(false);
     }
@@ -163,11 +169,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
     setUploading(true);
     try {
       await datasetService.uploadFiles(selectedProject.id, files);
-      toast.success(t('datasets.uploadSuccess', { count: files.length }));
+      toast.success(t("datasets.uploadSuccess", { count: files.length }));
       await handleProjectClick(selectedProject.id);
       await fetchList();
     } catch (error) {
-      toast.error(t('datasets.uploadFailed'), error);
+      toast.error(t("datasets.uploadFailed"), error);
     } finally {
       setUploading(false);
       event.target.value = null;
@@ -181,13 +187,20 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
       const reasons = [];
       if (!exportCheck.allApproved)
         reasons.push(
-          t('datasets.tasksNotApprovedDetail', { remaining: (exportCheck.totalTasks || 0) - (exportCheck.approved || 0), approved: exportCheck.approved || 0, total: exportCheck.totalTasks || 0 }),
+          t("datasets.tasksNotApprovedDetail", {
+            remaining:
+              (exportCheck.totalTasks || 0) - (exportCheck.approved || 0),
+            approved: exportCheck.approved || 0,
+            total: exportCheck.totalTasks || 0,
+          }),
         );
       if (!exportCheck.noPendingDisputes)
         reasons.push(
-          t('datasets.disputesPendingDetail', { count: exportCheck.pendingDisputeCount || 0 }),
+          t("datasets.disputesPendingDetail", {
+            count: exportCheck.pendingDisputeCount || 0,
+          }),
         );
-      toast.error(`${t('datasets.cannotExport')} ${reasons.join(". ")}.`, {
+      toast.error(`${t("datasets.cannotExport")} ${reasons.join(". ")}.`, {
         autoClose: 5000,
       });
       return;
@@ -205,9 +218,9 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      toast.success(t('datasets.exportSuccess'));
+      toast.success(t("datasets.exportSuccess"));
     } catch (error) {
-      toast.error(t('datasets.exportFailed'));
+      toast.error(t("datasets.exportFailed"));
     } finally {
       setExporting(false);
     }
@@ -224,14 +237,16 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
       >
         <div className="p-3 d-flex flex-column h-100">
           <div className="mb-3">
-            <h5 className="mb-0 fw-bold text-uppercase fs-13">{t('datasets.myProjects')}</h5>
+            <h5 className="mb-0 fw-bold text-uppercase fs-13">
+              {t("datasets.myProjects")}
+            </h5>
           </div>
 
           <div className="search-box mb-3">
             <input
               type="text"
               className="form-control bg-light border-light"
-              placeholder={t('datasets.searchProject')}
+              placeholder={t("datasets.searchProject")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -262,18 +277,20 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
               {filteredProjects.length === 0 && searchTerm && (
                 <li className="text-center text-muted small py-3">
                   <i className="ri-search-line d-block fs-20 mb-1 opacity-50" />
-                  {t('datasets.noProjectFound')}
+                  {t("datasets.noProjectFound")}
                 </li>
               )}
             </ul>
           </div>
 
           <div className="mt-3 border-top pt-3">
-            <p className="text-muted mb-1 fs-11 text-uppercase">{t('datasets.statistics')}</p>
+            <p className="text-muted mb-1 fs-11 text-uppercase">
+              {t("datasets.statistics")}
+            </p>
             <div className="d-flex align-items-center">
               <div className="flex-grow-1">
                 <p className="mb-1 fs-12">
-                  {t('datasets.totalProjects')}: <b>{projects.length}</b>
+                  {t("datasets.totalProjects")}: <b>{projects.length}</b>
                 </p>
                 <div className="progress progress-sm">
                   <div
@@ -291,8 +308,8 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
         <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-white shadow-sm z-3">
           <h5 className="fs-16 mb-0 fw-bold">
             {selectedProject
-              ? `${t('datasets.projectPrefix')}: ${selectedProject.name}`
-              : t('datasets.selectProject')}
+              ? `${t("datasets.projectPrefix")}: ${selectedProject.name}`
+              : t("datasets.selectProject")}
           </h5>
           <div className="hstack gap-2">
             <input
@@ -307,11 +324,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
               className={`btn btn-sm px-3 ${exportCheck.ready ? "btn-success" : "btn-outline-secondary"}`}
               disabled={!selectedProject || exporting || exportCheck.checking}
               onClick={handleExport}
-              style={{ minWidth: '160px' }}
+              style={{ minWidth: "160px" }}
               title={
                 !exportCheck.ready && selectedProject
-                  ? `${t('datasets.exportNotReady')}: ${!exportCheck.allApproved ? t('datasets.notAllApproved') : ""} ${!exportCheck.noPendingDisputes ? t('datasets.disputePendingShort') : ""}`
-                  : t('datasets.exportJson')
+                  ? `${t("datasets.exportNotReady")}: ${!exportCheck.allApproved ? t("datasets.notAllApproved") : ""} ${!exportCheck.noPendingDisputes ? t("datasets.disputePendingShort") : ""}`
+                  : t("datasets.exportJson")
               }
             >
               {exporting ? (
@@ -324,11 +341,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                 <i className="ri-file-download-line align-middle me-1" />
               )}
               {exporting
-                ? t('datasets.exporting')
+                ? t("datasets.exporting")
                 : exportCheck.checking
-                  ? t('datasets.checking')
+                  ? t("datasets.checking")
                   : !exportCheck.ready && selectedProject
-                    ? t('datasets.exportNotEligible')
+                    ? t("datasets.exportNotEligible")
                     : "Export JSON"}
             </button>
             <button
@@ -341,7 +358,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
               ) : (
                 <i className="ri-upload-cloud-2-line align-middle me-1" />
               )}
-              {uploading ? t('datasets.uploading') : "Upload Data"}
+              {uploading ? t("datasets.uploading") : "Upload Data"}
             </button>
           </div>
         </div>
@@ -350,7 +367,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
           {loading ? (
             <div className="text-center py-5">
               <div className="spinner-border text-primary"></div>
-              <p className="mt-2 text-muted">{t('datasets.loadingData')}</p>
+              <p className="mt-2 text-muted">{t("datasets.loadingData")}</p>
             </div>
           ) : selectedProject ? (
             <div className="row g-3">
@@ -359,49 +376,102 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                   <div
                     className="card-header bg-light-subtle d-flex align-items-center justify-content-between"
                     style={{ cursor: "pointer" }}
-                    onClick={() => toggleSection('labelConfig')}
+                    onClick={() => toggleSection("labelConfig")}
                   >
                     <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted d-flex align-items-center">
-                      <i className={`ri-arrow-${collapsedSections.labelConfig ? 'right' : 'down'}-s-line me-1 fs-16`} />
-                      {t('datasets.labelConfig')}
+                      <i
+                        className={`ri-arrow-${collapsedSections.labelConfig ? "right" : "down"}-s-line me-1 fs-16`}
+                      />
+                      {t("datasets.labelConfig")}
                       <span className="badge bg-primary-subtle text-primary ms-2">
                         {selectedProject.labels?.length || 0}
                       </span>
                     </h6>
                     <button
                       className="btn btn-sm btn-soft-primary"
-                      onClick={(e) => { e.stopPropagation(); setEditingLabel(null); setNewLabel({ name: "", color: "#3b82f6", guideLine: "", checklist: [""], isDefault: false }); setShowAddLabel(true); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingLabel(null);
+                        setNewLabel({
+                          name: "",
+                          color: "#3b82f6",
+                          guideLine: "",
+                          checklist: [""],
+                          isDefault: false,
+                        });
+                        setShowAddLabel(true);
+                      }}
                     >
                       <i className="ri-add-line align-middle me-1" />
-                      {t('datasets.addLabel')}
+                      {t("datasets.addLabel")}
                     </button>
                   </div>
-                  {!collapsedSections.labelConfig && <div className="card-body p-0">
-                      <table className="table table-hover align-middle mb-0" style={{ tableLayout: 'fixed' }}>
+                  {!collapsedSections.labelConfig && (
+                    <div className="card-body p-0">
+                      <table
+                        className="table table-hover align-middle mb-0"
+                        style={{ tableLayout: "fixed" }}
+                      >
                         <thead className="table-light">
                           <tr>
-                            <th style={{ width: '16%', whiteSpace: 'nowrap' }}>{t('datasets.labelName')}</th>
-                            <th style={{ width: '15%', whiteSpace: 'nowrap' }}>{t('datasets.labelType')}</th>
-                            <th style={{ width: '12%', whiteSpace: 'nowrap' }}>{t('datasets.color')}</th>
-                            <th style={{ width: '20%', whiteSpace: 'nowrap' }}>{t('datasets.guideline')}</th>
-                            <th style={{ width: '20%', whiteSpace: 'nowrap' }}>{t('datasets.checklist')}</th>
-                            <th style={{ width: '17%', whiteSpace: 'nowrap', textAlign: 'center' }}>{t('common.actions')}</th>
+                            <th style={{ width: "16%", whiteSpace: "nowrap" }}>
+                              {t("datasets.labelName")}
+                            </th>
+                            <th style={{ width: "15%", whiteSpace: "nowrap" }}>
+                              {t("datasets.labelType")}
+                            </th>
+                            <th style={{ width: "12%", whiteSpace: "nowrap" }}>
+                              {t("datasets.color")}
+                            </th>
+                            <th style={{ width: "20%", whiteSpace: "nowrap" }}>
+                              {t("datasets.guideline")}
+                            </th>
+                            <th style={{ width: "20%", whiteSpace: "nowrap" }}>
+                              {t("datasets.checklist")}
+                            </th>
+                            <th
+                              style={{
+                                width: "17%",
+                                whiteSpace: "nowrap",
+                                textAlign: "center",
+                              }}
+                            >
+                              {t("common.actions")}
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
                           {selectedProject.labels?.map((label) => (
                             <tr key={label.id}>
-                              <td className="fw-semibold text-truncate" style={{ maxWidth: 0 }} title={label.name}>{label.name}</td>
-                              <td style={{ whiteSpace: 'nowrap' }}>
+                              <td
+                                className="fw-semibold text-truncate"
+                                style={{ maxWidth: 0 }}
+                                title={label.name}
+                              >
+                                {label.name}
+                              </td>
+                              <td style={{ whiteSpace: "nowrap" }}>
                                 {label.isDefault ? (
-                                  <span className="badge bg-warning-subtle text-warning px-2 py-1" style={{ fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
+                                  <span
+                                    className="badge bg-warning-subtle text-warning px-2 py-1"
+                                    style={{
+                                      fontSize: "0.7rem",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
                                     <i className="ri-error-warning-line me-1" />
-                                    {t('datasets.labelDefault')}
+                                    {t("datasets.labelDefault")}
                                   </span>
                                 ) : (
-                                  <span className="badge bg-info-subtle text-info px-2 py-1" style={{ fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
+                                  <span
+                                    className="badge bg-info-subtle text-info px-2 py-1"
+                                    style={{
+                                      fontSize: "0.7rem",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
                                     <i className="ri-folder-line me-1" />
-                                    {t('datasets.labelProject')}
+                                    {t("datasets.labelProject")}
                                   </span>
                                 )}
                               </td>
@@ -413,14 +483,22 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                                   {label.color}
                                 </span>
                               </td>
-                              <td className="text-muted small text-truncate" style={{ maxWidth: 0 }} title={label.guideLine}>
+                              <td
+                                className="text-muted small text-truncate"
+                                style={{ maxWidth: 0 }}
+                                title={label.guideLine}
+                              >
                                 {label.guideLine}
                               </td>
                               <td>
                                 {label.checklist?.length > 0 ? (
                                   <ul className="list-unstyled mb-0">
                                     {label.checklist.map((item, idx) => (
-                                      <li key={idx} className="small text-truncate" title={item}>
+                                      <li
+                                        key={idx}
+                                        className="small text-truncate"
+                                        title={item}
+                                      >
                                         <i className="ri-checkbox-circle-line text-success me-1"></i>
                                         {item}
                                       </li>
@@ -434,22 +512,36 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                                 <div className="d-flex gap-1 justify-content-center">
                                   <button
                                     className="btn btn-sm btn-soft-primary p-1"
-                                    title={t('common.edit')}
+                                    title={t("common.edit")}
                                     onClick={() => startEditLabel(label)}
                                   >
                                     <i className="ri-pencil-line" />
                                   </button>
                                   <button
                                     className="btn btn-sm btn-soft-danger p-1"
-                                    title={t('common.delete')}
+                                    title={t("common.delete")}
                                     onClick={async () => {
-                                      if (!window.confirm(t('datasets.confirmDeleteLabel'))) return;
+                                      if (
+                                        !window.confirm(
+                                          t("datasets.confirmDeleteLabel"),
+                                        )
+                                      )
+                                        return;
                                       try {
-                                        await labelService.deleteLabel(selectedProject.id, label.id);
-                                        toast.success(t('datasets.deleteLabelSuccess'));
-                                        await handleProjectClick(selectedProject.id);
+                                        await labelService.deleteLabel(
+                                          selectedProject.id,
+                                          label.id,
+                                        );
+                                        toast.success(
+                                          t("datasets.deleteLabelSuccess"),
+                                        );
+                                        await handleProjectClick(
+                                          selectedProject.id,
+                                        );
                                       } catch {
-                                        toast.error(t('datasets.deleteLabelFailed'));
+                                        toast.error(
+                                          t("datasets.deleteLabelFailed"),
+                                        );
                                       }
                                     }}
                                   >
@@ -461,18 +553,25 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                           ))}
                         </tbody>
                       </table>
-                  </div>}
+                    </div>
+                  )}
 
                   {/* Add Label Modal */}
                   {showAddLabel && (
                     <div className="card-footer bg-white border-top p-3">
                       <h6 className="fw-bold fs-13 mb-3">
-                        <i className={`${editingLabel ? 'ri-pencil-line' : 'ri-add-circle-line'} me-1 text-primary`} />
-                        {editingLabel ? t('datasets.editLabelTitle') : t('datasets.addLabelTitle')}
+                        <i
+                          className={`${editingLabel ? "ri-pencil-line" : "ri-add-circle-line"} me-1 text-primary`}
+                        />
+                        {editingLabel
+                          ? t("datasets.editLabelTitle")
+                          : t("datasets.addLabelTitle")}
                       </h6>
                       <div className="row g-2">
                         <div className="col-12 mb-1">
-                          <label className="form-label small fw-semibold">{t('datasets.labelType')}</label>
+                          <label className="form-label small fw-semibold">
+                            {t("datasets.labelType")}
+                          </label>
                           <div className="d-flex gap-3">
                             <div className="form-check">
                               <input
@@ -480,11 +579,18 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                                 type="radio"
                                 id="labelTypeProject"
                                 checked={!newLabel.isDefault}
-                                onChange={() => setNewLabel({ ...newLabel, isDefault: false })}
+                                onChange={() =>
+                                  setNewLabel({ ...newLabel, isDefault: false })
+                                }
                               />
-                              <label className="form-check-label small" htmlFor="labelTypeProject">
-                                <span className="badge bg-info-subtle text-info me-1"><i className="ri-folder-line" /></span>
-                                {t('datasets.labelProject')}
+                              <label
+                                className="form-check-label small"
+                                htmlFor="labelTypeProject"
+                              >
+                                <span className="badge bg-info-subtle text-info me-1">
+                                  <i className="ri-folder-line" />
+                                </span>
+                                {t("datasets.labelProject")}
                               </label>
                             </div>
                             <div className="form-check">
@@ -493,69 +599,108 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                                 type="radio"
                                 id="labelTypeDefault"
                                 checked={newLabel.isDefault}
-                                onChange={() => setNewLabel({ ...newLabel, isDefault: true })}
+                                onChange={() =>
+                                  setNewLabel({ ...newLabel, isDefault: true })
+                                }
                               />
-                              <label className="form-check-label small" htmlFor="labelTypeDefault">
-                                <span className="badge bg-warning-subtle text-warning me-1"><i className="ri-error-warning-line" /></span>
-                                {t('datasets.labelDefault')}
+                              <label
+                                className="form-check-label small"
+                                htmlFor="labelTypeDefault"
+                              >
+                                <span className="badge bg-warning-subtle text-warning me-1">
+                                  <i className="ri-error-warning-line" />
+                                </span>
+                                {t("datasets.labelDefault")}
                               </label>
                             </div>
                           </div>
                         </div>
                         <div className="col-md-5">
-                          <label className="form-label small fw-semibold">{t('datasets.labelName')}</label>
+                          <label className="form-label small fw-semibold">
+                            {t("datasets.labelName")}
+                          </label>
                           <input
                             type="text"
                             className="form-control form-control-sm"
-                            placeholder={t('datasets.labelNamePlaceholder')}
+                            placeholder={t("datasets.labelNamePlaceholder")}
                             value={newLabel.name}
-                            onChange={(e) => setNewLabel({ ...newLabel, name: e.target.value })}
+                            onChange={(e) =>
+                              setNewLabel({ ...newLabel, name: e.target.value })
+                            }
                           />
                         </div>
                         <div className="col-md-2">
-                          <label className="form-label small fw-semibold">{t('datasets.labelColorLabel')}</label>
+                          <label className="form-label small fw-semibold">
+                            {t("datasets.labelColorLabel")}
+                          </label>
                           <div className="d-flex align-items-center gap-2">
                             <input
                               type="color"
                               className="form-control form-control-color form-control-sm"
                               value={newLabel.color}
-                              onChange={(e) => setNewLabel({ ...newLabel, color: e.target.value })}
-                              style={{ width: '40px', height: '32px' }}
+                              onChange={(e) =>
+                                setNewLabel({
+                                  ...newLabel,
+                                  color: e.target.value,
+                                })
+                              }
+                              style={{ width: "40px", height: "32px" }}
                             />
-                            <span className="small text-muted">{newLabel.color}</span>
+                            <span className="small text-muted">
+                              {newLabel.color}
+                            </span>
                           </div>
                         </div>
                         <div className="col-md-5">
-                          <label className="form-label small fw-semibold">{t('datasets.guideline')}</label>
+                          <label className="form-label small fw-semibold">
+                            {t("datasets.guideline")}
+                          </label>
                           <input
                             type="text"
                             className="form-control form-control-sm"
-                            placeholder={t('datasets.labelGuidelinePlaceholder')}
+                            placeholder={t(
+                              "datasets.labelGuidelinePlaceholder",
+                            )}
                             value={newLabel.guideLine}
-                            onChange={(e) => setNewLabel({ ...newLabel, guideLine: e.target.value })}
+                            onChange={(e) =>
+                              setNewLabel({
+                                ...newLabel,
+                                guideLine: e.target.value,
+                              })
+                            }
                           />
                         </div>
                         <div className="col-12">
-                          <label className="form-label small fw-semibold">{t('datasets.checklist')}</label>
+                          <label className="form-label small fw-semibold">
+                            {t("datasets.checklist")}
+                          </label>
                           {newLabel.checklist.map((item, idx) => (
                             <div key={idx} className="d-flex gap-2 mb-1">
                               <input
                                 type="text"
                                 className="form-control form-control-sm"
-                                placeholder={`${t('datasets.checklistItem')} ${idx + 1}`}
+                                placeholder={`${t("datasets.checklistItem")} ${idx + 1}`}
                                 value={item}
                                 onChange={(e) => {
                                   const updated = [...newLabel.checklist];
                                   updated[idx] = e.target.value;
-                                  setNewLabel({ ...newLabel, checklist: updated });
+                                  setNewLabel({
+                                    ...newLabel,
+                                    checklist: updated,
+                                  });
                                 }}
                               />
                               {newLabel.checklist.length > 1 && (
                                 <button
                                   className="btn btn-sm btn-soft-danger"
                                   onClick={() => {
-                                    const updated = newLabel.checklist.filter((_, i) => i !== idx);
-                                    setNewLabel({ ...newLabel, checklist: updated });
+                                    const updated = newLabel.checklist.filter(
+                                      (_, i) => i !== idx,
+                                    );
+                                    setNewLabel({
+                                      ...newLabel,
+                                      checklist: updated,
+                                    });
                                   }}
                                 >
                                   <i className="ri-close-line" />
@@ -565,10 +710,15 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                           ))}
                           <button
                             className="btn btn-sm btn-outline-secondary mt-1"
-                            onClick={() => setNewLabel({ ...newLabel, checklist: [...newLabel.checklist, ""] })}
+                            onClick={() =>
+                              setNewLabel({
+                                ...newLabel,
+                                checklist: [...newLabel.checklist, ""],
+                              })
+                            }
                           >
                             <i className="ri-add-line me-1" />
-                            {t('datasets.addChecklistItem')}
+                            {t("datasets.addChecklistItem")}
                           </button>
                         </div>
                       </div>
@@ -583,28 +733,41 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                                 .filter((c) => c.trim())
                                 .join("|");
                               if (editingLabel) {
-                                await labelService.updateLabel(selectedProject.id, editingLabel.id, {
-                                  name: newLabel.name.trim(),
-                                  color: newLabel.color,
-                                  guideLine: newLabel.guideLine.trim() || null,
-                                  defaultChecklist: checklistStr || null,
-                                  isDefault: newLabel.isDefault,
-                                });
-                                toast.success(t('datasets.editLabelSuccess'));
+                                await labelService.updateLabel(
+                                  selectedProject.id,
+                                  editingLabel.id,
+                                  {
+                                    name: newLabel.name.trim(),
+                                    color: newLabel.color,
+                                    guideLine:
+                                      newLabel.guideLine.trim() || null,
+                                    defaultChecklist: checklistStr || null,
+                                    isDefault: newLabel.isDefault,
+                                  },
+                                );
+                                toast.success(t("datasets.editLabelSuccess"));
                               } else {
-                                await labelService.createLabel(selectedProject.id, {
-                                  name: newLabel.name.trim(),
-                                  color: newLabel.color,
-                                  guideLine: newLabel.guideLine.trim() || null,
-                                  defaultChecklist: checklistStr || null,
-                                  isDefault: newLabel.isDefault,
-                                });
-                                toast.success(t('datasets.addLabelSuccess'));
+                                await labelService.createLabel(
+                                  selectedProject.id,
+                                  {
+                                    name: newLabel.name.trim(),
+                                    color: newLabel.color,
+                                    guideLine:
+                                      newLabel.guideLine.trim() || null,
+                                    defaultChecklist: checklistStr || null,
+                                    isDefault: newLabel.isDefault,
+                                  },
+                                );
+                                toast.success(t("datasets.addLabelSuccess"));
                               }
                               resetLabelForm();
                               await handleProjectClick(selectedProject.id);
                             } catch {
-                              toast.error(editingLabel ? t('datasets.editLabelFailed') : t('datasets.addLabelFailed'));
+                              toast.error(
+                                editingLabel
+                                  ? t("datasets.editLabelFailed")
+                                  : t("datasets.addLabelFailed"),
+                              );
                             } finally {
                               setAddingLabel(false);
                             }
@@ -615,13 +778,13 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                           ) : (
                             <i className="ri-check-line me-1" />
                           )}
-                          {t('common.save')}
+                          {t("common.save")}
                         </button>
                         <button
                           className="btn btn-sm btn-light px-3"
                           onClick={resetLabelForm}
                         >
-                          {t('common.cancel')}
+                          {t("common.cancel")}
                         </button>
                       </div>
                     </div>
@@ -632,12 +795,14 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                   <div
                     className="card-header bg-light-subtle"
                     style={{ cursor: "pointer" }}
-                    onClick={() => toggleSection('annotators')}
+                    onClick={() => toggleSection("annotators")}
                   >
                     <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted d-flex align-items-center">
-                      <i className={`ri-arrow-${collapsedSections.annotators ? 'right' : 'down'}-s-line me-1 fs-16`} />
+                      <i
+                        className={`ri-arrow-${collapsedSections.annotators ? "right" : "down"}-s-line me-1 fs-16`}
+                      />
                       <i className="ri-user-star-line me-1 text-success"></i>
-                      {t('datasets.annotatorsSectionTitle')}
+                      {t("datasets.annotatorsSectionTitle")}
                       <span className="badge bg-success-subtle text-success ms-2">
                         {selectedProject.members?.filter(
                           (m) => m.role === "Annotator",
@@ -646,36 +811,36 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                     </h6>
                   </div>
                   {!collapsedSections.annotators && (
-                  <div className="card-body">
-                    {selectedProject.members?.filter(
-                      (m) => m.role === "Annotator",
-                    ).length > 0 ? (
-                      <div className="d-flex flex-wrap gap-4">
-                        {selectedProject.members
-                          ?.filter((m) => m.role === "Annotator")
-                          .map((m) => (
-                            <div
-                              key={m.id}
-                              className="text-center"
-                              style={{ width: "80px" }}
-                            >
-                              <div className="avatar-sm mx-auto mb-2">
-                                <div className="avatar-title bg-soft-success text-success rounded-circle fw-bold">
-                                  {m.fullName?.charAt(0)}
+                    <div className="card-body">
+                      {selectedProject.members?.filter(
+                        (m) => m.role === "Annotator",
+                      ).length > 0 ? (
+                        <div className="d-flex flex-wrap gap-4">
+                          {selectedProject.members
+                            ?.filter((m) => m.role === "Annotator")
+                            .map((m) => (
+                              <div
+                                key={m.id}
+                                className="text-center"
+                                style={{ width: "80px" }}
+                              >
+                                <div className="avatar-sm mx-auto mb-2">
+                                  <div className="avatar-title bg-soft-success text-success rounded-circle fw-bold">
+                                    {m.fullName?.charAt(0)}
+                                  </div>
                                 </div>
+                                <p className="mb-0 fs-12 fw-bold text-truncate">
+                                  {m.fullName}
+                                </p>
                               </div>
-                              <p className="mb-0 fs-12 fw-bold text-truncate">
-                                {m.fullName}
-                              </p>
-                            </div>
-                          ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted small mb-0">
-                        {t('datasets.noAnnotators')}
-                      </p>
-                    )}
-                  </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted small mb-0">
+                          {t("datasets.noAnnotators")}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -683,12 +848,14 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                   <div
                     className="card-header bg-light-subtle"
                     style={{ cursor: "pointer" }}
-                    onClick={() => toggleSection('reviewers')}
+                    onClick={() => toggleSection("reviewers")}
                   >
                     <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted d-flex align-items-center">
-                      <i className={`ri-arrow-${collapsedSections.reviewers ? 'right' : 'down'}-s-line me-1 fs-16`} />
+                      <i
+                        className={`ri-arrow-${collapsedSections.reviewers ? "right" : "down"}-s-line me-1 fs-16`}
+                      />
                       <i className="ri-shield-star-line me-1 text-info"></i>
-                      {t('datasets.reviewersSectionTitle')}
+                      {t("datasets.reviewersSectionTitle")}
                       <span className="badge bg-info-subtle text-info ms-2">
                         {selectedProject.members?.filter(
                           (m) => m.role === "Reviewer",
@@ -697,36 +864,36 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                     </h6>
                   </div>
                   {!collapsedSections.reviewers && (
-                  <div className="card-body">
-                    {selectedProject.members?.filter(
-                      (m) => m.role === "Reviewer",
-                    ).length > 0 ? (
-                      <div className="d-flex flex-wrap gap-4">
-                        {selectedProject.members
-                          ?.filter((m) => m.role === "Reviewer")
-                          .map((m) => (
-                            <div
-                              key={m.id}
-                              className="text-center"
-                              style={{ width: "80px" }}
-                            >
-                              <div className="avatar-sm mx-auto mb-2">
-                                <div className="avatar-title bg-soft-info text-info rounded-circle fw-bold">
-                                  {m.fullName?.charAt(0)}
+                    <div className="card-body">
+                      {selectedProject.members?.filter(
+                        (m) => m.role === "Reviewer",
+                      ).length > 0 ? (
+                        <div className="d-flex flex-wrap gap-4">
+                          {selectedProject.members
+                            ?.filter((m) => m.role === "Reviewer")
+                            .map((m) => (
+                              <div
+                                key={m.id}
+                                className="text-center"
+                                style={{ width: "80px" }}
+                              >
+                                <div className="avatar-sm mx-auto mb-2">
+                                  <div className="avatar-title bg-soft-info text-info rounded-circle fw-bold">
+                                    {m.fullName?.charAt(0)}
+                                  </div>
                                 </div>
+                                <p className="mb-0 fs-12 fw-bold text-truncate">
+                                  {m.fullName}
+                                </p>
                               </div>
-                              <p className="mb-0 fs-12 fw-bold text-truncate">
-                                {m.fullName}
-                              </p>
-                            </div>
-                          ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted small mb-0">
-                        {t('datasets.noReviewers')}
-                      </p>
-                    )}
-                  </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted small mb-0">
+                          {t("datasets.noReviewers")}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -738,43 +905,55 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                 >
                   <div className="card-body">
                     <h6 className="mb-3 fw-bold text-uppercase fs-12 border-bottom pb-2">
-                      {t('datasets.overallProgress')}
+                      {t("datasets.overallProgress")}
                     </h6>
                     <div className="vstack gap-3">
                       <div className="d-flex justify-content-between">
-                        <span className="text-muted">{t('datasets.totalData')}:</span>
+                        <span className="text-muted">
+                          {t("datasets.totalData")}:
+                        </span>
                         <span className="fw-bold text-dark">
                           {projectStats?.totalItems ??
                             selectedProject.totalDataItems}
                         </span>
                       </div>
                       <div className="d-flex justify-content-between">
-                        <span className="text-muted">{t('datasets.assigned')}:</span>
+                        <span className="text-muted">
+                          {t("datasets.assigned")}:
+                        </span>
                         <span className="fw-bold text-info">
                           {projectStats?.totalAssignments ?? 0}
                         </span>
                       </div>
                       <div className="d-flex justify-content-between">
-                        <span className="text-muted">{t('datasets.approved')}:</span>
+                        <span className="text-muted">
+                          {t("datasets.approved")}:
+                        </span>
                         <span className="fw-bold text-success">
                           {projectStats?.approvedAssignments ??
                             selectedProject.processedItems}
                         </span>
                       </div>
                       <div className="d-flex justify-content-between">
-                        <span className="text-muted">{t('datasets.pending')}:</span>
+                        <span className="text-muted">
+                          {t("datasets.pending")}:
+                        </span>
                         <span className="fw-bold text-warning">
                           {projectStats?.submittedAssignments ?? 0}
                         </span>
                       </div>
                       <div className="d-flex justify-content-between">
-                        <span className="text-muted">{t('datasets.rejected')}:</span>
+                        <span className="text-muted">
+                          {t("datasets.rejected")}:
+                        </span>
                         <span className="fw-bold text-danger">
                           {projectStats?.rejectedAssignments ?? 0}
                         </span>
                       </div>
                       <div className="d-flex justify-content-between">
-                        <span className="text-muted">{t('datasets.deadline')}:</span>
+                        <span className="text-muted">
+                          {t("datasets.deadline")}:
+                        </span>
                         <span className="fw-bold text-danger">
                           {new Date(
                             selectedProject.deadline,
@@ -785,12 +964,12 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                       <div className="border-top pt-3 mt-1">
                         <h6 className="mb-2 fw-bold text-uppercase fs-11 text-muted">
                           <i className="ri-team-line me-1" />
-                          {t('datasets.teamOverview')}
+                          {t("datasets.teamOverview")}
                         </h6>
                         <div className="d-flex justify-content-between">
                           <span className="text-muted">
                             <i className="ri-group-line me-1 text-primary" />
-                            {t('datasets.totalStaff')}:
+                            {t("datasets.totalStaff")}:
                           </span>
                           <span className="fw-bold text-primary">
                             {selectedProject.members?.length || 0}
@@ -799,19 +978,23 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                         <div className="d-flex justify-content-between mt-2">
                           <span className="text-muted">
                             <i className="ri-user-star-line me-1 text-success" />
-                            {t('datasets.totalAnnotators')}:
+                            {t("datasets.totalAnnotators")}:
                           </span>
                           <span className="fw-bold text-success">
-                            {selectedProject.members?.filter(m => m.role === "Annotator").length || 0}
+                            {selectedProject.members?.filter(
+                              (m) => m.role === "Annotator",
+                            ).length || 0}
                           </span>
                         </div>
                         <div className="d-flex justify-content-between mt-2">
                           <span className="text-muted">
                             <i className="ri-shield-star-line me-1 text-info" />
-                            {t('datasets.totalReviewers')}:
+                            {t("datasets.totalReviewers")}:
                           </span>
                           <span className="fw-bold text-info">
-                            {selectedProject.members?.filter(m => m.role === "Reviewer").length || 0}
+                            {selectedProject.members?.filter(
+                              (m) => m.role === "Reviewer",
+                            ).length || 0}
                           </span>
                         </div>
                       </div>
@@ -828,7 +1011,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                       return (
                         <div className="mt-4">
                           <div className="d-flex justify-content-between mb-2">
-                            <span>{t('datasets.completed')}</span>
+                            <span>{t("datasets.completed")}</span>
                             <span className="fw-bold text-success">
                               {statsProgress ?? selectedProject.progress}%
                             </span>
@@ -848,13 +1031,13 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                     <div className="mt-4 border-top pt-3">
                       <h6 className="mb-2 fw-bold text-uppercase fs-11 text-muted">
                         <i className="ri-shield-check-line me-1"></i>
-                        {t('datasets.exportStatus')}
+                        {t("datasets.exportStatus")}
                       </h6>
                       {exportCheck.checking ? (
                         <div className="text-center py-2">
                           <span className="spinner-border spinner-border-sm text-primary"></span>
                           <span className="ms-1 small text-muted">
-                            {t('datasets.checking')}
+                            {t("datasets.checking")}
                           </span>
                         </div>
                       ) : (
@@ -871,8 +1054,12 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                               }
                             >
                               {exportCheck.allApproved
-                                ? t('datasets.allTasksApproved')
-                                : t('datasets.tasksNotApproved', { count: (exportCheck.totalTasks || 0) - (exportCheck.approved || 0) })}
+                                ? t("datasets.allTasksApproved")
+                                : t("datasets.tasksNotApproved", {
+                                    count:
+                                      (exportCheck.totalTasks || 0) -
+                                      (exportCheck.approved || 0),
+                                  })}
                             </small>
                           </div>
                           <div className="d-flex align-items-center">
@@ -887,14 +1074,16 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
                               }
                             >
                               {exportCheck.noPendingDisputes
-                                ? t('datasets.noDisputePending')
-                                : t('datasets.disputesPending', { count: exportCheck.pendingDisputeCount })}
+                                ? t("datasets.noDisputePending")
+                                : t("datasets.disputesPending", {
+                                    count: exportCheck.pendingDisputeCount,
+                                  })}
                             </small>
                           </div>
                           {exportCheck.ready && (
                             <div className="alert alert-success py-1 px-2 mb-0 mt-1 small">
                               <i className="ri-check-double-line me-1"></i>
-                              <strong>{t('datasets.readyToExport')}</strong>
+                              <strong>{t("datasets.readyToExport")}</strong>
                             </div>
                           )}
                         </div>
@@ -907,8 +1096,8 @@ const ProjectsDatasetsPage = ({ embeddedProjectId } = {}) => {
           ) : (
             <div className="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
               <i className="ri-folder-zip-line display-1 opacity-25"></i>
-              <h5 className="mt-3">{t('datasets.noProjectSelected')}</h5>
-              <p>{t('datasets.selectProjectHint')}</p>
+              <h5 className="mt-3">{t("datasets.noProjectSelected")}</h5>
+              <p>{t("datasets.selectProjectHint")}</p>
             </div>
           )}
         </div>

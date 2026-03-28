@@ -14,16 +14,7 @@ import {
   ListGroup,
   Spinner,
 } from "react-bootstrap";
-import {
-  ArrowLeft,
-  Calendar,
-  User,
-  Tag,
-  Users,
-  CheckCircle2,
-  Box,
-  Info,
-} from "lucide-react";
+import { ArrowLeft, Calendar, User, Users, Info } from "lucide-react";
 
 const DetailProject = () => {
   const { id } = useParams();
@@ -63,6 +54,7 @@ const DetailProject = () => {
 
   return (
     <Container fluid className="p-4 bg-light min-vh-100">
+      {/* Header */}
       <div className="d-flex align-items-center mb-4">
         <Button
           variant="outline-secondary"
@@ -85,6 +77,7 @@ const DetailProject = () => {
 
       <Row>
         <Col lg={8}>
+          {/* Project Description */}
           <Card className="border-0 shadow-sm mb-4">
             <Card.Body>
               <h6 className="fw-bold mb-3 text-primary d-flex align-items-center">
@@ -101,60 +94,7 @@ const DetailProject = () => {
             </Card.Body>
           </Card>
 
-          <Card className="border-0 shadow-sm mb-4">
-            <Card.Body>
-              <h6 className="fw-bold mb-3 text-primary d-flex align-items-center">
-                <Tag size={18} className="me-2" />{" "}
-                {t("admin.projectDetail.labelConfig")}
-              </h6>
-              <Row xs={1} md={2} className="g-3">
-                {selectProject.labels?.map((label) => (
-                  <Col key={label.id}>
-                    <div className="p-3 border rounded-3 bg-white">
-                      <div className="d-flex align-items-center mb-2">
-                        <div
-                          className="rounded-circle me-2 shadow-sm"
-                          style={{
-                            width: "16px",
-                            height: "16px",
-                            backgroundColor: label.color,
-                          }}
-                        />
-                        <span className="fw-bolder">{label.name}</span>
-                        {label.isDefault && (
-                          <Badge
-                            bg="warning"
-                            text="dark"
-                            className="ms-2 small"
-                            style={{ fontSize: "10px" }}
-                          >
-                            {t("admin.projectDetail.defaultLabel")}
-                          </Badge>
-                        )}
-                      </div>
-                      {label.checklist?.length > 0 && (
-                        <div className="mt-2 border-top pt-2">
-                          {label.checklist.map((item, idx) => (
-                            <div
-                              key={idx}
-                              className="small text-muted mb-1 d-flex align-items-center"
-                            >
-                              <CheckCircle2
-                                size={12}
-                                className="me-2 text-success"
-                              />{" "}
-                              {item}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </Col>
-                ))}
-              </Row>
-            </Card.Body>
-          </Card>
-
+          {/* Member Performance Table */}
           <Card className="border-0 shadow-sm">
             <Card.Body>
               <h6 className="fw-bold mb-3 text-primary d-flex align-items-center">
@@ -224,6 +164,7 @@ const DetailProject = () => {
           </Card>
         </Col>
 
+        {/* Sidebar Info */}
         <Col lg={4}>
           <Card className="border-0 shadow-sm mb-4">
             <Card.Body className="p-4">

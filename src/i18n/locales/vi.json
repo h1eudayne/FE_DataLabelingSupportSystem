@@ -114,7 +114,16 @@
     "status": {
       "overdue": "QUÁ HẠN"
     },
-    "completed":"Hoàn thành"
+    "completed":"Hoàn thành",
+    "alerts": {
+      "overdue": "QUÁ HẠN",
+      "nearDeadline": "SẮP HẾT HẠN",
+      "endsIn": "Kết thúc sau"
+    },
+    "action": {
+      "reviewNow": "Kiểm duyệt ngay",
+      "viewDetail": "Xem chi tiết"
+    }
   },
   "review": {
     "nav": {

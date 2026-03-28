@@ -122,3 +122,9 @@
         max-width: 400px;
     }
 }
+
+.dropdown-toggle.hide-extra-icon::after {
+    display: none !important;
+    content: none !important;
+    border: none !important;
+}

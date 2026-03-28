@@ -5,6 +5,7 @@ import {
   updateUser,
   updateStatus,
   importUser,
+  getAdmins,
 } from "../../services/admin/managementUsers/user.api";
 import UserTable from "../../components/admin/managementUser/UserTable";
 import {
@@ -28,6 +29,7 @@ import { useTranslation } from "react-i18next";
 
 const SettingUserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [managers, setManagers] = useState([]);
   const [selectUser, setSelectUser] = useState(null);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,7 +47,7 @@ const SettingUserManagement = () => {
   const [importError, setImportError] = useState("");
   const { t } = useTranslation();
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (BR-ADM-25)
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const ALLOWED_EXTENSIONS = [".xlsx", ".xls"];
 
   const handleImportFileChange = (e) => {
@@ -56,11 +58,19 @@ const SettingUserManagement = () => {
 
     const ext = "." + file.name.split(".").pop().toLowerCase();
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      setImportError(t("userMgmt.importInvalidType", { defaultValue: "Only .xlsx and .xls files are allowed" }));
+      setImportError(
+        t("userMgmt.importInvalidType", {
+          defaultValue: "Only .xlsx and .xls files are allowed",
+        }),
+      );
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
-      setImportError(t("userMgmt.importFileTooLarge", { defaultValue: "File must be less than 5MB" }));
+      setImportError(
+        t("userMgmt.importFileTooLarge", {
+          defaultValue: "File must be less than 5MB",
+        }),
+      );
       return;
     }
     setImportFile(file);
@@ -75,7 +85,8 @@ const SettingUserManagement = () => {
       setImportResult(res.data);
       await fetchUsers();
     } catch (error) {
-      const msg = error?.response?.data?.message || error.message || "Import failed";
+      const msg =
+        error?.response?.data?.message || error.message || "Import failed";
       setImportError(msg);
     } finally {
       setImportLoading(false);
@@ -101,12 +112,18 @@ const SettingUserManagement = () => {
   const fetchUsers = async (currentPage = pagination.page) => {
     setLoading(true);
     try {
+      const resAdmins = await getAdmins();
+      const managerUsers = resAdmins.data.filter(
+        (user) => user.role === "Manager",
+      );
       const res = await getUsers(currentPage, pagination.pageSize);
       const data = res.data;
       const userList = data.items || data;
+
+      setManagers(managerUsers);
       setUsers(userList);
       setFilteredUsers(userList);
-      setTotalCount(data.totalCount || 0);
+      setTotalCount(data.stats.totalWorkers || 0);
     } catch (error) {
       console.error(error);
     } finally {
@@ -222,11 +239,13 @@ const SettingUserManagement = () => {
         </CardBody>
       </Card>
 
-      {/* Import Excel Modal (BR-ADM-14, 16, 25, 26) */}
+      {}
       <Modal isOpen={importModalOpen} toggle={closeImportModal} size="lg">
         <ModalHeader toggle={closeImportModal}>
           <i className="ri-file-excel-2-line me-2 text-success"></i>
-          {t("userMgmt.importExcel", { defaultValue: "Import Users from Excel" })}
+          {t("userMgmt.importExcel", {
+            defaultValue: "Import Users from Excel",
+          })}
         </ModalHeader>
         <ModalBody>
           {importError && (
@@ -248,7 +267,10 @@ const SettingUserManagement = () => {
               disabled={importLoading}
             />
             <small className="text-muted d-block mt-1">
-              {t("userMgmt.importHint", { defaultValue: "Max 5MB, .xlsx or .xls only. Only Annotators and Reviewers can be imported." })}
+              {t("userMgmt.importHint", {
+                defaultValue:
+                  "Max 5MB, .xlsx or .xls only. Only Annotators and Reviewers can be imported.",
+              })}
             </small>
           </div>
 
@@ -268,10 +290,12 @@ const SettingUserManagement = () => {
               </h6>
               <div className="d-flex gap-3 mb-3">
                 <Badge color="success" className="px-3 py-2">
-                  {t("userMgmt.success", { defaultValue: "Success" })}: {importResult.successCount ?? importResult.success ?? 0}
+                  {t("userMgmt.success", { defaultValue: "Success" })}:{" "}
+                  {importResult.successCount ?? importResult.success ?? 0}
                 </Badge>
                 <Badge color="danger" className="px-3 py-2">
-                  {t("userMgmt.failed", { defaultValue: "Failed" })}: {importResult.failCount ?? importResult.failed ?? 0}
+                  {t("userMgmt.failed", { defaultValue: "Failed" })}:{" "}
+                  {importResult.failCount ?? importResult.failed ?? 0}
                 </Badge>
               </div>
               {importResult.errors && importResult.errors.length > 0 && (
@@ -306,9 +330,15 @@ const SettingUserManagement = () => {
               disabled={!importFile || importLoading}
             >
               {importLoading ? (
-                <><Spinner size="sm" className="me-1" /> {t("userMgmt.importing", { defaultValue: "Importing..." })}</>
+                <>
+                  <Spinner size="sm" className="me-1" />{" "}
+                  {t("userMgmt.importing", { defaultValue: "Importing..." })}
+                </>
               ) : (
-                <><i className="ri-upload-2-line me-1"></i> {t("userMgmt.import", { defaultValue: "Import" })}</>
+                <>
+                  <i className="ri-upload-2-line me-1"></i>{" "}
+                  {t("userMgmt.import", { defaultValue: "Import" })}
+                </>
               )}
             </Button>
           )}
@@ -320,7 +350,7 @@ const SettingUserManagement = () => {
         toggle={toggleModal}
         user={selectUser}
         handleSave={handleSave}
-        managers={users.filter((u) => u.role === "Manager")}
+        managers={managers}
       />
     </>
   );
