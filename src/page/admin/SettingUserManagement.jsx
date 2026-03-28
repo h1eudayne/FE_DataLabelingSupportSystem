@@ -6,6 +6,7 @@ import {
   updateStatus,
   importUser,
   adminResetPassword,
+  getAdmins,
 } from "../../services/admin/managementUsers/user.api";
 import UserTable from "../../components/admin/managementUser/UserTable";
 import {

@@ -115,6 +115,13 @@ const ProjectUserManagement = () => {
     },
   ];
 
+  const getProgressVariant = (progress) => {
+    if (progress >= 100) return "success";
+    if (progress >= 50) return "primary";
+    if (progress >= 20) return "warning";
+    return "danger";
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case "New":
@@ -268,22 +275,33 @@ const ProjectUserManagement = () => {
                           </Badge>
                         </td>
                         <td>
-                          <div
-                            className="d-flex align-items-center gap-2"
-                            style={{ minWidth: "120px" }}
-                          >
+                          <div style={{ minWidth: "160px" }}>
+                            <div className="d-flex justify-content-between align-items-center mb-1">
+                              <small
+                                className={`fw-bold text-${getProgressVariant(project.progress)}`}
+                              >
+                                {typeof project.progress === "number"
+                                  ? project.progress.toFixed(1)
+                                  : parseFloat(project.progress || 0).toFixed(
+                                      1,
+                                    )}
+                                %
+                              </small>
+                            </div>
+
                             <div
-                              className="progress flex-grow-1"
-                              style={{ height: "6px" }}
+                              className="progress"
+                              style={{ height: "8px", borderRadius: "10px" }}
                             >
                               <div
-                                className="progress-bar bg-primary"
+                                className={`progress-bar bg-${getProgressVariant(project.progress)}`}
+                                role="progressbar"
                                 style={{ width: `${project.progress}%` }}
+                                aria-valuenow={project.progress}
+                                aria-valuemin="0"
+                                aria-valuemax="100"
                               ></div>
                             </div>
-                            <small className="fw-medium">
-                              {project.progress}%
-                            </small>
                           </div>
                         </td>
                         <td>
@@ -302,8 +320,14 @@ const ProjectUserManagement = () => {
                             variant="link"
                             size="sm"
                             className="text-info p-0 shadow-none"
-                            onClick={() => navigate(`/view-detail-project/${project.id}?tab=statistics`)}
-                            title={t("admin.project.statistics", { defaultValue: "View Statistics" })}
+                            onClick={() =>
+                              navigate(
+                                `/view-detail-project/${project.id}?tab=statistics`,
+                              )
+                            }
+                            title={t("admin.project.statistics", {
+                              defaultValue: "View Statistics",
+                            })}
                           >
                             <BarChart2 size={18} />
                           </Button>

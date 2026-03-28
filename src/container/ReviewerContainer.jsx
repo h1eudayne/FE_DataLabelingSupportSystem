@@ -15,13 +15,17 @@ import { useNavigate } from "react-router-dom";
 import useSignalRRefresh from "../hooks/useSignalRRefresh";
 import { useTranslation } from "react-i18next";
 import ProjectCardItem from "../components/reviewer/home/ProjectCardItem";
+import { useSelector } from "react-redux";
 
 const ReviewerContainer = () => {
   const { t } = useTranslation();
+  const { user } = useSelector((state) => state.auth);
+
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [globalAccuracy, setGlobalAccuracy] = useState(100);
+  const CURRENT_USER_ID = user?.id;
 
   const navigate = useNavigate();
 
@@ -62,17 +66,28 @@ const ReviewerContainer = () => {
 
         const accuracyList = statsResponses
           .map((response) => {
-            return response.data?.reviewerPerformances?.[0]?.reviewerAccuracy;
+            const stats = response.data;
+            const myPerf = stats?.reviewerPerformances?.find(
+              (rp) => rp.reviewerId === CURRENT_USER_ID,
+            );
+
+            if (myPerf && myPerf.totalReviews > 0) {
+              return myPerf.reviewerAccuracy;
+            }
+            return null;
           })
-          .filter((acc) => acc !== undefined && acc !== null);
+          .filter((acc) => acc !== null);
 
         if (accuracyList.length > 0) {
           const totalAccuracy = accuracyList.reduce((sum, acc) => sum + acc, 0);
           setGlobalAccuracy((totalAccuracy / accuracyList.length).toFixed(1));
+        } else {
+          setGlobalAccuracy(100);
         }
       }
     } catch (err) {
       console.error("Error loading projects:", err);
+      setGlobalAccuracy(100);
     } finally {
       setLoading(false);
     }
