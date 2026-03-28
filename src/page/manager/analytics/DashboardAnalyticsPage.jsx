@@ -34,6 +34,11 @@ import {
   AlertTriangle,
   TrendingDown,
   Target,
+  Award,
+  Zap,
+  RefreshCw,
+  CheckCircle2,
+  AlertOctagon,
 } from "lucide-react";
 import StatCard from "../../../components/manager/analytics/StatCard";
 import { useSelector } from "react-redux";
@@ -72,6 +77,15 @@ const DashboardAnalytics = () => {
   const [avgProjectAccuracy, setAvgProjectAccuracy] = useState(null);
   const [projectAccuracies, setProjectAccuracies] = useState([]);
 
+  // ============= 3 KEY METRICS STATES =============
+  const [projectFinalAccuracy, setProjectFinalAccuracy] = useState(null);
+  const [projectFirstPassAccuracy, setProjectFirstPassAccuracy] = useState(null);
+  const [projectReworkRate, setProjectReworkRate] = useState(null);
+  const [projectFinalCorrect, setProjectFinalCorrect] = useState(0);
+  const [projectFirstPassCorrect, setProjectFirstPassCorrect] = useState(0);
+  const [projectTotalReworks, setProjectTotalReworks] = useState(0);
+  const [projectTotalSubmitted, setProjectTotalSubmitted] = useState(0);
+
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.id;
 
@@ -104,6 +118,13 @@ const DashboardAnalytics = () => {
         const allReviewerPerformances = [];
         let totalAccItems = 0;
         let totalAccWeighted = 0;
+
+        // ============= 3 KEY METRICS ACCUMULATORS =============
+        let totalFinalCorrect = 0;
+        let totalFirstPassCorrect = 0;
+        let totalReworks = 0;
+        let totalSubmittedTasks = 0;
+        let totalItemsForMetrics = 0;
 
         const reviewerMap = {};
         const alerts = [];
@@ -165,12 +186,24 @@ const DashboardAnalytics = () => {
               totalAccWeighted += s.projectAccuracy * s.totalItems;
               totalAccItems += s.totalItems;
             }
+
+            // ============= COLLECT 3 KEY METRICS =============
+            totalFinalCorrect += s.finalCorrect ?? 0;
+            totalFirstPassCorrect += s.firstPassCorrect ?? 0;
+            totalReworks += s.totalReworks ?? 0;
+            totalSubmittedTasks += s.totalSubmittedTasks ?? 0;
+            totalItemsForMetrics += s.totalItems ?? 0;
+
             projectAccuraciesArr.push({
               projectId: project.id,
               projectName: project.name,
               accuracy: s.projectAccuracy ?? 0,
               totalItems: s.totalItems ?? 0,
               completedItems: s.completedItems ?? 0,
+              // Also push new metrics for per-project display
+              finalAccuracy: s.finalAccuracy ?? 0,
+              firstPassAccuracy: s.firstPassAccuracy ?? 0,
+              reworkRate: s.reworkRate ?? 0,
             });
 
             if (s.labelDistributions?.length) {
@@ -575,6 +608,32 @@ const DashboardAnalytics = () => {
         );
         setProjectAccuracies(projectAccuraciesArr);
 
+        // ============= SET 3 KEY METRICS =============
+        // ✅ 1. Final Accuracy = FinalCorrect / TotalItems
+        setProjectFinalCorrect(totalFinalCorrect);
+        setProjectTotalSubmitted(totalSubmittedTasks);
+        setProjectFinalAccuracy(
+          totalItemsForMetrics > 0
+            ? Math.round((totalFinalCorrect / totalItemsForMetrics) * 100 * 10) / 10
+            : null
+        );
+
+        // ✅ 2. First-pass Accuracy = FirstPassCorrect / TotalItems
+        setProjectFirstPassCorrect(totalFirstPassCorrect);
+        setProjectFirstPassAccuracy(
+          totalItemsForMetrics > 0
+            ? Math.round((totalFirstPassCorrect / totalItemsForMetrics) * 100 * 10) / 10
+            : null
+        );
+
+        // ✅ 3. Rework Rate = TotalReworks / TotalSubmittedTasks
+        setProjectTotalReworks(totalReworks);
+        setProjectReworkRate(
+          totalSubmittedTasks > 0
+            ? Math.round((totalReworks / totalSubmittedTasks) * 100 * 10) / 10
+            : null
+        );
+
         setAnnotatorData(
           annotatorsArr
             .map((a) => ({
@@ -655,6 +714,87 @@ const DashboardAnalytics = () => {
             icon={Users}
             color="info"
           />
+        </Col>
+      </Row>
+
+      {/* ============= 3 KEY METRICS SECTION ============= */}
+      <Row className="mt-3">
+        <Col xl={12}>
+          <Card className="shadow-sm border-0" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+            <CardBody>
+              <h5 className="text-white mb-3">
+                <i className="ri-bar-chart-box-line me-2"></i>
+                {t('analytics.threeKeyMetrics') || '3 Key Metrics (Best Practice)'}
+              </h5>
+              <Row>
+                {/* ✅ 1. Final Accuracy */}
+                <Col md={4}>
+                  <Card className="border-0 h-100" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                    <CardBody className="text-center py-3">
+                      <Award size={32} className="text-white mb-2" />
+                      <h3 className="text-white mb-1">
+                        {projectFinalAccuracy !== null ? `${projectFinalAccuracy}%` : '—'}
+                      </h3>
+                      <p className="text-white-50 mb-1 small">{t('analytics.finalAccuracy') || 'Final Accuracy'}</p>
+                      <small className="text-white">
+                        {projectFinalCorrect} / {totalItemsForMetrics} {t('analytics.tasksCorrect') || 'tasks correct'}
+                      </small>
+                      <div className="mt-2">
+                        <Badge color="light" className="px-2 py-1">
+                          <i className="ri-customer-2-line me-1"></i>
+                          {t('analytics.forCustomer') || 'For Customer'}
+                        </Badge>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Col>
+
+                {/* ✅ 2. First-pass Accuracy */}
+                <Col md={4}>
+                  <Card className="border-0 h-100" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                    <CardBody className="text-center py-3">
+                      <Zap size={32} className="text-warning mb-2" />
+                      <h3 className="text-white mb-1">
+                        {projectFirstPassAccuracy !== null ? `${projectFirstPassAccuracy}%` : '—'}
+                      </h3>
+                      <p className="text-white-50 mb-1 small">{t('analytics.firstPassAccuracy') || 'First-pass Accuracy'}</p>
+                      <small className="text-white">
+                        {projectFirstPassCorrect} / {totalItemsForMetrics} {t('analytics.correctFirstTime') || 'correct first time'}
+                      </small>
+                      <div className="mt-2">
+                        <Badge color="warning" className="px-2 py-1">
+                          <i className="ri-team-line me-1"></i>
+                          {t('analytics.forInternal') || 'For Internal'}
+                        </Badge>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Col>
+
+                {/* ✅ 3. Rework Rate */}
+                <Col md={4}>
+                  <Card className="border-0 h-100" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                    <CardBody className="text-center py-3">
+                      <RefreshCw size={32} className={projectReworkRate > 15 ? 'text-danger' : 'text-success'} />
+                      <h3 className="text-white mb-1">
+                        {projectReworkRate !== null ? `${projectReworkRate}%` : '—'}
+                      </h3>
+                      <p className="text-white-50 mb-1 small">{t('analytics.reworkRate') || 'Rework Rate'}</p>
+                      <small className="text-white">
+                        {projectTotalReworks} / {projectTotalSubmitted} {t('analytics.tasksRejected') || 'tasks rejected'}
+                      </small>
+                      <div className="mt-2">
+                        <Badge color={projectReworkRate > 15 ? 'danger' : 'success'} className="px-2 py-1">
+                          <i className="ri-error-warning-line me-1"></i>
+                          {projectReworkRate > 15 ? t('analytics.highRework') || 'HIGH' : t('analytics.goodRework') || 'Good'}
+                        </Badge>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Col>
+              </Row>
+            </CardBody>
+          </Card>
         </Col>
       </Row>
 
@@ -780,8 +920,7 @@ const DashboardAnalytics = () => {
               <CardBody>
                 <p className="text-muted small mb-3">
                   <i className="ri-information-line me-1"></i>
-                  PA = Tỷ lệ approved đúng từ lần review đầu tiên / Tổng data
-                  items.
+                  Các metrics chất lượng chuẩn: Final Accuracy (cho khách hàng), First-pass Accuracy (độ sạch pipeline nội bộ), Rework Rate (đo lường hiệu quả).
                 </p>
                 <div className="table-responsive">
                   <Table className="table-hover align-middle mb-0">
@@ -790,8 +929,20 @@ const DashboardAnalytics = () => {
                         <th>{t('analytics.project')}</th>
                         <th className="text-center">{t('analytics.totalImages')}</th>
                         <th className="text-center">{t('analytics.completedImages')}</th>
-                        <th className="text-center">Accuracy (PA)</th>
-                        <th style={{ minWidth: "200px" }}>{t('analytics.accuracyProgress')}</th>
+                        {/* ============= 3 KEY METRICS COLUMNS ============= */}
+                        <th className="text-center bg-success bg-opacity-10">
+                          <RefreshCw size={14} className="me-1 text-success" />
+                          Final Accuracy
+                        </th>
+                        <th className="text-center bg-warning bg-opacity-10">
+                          <Zap size={14} className="me-1 text-warning" />
+                          First-pass
+                        </th>
+                        <th className="text-center bg-danger bg-opacity-10">
+                          <AlertOctagon size={14} className="me-1 text-danger" />
+                          Rework Rate
+                        </th>
+                        <th style={{ minWidth: "150px" }}>{t('analytics.accuracyProgress')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -805,27 +956,48 @@ const DashboardAnalytics = () => {
                           <td className="text-center text-success fw-bold">
                             {pa.completedItems}
                           </td>
-                          <td className="text-center">
+                          {/* ============= 3 KEY METRICS VALUES ============= */}
+                          <td className="text-center bg-success bg-opacity-5">
                             <Badge
                               color={
-                                pa.accuracy >= 80
+                                (pa.finalAccuracy ?? 0) >= 80
                                   ? "success"
-                                  : pa.accuracy >= 50
+                                  : (pa.finalAccuracy ?? 0) >= 50
                                     ? "warning"
                                     : "danger"
                               }
                             >
-                              {pa.accuracy > 0 ? `${pa.accuracy}%` : "—"}
+                              {pa.finalAccuracy > 0 ? `${pa.finalAccuracy}%` : "—"}
                             </Badge>
+                          </td>
+                          <td className="text-center bg-warning bg-opacity-5">
+                            <Badge
+                              color={
+                                (pa.firstPassAccuracy ?? 0) >= 80
+                                  ? "success"
+                                  : (pa.firstPassAccuracy ?? 0) >= 50
+                                    ? "warning"
+                                    : "danger"
+                              }
+                            >
+                              {pa.firstPassAccuracy > 0 ? `${pa.firstPassAccuracy}%` : "—"}
+                            </Badge>
+                          </td>
+                          <td className="text-center bg-danger bg-opacity-5">
+                            {(pa.reworkRate ?? 0) > 15 ? (
+                              <Badge color="danger">{pa.reworkRate > 0 ? `${pa.reworkRate}%` : "0%"}</Badge>
+                            ) : (
+                              <Badge color="success">{pa.reworkRate > 0 ? `${pa.reworkRate}%` : "0%"}</Badge>
+                            )}
                           </td>
                           <td>
                             <div className="d-flex align-items-center gap-2">
                               <Progress
-                                value={pa.accuracy}
+                                value={pa.finalAccuracy ?? pa.accuracy}
                                 color={
-                                  pa.accuracy >= 80
+                                  (pa.finalAccuracy ?? pa.accuracy) >= 80
                                     ? "success"
-                                    : pa.accuracy >= 50
+                                    : (pa.finalAccuracy ?? pa.accuracy) >= 50
                                       ? "warning"
                                       : "danger"
                                 }
@@ -836,7 +1008,7 @@ const DashboardAnalytics = () => {
                                 className="text-muted fw-bold"
                                 style={{ minWidth: "40px" }}
                               >
-                                {pa.accuracy}%
+                                {(pa.finalAccuracy ?? pa.accuracy)}%
                               </small>
                             </div>
                           </td>
@@ -878,8 +1050,19 @@ const DashboardAnalytics = () => {
                         <th className="text-center">{t('analytics.imagesDone')}</th>
                         <th className="text-center">{t('statusCommon.qualityScore')}</th>
                         <th className="text-center">{t('analytics.criticalErrors')}</th>
-                        <th className="text-center">{t('statusCommon.accuracy')}</th>
-                        <th>{t('analytics.progressImages')}</th>
+                        {/* ============= 3 KEY METRICS COLUMNS FOR ANNOTATOR ============= */}
+                        <th className="text-center bg-success bg-opacity-10">
+                          <RefreshCw size={12} className="me-1 text-success" />
+                          Final
+                        </th>
+                        <th className="text-center bg-warning bg-opacity-10">
+                          <Zap size={12} className="me-1 text-warning" />
+                          1st Pass
+                        </th>
+                        <th className="text-center bg-danger bg-opacity-10">
+                          <RefreshCw size={12} className="me-1 text-danger" />
+                          Rework
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -942,40 +1125,49 @@ const DashboardAnalytics = () => {
                                   <span className="text-muted">0</span>
                                 )}
                               </td>
-                              <td className="text-center">
+                              {/* ============= 3 KEY METRICS VALUES FOR ANNOTATOR ============= */}
+                              <td className="text-center bg-success bg-opacity-5">
                                 <Badge
                                   color={
-                                    a.annotatorAccuracy >= 80
+                                    (a.finalAccuracy ?? a.annotatorAccuracy ?? 0) >= 80
                                       ? "success"
-                                      : a.annotatorAccuracy >= 50
+                                      : (a.finalAccuracy ?? a.annotatorAccuracy ?? 0) >= 50
                                         ? "warning"
                                         : "danger"
                                   }
                                 >
-                                  {`${a.annotatorAccuracy.toFixed(1)}%`}
-                                  {!a._hasManagerDecision && (
-                                    <i className="ri-time-line ms-1" title={t('analytics.noReviewYet') || 'No review yet'}></i>
-                                  )}
+                                  {(a.finalAccuracy ?? a.annotatorAccuracy ?? 0) > 0
+                                    ? `${(a.finalAccuracy ?? a.annotatorAccuracy ?? 0).toFixed(1)}%`
+                                    : "—"}
                                 </Badge>
                               </td>
-                              <td style={{ minWidth: "150px" }}>
-                                <div className="d-flex align-items-center gap-2">
-                                  <Progress
-                                    value={completionRate}
-                                    color={
-                                      completionRate >= 80
-                                        ? "success"
-                                        : completionRate >= 50
-                                          ? "warning"
-                                          : "danger"
-                                    }
-                                    className="flex-grow-1"
-                                    style={{ height: "6px" }}
-                                  />
-                                  <small className="text-muted fw-bold">
-                                    {completionRate}%
-                                  </small>
-                                </div>
+                              <td className="text-center bg-warning bg-opacity-5">
+                                <Badge
+                                  color={
+                                    (a.firstPassAccuracy ?? 0) >= 80
+                                      ? "success"
+                                      : (a.firstPassAccuracy ?? 0) >= 50
+                                        ? "warning"
+                                        : "danger"
+                                  }
+                                >
+                                  {(a.firstPassAccuracy ?? 0) > 0
+                                    ? `${a.firstPassAccuracy.toFixed(1)}%`
+                                    : "—"}
+                                </Badge>
+                              </td>
+                              <td className="text-center bg-danger bg-opacity-5">
+                                {(a.reworkRate ?? 0) > 15 ? (
+                                  <Badge color="danger">
+                                    {a.reworkRate > 0 ? `${a.reworkRate.toFixed(1)}%` : "0%"}
+                                    {a.reworkCount > 0 && <span className="ms-1">({a.reworkCount})</span>}
+                                  </Badge>
+                                ) : (
+                                  <Badge color="success">
+                                    {a.reworkRate > 0 ? `${a.reworkRate.toFixed(1)}%` : "0%"}
+                                    {a.reworkCount > 0 && <span className="ms-1">({a.reworkCount})</span>}
+                                  </Badge>
+                                )}
                               </td>
                             </tr>
                             {}
@@ -1027,27 +1219,15 @@ const DashboardAnalytics = () => {
                                     <td className="text-center text-muted">
                                       —
                                     </td>
+                                    {/* ============= 3 KEY METRICS PLACEHOLDERS FOR EXPANDED ROW ============= */}
                                     <td className="text-center text-muted">
                                       —
                                     </td>
-                                    <td style={{ minWidth: "150px" }}>
-                                      <div className="d-flex align-items-center gap-2">
-                                        <Progress
-                                          value={pdRate}
-                                          color={
-                                            pdRate >= 80
-                                              ? "success"
-                                              : pdRate >= 50
-                                                ? "warning"
-                                                : "danger"
-                                          }
-                                          className="flex-grow-1"
-                                          style={{ height: "5px" }}
-                                        />
-                                        <small className="text-muted">
-                                          {pd.completedImages}/{pd.totalImages}
-                                        </small>
-                                      </div>
+                                    <td className="text-center text-muted">
+                                      —
+                                    </td>
+                                    <td className="text-center text-muted">
+                                      —
                                     </td>
                                   </tr>
                                 );
@@ -1096,7 +1276,19 @@ const DashboardAnalytics = () => {
                         <th className="text-center">{t('statusCommon.overrideRate')}</th>
                         <th className="text-center">{t('statusCommon.disputes')}</th>
                         <th className="text-center">{t('statusCommon.disputeRate')}</th>
-                        <th className="text-center">{t('statusCommon.accuracy')}</th>
+                        {/* ============= 3 KEY METRICS COLUMNS FOR REVIEWER ============= */}
+                        <th className="text-center bg-success bg-opacity-10">
+                          <RefreshCw size={12} className="me-1 text-success" />
+                          Final Accuracy
+                        </th>
+                        <th className="text-center bg-warning bg-opacity-10">
+                          <Zap size={12} className="me-1 text-warning" />
+                          1st Pass
+                        </th>
+                        <th className="text-center bg-info bg-opacity-10">
+                          <AlertTriangle size={12} className="me-1 text-info" />
+                          Dispute Rate
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1159,20 +1351,41 @@ const DashboardAnalytics = () => {
                                   {r.disputeRate}%
                                 </Badge>
                               </td>
-                              <td className="text-center">
+                              {/* ============= 3 KEY METRICS VALUES FOR REVIEWER ============= */}
+                              <td className="text-center bg-success bg-opacity-5">
                                 <Badge
                                   color={
-                                    isNaN(accNum)
+                                    accNum >= 80
                                       ? "success"
-                                      : accNum >= 80
-                                        ? "success"
-                                        : accNum >= 50
-                                          ? "warning"
-                                          : "danger"
+                                      : accNum >= 50
+                                        ? "warning"
+                                        : "danger"
                                   }
                                   className="fs-12"
                                 >
                                   {`${accValue}%`}
+                                </Badge>
+                              </td>
+                              <td className="text-center bg-warning bg-opacity-5">
+                                {/* First-pass accuracy for reviewers = correct without disputes */}
+                                <Badge
+                                  color={
+                                    (100 - parseFloat(r.disputeRate)) >= 80
+                                      ? "success"
+                                      : (100 - parseFloat(r.disputeRate)) >= 50
+                                        ? "warning"
+                                        : "danger"
+                                  }
+                                  className="fs-12"
+                                >
+                                  {isNaN(accNum) ? "—" : `${Math.max(0, 100 - parseFloat(r.disputeRate)).toFixed(1)}%`}
+                                </Badge>
+                              </td>
+                              <td className="text-center bg-info bg-opacity-5">
+                                <Badge
+                                  color={disputeHigh ? "danger" : "success"}
+                                >
+                                  {r.disputeRate}%
                                 </Badge>
                               </td>
                             </tr>
@@ -1211,6 +1424,9 @@ const DashboardAnalytics = () => {
                                         ).toFixed(1) + "%"
                                       : "—"}
                                   </td>
+                                  {/* ============= 3 KEY METRICS PLACEHOLDERS FOR EXPANDED ROW ============= */}
+                                  <td className="text-center text-muted">—</td>
+                                  <td className="text-center text-muted">—</td>
                                   <td className="text-center text-muted">—</td>
                                 </tr>
                               ))}

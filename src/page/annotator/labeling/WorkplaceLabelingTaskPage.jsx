@@ -65,6 +65,7 @@ const WorkplaceLabelingTaskPage = () => {
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeSubmitting, setDisputeSubmitting] = useState(false);
   const [disputeStatus, setDisputeStatus] = useState(null);
+  const [disputeResult, setDisputeResult] = useState(null); // Store resolved dispute info
 
   const [highlightedAnnotationId, setHighlightedAnnotationId] = useState(null);
   const [collapsedPanels, setCollapsedPanels] = useState(new Set());
@@ -602,24 +603,56 @@ const WorkplaceLabelingTaskPage = () => {
   };
 
   useEffect(() => {
-    if (!currentImage || currentImage.status !== "Rejected") {
+    if (!currentImage) {
       setDisputeStatus(null);
+      setDisputeResult(null);
       setShowDisputeForm(false);
       return;
     }
+
     const checkDispute = async () => {
       try {
         const res = await taskService.getMyDisputes(assignmentId);
         const disputes = res.data || res || [];
-        const existing = disputes.find(
-          (d) => d.assignmentId === currentImage.id && d.status === "Pending",
+        const currentImageId = currentImage?.id;
+
+        if (!currentImageId) return;
+
+        // Find pending dispute for current image
+        const pending = disputes.find(
+          (d) => d.assignmentId === currentImageId && d.status === "Pending",
         );
-        setDisputeStatus(existing ? "Pending" : null);
+
+        // Find resolved dispute for current image
+        const resolved = disputes.find(
+          (d) => d.assignmentId === currentImageId && (d.status === "Resolved" || d.status === "Rejected"),
+        );
+
+        setDisputeStatus(pending ? "Pending" : null);
+        setDisputeResult(resolved || null);
+
+        // Show/hide dispute form based on status
+        if (resolved) {
+          setShowDisputeForm(false);
+          // If dispute was accepted (Resolved), check if task is back to editable
+          if (resolved.status === "Resolved" && currentImage.status !== "Rejected") {
+            // Dispute accepted - annotator was correct, task should be approved
+          }
+        }
       } catch {
         setDisputeStatus(null);
+        setDisputeResult(null);
       }
     };
-    checkDispute();
+
+    // Only check disputes when image is rejected
+    if (currentImage.status === "Rejected") {
+      checkDispute();
+    } else {
+      setDisputeStatus(null);
+      setDisputeResult(null);
+      setShowDisputeForm(false);
+    }
   }, [currentImage, assignmentId]);
 
   if (loading)
@@ -731,12 +764,21 @@ const WorkplaceLabelingTaskPage = () => {
   if (!currentImage)
     return <div className="text-center mt-5">{t("workspace.noImages")}</div>;
 
+  // ReadOnly logic:
+  // - Submitted/Approved: read only
+  // - Rejected with pending dispute: read only (waiting for manager decision)
+  // - Rejected with resolved dispute (annotator_correct): read only (was approved)
+  // - Rejected with resolved dispute (annotator_wrong): NOT read only (must redo)
   const isReadOnly =
     currentImage.status === "Submitted" ||
     currentImage.status === "Approved" ||
-    (currentImage.status === "Rejected" && disputeStatus === "Pending");
+    (currentImage.status === "Rejected" && disputeStatus === "Pending") ||
+    (currentImage.status === "Rejected" && disputeResult?.status === "Resolved" && disputeResult?.resolutionType === "annotator_correct");
 
   const isRejected = currentImage.status === "Rejected";
+
+  // When dispute is rejected (annotator was wrong), show resubmit option
+  const needsResubmit = isRejected && disputeResult?.status === "Rejected" && disputeResult?.resolutionType === "annotator_wrong";
 
   const doneCount = images.filter(
     (img) => img.status === "Submitted" || img.status === "Approved",
@@ -889,7 +931,7 @@ const WorkplaceLabelingTaskPage = () => {
           </div>
 
           {}
-          {isRejected && (
+          {isRejected && !disputeResult && (
             <div className="stitch-ws-alert danger">
               <div className="d-flex align-items-start gap-2">
                 <i
@@ -911,7 +953,7 @@ const WorkplaceLabelingTaskPage = () => {
                       <i className="ri-time-line me-1"></i>
                       <strong>{t("workspace.disputeSent")}</strong>
                     </div>
-                  ) : (
+                  ) : !disputeResult && (
                     <button
                       className="stitch-ws-nav-btn mt-2"
                       style={{ padding: "4px 12px", fontSize: "0.75rem" }}
@@ -920,6 +962,83 @@ const WorkplaceLabelingTaskPage = () => {
                       <i className="ri-questionnaire-line"></i>{" "}
                       {t("workspace.disputeBtn")}
                     </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Dispute Result Display */}
+          {disputeResult && (
+            <div className={`stitch-ws-alert ${disputeResult.status === "Resolved" ? "success" : "warning"}`}>
+              <div className="d-flex align-items-start gap-2">
+                <i
+                  className={disputeResult.status === "Resolved" ? "ri-checkbox-circle-fill" : "ri-close-circle-fill"}
+                  style={{ fontSize: "1.1rem", marginTop: 2 }}
+                ></i>
+                <div className="flex-grow-1">
+                  <strong className="d-block mb-1">
+                    {disputeResult.status === "Resolved"
+                      ? "Dispute Accepted - Manager ruled in your favor"
+                      : "Dispute Rejected - Manager upheld the rejection"}
+                  </strong>
+
+                  {/* Show reviewer votes summary */}
+                  {disputeResult.reviewerFeedbacks && disputeResult.reviewerFeedbacks.length > 0 && (
+                    <div className="mb-2 d-flex gap-2 align-items-center">
+                      <small className="text-muted">Reviewer votes:</small>
+                      <span className="badge bg-success">
+                        <i className="ri-check-line me-1"></i>
+                        {disputeResult.reviewerFeedbacks.filter(f => f.verdict === "Approved" || f.verdict === "Approve").length}
+                      </span>
+                      <span className="badge bg-danger">
+                        <i className="ri-close-line me-1"></i>
+                        {disputeResult.reviewerFeedbacks.filter(f => f.verdict === "Rejected" || f.verdict === "Reject").length}
+                      </span>
+                    </div>
+                  )}
+
+                  {disputeResult.resolutionType === "annotator_correct" && (
+                    <div className="mt-2 p-2 rounded" style={{ background: "rgba(34, 197, 94, 0.15)" }}>
+                      <small className="d-block mb-1">
+                        <i className="ri-user-follow-line me-1"></i>
+                        <strong>Manager Decision:</strong> Your labeling was correct.
+                      </small>
+                      <small className="d-block">
+                        <i className="ri-notification-3-line me-1"></i>
+                        Rejector(s) have been notified to re-review this task.
+                      </small>
+                      <small className="d-block mt-1 text-success">
+                        <i className="ri-check-double-line me-1"></i>
+                        Task remains APPROVED.
+                      </small>
+                    </div>
+                  )}
+
+                  {disputeResult.resolutionType === "annotator_wrong" && (
+                    <div className="mt-2 p-2 rounded" style={{ background: "rgba(249, 115, 22, 0.15)" }}>
+                      <small className="d-block mb-1">
+                        <i className="ri-user-follow-line me-1"></i>
+                        <strong>Manager Decision:</strong> Your labeling was incorrect.
+                      </small>
+                      <small className="d-block text-danger">
+                        <i className="ri-edit-line me-1"></i>
+                        Please review the guidelines carefully and resubmit your work.
+                      </small>
+                      <small className="d-block text-muted mt-1">
+                        <i className="ri-refresh-line me-1"></i>
+                        All reviewers will re-review when you resubmit.
+                      </small>
+                    </div>
+                  )}
+
+                  {disputeResult.managerComment && (
+                    <div className="mt-2">
+                      <small className="text-muted">Manager's comment:</small>
+                      <p className="mb-0 small" style={{ fontStyle: "italic" }}>
+                        "{disputeResult.managerComment}"
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1373,26 +1492,40 @@ const WorkplaceLabelingTaskPage = () => {
                     <i className="ri-save-line"></i> {t("workspace.saveDraft")}
                   </button>
                   <button
-                    className={`action-btn ${isRejected ? "warning" : "success"}`}
+                    className={`action-btn ${needsResubmit || isRejected ? "warning" : "success"}`}
                     onClick={handleSubmit}
                   >
                     <i
-                      className={`ri-${isRejected ? "restart-line" : "check-line"}`}
+                      className={`ri-${needsResubmit || isRejected ? "restart-line" : "check-line"}`}
                     ></i>
-                    {isRejected
-                      ? t("workspace.resubmit")
-                      : t("workspace.submitTask")}
+                    {needsResubmit
+                      ? t("workspace.resubmitAfterDispute", "Resubmit (Dispute Rejected)")
+                      : isRejected
+                        ? t("workspace.resubmit")
+                        : t("workspace.submitTask")}
                   </button>
                 </>
               )}
               {isReadOnly && (
-                <span
-                  className="stitch-ws-badge stitch-ws-badge-approved"
-                  style={{ fontSize: "0.78rem", padding: "5px 12px" }}
-                >
-                  <i className="ri-check-double-line me-1"></i>{" "}
-                  {t("workspace.submitted")}
-                </span>
+                <>
+                  {needsResubmit ? (
+                    <span
+                      className="stitch-ws-badge stitch-ws-badge-rejected"
+                      style={{ fontSize: "0.78rem", padding: "5px 12px" }}
+                    >
+                      <i className="ri-edit-line me-1"></i>{" "}
+                      {t("workspace.waitingForResubmit", "Awaiting your revision")}
+                    </span>
+                  ) : (
+                    <span
+                      className="stitch-ws-badge stitch-ws-badge-approved"
+                      style={{ fontSize: "0.78rem", padding: "5px 12px" }}
+                    >
+                      <i className="ri-check-double-line me-1"></i>{" "}
+                      {t("workspace.submitted")}
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>
