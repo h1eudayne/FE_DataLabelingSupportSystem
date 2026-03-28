@@ -18,18 +18,19 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
-  BarChart3,
   Calendar,
   AlertTriangle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import projectService from "../../../services/reviewer/project.service";
+import { useTranslation } from "react-i18next";
 
 const WorkplaceReviewTask = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -64,9 +65,7 @@ const WorkplaceReviewTask = () => {
           },
         );
       } else {
-        alert(
-          "Hiện tại không còn mục dữ liệu nào cần kiểm duyệt trong dự án này!",
-        );
+        alert(alert(t("workplace.noTaskAlert")));
       }
     } catch (error) {
       console.error(error);
@@ -77,10 +76,8 @@ const WorkplaceReviewTask = () => {
     <div className="bg-light min-vh-100 py-4">
       <Container>
         <div className="mb-4">
-          <h3 className="fw-bold text-dark mb-1">Dự án Kiểm duyệt</h3>
-          <p className="text-muted">
-            Quản lý và theo dõi tiến độ các dự án gán nhãn được phân công.
-          </p>
+          <h3 className="fw-bold text-dark mb-1">{t("workplace.title")}</h3>
+          <p className="text-muted">{t("workplace.subtitle")}</p>
         </div>
 
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
@@ -90,7 +87,7 @@ const WorkplaceReviewTask = () => {
                 <Search size={18} className="text-muted" />
               </InputGroup.Text>
               <Form.Control
-                placeholder="Tìm tên dự án..."
+                placeholder={t("workplace.searchPlaceholder")}
                 className="border-0 py-2 shadow-none"
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -156,7 +153,9 @@ const WorkplaceReviewTask = () => {
                         <div className="d-flex align-items-center gap-2 mb-1">
                           <Calendar size={14} className="text-primary" />
                           <span>
-                            <strong>Giao:</strong>{" "}
+                            <strong>
+                              {t("workplace.projectCard.assigned")}
+                            </strong>{" "}
                             {new Date(project.assignedDate).toLocaleDateString(
                               "vi-VN",
                             )}
@@ -170,7 +169,9 @@ const WorkplaceReviewTask = () => {
                           <span
                             className={isOverdue ? "text-danger fw-bold" : ""}
                           >
-                            <strong>Deadline:</strong>{" "}
+                            <strong>
+                              {t("workplace.projectCard.deadline")}
+                            </strong>{" "}
                             {new Date(project.deadline).toLocaleDateString(
                               "vi-VN",
                             )}
@@ -184,7 +185,7 @@ const WorkplaceReviewTask = () => {
                       <div className="mt-auto">
                         <div className="d-flex justify-content-between align-items-end mb-2">
                           <span className="small text-muted fw-bold">
-                            Tiến độ tổng thể
+                            {t("workplace.projectCard.overallProgress")}
                           </span>
                           <span className="h6 mb-0 fw-bold">
                             {project.progressPercent}%
@@ -218,11 +219,11 @@ const WorkplaceReviewTask = () => {
                           {project.progressPercent >= 100 ? (
                             <>
                               <CheckCircle2 size={18} />
-                              Đã hoàn thành
+                              {t("workplace.projectCard.button.completed")}
                             </>
                           ) : (
                             <>
-                              Vào kiểm duyệt
+                              {t("workplace.projectCard.button.enter")}
                               <ArrowRight size={18} />
                             </>
                           )}

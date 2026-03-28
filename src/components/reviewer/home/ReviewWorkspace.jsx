@@ -44,58 +44,7 @@ const ReviewWorkspace = () => {
   const [checkedCriteria, setCheckedCriteria] = useState({});
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
-  const ERROR_CATEGORIES = [
-    {
-      id: "CL-01",
-      title: "CL-01: Xác định sai đối tượng",
-      desc: "Đối tượng gán nhãn không đúng thực tế",
-    },
-    {
-      id: "CL-02",
-      title: "CL-02: Sai loại nhãn (Label Class)",
-      desc: "Chọn sai danh mục nhãn",
-    },
-    {
-      id: "CL-03",
-      title: "CL-03: Bounding Box chưa chính xác",
-      desc: "Khung bao không ôm sát, quá rộng/hẹp",
-    },
-    {
-      id: "CL-04",
-      title: "CL-04: Còn bỏ sót đối tượng",
-      desc: "Chưa gán nhãn hết các đối tượng trong ảnh",
-    },
-    {
-      id: "CL-05",
-      title: "CL-05: Gán nhãn sai",
-      desc: "Gán nhãn cho đối tượng không liên quan",
-    },
-    {
-      id: "CL-06",
-      title: "CL-06: Không tuân thủ guideline",
-      desc: "Sai quy định đặc thù của dự án",
-    },
-    {
-      id: "CL-07",
-      title: "CL-07: Chưa có tính nhất quán",
-      desc: "Gán nhãn không đồng nhất với các ảnh khác",
-    },
-    {
-      id: "CL-08",
-      title: "CL-08: Dùng sai loại công cụ",
-      desc: "Dùng sai công cụ (VD: dùng Box thay vì Polygon)",
-    },
-    {
-      id: "CL-09",
-      title: "CL-09: Chưa bao phủ đầy đủ",
-      desc: "Phần hiển thị của đối tượng bị cắt mất",
-    },
-    {
-      id: "CL-10",
-      title: "CL-10: Chất lượng dữ liệu",
-      desc: "Ảnh quá mờ/lỗi không thể gán nhãn",
-    },
-  ];
+
   const CHECKLIST_IDS = [
     "CL-01",
     "CL-02",
@@ -108,6 +57,12 @@ const ReviewWorkspace = () => {
     "CL-09",
     "CL-10",
   ];
+
+  const ERROR_CATEGORIES = CHECKLIST_IDS.map((id) => ({
+    id,
+    title: `${id}: ${t(`review.modalReject.items.${id}.title`)}`,
+    desc: t(`review.modalReject.items.${id}.desc`),
+  }));
 
   const handleSelectAllCriteria = () => {
     const isAllChecked = CHECKLIST_IDS.every(
@@ -209,11 +164,9 @@ const ReviewWorkspace = () => {
   const submitReview = async (isApproved) => {
     if (!isApproved) {
       if (errorCategories.length === 0)
-        return alert(
-          "Quy định: Phải chọn ít nhất một Phân loại lỗi khi Reject!",
-        );
+        return alert(t("review.messages.rejectRuleCategory"));
       if (!rejectComment.trim())
-        return alert("Quy định: Phải ghi rõ lý do để Annotator sửa bài!");
+        return alert(t("review.messages.rejectRuleComment"));
     }
 
     setSubmitting(true);
@@ -233,16 +186,10 @@ const ReviewWorkspace = () => {
       const isLastTask = currentIndex === taskList.length - 1;
 
       if (isLastTask) {
-        alert("Chúc mừng! Bạn đã hoàn thành mục kiểm duyệt cuối cùng.");
+        alert(t("review.messages.congrats"));
         navigate("/");
       } else {
         const nextTask = taskList[currentIndex + 1];
-
-        console.log(
-          isApproved
-            ? "Đã duyệt, chuyển ảnh tiếp theo..."
-            : "Đã từ chối, chuyển ảnh tiếp theo...",
-        );
 
         setCheckedCriteria({});
         navigate(
@@ -257,12 +204,7 @@ const ReviewWorkspace = () => {
         );
       }
     } catch (error) {
-      const errorMsg = error?.response?.data || error?.message || "";
-      if (errorMsg.includes("already reviewed") || errorMsg.includes("Duplicate")) {
-        alert("Bạn đã thực hiện kiểm duyệt nhiệm vụ này trước đó. Không thể kiểm duyệt trùng lặp.");
-      } else {
-        alert("Lỗi hệ thống, không thể lưu phán quyết.");
-      }
+      alert("Lỗi hệ thống, không thể lưu phán quyết.");
     } finally {
       setSubmitting(false);
     }
@@ -276,20 +218,12 @@ const ReviewWorkspace = () => {
     );
   if (!data)
     return (
-      <div className="text-center py-5 text-white">
-        Không tìm thấy dữ liệu nhiệm vụ.
-      </div>
+      <div className="text-center py-5 text-white">{t("review.nav.back")}</div>
     );
 
   const isOverdue = new Date(data.deadline) < new Date();
 
-  const hasAnyLabel = data.labels?.some((label) =>
-    data.existingAnnotations[0]?.__checklist?.[label.id]?.some(
-      (val) => val === true,
-    ),
-  );
-
-  const totalCLItemsToTick = hasAnyLabel ? 10 : 0;
+  const totalCLItemsToTick = CHECKLIST_IDS?.length || 10;
 
   const checkedCLCount = Object.values(checkedCriteria).filter(Boolean).length;
 
@@ -312,7 +246,7 @@ const ReviewWorkspace = () => {
               size="sm"
               onClick={() => navigate("/")}
             >
-              <ArrowLeft size={14} /> Quay lại
+              <ArrowLeft size={14} /> {t("review.nav.project")}
             </Button>
             <div className="d-flex align-items-center bg-light rounded-pill px-2 py-1 border">
               <Button
@@ -392,14 +326,14 @@ const ReviewWorkspace = () => {
                 className="text-uppercase text-muted fw-bold mb-3"
                 style={{ fontSize: "11px" }}
               >
-                Thông tin nhiệm vụ
+                {t("review.info.title")}
               </h6>
               <div className="d-flex justify-content-between mb-2">
-                <span className="text-muted">Người gán:</span>
+                <span className="text-muted">{t("review.info.assignee")}</span>
                 <span className="fw-semibold">{data.reviewerName}</span>
               </div>
               <div className="d-flex justify-content-between align-items-center">
-                <span className="text-muted">Hạn chót:</span>
+                <span className="text-muted">{t("review.info.deadline")}</span>
                 <Badge
                   bg={isOverdue ? "danger" : "light"}
                   className={`border ${isOverdue ? "text-white" : "text-primary"} fw-bold px-2`}
@@ -415,7 +349,7 @@ const ReviewWorkspace = () => {
                 className="text-uppercase text-muted fw-bold mb-3"
                 style={{ fontSize: "11px" }}
               >
-                Danh sách nhãn trong ảnh
+                {t("review.info.labelList")}
               </h6>
 
               {data.labels?.map((label) => {
@@ -445,7 +379,8 @@ const ReviewWorkspace = () => {
                         className="text-muted mb-2 small italic"
                         style={{ fontSize: "11px" }}
                       >
-                        <strong>Mô tả:</strong> {label.guideLine}
+                        <strong>{t("review.info.guide")}</strong>{" "}
+                        {label.guideLine}
                       </div>
                       {label.checklist?.length > 0 && (
                         <div className="p-2 rounded bg-light border-start border-2 border-info">
@@ -453,7 +388,7 @@ const ReviewWorkspace = () => {
                             className="text-uppercase fw-bold text-info mb-1"
                             style={{ fontSize: "9px" }}
                           >
-                            Checklist công việc:
+                            {t("review.info.workChecklist")}
                           </div>
                           <ul className="list-unstyled mb-0 d-flex flex-column gap-1">
                             {label.checklist.map((item, index) => (
@@ -491,8 +426,8 @@ const ReviewWorkspace = () => {
                 className="text-uppercase text-muted fw-bold mb-3 d-flex align-items-center gap-2"
                 style={{ fontSize: "11px" }}
               >
-                <CheckCircle size={14} className="text-success" /> TRẠNG THÁI
-                KIỂM DUYỆT CHUNG
+                <CheckCircle size={14} className="text-success" />{" "}
+                {t("review.status.title")}
               </h6>
 
               <Card
@@ -505,7 +440,7 @@ const ReviewWorkspace = () => {
                     {checkedCLCount}/{totalCLItemsToTick}
                   </div>
                   <div className="fw-bold small mb-2 text-muted">
-                    Tiêu chí đã đạt
+                    {t("review.status.criteriaMet")}
                   </div>
                   <Button
                     variant={isChecklistComplete ? "success" : "primary"}
@@ -514,8 +449,8 @@ const ReviewWorkspace = () => {
                     onClick={() => setShowChecklistModal(true)}
                   >
                     {isChecklistComplete
-                      ? "Xem lại Checklist"
-                      : "Bắt đầu Kiểm duyệt"}
+                      ? t("review.status.btnReviewAgain")
+                      : t("review.status.btnReview")}
                   </Button>
                 </Card.Body>
               </Card>
@@ -526,7 +461,7 @@ const ReviewWorkspace = () => {
                 className="text-muted mb-2 italic"
                 style={{ fontSize: "11px" }}
               >
-                * Nếu có lỗi, hãy nhấn vào nút bên dưới để chọn mã lỗi.
+                {t("review.status.hintReject")}
               </p>
               <Button
                 variant="danger"
@@ -534,7 +469,7 @@ const ReviewWorkspace = () => {
                 style={{ fontSize: "12px", padding: "10px" }}
                 onClick={() => setShowRejectModal(true)}
               >
-                <AlertCircle size={16} /> THIẾT LẬP LỖI REJECT
+                <AlertCircle size={16} /> {t("review.status.btnSetReject")}
               </Button>
             </div>
           </Col>
@@ -550,27 +485,26 @@ const ReviewWorkspace = () => {
       >
         <Modal.Header closeButton>
           <Modal.Title className="fw-bold text-primary d-flex align-items-center gap-2">
-            <CheckCircle size={24} /> Kiểm duyệt Tiêu chí Chất lượng
+            <CheckCircle size={24} /> {t("review.modalChecklist.title")}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="bg-light">
           <div className="alert alert-info py-2" style={{ fontSize: "12px" }}>
             <AlertCircle size={16} className="me-2" />
-            Xác nhận các tiêu chí chất lượng cho <strong>tất cả</strong> nhãn có
-            trong ảnh.
+            {t("review.modalChecklist.alertInfo")}
           </div>
           <div
             className="mb-3 px-1 d-flex align-items-center gap-1 animate-pulse"
             style={{ fontSize: "11px", color: "#dc3545", fontWeight: "600" }}
           >
             <AlertTriangle size={14} />
-            <span>
-              Lưu ý: Bạn phải hoàn thành 10/10 tiêu chí thì mới được Approve.
-            </span>
+            <span>{t("review.modalChecklist.alertNote")}</span>
           </div>
 
           <div className="mb-3 d-flex flex-wrap gap-2">
-            <span className="small fw-bold text-muted">Đang kiểm duyệt:</span>
+            <span className="small fw-bold text-muted">
+              {t("review.modalChecklist.labeling")}
+            </span>
             {data.labels?.map((label) => {
               const isLabelUsed = data.existingAnnotations[0]?.__checklist?.[
                 label.id
@@ -604,67 +538,20 @@ const ReviewWorkspace = () => {
               style={{ userSelect: "none" }}
             >
               {isAllCriteriaSelected
-                ? "Bỏ chọn tất cả tiêu chí"
-                : "Chọn tất cả tiêu chí đạt chuẩn"}
+                ? t("review.modalChecklist.deselectAll")
+                : t("review.modalChecklist.selectAll")}
             </span>
           </div>
 
           <Row xs={1} md={2} className="g-2">
-            {[
-              {
-                id: "CL-01",
-                title: "Xác định đúng đối tượng",
-                desc: "Đối tượng gán đúng với thực tế",
-              },
-              {
-                id: "CL-02",
-                title: "Đúng loại nhãn",
-                desc: "Chọn đúng category",
-              },
-              {
-                id: "CL-03",
-                title: "Bounding Box chính xác",
-                desc: "Khung bao ôm sát đối tượng",
-              },
-              {
-                id: "CL-04",
-                title: "Không bỏ sót",
-                desc: "Gán hết đối tượng trong ảnh",
-              },
-              {
-                id: "CL-05",
-                title: "Không gán nhãn sai",
-                desc: "Không gán vào vật thể lạ",
-              },
-              {
-                id: "CL-06",
-                title: "Tuân thủ guideline",
-                desc: "Theo đúng quy định dự án",
-              },
-              {
-                id: "CL-07",
-                title: "Tính nhất quán",
-                desc: "Giống các ảnh đã gán trước đó",
-              },
-              {
-                id: "CL-08",
-                title: "Đúng công cụ",
-                desc: "Dùng đúng Box/Polygon",
-              },
-              {
-                id: "CL-09",
-                title: "Bao phủ đầy đủ",
-                desc: "Không bị cắt mất phần hiển thị",
-              },
-              {
-                id: "CL-10",
-                title: "Dữ liệu đạt chuẩn",
-                desc: "Ảnh đủ rõ để định danh",
-              },
-            ].map((item) => {
-              const isChecked = !!checkedCriteria[`shared-${item.id}`];
+            {CHECKLIST_IDS.map((id) => {
+              const isChecked = !!checkedCriteria[`shared-${id}`];
+
+              const title = t(`review.modalChecklist.items.${id}.title`);
+              const desc = t(`review.modalChecklist.items.${id}.desc`);
+
               return (
-                <Col key={item.id}>
+                <Col key={id}>
                   <div
                     className={`p-2 rounded border d-flex align-items-start gap-2 h-100 transition-all ${
                       isChecked
@@ -672,17 +559,17 @@ const ReviewWorkspace = () => {
                         : "bg-white border-light-subtle"
                     }`}
                     style={{ cursor: "pointer", fontSize: "12px" }}
-                    onClick={() => handleCriteriaCheck(item.id)}
+                    onClick={() => handleCriteriaCheck(id)}
                   >
                     <Form.Check type="checkbox" checked={isChecked} readOnly />
                     <div>
                       <div
                         className={`fw-bold ${isChecked ? "text-success" : ""}`}
                       >
-                        {item.id}: {item.title}
+                        {id}: {title}
                       </div>
                       <div className="text-muted" style={{ fontSize: "10px" }}>
-                        {item.desc}
+                        {desc}
                       </div>
                     </div>
                   </div>
@@ -693,14 +580,16 @@ const ReviewWorkspace = () => {
         </Modal.Body>
         <Modal.Footer>
           <div className="me-auto small text-muted">
-            Đã hoàn thành: <strong>{checkedCLCount}</strong> /{" "}
-            <strong>{totalCLItemsToTick}</strong> tiêu chí
+            {t("review.modalChecklist.footer", {
+              count: checkedCLCount,
+              total: totalCLItemsToTick,
+            })}
           </div>
           <Button
             variant="primary"
             onClick={() => setShowChecklistModal(false)}
           >
-            Lưu & Đóng
+            {t("review.modalChecklist.saveAndClose")}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -717,13 +606,13 @@ const ReviewWorkspace = () => {
             className="fw-bold d-flex align-items-center gap-2"
             style={{ color: "#d93025" }}
           >
-            <AlertTriangle size={24} /> Xác nhận lỗi vi phạm
+            <AlertTriangle size={24} /> {t("review.modalReject.title")}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="bg-light">
           <Form.Group className="mb-4">
             <Form.Label className="fw-bold text-secondary small mb-3">
-              1. Phân loại các tiêu chí vi phạm (Chọn nhiều):
+              {t("review.modalReject.step1")}
             </Form.Label>
             <Row xs={1} md={2} className="g-2">
               {ERROR_CATEGORIES.map((err) => (
@@ -762,12 +651,12 @@ const ReviewWorkspace = () => {
 
           <Form.Group>
             <Form.Label className="fw-bold text-secondary small mb-2">
-              2. Ghi chú cụ thể cho Annotator:
+              {t("review.modalReject.step2")}
             </Form.Label>
             <Form.Control
               as="textarea"
               rows={4}
-              placeholder="Mô tả chi tiết vị trí lỗi..."
+              placeholder={t("review.modalReject.placeholder")}
               style={{ fontSize: "13px" }}
               value={rejectComment}
               onChange={(e) => setRejectComment(e.target.value)}
@@ -780,7 +669,7 @@ const ReviewWorkspace = () => {
             size="sm"
             onClick={() => setShowRejectModal(false)}
           >
-            Hủy bỏ
+            {t("review.modalReject.btnCancel")}
           </Button>
           <Button
             variant="danger"
@@ -791,7 +680,7 @@ const ReviewWorkspace = () => {
               setShowRejectModal(false);
             }}
           >
-            Xác nhận Reject
+            {t("review.modalReject.btnConfirm")}
           </Button>
         </Modal.Footer>
       </Modal>

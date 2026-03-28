@@ -36,6 +36,16 @@ const ReviewerContainer = () => {
     (p) => p.progressPercent < 100 && new Date(p.deadline) < today,
   ).length;
 
+  const overdueProjects = projects.filter(
+    (p) => p.progressPercent < 100 && new Date(p.deadline) < today,
+  );
+
+  const nearDeadlineProjects = projects.filter((p) => {
+    const deadlineDate = new Date(p.deadline);
+    const diffInHours = (deadlineDate - today) / (1000 * 60 * 60);
+    return p.progressPercent < 100 && diffInHours > 0 && diffInHours <= 48;
+  });
+
   const fetchProjects = async () => {
     setLoading(true);
     try {
@@ -183,6 +193,69 @@ const ReviewerContainer = () => {
           ))}
         </div>
 
+        {(overdueProjects.length > 0 || nearDeadlineProjects.length > 0) && (
+          <div className="mb-4 d-flex flex-column gap-2">
+            {overdueProjects.map((p) => (
+              <div
+                key={`overdue-${p.projectId}`}
+                className="alert alert-danger d-flex align-items-center justify-content-between border-0 shadow-sm rounded-4 mb-0 py-2 px-3 animate__animated animate__fadeIn"
+              >
+                <div className="d-flex align-items-center gap-2">
+                  <AlertCircle size={18} className="text-danger" />
+                  <div>
+                    <span className="fw-bold text-dark">
+                      {t("reviewer.alerts.overdue")}:
+                    </span>{" "}
+                    <span className="text-danger fw-medium">
+                      {p.projectName}
+                    </span>
+                    <small className="ms-2 text-muted">
+                      ({new Date(p.deadline).toLocaleDateString("vi-VN")})
+                    </small>
+                  </div>
+                </div>
+                <button
+                  className="btn btn-sm btn-danger rounded-pill px-3"
+                  onClick={() => getReviewWorkspace(p.projectId)}
+                >
+                  {t("reviewer.action.reviewNow")}
+                </button>
+              </div>
+            ))}
+
+            {nearDeadlineProjects.map((p) => (
+              <div
+                key={`near-${p.projectId}`}
+                className="alert alert-warning d-flex align-items-center justify-content-between border-0 shadow-sm rounded-4 mb-0 py-2 px-3 animate__animated animate__fadeIn"
+              >
+                <div className="d-flex align-items-center gap-2">
+                  <Clock size={18} className="text-warning" />
+                  <div>
+                    <span className="fw-bold text-dark">
+                      {t("reviewer.alerts.nearDeadline")}:
+                    </span>{" "}
+                    <span className="text-warning-emphasis fw-medium">
+                      {p.projectName}
+                    </span>
+                    <small className="ms-2 text-muted">
+                      ({t("reviewer.alerts.endsIn")}{" "}
+                      {Math.round(
+                        (new Date(p.deadline) - today) / (1000 * 60 * 60),
+                      )}
+                      h)
+                    </small>
+                  </div>
+                </div>
+                <button
+                  className="btn btn-sm btn-warning rounded-pill px-3 text-dark fw-medium"
+                  onClick={() => getReviewWorkspace(p.projectId)}
+                >
+                  {t("reviewer.action.reviewNow")}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <ReviewerActionBar onSearchChange={setSearchTerm} />
 
         <Row>
