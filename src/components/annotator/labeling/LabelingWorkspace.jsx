@@ -123,6 +123,9 @@ const LabelingWorkspace = ({
   useEffect(() => {
     const onKeyDown = (e) => {
       if (readOnly) return;
+      
+      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable;
+      if (isInput) return;
 
       if (e.key === "Enter" && drawingMode === "polygon") {
         e.preventDefault();

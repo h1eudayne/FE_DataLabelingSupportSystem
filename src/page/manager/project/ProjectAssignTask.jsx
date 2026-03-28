@@ -239,11 +239,18 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
     return <div className="p-5 text-center">{t("projectAssign.loading")}</div>;
 
   const totalItems = projectInfo?.totalDataItems ?? 0;
+  const unassignedFromApi = projectInfo?.unassignedDataItemCount;
   const assignedItems =
-    projectInfo?.members?.reduce((sum, m) => sum + (m.tasksAssigned || 0), 0) ??
-    0;
+    typeof unassignedFromApi === "number"
+      ? Math.max(0, totalItems - unassignedFromApi)
+      : (projectInfo?.members
+          ?.filter((m) => m.role === "Annotator")
+          .reduce((sum, m) => sum + (m.tasksAssigned || 0), 0) ?? 0);
   const processedItems = projectInfo?.processedItems ?? 0;
-  const availableItems = totalItems - assignedItems;
+  const availableItems =
+    typeof unassignedFromApi === "number"
+      ? Math.max(0, unassignedFromApi)
+      : Math.max(0, totalItems - assignedItems);
   const progressPercent = totalItems > 0 ? Math.round((processedItems / totalItems) * 100) : 0;
   const assignPercent = totalItems > 0 ? Math.min(Math.round((assignedItems / totalItems) * 100), 100) : 0;
 

@@ -280,6 +280,9 @@ const WorkplaceLabelingTaskPage = () => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable;
+      if (isInput) return;
+
       if (!e.shiftKey) return;
       if (e.key === "ArrowLeft") {
         e.preventDefault();
