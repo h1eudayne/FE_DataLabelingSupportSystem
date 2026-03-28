@@ -30,6 +30,7 @@ function getOrCreateConnection() {
   
   connection.onreconnected(() => {
     console.log("[SignalR Manager] Reconnected");
+    window.dispatchEvent(new Event("signalr-reconnected"));
   });
 
   connection.onreconnecting(() => {

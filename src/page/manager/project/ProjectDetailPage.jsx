@@ -19,7 +19,7 @@ import ProjectsDatasetsPage from "../datasets/ProjectsDatasetsPage";
 import ProjectAssignTask from "./ProjectAssignTask";
 import DisputeTab from "./tabs/DisputeTab";
 import ReviewAuditTab from "./tabs/ReviewAuditTab";
-import ExportTab from "./tabs/ExportTab";
+
 
 
 import "../../../assets/css/project-detail.css";
@@ -91,10 +91,9 @@ const ProjectDetailPage = () => {
     { key: "assign", icon: "ri-user-add-line", label: t("projectDetail.tabAssign", "Giao việc") },
     { key: "disputes", icon: "ri-scales-3-line", label: t("projectDetail.tabDisputes", "Tranh chấp") },
     { key: "review", icon: "ri-shield-check-line", label: t("projectDetail.tabReview", "Review Audit") },
-    { key: "export", icon: "ri-file-download-line", label: t("projectDetail.tabExport", "Export") },
   ];
   const tabConfig = isAdminView
-    ? tabConfigFull.filter((tab) => ["datasets", "export"].includes(tab.key))
+    ? tabConfigFull.filter((tab) => ["datasets"].includes(tab.key))
     : tabConfigFull;
 
   return (
@@ -179,9 +178,6 @@ const ProjectDetailPage = () => {
           </TabPane>
           <TabPane tabId="review">
             {activeTab === "review" && <ReviewAuditTab projectId={id} />}
-          </TabPane>
-          <TabPane tabId="export">
-            {activeTab === "export" && <ExportTab projectId={id} project={project} />}
           </TabPane>
         </TabContent>
       </div>

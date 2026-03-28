@@ -59,16 +59,15 @@ const useNotifications = (userId, initialUnreadCount) => {
     userIdRef.current = userId;
   }, [userId]);
 
-  useEffect(() => {
+  const fetchNotifications = useCallback(() => {
     const token = localStorage.getItem("access_token");
-    if (!token || !userId || hasFetchedRef.current) return;
-
-    hasFetchedRef.current = true;
+    if (!token || !userIdRef.current) return;
 
     notificationService
       .getMyNotifications()
       .then((res) => {
-        const serverNotifs = (res.data || []).map(normalizeServerNotification);
+        const rawData = Array.isArray(res) ? res : (res?.data || []);
+        const serverNotifs = rawData.map(normalizeServerNotification);
 
         setNotifications(serverNotifs);
 
@@ -78,7 +77,19 @@ const useNotifications = (userId, initialUnreadCount) => {
       .catch((err) => {
         console.warn("[Notifications] Failed to fetch from server:", err?.message);
       });
-  }, [userId]);
+  }, []);
+
+  useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    const handleReconnect = () => fetchNotifications();
+    window.addEventListener("signalr-reconnected", handleReconnect);
+    return () => window.removeEventListener("signalr-reconnected", handleReconnect);
+  }, [fetchNotifications]);
 
   useEffect(() => {
     saveToStorage(userIdRef.current, notifications);

@@ -9,6 +9,58 @@ import analyticsService from "../../../services/manager/analytics/analyticsServi
 import disputeService from "../../../services/manager/dispute/disputeService";
 import labelService from "../../../services/manager/project/labelService";
 
+const EXPORT_FORMATS = [
+  { value: "json", label: "JSON", desc: ".json", mime: "application/json", ext: ".json" },
+  { value: "csv", label: "CSV", desc: ".csv", mime: "text/csv", ext: ".csv" },
+  { value: "xml", label: "XML", desc: ".xml", mime: "application/xml", ext: ".xml" },
+];
+
+const convertToCSV = (data) => {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    if (typeof data === "object" && !Array.isArray(data)) data = [data];
+    else return "";
+  }
+  const flattenObj = (obj, prefix = "") => {
+    const result = {};
+    for (const key of Object.keys(obj)) {
+      const fullKey = prefix ? `${prefix}.${key}` : key;
+      if (obj[key] !== null && typeof obj[key] === "object" && !Array.isArray(obj[key])) {
+        Object.assign(result, flattenObj(obj[key], fullKey));
+      } else {
+        result[fullKey] = Array.isArray(obj[key]) ? JSON.stringify(obj[key]) : obj[key];
+      }
+    }
+    return result;
+  };
+  const flatData = data.map((item) => flattenObj(item));
+  const headers = [...new Set(flatData.flatMap((d) => Object.keys(d)))];
+  const csvRows = [headers.join(",")];
+  for (const row of flatData) {
+    const values = headers.map((h) => {
+      const val = row[h] ?? "";
+      const str = String(val);
+      return str.includes(",") || str.includes('"') || str.includes("\n") ? `"${str.replace(/"/g, '""')}"` : str;
+    });
+    csvRows.push(values.join(","));
+  }
+  return csvRows.join("\n");
+};
+
+const convertToXML = (data, rootName = "export") => {
+  const escapeXml = (str) =>
+    String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const toXml = (obj, tag = "item") => {
+    if (Array.isArray(obj)) return obj.map((item) => toXml(item, tag)).join("\n");
+    if (typeof obj === "object" && obj !== null) {
+      const inner = Object.entries(obj).map(([key, val]) => toXml(val, key)).join("\n");
+      return `<${tag}>\n${inner}\n</${tag}>`;
+    }
+    return `<${tag}>${escapeXml(obj)}</${tag}>`;
+  };
+  const items = Array.isArray(data) ? data : [data];
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<${rootName}>\n${items.map((item) => toXml(item, "item")).join("\n")}\n</${rootName}>`;
+};
+
 const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
   const { t } = useTranslation();
   const { id: routeParamId } = useParams();
@@ -19,6 +71,8 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState("json");
   const [exportCheck, setExportCheck] = useState({
     ready: false,
     allApproved: false,
@@ -174,6 +228,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
     }
   };
 
+  const openExportModal = () => {
+    if (!selectedProject) return;
+    setShowExportModal(true);
+  };
+
   const handleExport = async () => {
     if (!selectedProject) return;
 
@@ -196,16 +255,36 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
     setExporting(true);
     try {
       const res = await datasetService.exportData(selectedProject.id);
-      const blob = new Blob([res.data], { type: "application/json" });
+      const format = EXPORT_FORMATS.find((f) => f.value === selectedFormat);
+      let rawData = res.data;
+
+      if (typeof rawData === "string") {
+        try { rawData = JSON.parse(rawData); } catch {}
+      }
+
+      let content;
+      switch (selectedFormat) {
+        case "csv":
+          content = convertToCSV(rawData);
+          break;
+        case "xml":
+          content = convertToXML(rawData, "projectExport");
+          break;
+        default:
+          content = typeof rawData === "string" ? rawData : JSON.stringify(rawData, null, 2);
+      }
+
+      const blob = new Blob([content], { type: format.mime });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `project_${selectedProject.id}_export_${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `project_${selectedProject.id}_export_${new Date().toISOString().slice(0, 10)}${format.ext}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
       toast.success(t('datasets.exportSuccess'));
+      setShowExportModal(false);
     } catch (error) {
       toast.error(t('datasets.exportFailed'));
     } finally {
@@ -214,6 +293,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
   };
 
   return (
+    <>
     <div
       className="chat-wrapper d-lg-flex gap-1 mx-n4 mt-n4 p-1"
       style={{ height: "calc(100vh - 70px)", overflow: "hidden" }}
@@ -305,31 +385,23 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
             />
             <button
               className={`btn btn-sm px-3 ${exportCheck.ready ? "btn-success" : "btn-outline-secondary"}`}
-              disabled={!selectedProject || exporting || exportCheck.checking}
-              onClick={handleExport}
+              disabled={!selectedProject || exportCheck.checking}
+              onClick={openExportModal}
               style={{ minWidth: '160px' }}
               title={
                 !exportCheck.ready && selectedProject
                   ? `${t('datasets.exportNotReady')}: ${!exportCheck.allApproved ? t('datasets.notAllApproved') : ""} ${!exportCheck.noPendingDisputes ? t('datasets.disputePendingShort') : ""}`
-                  : t('datasets.exportJson')
+                  : t('datasets.exportData', 'Export Data')
               }
             >
-              {exporting ? (
+              {exportCheck.checking ? (
                 <span className="spinner-border spinner-border-sm me-1"></span>
-              ) : exportCheck.checking ? (
-                <span className="spinner-border spinner-border-sm me-1"></span>
-              ) : !exportCheck.ready && selectedProject ? (
-                <i className="ri-lock-line align-middle me-1" />
               ) : (
                 <i className="ri-file-download-line align-middle me-1" />
               )}
-              {exporting
-                ? t('datasets.exporting')
-                : exportCheck.checking
-                  ? t('datasets.checking')
-                  : !exportCheck.ready && selectedProject
-                    ? t('datasets.exportNotEligible')
-                    : "Export JSON"}
+              {exportCheck.checking
+                ? t('datasets.checking')
+                : t('datasets.exportData', 'Export Data')}
             </button>
             {!readOnly && (
             <button
@@ -923,6 +995,185 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
         </div>
       </div>
     </div>
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowExportModal(false); }}
+        >
+          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '520px' }}>
+            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+              {/* Modal Header */}
+              <div
+                className="modal-header border-0 text-white"
+                style={{
+                  background: 'linear-gradient(135deg, #405189 0%, #3577f1 100%)',
+                  padding: '20px 24px',
+                }}
+              >
+                <div className="d-flex align-items-center gap-3">
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      background: 'rgba(255,255,255,0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <i className="ri-file-download-line fs-20"></i>
+                  </div>
+                  <div>
+                    <h5 className="modal-title mb-0 fw-bold">{t('datasets.exportModalTitle', 'Xuất dữ liệu')}</h5>
+                    <small style={{ opacity: 0.85 }}>{selectedProject?.name}</small>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowExportModal(false)}
+                ></button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="modal-body p-4">
+                {/* Eligibility Check */}
+                <div className="mb-4">
+                  <h6 className="fw-bold text-uppercase fs-12 text-muted mb-3">
+                    <i className="ri-shield-check-line me-1"></i>
+                    {t('datasets.exportEligibility', 'Điều kiện xuất dữ liệu')}
+                  </h6>
+                  {exportCheck.checking ? (
+                    <div className="text-center py-3">
+                      <span className="spinner-border spinner-border-sm text-primary me-2"></span>
+                      <span className="text-muted">{t('datasets.checking')}</span>
+                    </div>
+                  ) : (
+                    <div className="d-flex flex-column gap-2">
+                      <div className={`d-flex align-items-center gap-2 p-2 rounded ${exportCheck.allApproved ? 'bg-success-subtle' : 'bg-danger-subtle'}`}>
+                        <i className={`fs-18 ${exportCheck.allApproved ? 'ri-checkbox-circle-fill text-success' : 'ri-close-circle-fill text-danger'}`}></i>
+                        <span className={`small fw-medium ${exportCheck.allApproved ? 'text-success' : 'text-danger'}`}>
+                          {exportCheck.allApproved
+                            ? t('datasets.allTasksApproved')
+                            : t('datasets.tasksNotApproved', { count: (exportCheck.totalTasks || 0) - (exportCheck.approved || 0) })}
+                        </span>
+                      </div>
+                      <div className={`d-flex align-items-center gap-2 p-2 rounded ${exportCheck.noPendingDisputes ? 'bg-success-subtle' : 'bg-danger-subtle'}`}>
+                        <i className={`fs-18 ${exportCheck.noPendingDisputes ? 'ri-checkbox-circle-fill text-success' : 'ri-close-circle-fill text-danger'}`}></i>
+                        <span className={`small fw-medium ${exportCheck.noPendingDisputes ? 'text-success' : 'text-danger'}`}>
+                          {exportCheck.noPendingDisputes
+                            ? t('datasets.noDisputePending')
+                            : t('datasets.disputesPending', { count: exportCheck.pendingDisputeCount })}
+                        </span>
+                      </div>
+                      {exportCheck.ready && (
+                        <div className="alert alert-success py-2 px-3 mb-0 mt-1 small d-flex align-items-center gap-2">
+                          <i className="ri-check-double-line fs-16"></i>
+                          <strong>{t('datasets.readyToExport')}</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Format Selection */}
+                <div className="mb-3">
+                  <h6 className="fw-bold text-uppercase fs-12 text-muted mb-3">
+                    <i className="ri-settings-3-line me-1"></i>
+                    {t('datasets.exportFormat', 'Định dạng xuất')}
+                  </h6>
+                  <div className="d-flex gap-2">
+                    {EXPORT_FORMATS.map((f) => (
+                      <button
+                        key={f.value}
+                        className={`btn flex-fill ${
+                          selectedFormat === f.value
+                            ? 'btn-primary'
+                            : 'btn-outline-secondary'
+                        }`}
+                        onClick={() => setSelectedFormat(f.value)}
+                        style={{
+                          borderRadius: 10,
+                          padding: '10px 16px',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <div className="d-flex flex-column align-items-center">
+                          <i className={`fs-20 mb-1 ${
+                            f.value === 'json' ? 'ri-braces-line' :
+                            f.value === 'csv' ? 'ri-file-excel-line' :
+                            'ri-code-s-slash-line'
+                          }`}></i>
+                          <span className="fw-semibold">{f.label}</span>
+                          <small style={{ opacity: 0.7, fontSize: '0.7rem' }}>{f.desc}</small>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Project Info Summary */}
+                {selectedProject && (
+                  <div className="bg-light rounded p-3">
+                    <div className="d-flex justify-content-between small mb-1">
+                      <span className="text-muted">{t('datasets.totalData')}:</span>
+                      <span className="fw-bold">{selectedProject.totalDataItems ?? 0}</span>
+                    </div>
+                    <div className="d-flex justify-content-between small mb-1">
+                      <span className="text-muted">{t('datasets.approved')}:</span>
+                      <span className="fw-bold text-success">{exportCheck.approved ?? 0}</span>
+                    </div>
+                    <div className="d-flex justify-content-between small">
+                      <span className="text-muted">{t('datasets.deadline')}:</span>
+                      <span className="fw-bold">{selectedProject.deadline ? new Date(selectedProject.deadline).toLocaleDateString('vi-VN') : '—'}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="modal-footer border-0 px-4 pb-4 pt-0">
+                <button
+                  className="btn btn-light px-4"
+                  onClick={() => setShowExportModal(false)}
+                  style={{ borderRadius: 10 }}
+                >
+                  {t('common.cancel', 'Hủy')}
+                </button>
+                <button
+                  className={`btn px-4 ${exportCheck.ready ? 'btn-success' : 'btn-secondary'}`}
+                  onClick={handleExport}
+                  disabled={!exportCheck.ready || exporting}
+                  style={{ borderRadius: 10, minWidth: 160 }}
+                >
+                  {exporting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      {t('datasets.exporting')}
+                    </>
+                  ) : !exportCheck.ready ? (
+                    <>
+                      <i className="ri-lock-line me-1"></i>
+                      {t('datasets.exportNotEligible')}
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-file-download-line me-1"></i>
+                      {`Export ${EXPORT_FORMATS.find(f => f.value === selectedFormat)?.label}`}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

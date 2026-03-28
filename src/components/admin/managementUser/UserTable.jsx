@@ -85,7 +85,7 @@ const UserTable = (props) => {
                         justifyContent: "center",
                         padding: "0.4rem 0.6rem",
                       }}
-                      onClick={() => onActive(user.id, !user.isActive)}
+                      onClick={() => onActive(user, !user.isActive)}
                       title={
                         user.isActive
                           ? t("userTableComp.deactivate")

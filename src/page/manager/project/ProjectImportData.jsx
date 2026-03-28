@@ -24,6 +24,7 @@ const CreateProject = () => {
   const [labels] = useState([{ name: "", color: "#0ab39c", guideLine: "N/A" }]);
   const [urlInput, setUrlInput] = useState("");
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [autoAssign, setAutoAssign] = useState(true);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -48,9 +49,9 @@ const CreateProject = () => {
       .map((u) => u.trim())
       .filter((u) => u !== "");
 
-    if (selectedUsers.length === 0)
+    if (selectedUsers.length === 0 && autoAssign)
       return Swal.fire(t("projectImport.error"), t("projectImport.errorSelectUser"), "warning");
-    if (!selectedReviewer)
+    if (!selectedReviewer && autoAssign)
       return Swal.fire(t("projectImport.error"), t("projectImport.errorSelectReviewer"), "warning");
     if (urlArray.length === 0)
       return Swal.fire(t("projectImport.error"), t("projectImport.errorInputUrl"), "warning");
@@ -66,30 +67,40 @@ const CreateProject = () => {
 
       await projectService.importData(projectId, urlArray);
 
-      const quantityPerPerson = Math.floor(
-        urlArray.length / selectedUsers.length,
-      );
-      const remain = urlArray.length % selectedUsers.length;
+      if (autoAssign && selectedUsers.length > 0) {
+        const quantityPerPerson = Math.floor(
+          urlArray.length / selectedUsers.length,
+        );
+        const remain = urlArray.length % selectedUsers.length;
 
-      for (let i = 0; i < selectedUsers.length; i++) {
-        const finalQuantity =
-          i === selectedUsers.length - 1
-            ? quantityPerPerson + remain
-            : quantityPerPerson;
+        for (let i = 0; i < selectedUsers.length; i++) {
+          const finalQuantity =
+            i === selectedUsers.length - 1
+              ? quantityPerPerson + remain
+              : quantityPerPerson;
 
-        await taskService.assignTask({
-          projectId: projectId,
-          annotatorId: selectedUsers[i],
-          quantity: finalQuantity,
-          reviewerId: selectedReviewer,
-        });
+          await taskService.assignTask({
+            projectId: projectId,
+            annotatorId: selectedUsers[i],
+            quantity: finalQuantity,
+            reviewerId: selectedReviewer,
+          });
+        }
       }
 
-      await Swal.fire(
-        t("projectImport.success"),
-        t("projectImport.successMsg", { count: urlArray.length, users: selectedUsers.length }),
-        "success",
-      );
+      if (autoAssign) {
+        await Swal.fire(
+          t("projectImport.success"),
+          t("projectImport.successMsg", { count: urlArray.length, users: selectedUsers.length }),
+          "success",
+        );
+      } else {
+        await Swal.fire(
+          t("projectImport.success"),
+          `${urlArray.length} data items imported. You can assign tasks manually later.`,
+          "success",
+        );
+      }
       navigate("/projects-all-projects");
     } catch (error) {
       console.error("Error:", error);
@@ -184,6 +195,7 @@ const CreateProject = () => {
                     className="form-select"
                     value={selectedReviewer}
                     onChange={(e) => setSelectedReviewer(e.target.value)}
+                    disabled={!autoAssign}
                   >
                     <option value="">
                       {t("projectImport.selectReviewer")} ({reviewers.length}) --
@@ -195,6 +207,28 @@ const CreateProject = () => {
                     ))}
                   </select>
                 </div>
+
+                <div className="form-check form-switch mb-3 p-3 border rounded bg-light">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    id="autoAssignSwitch"
+                    checked={autoAssign}
+                    onChange={(e) => setAutoAssign(e.target.checked)}
+                  />
+                  <label className="form-check-label fw-bold" htmlFor="autoAssignSwitch">
+                    {autoAssign ? "Auto-assign tasks after import" : "Manual assignment (assign later)"}
+                  </label>
+                  <small className="d-block text-muted mt-1">
+                    {autoAssign
+                      ? "Tasks will be automatically distributed to selected annotators."
+                      : "Data will be imported only. You can assign tasks manually from the project detail page."}
+                  </small>
+                </div>
+
+                {autoAssign && (
+                <>
                 <input
                   type="text"
                   className="form-control mb-3"
@@ -239,6 +273,7 @@ const CreateProject = () => {
                       </div>
                     ))}
                 </div>
+                </>)}
                 <button
                   type="submit"
                   className="btn btn-primary w-100 py-3 mt-4 fw-bold"

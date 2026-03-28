@@ -60,5 +60,5 @@ export const deleteUser = (id) => {
 };
 
 export const adminResetPassword = (userId, newPassword) => {
-  return axios.put(`/api/users/${userId}/password`, { newPassword });
+  return axios.put(`/api/users/${userId}/change-password`, { newPassword });
 };
