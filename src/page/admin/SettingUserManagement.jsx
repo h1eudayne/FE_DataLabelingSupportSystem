@@ -30,6 +30,7 @@ import { toast } from "react-toastify";
 
 const SettingUserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [managers, setManagers] = useState([]);
   const [selectUser, setSelectUser] = useState(null);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,7 +60,7 @@ const SettingUserManagement = () => {
 
   const { t } = useTranslation();
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const ALLOWED_EXTENSIONS = [".xlsx", ".xls"];
 
   const handleImportFileChange = (e) => {
@@ -70,11 +71,19 @@ const SettingUserManagement = () => {
 
     const ext = "." + file.name.split(".").pop().toLowerCase();
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      setImportError(t("userMgmt.importInvalidType", { defaultValue: "Only .xlsx and .xls files are allowed" }));
+      setImportError(
+        t("userMgmt.importInvalidType", {
+          defaultValue: "Only .xlsx and .xls files are allowed",
+        }),
+      );
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
-      setImportError(t("userMgmt.importFileTooLarge", { defaultValue: "File must be less than 5MB" }));
+      setImportError(
+        t("userMgmt.importFileTooLarge", {
+          defaultValue: "File must be less than 5MB",
+        }),
+      );
       return;
     }
     setImportFile(file);
@@ -89,7 +98,8 @@ const SettingUserManagement = () => {
       setImportResult(res.data);
       await fetchUsers();
     } catch (error) {
-      const msg = error?.response?.data?.message || error.message || "Import failed";
+      const msg =
+        error?.response?.data?.message || error.message || "Import failed";
       setImportError(msg);
     } finally {
       setImportLoading(false);
@@ -115,12 +125,18 @@ const SettingUserManagement = () => {
   const fetchUsers = async (currentPage = pagination.page) => {
     setLoading(true);
     try {
+      const resAdmins = await getAdmins();
+      const managerUsers = resAdmins.data.filter(
+        (user) => user.role === "Manager",
+      );
       const res = await getUsers(currentPage, pagination.pageSize);
       const data = res.data;
       const userList = data.items || data;
+
+      setManagers(managerUsers);
       setUsers(userList);
       setFilteredUsers(userList);
-      setTotalCount(data.totalCount || 0);
+      setTotalCount(data.stats.totalWorkers || 0);
     } catch (error) {
       console.error(error);
     } finally {
@@ -187,18 +203,28 @@ const SettingUserManagement = () => {
     try {
       await updateStatus(lockTargetUser.id, lockTargetActive);
       const updateList = (list) =>
-        list.map((u) => (u.id === lockTargetUser.id ? { ...u, isActive: lockTargetActive } : u));
+        list.map((u) =>
+          u.id === lockTargetUser.id ? { ...u, isActive: lockTargetActive } : u,
+        );
       setUsers((prev) => updateList(prev));
       setFilteredUsers((prev) => updateList(prev));
       toast.success(
         lockTargetActive
-          ? t("userMgmt.unlockSuccess", { defaultValue: "Tài khoản đã được mở khóa" })
-          : t("userMgmt.lockSuccess", { defaultValue: "Tài khoản đã bị khóa" })
+          ? t("userMgmt.unlockSuccess", {
+              defaultValue: "Tài khoản đã được mở khóa",
+            })
+          : t("userMgmt.lockSuccess", { defaultValue: "Tài khoản đã bị khóa" }),
       );
       setLockModalOpen(false);
       setLockTargetUser(null);
     } catch (error) {
-      toast.error(error?.response?.data?.message || error.message || t("userMgmt.statusUpdateFailed", { defaultValue: "Cập nhật trạng thái thất bại" }));
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          t("userMgmt.statusUpdateFailed", {
+            defaultValue: "Cập nhật trạng thái thất bại",
+          }),
+      );
     } finally {
       setLockLoading(false);
     }
@@ -213,11 +239,21 @@ const SettingUserManagement = () => {
     setResetPasswordLoading(true);
     try {
       await adminResetPassword(resetPasswordUser.id, "Password@123");
-      toast.success(t("userMgmt.passwordResetSuccess", { defaultValue: "Password has been reset to default successfully" }));
+      toast.success(
+        t("userMgmt.passwordResetSuccess", {
+          defaultValue: "Password has been reset to default successfully",
+        }),
+      );
       setResetPasswordModalOpen(false);
       setResetPasswordUser(null);
     } catch (error) {
-      toast.error(error?.response?.data?.message || error.message || t("userMgmt.passwordResetFailed", { defaultValue: "Failed to reset password" }));
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          t("userMgmt.passwordResetFailed", {
+            defaultValue: "Failed to reset password",
+          }),
+      );
     } finally {
       setResetPasswordLoading(false);
     }
@@ -276,7 +312,9 @@ const SettingUserManagement = () => {
       {/* Lock/Unlock Confirmation Modal */}
       <Modal isOpen={lockModalOpen} toggle={() => setLockModalOpen(false)}>
         <ModalHeader toggle={() => setLockModalOpen(false)}>
-          <i className={`me-2 ${lockTargetActive ? 'ri-lock-unlock-line text-success' : 'ri-lock-line text-danger'}`}></i>
+          <i
+            className={`me-2 ${lockTargetActive ? "ri-lock-unlock-line text-success" : "ri-lock-line text-danger"}`}
+          ></i>
           {lockTargetActive
             ? t("userMgmt.unlockAccount", { defaultValue: "Mở khóa tài khoản" })
             : t("userMgmt.lockAccount", { defaultValue: "Khóa tài khoản" })}
@@ -284,21 +322,33 @@ const SettingUserManagement = () => {
         <ModalBody>
           <div className="text-center py-2">
             <div className="avatar-lg mx-auto mb-3">
-              <div className={`avatar-title rounded-circle fs-24 ${lockTargetActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`}>
-                <i className={lockTargetActive ? 'ri-lock-unlock-line' : 'ri-lock-line'}></i>
+              <div
+                className={`avatar-title rounded-circle fs-24 ${lockTargetActive ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"}`}
+              >
+                <i
+                  className={
+                    lockTargetActive ? "ri-lock-unlock-line" : "ri-lock-line"
+                  }
+                ></i>
               </div>
             </div>
             <h5 className="mb-2">
               {lockTargetActive
-                ? t("userMgmt.confirmUnlock", { defaultValue: "Xác nhận mở khóa tài khoản?" })
-                : t("userMgmt.confirmLock", { defaultValue: "Xác nhận khóa tài khoản?" })}
+                ? t("userMgmt.confirmUnlock", {
+                    defaultValue: "Xác nhận mở khóa tài khoản?",
+                  })
+                : t("userMgmt.confirmLock", {
+                    defaultValue: "Xác nhận khóa tài khoản?",
+                  })}
             </h5>
             <p className="mb-1">
               <strong className="fs-15">{lockTargetUser?.fullName}</strong>
             </p>
             <small className="text-muted">{lockTargetUser?.email}</small>
             <div className="mt-1">
-              <span className="badge bg-info-subtle text-info px-2 py-1">{lockTargetUser?.role}</span>
+              <span className="badge bg-info-subtle text-info px-2 py-1">
+                {lockTargetUser?.role}
+              </span>
             </div>
 
             {/* Warning if user is in projects */}
@@ -309,13 +359,15 @@ const SettingUserManagement = () => {
                   <div>
                     <strong className="d-block mb-1">
                       {t("userMgmt.userInProjectWarning", {
-                        defaultValue: "Người dùng đang tham gia {{count}} dự án!",
+                        defaultValue:
+                          "Người dùng đang tham gia {{count}} dự án!",
                         count: lockTargetUser.totalProjects,
                       })}
                     </strong>
                     <span className="small">
                       {t("userMgmt.userInProjectNote", {
-                        defaultValue: "Việc khóa tài khoản này cần được bàn giao cho Manager quản lý dự án của người dùng. Hãy liên hệ Manager trước khi khóa.",
+                        defaultValue:
+                          "Việc khóa tài khoản này cần được bàn giao cho Manager quản lý dự án của người dùng. Hãy liên hệ Manager trước khi khóa.",
                       })}
                     </span>
                   </div>
@@ -327,29 +379,37 @@ const SettingUserManagement = () => {
               <div className="alert alert-info mt-3 mb-0 text-start small">
                 <i className="ri-information-line me-1"></i>
                 {t("userMgmt.unlockInProjectNote", {
-                  defaultValue: "Người dùng đang trong {{count}} dự án. Mở khóa sẽ cho phép họ tiếp tục làm việc.",
+                  defaultValue:
+                    "Người dùng đang trong {{count}} dự án. Mở khóa sẽ cho phép họ tiếp tục làm việc.",
                   count: lockTargetUser.totalProjects,
                 })}
               </div>
             )}
 
-            {(!lockTargetUser?.totalProjects || lockTargetUser?.totalProjects === 0) && !lockTargetActive && (
-              <div className="alert alert-warning mt-3 mb-0 text-start small">
-                <i className="ri-information-line me-1"></i>
-                {t("userMgmt.lockNoProjectNote", {
-                  defaultValue: "Người dùng không tham gia dự án nào. Có thể khóa an toàn.",
-                })}
-              </div>
-            )}
+            {(!lockTargetUser?.totalProjects ||
+              lockTargetUser?.totalProjects === 0) &&
+              !lockTargetActive && (
+                <div className="alert alert-warning mt-3 mb-0 text-start small">
+                  <i className="ri-information-line me-1"></i>
+                  {t("userMgmt.lockNoProjectNote", {
+                    defaultValue:
+                      "Người dùng không tham gia dự án nào. Có thể khóa an toàn.",
+                  })}
+                </div>
+              )}
           </div>
         </ModalBody>
         <ModalFooter className="justify-content-center">
-          <Button color="light" onClick={() => setLockModalOpen(false)} className="px-4">
+          <Button
+            color="light"
+            onClick={() => setLockModalOpen(false)}
+            className="px-4"
+          >
             <i className="ri-close-line me-1"></i>
             {t("common.cancel", { defaultValue: "Không" })}
           </Button>
           <Button
-            color={lockTargetActive ? 'success' : 'danger'}
+            color={lockTargetActive ? "success" : "danger"}
             onClick={handleConfirmLockUnlock}
             disabled={lockLoading}
             className="px-4"
@@ -361,7 +421,9 @@ const SettingUserManagement = () => {
               </>
             ) : (
               <>
-                <i className={`me-1 ${lockTargetActive ? 'ri-lock-unlock-line' : 'ri-lock-line'}`}></i>
+                <i
+                  className={`me-1 ${lockTargetActive ? "ri-lock-unlock-line" : "ri-lock-line"}`}
+                ></i>
                 {t("common.confirm", { defaultValue: "Đồng ý" })}
               </>
             )}
@@ -370,7 +432,10 @@ const SettingUserManagement = () => {
       </Modal>
 
       {/* Reset Password Modal */}
-      <Modal isOpen={resetPasswordModalOpen} toggle={() => setResetPasswordModalOpen(false)}>
+      <Modal
+        isOpen={resetPasswordModalOpen}
+        toggle={() => setResetPasswordModalOpen(false)}
+      >
         <ModalHeader toggle={() => setResetPasswordModalOpen(false)}>
           <i className="ri-lock-password-line me-2 text-warning"></i>
           {t("userMgmt.resetPassword", { defaultValue: "Reset Password" })}
@@ -383,10 +448,15 @@ const SettingUserManagement = () => {
               </div>
             </div>
             <h5 className="mb-2">
-              {t("userMgmt.resetPasswordConfirmTitle", { defaultValue: "Xác nhận đặt lại mật khẩu?" })}
+              {t("userMgmt.resetPasswordConfirmTitle", {
+                defaultValue: "Xác nhận đặt lại mật khẩu?",
+              })}
             </h5>
             <p className="text-muted mb-2">
-              {t("userMgmt.resetPasswordFor", { defaultValue: "Reset password for" })}:
+              {t("userMgmt.resetPasswordFor", {
+                defaultValue: "Reset password for",
+              })}
+              :
             </p>
             <p className="mb-1">
               <strong className="fs-15">{resetPasswordUser?.fullName}</strong>
@@ -394,16 +464,27 @@ const SettingUserManagement = () => {
             <small className="text-muted">{resetPasswordUser?.email}</small>
             <div className="alert alert-warning mt-3 mb-0 text-start small">
               <i className="ri-information-line me-1"></i>
-              {t("userMgmt.resetPasswordDefaultNote", { defaultValue: "Mật khẩu sẽ được đặt lại về mặc định" })}
+              {t("userMgmt.resetPasswordDefaultNote", {
+                defaultValue: "Mật khẩu sẽ được đặt lại về mặc định",
+              })}
             </div>
           </div>
         </ModalBody>
         <ModalFooter className="justify-content-center">
-          <Button color="light" onClick={() => setResetPasswordModalOpen(false)} className="px-4">
+          <Button
+            color="light"
+            onClick={() => setResetPasswordModalOpen(false)}
+            className="px-4"
+          >
             <i className="ri-close-line me-1"></i>
             {t("common.cancel", { defaultValue: "Không" })}
           </Button>
-          <Button color="warning" onClick={handleSubmitResetPassword} disabled={resetPasswordLoading} className="px-4">
+          <Button
+            color="warning"
+            onClick={handleSubmitResetPassword}
+            disabled={resetPasswordLoading}
+            className="px-4"
+          >
             {resetPasswordLoading ? (
               <>
                 <span className="spinner-border spinner-border-sm me-1"></span>
@@ -423,7 +504,9 @@ const SettingUserManagement = () => {
       <Modal isOpen={importModalOpen} toggle={closeImportModal} size="lg">
         <ModalHeader toggle={closeImportModal}>
           <i className="ri-file-excel-2-line me-2 text-success"></i>
-          {t("userMgmt.importExcel", { defaultValue: "Import Users from Excel" })}
+          {t("userMgmt.importExcel", {
+            defaultValue: "Import Users from Excel",
+          })}
         </ModalHeader>
         <ModalBody>
           {importError && (
@@ -445,7 +528,10 @@ const SettingUserManagement = () => {
               disabled={importLoading}
             />
             <small className="text-muted d-block mt-1">
-              {t("userMgmt.importHint", { defaultValue: "Max 5MB, .xlsx or .xls only. Only Annotators and Reviewers can be imported." })}
+              {t("userMgmt.importHint", {
+                defaultValue:
+                  "Max 5MB, .xlsx or .xls only. Only Annotators and Reviewers can be imported.",
+              })}
             </small>
           </div>
 
@@ -465,10 +551,12 @@ const SettingUserManagement = () => {
               </h6>
               <div className="d-flex gap-3 mb-3">
                 <Badge color="success" className="px-3 py-2">
-                  {t("userMgmt.success", { defaultValue: "Success" })}: {importResult.successCount ?? importResult.success ?? 0}
+                  {t("userMgmt.success", { defaultValue: "Success" })}:{" "}
+                  {importResult.successCount ?? importResult.success ?? 0}
                 </Badge>
                 <Badge color="danger" className="px-3 py-2">
-                  {t("userMgmt.failed", { defaultValue: "Failed" })}: {importResult.failCount ?? importResult.failed ?? 0}
+                  {t("userMgmt.failed", { defaultValue: "Failed" })}:{" "}
+                  {importResult.failCount ?? importResult.failed ?? 0}
                 </Badge>
               </div>
               {importResult.errors && importResult.errors.length > 0 && (
@@ -503,9 +591,15 @@ const SettingUserManagement = () => {
               disabled={!importFile || importLoading}
             >
               {importLoading ? (
-                <><Spinner size="sm" className="me-1" /> {t("userMgmt.importing", { defaultValue: "Importing..." })}</>
+                <>
+                  <Spinner size="sm" className="me-1" />{" "}
+                  {t("userMgmt.importing", { defaultValue: "Importing..." })}
+                </>
               ) : (
-                <><i className="ri-upload-2-line me-1"></i> {t("userMgmt.import", { defaultValue: "Import" })}</>
+                <>
+                  <i className="ri-upload-2-line me-1"></i>{" "}
+                  {t("userMgmt.import", { defaultValue: "Import" })}
+                </>
               )}
             </Button>
           )}
@@ -517,7 +611,7 @@ const SettingUserManagement = () => {
         toggle={toggleModal}
         user={selectUser}
         handleSave={handleSave}
-        managers={users.filter((u) => u.role === "Manager")}
+        managers={managers}
       />
     </>
   );

@@ -36,9 +36,9 @@ const UserManagementView = ({
   const { t } = useTranslation();
   const { page, pageSize, onPageChange } = pagination;
 
-  const totalPages = Math.ceil(totalCount / pageSize);
-  const fromEntry = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
-  const toEntry = Math.min(page * pageSize, totalCount);
+  const totalPages = Math.ceil(stats.workers / pageSize);
+  const fromEntry = stats.workers === 0 ? 0 : (page - 1) * pageSize + 1;
+  const toEntry = Math.min(page * pageSize, stats.workers);
 
   const regularUsers = users.filter((user) => user.role !== "Admin");
 
@@ -246,7 +246,7 @@ const UserManagementView = ({
                 {t("userMgmt.showingRange", {
                   from: fromEntry,
                   to: toEntry,
-                  total: totalCount,
+                  total: stats.workers,
                 })}
               </div>
               <Pagination className="mb-0">

@@ -132,7 +132,15 @@
     "status": {
       "overdue": "OVERDUE"
     },
-    "completed":"Completed"
+    "completed":"Completed",
+    "alerts": {
+      "overdue": "OVERDUE",
+      "nearDeadline": "DUE SOON",
+      "endsIn": "Ends in"
+    },
+    "action": {
+      "reviewNow": "Review Now"
+    }
   },
   "dispute": {
     "title": "Dispute Management",
@@ -1045,11 +1053,16 @@
     "passwordResetFailed": "Failed to reset password"
   },
   "addUser": {
-    "title": "Import Staff from Excel",
-    "dropHint": "Click or drag and drop an Excel file here",
+    "title": "Import Users from Excel",
+    "dropHint": "Click to select or drag and drop Excel file here",
     "noFileSelected": "No file selected",
     "cancelBtn": "Cancel",
-    "confirmImport": "Confirm Import"
+    "confirmImport": "Confirm Import",
+    "errorSize": "File size exceeds 5MB. Please check again.",
+    "errorType": "Unsupported file format. Only .xlsx or .xls are accepted",
+    "maxSizeLabel": "Maximum size:",
+    "maxRowLabel": "Row limit:",
+    "rows":"rows"
   },
   "annotatorContainerComp": {
     "workboard": "Workboard",
@@ -1219,6 +1232,96 @@
     "priorityHigh": "High",
     "priorityMedium": "Medium",
     "priorityLow": "Low"
+  },
+  "workplace": {
+    "title": "Review Projects",
+    "subtitle": "Manage and track the progress of assigned labeling projects.",
+    "searchPlaceholder": "Search project name...",
+    "noTaskAlert": "There are currently no items needing review in this project!",
+    "projectCard": {
+      "assigned": "Assigned:",
+      "deadline": "Deadline:",
+      "overallProgress": "Overall Progress",
+      "status": {
+        "finished": "Finished",
+        "overdue": "Overdue",
+        "processing": "Processing"
+      },
+      "button": {
+        "enter": "Enter Review",
+        "completed": "Completed"
+      }
+    }},
+    "review": {
+    "nav": {
+      "back": "Back",
+      "project": "PROJECT"
+    },
+    "info": {
+      "title": "Task Information",
+      "assignee": "Assignee:",
+      "deadline": "Deadline:",
+      "labelList": "Labels in Image",
+      "guide": "Description:",
+      "workChecklist": "Work Checklist:"
+    },
+    "status": {
+      "title": "OVERALL REVIEW STATUS",
+      "criteriaMet": "Criteria Met",
+      "btnReview": "Start Review",
+      "btnReviewAgain": "Review Checklist",
+      "hintReject": "* If errors are found, click the button below to select error codes.",
+      "btnSetReject": "SET REJECT ERRORS"
+    },
+    "modalChecklist": {
+      "title": "Quality Criteria Review",
+      "alertInfo": "Confirm quality criteria for all labels present in the image.",
+      "alertNote": "Note: You must complete 10/10 criteria to enable Approval.",
+      "labeling": "Reviewing:",
+      "selectAll": "Select all standard criteria",
+      "deselectAll": "Deselect all criteria",
+      "footer": "Completed: {{count}} / {{total}} criteria",
+      "items": {
+        "CL-01": { "title": "Correct Identification", "desc": "Object matches reality" },
+        "CL-02": { "title": "Correct Label Class", "desc": "Correct category selected" },
+        "CL-03": { "title": "Accurate Bounding Box", "desc": "Frame tightly fits the object" },
+        "CL-04": { "title": "No Omissions", "desc": "All objects in image are labeled" },
+        "CL-05": { "title": "No Mislabeling", "desc": "No labels on irrelevant artifacts" },
+        "CL-06": { "title": "Guideline Compliance", "desc": "Follows project instructions" },
+        "CL-07": { "title": "Consistency", "desc": "Consistent with previous labels" },
+        "CL-08": { "title": "Correct Tool", "desc": "Used correct Box/Polygon tool" },
+        "CL-09": { "title": "Full Coverage", "desc": "Visible parts are not cut off" },
+        "CL-10": { "title": "Standard Data Quality", "desc": "Image is clear enough for ID" }
+      },
+      "saveAndClose": "Save & Close"
+    },
+    "modalReject": {
+      "title": "Confirm Violations",
+      "step1": "1. Classify violation criteria (Select multiple):",
+      "step2": "2. Specific notes for Annotator:",
+      "placeholder": "Describe detailed error locations...",
+      "btnCancel": "Cancel",
+      "btnConfirm": "Confirm Reject",
+      "items": {
+        "CL-01": { "title": "Incorrect Identification", "desc": "Object labeling does not match reality" },
+        "CL-02": { "title": "Wrong Label Class", "desc": "Incorrect category or classification" },
+        "CL-03": { "title": "Inaccurate Bounding Box", "desc": "Box is too loose, too tight, or off-center" },
+        "CL-04": { "title": "Missing Objects", "desc": "Some target objects were not labeled" },
+        "CL-05": { "title": "Extra/Incorrect Labels", "desc": "Labeled irrelevant objects or artifacts" },
+        "CL-06": { "title": "Non-compliant with Guideline", "desc": "Violated specific project rules" },
+        "CL-07": { "title": "Inconsistency", "desc": "Not consistent with project standards" },
+        "CL-08": { "title": "Wrong Tool Used", "desc": "Incorrect tool (e.g., used Box for Polygon)" },
+        "CL-09": { "title": "Incomplete Coverage", "desc": "Visible area of object is not fully covered" },
+        "CL-10": { "title": "Data Quality Issue", "desc": "Blurry image or unidentifiable object" }
+      }
+    },
+    "messages": {
+      "noData": "Task data not found.",
+      "rejectRuleCategory": "Rule: You must select at least one Error Category to reject!",
+      "rejectRuleComment": "Rule: You must provide a reason for the annotator to fix!",
+      "congrats": "Congratulations! You have completed the final review task.",
+      "systemError": "System error, unable to save review decision."
+    }
   },
   "statusCommon": {
     "active": "Active",
