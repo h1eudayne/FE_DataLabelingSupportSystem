@@ -1,7 +1,7 @@
 import axios from "./axios.customize";
 
 const NotificationService = {
-  // Get the latest notifications for the current user
+  
   getMyNotifications: async () => {
     try {
       const response = await axios.get('/api/notifications');
@@ -12,7 +12,7 @@ const NotificationService = {
     }
   },
 
-  // Mark a single notification as read
+  
   markAsRead: async (id) => {
     try {
       const response = await axios.put(`/api/notifications/${id}/read`);
@@ -23,7 +23,7 @@ const NotificationService = {
     }
   },
 
-  // Mark all notifications as read
+  
   markAllAsRead: async () => {
     try {
       const response = await axios.put('/api/notifications/read-all');

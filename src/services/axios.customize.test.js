@@ -31,24 +31,9 @@ describe("Axios Customize Instance", () => {
     mock.onGet("/test").reply((config) => {
       return [200, { auth: config.headers.Authorization }];
     });
-    /*
-      config = {
-        url: "/test",
-        method: "get",
-        headers: {
-          Authorization: "Bearer test-token-123"
-        }
-      }
-    */
+    
     const response = await instance.get("/test");
-    /*
-      [
-        200,
-        {
-          auth: "Bearer test-token-123"
-        }
-      ]
-    */
+    
     expect(response.data.auth).toBe(`Bearer ${testToken}`);
   });
 

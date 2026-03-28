@@ -25,10 +25,22 @@ const AnnotatorProjectPacks = () => {
         taskService.getProjectImages(assignmentId),
       ]);
 
-      const projectData = projectRes.data || projectRes;
+      const projectData = projectRes?.data || projectRes;
       setProjectInfo(projectData);
 
-      const allImages = imgRes.data || imgRes || [];
+      let allImages = imgRes?.data;
+      if (Array.isArray(imgRes)) {
+        allImages = imgRes;
+      } else if (imgRes?.data && Array.isArray(imgRes.data)) {
+        allImages = imgRes.data;
+      } else {
+        allImages = [];
+      }
+      
+      if (!Array.isArray(allImages)) {
+        allImages = [];
+      }
+      
       setImages(allImages);
     } catch (err) {
       console.error(err);
@@ -42,7 +54,7 @@ const AnnotatorProjectPacks = () => {
     fetchData();
   }, [fetchData]);
 
-  // Realtime: auto-refetch packs when notification arrives (approve/reject)
+  
   useSignalRRefresh(fetchData);
 
   const packs = useMemo(() => {
@@ -108,7 +120,7 @@ const AnnotatorProjectPacks = () => {
 
   return (
     <div className="container-fluid">
-      {/* Header */}
+      {}
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
           <button
@@ -120,7 +132,7 @@ const AnnotatorProjectPacks = () => {
         </div>
       </div>
 
-      {/* Project Summary Card */}
+      {}
       <div className="card shadow-sm border-0 mb-4">
         <div className="card-body">
           <div className="row align-items-center">
@@ -172,7 +184,7 @@ const AnnotatorProjectPacks = () => {
         </div>
       </div>
 
-      {/* Pack Grid */}
+      {}
       <h5 className="fw-bold mb-3">
         <i className="ri-stack-line me-2"></i>{t("annotatorPacks.packList")} ({packs.length}{" "}
         {t("annotatorPacks.pack")})
@@ -223,7 +235,7 @@ const AnnotatorProjectPacks = () => {
                     <div>
                       <small className="text-muted d-block">{t("annotatorPacks.imageLabel")}</small>
                       <span className="fw-bold">
-                        {pack.startIdx + 1} – {pack.endIdx}
+                        {pack.startIdx + 1} – {Math.min(pack.endIdx, images.length)}
                       </span>
                     </div>
                     <div className="text-end">

@@ -35,6 +35,7 @@
     "password": "Mật khẩu",
     "rememberMe": "Ghi nhớ đăng nhập",
     "forgotPassword": "Quên mật khẩu?",
+    "contactAdminForAccount": "Liên hệ Admin để tạo tài khoản",
     "login": "Đăng nhập",
     "loginProcessing": "Đang xử lý...",
     "loginFailed": "Đăng nhập thất bại",
@@ -52,7 +53,24 @@
     "registerBtn": "Đăng ký",
     "registerProcessing": "Đang đăng ký...",
     "registerSuccess": "Đăng ký thành công!",
-    "registerFailed": "Đăng ký thất bại"
+    "registerFailed": "Đăng ký thất bại",
+    "signIn": "Đăng nhập",
+    "signUp": "Đăng ký"
+  },
+  "forgotPassword": {
+    "title": "Đặt lại mật khẩu",
+    "subtitle": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn mật khẩu mới.",
+    "enterEmail": "Nhập địa chỉ email của bạn",
+    "resetButton": "Gửi mật khẩu mới",
+    "sending": "Đang gửi...",
+    "emailRequired": "Email là bắt buộc",
+    "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ",
+    "success": "Mật khẩu mới đã được gửi đến email của bạn",
+    "error": "Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại.",
+    "rememberPassword": "Nhớ mật khẩu?",
+    "emailSent": "Kiểm tra email của bạn",
+    "emailSentDesc": "Mật khẩu mới đã được gửi đến địa chỉ email của bạn. Vui lòng kiểm tra hộp thư và sử dụng nó để đăng nhập.",
+    "backToLogin": "Quay lại Đăng nhập"
   },
   "managerDashboard": {
     "title": "Báo cáo Quản lý",
@@ -1128,7 +1146,14 @@
     "showingRange": "Hiển thị {{from}} đến {{to}} trên {{total}} người dùng",
     "totalProjects":"Tổng dự án",
     "assignManager":"Phân công quản lý",
-    "noManager":"-- Chưa có quản lý --"
+    "noManager":"-- Chưa có quản lý --",
+    "resetPassword": "Đặt lại mật khẩu",
+    "resetPasswordFor": "Đặt lại mật khẩu cho",
+    "newPassword": "Mật khẩu mới",
+    "enterNewPassword": "Nhập mật khẩu mới",
+    "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
+    "passwordResetSuccess": "Mật khẩu đã được đặt lại thành công",
+    "passwordResetFailed": "Đặt lại mật khẩu thất bại"
   },
   "addUser": {
     "title": "Nhập người dùng từ Excel",

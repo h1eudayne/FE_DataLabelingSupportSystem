@@ -58,3 +58,7 @@ export const importUser = (file) => {
 export const deleteUser = (id) => {
   return axios.delete(`/api/users/${id}`);
 };
+
+export const adminResetPassword = (userId, newPassword) => {
+  return axios.put(`/api/users/${userId}/change-password`, { newPassword });
+};

@@ -35,6 +35,7 @@
     "password": "Password",
     "rememberMe": "Remember me",
     "forgotPassword": "Forgot password?",
+    "contactAdminForAccount": "Contact Admin to create an account",
     "login": "Sign in",
     "loginProcessing": "Processing...",
     "loginFailed": "Login failed",
@@ -52,7 +53,24 @@
     "registerBtn": "Sign up",
     "registerProcessing": "Signing up...",
     "registerSuccess": "Registration successful!",
-    "registerFailed": "Registration failed"
+    "registerFailed": "Registration failed",
+    "signIn": "Sign in",
+    "signUp": "Sign up"
+  },
+  "forgotPassword": {
+    "title": "Reset Password",
+    "subtitle": "Enter your email address and we'll send you a new password.",
+    "enterEmail": "Enter your email address",
+    "resetButton": "Send New Password",
+    "sending": "Sending...",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Please enter a valid email address",
+    "success": "New password has been sent to your email",
+    "error": "Failed to send password reset request. Please try again.",
+    "rememberPassword": "Remember your password?",
+    "emailSent": "Check Your Email",
+    "emailSentDesc": "A new password has been sent to your email address. Please check your inbox and use it to login.",
+    "backToLogin": "Back to Sign In"
   },
   "managerDashboard": {
     "title": "Management Report",
@@ -1025,7 +1043,14 @@
     "showingRange": "Showing {{from}} to {{to}} of {{total}} users",
     "totalProjects":"Total Projects",
     "assignManager":"Assign Manager",
-    "noManager": "-- No Manager --"
+    "noManager": "-- No Manager --",
+    "resetPassword": "Reset Password",
+    "resetPasswordFor": "Reset password for",
+    "newPassword": "New Password",
+    "enterNewPassword": "Enter new password",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "passwordResetSuccess": "Password has been reset successfully",
+    "passwordResetFailed": "Failed to reset password"
   },
   "addUser": {
     "title": "Import Users from Excel",

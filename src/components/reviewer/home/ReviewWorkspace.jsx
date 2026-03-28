@@ -204,7 +204,7 @@ const ReviewWorkspace = () => {
         );
       }
     } catch (error) {
-      alert(t("review.messages.systemError"));
+      alert("Lỗi hệ thống, không thể lưu phán quyết.");
     } finally {
       setSubmitting(false);
     }

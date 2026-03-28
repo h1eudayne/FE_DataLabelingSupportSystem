@@ -5,7 +5,7 @@ import {
   updateUser,
   updateStatus,
   importUser,
-  getAdmins,
+  adminResetPassword,
 } from "../../services/admin/managementUsers/user.api";
 import UserTable from "../../components/admin/managementUser/UserTable";
 import {
@@ -26,6 +26,7 @@ import {
 import UserFilter from "../../components/admin/managementUser/UserFilter";
 import UserModal from "../../components/admin/managementUser/UserModal";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 
 const SettingUserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -45,6 +46,18 @@ const SettingUserManagement = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const [importError, setImportError] = useState("");
+
+  // Reset password state
+  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
+  const [resetPasswordUser, setResetPasswordUser] = useState(null);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
+  // Lock/Unlock confirmation state
+  const [lockModalOpen, setLockModalOpen] = useState(false);
+  const [lockTargetUser, setLockTargetUser] = useState(null);
+  const [lockTargetActive, setLockTargetActive] = useState(false);
+  const [lockLoading, setLockLoading] = useState(false);
+
   const { t } = useTranslation();
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -178,15 +191,71 @@ const SettingUserManagement = () => {
     }
   };
 
-  const handleActive = async (userId, isActive) => {
+  const handleActive = (user, isActive) => {
+    setLockTargetUser(user);
+    setLockTargetActive(isActive);
+    setLockModalOpen(true);
+  };
+
+  const handleConfirmLockUnlock = async () => {
+    if (!lockTargetUser) return;
+    setLockLoading(true);
     try {
-      if (userId) {
-        await updateStatus(userId, isActive);
-        console.log("Updated Successfully");
-      }
-      await fetchUsers();
+      await updateStatus(lockTargetUser.id, lockTargetActive);
+      const updateList = (list) =>
+        list.map((u) =>
+          u.id === lockTargetUser.id ? { ...u, isActive: lockTargetActive } : u,
+        );
+      setUsers((prev) => updateList(prev));
+      setFilteredUsers((prev) => updateList(prev));
+      toast.success(
+        lockTargetActive
+          ? t("userMgmt.unlockSuccess", {
+              defaultValue: "Tài khoản đã được mở khóa",
+            })
+          : t("userMgmt.lockSuccess", { defaultValue: "Tài khoản đã bị khóa" }),
+      );
+      setLockModalOpen(false);
+      setLockTargetUser(null);
     } catch (error) {
-      console.error(error);
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          t("userMgmt.statusUpdateFailed", {
+            defaultValue: "Cập nhật trạng thái thất bại",
+          }),
+      );
+    } finally {
+      setLockLoading(false);
+    }
+  };
+
+  const handleResetPassword = (user) => {
+    setResetPasswordUser(user);
+    setResetPasswordModalOpen(true);
+  };
+
+  const handleSubmitResetPassword = async () => {
+    setResetPasswordLoading(true);
+    try {
+      await adminResetPassword(resetPasswordUser.id, "Password@123");
+      toast.success(
+        t("userMgmt.passwordResetSuccess", {
+          defaultValue: "Password has been reset to default successfully",
+        }),
+      );
+      setResetPasswordModalOpen(false);
+      setResetPasswordUser(null);
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          t("userMgmt.passwordResetFailed", {
+            defaultValue: "Failed to reset password",
+          }),
+      );
+    } finally {
+      setResetPasswordLoading(false);
     }
   };
 
@@ -232,12 +301,204 @@ const SettingUserManagement = () => {
             users={filteredUsers}
             onEdit={handleEdit}
             onActive={handleActive}
+            onResetPassword={handleResetPassword}
             currentRole={currentRole}
             pagination={{ ...pagination, onPageChange }}
             totalCount={totalCount}
           />
         </CardBody>
       </Card>
+
+      {/* Lock/Unlock Confirmation Modal */}
+      <Modal isOpen={lockModalOpen} toggle={() => setLockModalOpen(false)}>
+        <ModalHeader toggle={() => setLockModalOpen(false)}>
+          <i
+            className={`me-2 ${lockTargetActive ? "ri-lock-unlock-line text-success" : "ri-lock-line text-danger"}`}
+          ></i>
+          {lockTargetActive
+            ? t("userMgmt.unlockAccount", { defaultValue: "Mở khóa tài khoản" })
+            : t("userMgmt.lockAccount", { defaultValue: "Khóa tài khoản" })}
+        </ModalHeader>
+        <ModalBody>
+          <div className="text-center py-2">
+            <div className="avatar-lg mx-auto mb-3">
+              <div
+                className={`avatar-title rounded-circle fs-24 ${lockTargetActive ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"}`}
+              >
+                <i
+                  className={
+                    lockTargetActive ? "ri-lock-unlock-line" : "ri-lock-line"
+                  }
+                ></i>
+              </div>
+            </div>
+            <h5 className="mb-2">
+              {lockTargetActive
+                ? t("userMgmt.confirmUnlock", {
+                    defaultValue: "Xác nhận mở khóa tài khoản?",
+                  })
+                : t("userMgmt.confirmLock", {
+                    defaultValue: "Xác nhận khóa tài khoản?",
+                  })}
+            </h5>
+            <p className="mb-1">
+              <strong className="fs-15">{lockTargetUser?.fullName}</strong>
+            </p>
+            <small className="text-muted">{lockTargetUser?.email}</small>
+            <div className="mt-1">
+              <span className="badge bg-info-subtle text-info px-2 py-1">
+                {lockTargetUser?.role}
+              </span>
+            </div>
+
+            {/* Warning if user is in projects */}
+            {lockTargetUser?.totalProjects > 0 && !lockTargetActive && (
+              <div className="alert alert-danger mt-3 mb-0 text-start">
+                <div className="d-flex align-items-start gap-2">
+                  <i className="ri-error-warning-fill fs-18 mt-1 flex-shrink-0"></i>
+                  <div>
+                    <strong className="d-block mb-1">
+                      {t("userMgmt.userInProjectWarning", {
+                        defaultValue:
+                          "Người dùng đang tham gia {{count}} dự án!",
+                        count: lockTargetUser.totalProjects,
+                      })}
+                    </strong>
+                    <span className="small">
+                      {t("userMgmt.userInProjectNote", {
+                        defaultValue:
+                          "Việc khóa tài khoản này cần được bàn giao cho Manager quản lý dự án của người dùng. Hãy liên hệ Manager trước khi khóa.",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {lockTargetUser?.totalProjects > 0 && lockTargetActive && (
+              <div className="alert alert-info mt-3 mb-0 text-start small">
+                <i className="ri-information-line me-1"></i>
+                {t("userMgmt.unlockInProjectNote", {
+                  defaultValue:
+                    "Người dùng đang trong {{count}} dự án. Mở khóa sẽ cho phép họ tiếp tục làm việc.",
+                  count: lockTargetUser.totalProjects,
+                })}
+              </div>
+            )}
+
+            {(!lockTargetUser?.totalProjects ||
+              lockTargetUser?.totalProjects === 0) &&
+              !lockTargetActive && (
+                <div className="alert alert-warning mt-3 mb-0 text-start small">
+                  <i className="ri-information-line me-1"></i>
+                  {t("userMgmt.lockNoProjectNote", {
+                    defaultValue:
+                      "Người dùng không tham gia dự án nào. Có thể khóa an toàn.",
+                  })}
+                </div>
+              )}
+          </div>
+        </ModalBody>
+        <ModalFooter className="justify-content-center">
+          <Button
+            color="light"
+            onClick={() => setLockModalOpen(false)}
+            className="px-4"
+          >
+            <i className="ri-close-line me-1"></i>
+            {t("common.cancel", { defaultValue: "Không" })}
+          </Button>
+          <Button
+            color={lockTargetActive ? "success" : "danger"}
+            onClick={handleConfirmLockUnlock}
+            disabled={lockLoading}
+            className="px-4"
+          >
+            {lockLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-1"></span>
+                {t("common.loading", { defaultValue: "Đang xử lý..." })}
+              </>
+            ) : (
+              <>
+                <i
+                  className={`me-1 ${lockTargetActive ? "ri-lock-unlock-line" : "ri-lock-line"}`}
+                ></i>
+                {t("common.confirm", { defaultValue: "Đồng ý" })}
+              </>
+            )}
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Reset Password Modal */}
+      <Modal
+        isOpen={resetPasswordModalOpen}
+        toggle={() => setResetPasswordModalOpen(false)}
+      >
+        <ModalHeader toggle={() => setResetPasswordModalOpen(false)}>
+          <i className="ri-lock-password-line me-2 text-warning"></i>
+          {t("userMgmt.resetPassword", { defaultValue: "Reset Password" })}
+        </ModalHeader>
+        <ModalBody>
+          <div className="text-center py-2">
+            <div className="avatar-lg mx-auto mb-3">
+              <div className="avatar-title bg-warning-subtle text-warning rounded-circle fs-24">
+                <i className="ri-error-warning-line"></i>
+              </div>
+            </div>
+            <h5 className="mb-2">
+              {t("userMgmt.resetPasswordConfirmTitle", {
+                defaultValue: "Xác nhận đặt lại mật khẩu?",
+              })}
+            </h5>
+            <p className="text-muted mb-2">
+              {t("userMgmt.resetPasswordFor", {
+                defaultValue: "Reset password for",
+              })}
+              :
+            </p>
+            <p className="mb-1">
+              <strong className="fs-15">{resetPasswordUser?.fullName}</strong>
+            </p>
+            <small className="text-muted">{resetPasswordUser?.email}</small>
+            <div className="alert alert-warning mt-3 mb-0 text-start small">
+              <i className="ri-information-line me-1"></i>
+              {t("userMgmt.resetPasswordDefaultNote", {
+                defaultValue: "Mật khẩu sẽ được đặt lại về mặc định",
+              })}
+            </div>
+          </div>
+        </ModalBody>
+        <ModalFooter className="justify-content-center">
+          <Button
+            color="light"
+            onClick={() => setResetPasswordModalOpen(false)}
+            className="px-4"
+          >
+            <i className="ri-close-line me-1"></i>
+            {t("common.cancel", { defaultValue: "Không" })}
+          </Button>
+          <Button
+            color="warning"
+            onClick={handleSubmitResetPassword}
+            disabled={resetPasswordLoading}
+            className="px-4"
+          >
+            {resetPasswordLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-1"></span>
+                {t("common.loading", { defaultValue: "Loading..." })}
+              </>
+            ) : (
+              <>
+                <i className="ri-check-line me-1"></i>
+                {t("common.confirm", { defaultValue: "Đồng ý" })}
+              </>
+            )}
+          </Button>
+        </ModalFooter>
+      </Modal>
 
       {}
       <Modal isOpen={importModalOpen} toggle={closeImportModal} size="lg">

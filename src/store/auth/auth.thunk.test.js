@@ -20,7 +20,9 @@ describe("authThunk - Synced with Backend API Contract", () => {
       data: {
         message: "Login successful.",
         accessToken: "jwt_token_xyz",
+        refreshToken: "refresh_token_xyz",
         tokenType: "Bearer",
+        unreadNotifications: 0,
       },
     };
     loginAPI.mockResolvedValue(mockRes);
@@ -32,7 +34,8 @@ describe("authThunk - Synced with Backend API Contract", () => {
     );
 
     expect(localStorage.getItem("access_token")).toBe("jwt_token_xyz");
-    expect(result.payload).toEqual({ token: "jwt_token_xyz" });
+    expect(localStorage.getItem("unreadNotifications")).toBe("0");
+    expect(result.payload).toEqual({ token: "jwt_token_xyz", unreadNotifications: 0 });
   });
 
   it("should reject when server returns error 500 without message", async () => {
@@ -72,7 +75,9 @@ describe("authThunk - Synced with Backend API Contract", () => {
       data: {
         message: "Login successful.",
         accessToken: "t",
+        refreshToken: "r",
         tokenType: "Bearer",
+        unreadNotifications: 0,
       },
     });
     const credentials = {
@@ -108,12 +113,14 @@ describe("authThunk - Synced with Backend API Contract", () => {
     expect(result.payload.message).toBe("Account is deactivated or banned.");
   });
 
-  it("should save token to localStorage BEFORE action completes", async () => {
+  it("should save token and unreadNotifications to localStorage BEFORE action completes", async () => {
     const mockRes = {
       data: {
         message: "Login successful.",
         accessToken: "final_token",
+        refreshToken: "final_refresh",
         tokenType: "Bearer",
+        unreadNotifications: 5,
       },
     };
     loginAPI.mockResolvedValue(mockRes);
@@ -125,6 +132,100 @@ describe("authThunk - Synced with Backend API Contract", () => {
     );
 
     expect(localStorage.getItem("access_token")).toBe("final_token");
-    expect(result.payload).toEqual({ token: "final_token" });
+    expect(localStorage.getItem("unreadNotifications")).toBe("5");
+    expect(result.payload).toEqual({ token: "final_token", unreadNotifications: 5 });
+  });
+
+  it("should handle login with pending notifications", async () => {
+    const mockRes = {
+      data: {
+        message: "Login successful.",
+        accessToken: "token_with_notifs",
+        refreshToken: "refresh_with_notifs",
+        tokenType: "Bearer",
+        unreadNotifications: 10,
+      },
+    };
+    loginAPI.mockResolvedValue(mockRes);
+
+    const result = await loginThunk({ email: "user@test.com", password: "123" })(
+      dispatch,
+      getState,
+      undefined,
+    );
+
+    expect(localStorage.getItem("unreadNotifications")).toBe("10");
+    expect(result.payload.unreadNotifications).toBe(10);
+  });
+
+  // Test for BUG FIX: Notification count after login
+  // Backend now returns unreadNotifications (camelCase) instead of UnreadNotifications (PascalCase)
+  it("BUG-FIX: should correctly read unreadNotifications from backend response (camelCase)", async () => {
+    // This test verifies the fix for the notification bug where backend was returning
+    // "UnreadNotifications" (PascalCase) but frontend was reading "unreadNotifications" (camelCase)
+    const mockRes = {
+      data: {
+        message: "Login successful.",
+        accessToken: "token_fixed_bug",
+        refreshToken: "refresh_fixed_bug",
+        tokenType: "Bearer",
+        unreadNotifications: 7, // camelCase as expected by frontend
+      },
+    };
+    loginAPI.mockResolvedValue(mockRes);
+
+    const result = await loginThunk({ email: "fix@test.com", password: "123" })(
+      dispatch,
+      getState,
+      undefined,
+    );
+
+    // Verify unreadNotifications is correctly extracted and saved
+    expect(localStorage.getItem("unreadNotifications")).toBe("7");
+    expect(result.payload.unreadNotifications).toBe(7);
+  });
+
+  it("BUG-FIX: should handle zero notifications after login", async () => {
+    const mockRes = {
+      data: {
+        message: "Login successful.",
+        accessToken: "token_zero_notifs",
+        refreshToken: "refresh_zero_notifs",
+        tokenType: "Bearer",
+        unreadNotifications: 0,
+      },
+    };
+    loginAPI.mockResolvedValue(mockRes);
+
+    const result = await loginThunk({ email: "zero@test.com", password: "123" })(
+      dispatch,
+      getState,
+      undefined,
+    );
+
+    expect(localStorage.getItem("unreadNotifications")).toBe("0");
+    expect(result.payload.unreadNotifications).toBe(0);
+  });
+
+  it("BUG-FIX: should handle large notification count", async () => {
+    const mockRes = {
+      data: {
+        message: "Login successful.",
+        accessToken: "token_many_notifs",
+        refreshToken: "refresh_many_notifs",
+        tokenType: "Bearer",
+        unreadNotifications: 999,
+      },
+    };
+    loginAPI.mockResolvedValue(mockRes);
+
+    const result = await loginThunk({ email: "many@test.com", password: "123" })(
+      dispatch,
+      getState,
+      undefined,
+    );
+
+    expect(localStorage.getItem("unreadNotifications")).toBe("999");
+    expect(result.payload.unreadNotifications).toBe(999);
   });
 });

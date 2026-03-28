@@ -8,6 +8,7 @@ const initialState = {
   loading: false,
   error: null,
   isAuthenticated: !!localStorage.getItem("access_token"),
+  unreadNotifications: parseInt(localStorage.getItem("unreadNotifications") || "0", 10),
 };
 
 const authSlice = createSlice({
@@ -18,13 +19,20 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      // Selective clear — preserve theme and language preferences
+      state.unreadNotifications = 0;
+      
       localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
       localStorage.removeItem("user");
+      localStorage.removeItem("unreadNotifications");
     },
     updateUser(state, action) {
       state.user = { ...state.user, ...action.payload };
       localStorage.setItem("user", JSON.stringify(state.user));
+    },
+    setUnreadNotifications(state, action) {
+      state.unreadNotifications = action.payload;
+      localStorage.setItem("unreadNotifications", String(action.payload));
     },
   },
   extraReducers: (builder) => {
@@ -41,6 +49,8 @@ const authSlice = createSlice({
           state.loading = false;
           state.token = token;
           state.isAuthenticated = true;
+          
+          state.unreadNotifications = payload?.unreadNotifications || 0;
           localStorage.setItem("access_token", token);
 
           try {
@@ -69,5 +79,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, updateUser } = authSlice.actions;
+export const { logout, updateUser, setUnreadNotifications } = authSlice.actions;
 export default authSlice.reducer;

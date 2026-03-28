@@ -14,14 +14,14 @@ import {
 import { toast } from "react-toastify";
 import projectService from "../../../services/manager/project/projectService";
 
-/* ── Tab components ── */
+
 import ProjectsDatasetsPage from "../datasets/ProjectsDatasetsPage";
 import ProjectAssignTask from "./ProjectAssignTask";
 import DisputeTab from "./tabs/DisputeTab";
 import ReviewAuditTab from "./tabs/ReviewAuditTab";
-import ExportTab from "./tabs/ExportTab";
 
-/* ── Stitch-based CSS ── */
+
+
 import "../../../assets/css/project-detail.css";
 
 const ProjectDetailPage = () => {
@@ -29,9 +29,14 @@ const ProjectDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  const isAdminView = user?.role === "Admin";
   const [activeTab, setActiveTab] = useState("datasets");
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isAdminView) setActiveTab("datasets");
+  }, [isAdminView, id]);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -69,30 +74,47 @@ const ProjectDetailPage = () => {
       <div className="text-center p-5" style={{ color: "var(--pd-text-muted)" }}>
         <i className="ri-folder-warning-line display-1 opacity-25"></i>
         <h5 className="mt-3">{t("projectDetail.notFound", "Không tìm thấy dự án")}</h5>
-        <button className="btn btn-primary mt-2" onClick={() => navigate("/projects-all-projects")}>
+        <button
+          className="btn btn-primary mt-2"
+          onClick={() =>
+            navigate(isAdminView ? "/projects-overview" : "/projects-all-projects")
+          }
+        >
           {t("projectDetail.backToProjects", "← Quay lại danh sách dự án")}
         </button>
       </div>
     );
   }
 
-  const tabConfig = [
+  const tabConfigFull = [
     { key: "datasets", icon: "ri-database-2-line", label: t("projectDetail.tabDatasets", "Datasets & Labels") },
     { key: "assign", icon: "ri-user-add-line", label: t("projectDetail.tabAssign", "Giao việc") },
     { key: "disputes", icon: "ri-scales-3-line", label: t("projectDetail.tabDisputes", "Tranh chấp") },
     { key: "review", icon: "ri-shield-check-line", label: t("projectDetail.tabReview", "Review Audit") },
-    { key: "export", icon: "ri-file-download-line", label: t("projectDetail.tabExport", "Export") },
   ];
+  const tabConfig = isAdminView
+    ? tabConfigFull.filter((tab) => ["datasets"].includes(tab.key))
+    : tabConfigFull;
 
   return (
     <>
-      {/* ── Project Header ── */}
+      {}
       <div className="project-detail-header mb-3">
+        {isAdminView && (
+          <div className="alert alert-info py-2 px-3 mb-3 small" role="status">
+            {t(
+              "projectDetail.adminReadOnly",
+              "Chế độ xem dành cho Admin (BR-ADM-17). Không chỉnh sửa dự án (BR-ADM-18).",
+            )}
+          </div>
+        )}
         <div className="d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center gap-3">
-            <button
-              className="btn-back"
-              onClick={() => navigate("/projects-all-projects")}
+        <button
+          className="btn-back"
+          onClick={() =>
+            navigate(isAdminView ? "/projects-overview" : "/projects-all-projects")
+          }
               title={t("projectDetail.back", "Quay lại")}
             >
               <i className="ri-arrow-left-line fs-5"></i>
@@ -123,7 +145,7 @@ const ProjectDetailPage = () => {
         </div>
       </div>
 
-      {/* ── Tabs Navigation ── */}
+      {}
       <div className="project-detail-tabs-card">
         <Nav className="project-detail-tabs">
           {tabConfig.map((tab) => (
@@ -140,11 +162,13 @@ const ProjectDetailPage = () => {
         </Nav>
       </div>
 
-      {/* ── Tab Content ── */}
+      {}
       <div className="tab-content-area">
         <TabContent activeTab={activeTab}>
           <TabPane tabId="datasets">
-            {activeTab === "datasets" && <ProjectsDatasetsPage embeddedProjectId={id} />}
+            {activeTab === "datasets" && (
+              <ProjectsDatasetsPage embeddedProjectId={id} readOnly={isAdminView} />
+            )}
           </TabPane>
           <TabPane tabId="assign">
             {activeTab === "assign" && <ProjectAssignTask embeddedProjectId={id} />}
@@ -154,9 +178,6 @@ const ProjectDetailPage = () => {
           </TabPane>
           <TabPane tabId="review">
             {activeTab === "review" && <ReviewAuditTab projectId={id} />}
-          </TabPane>
-          <TabPane tabId="export">
-            {activeTab === "export" && <ExportTab projectId={id} project={project} />}
           </TabPane>
         </TabContent>
       </div>

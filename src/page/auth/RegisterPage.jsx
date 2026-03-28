@@ -1,308 +1,217 @@
-import React, { useState } from "react";
-import { Carousel } from "react-bootstrap";
+import { useEffect, useState } from "react";
+import AuthLeft from "../../components/auth/auth-left/AuthLeft";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import registerApi from "../../services/auth/register/register.api";
+
 const RegisterPage = () => {
   const { t } = useTranslation();
-  const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    fullName: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setError("");
+  useEffect(() => {
+    document.documentElement.setAttribute("data-bs-theme", "light");
+    return () => {
+      const themeToRestore = localStorage.getItem("theme") || "light";
+      document.documentElement.setAttribute("data-bs-theme", themeToRestore);
+    };
+  }, []);
 
-    try {
-      await registerApi(fullName, email, password);
-      window.location.href = "/login";
-    } catch (err) {
-      setError(err?.response?.data?.message || t("register.registerFailed"));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  const quotes = [
-    {
-      text: "Great things never come from comfort zones.",
-      author: "Admin",
-    },
-    {
-      text: "Experience is the simply name we give our mistakes.",
-      author: "Oscar Wilde",
-    },
-    {
-      text: "The web as I envisaged it, we have not seen it yet. The future is still so much bigger than the past.",
-      author: "Tim Berners-Lee",
-    },
-  ];
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = t("register.errors.fullNameRequired");
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = t("register.errors.emailRequired");
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = t("register.errors.emailInvalid");
+    }
+    if (!formData.password) {
+      newErrors.password = t("register.errors.passwordRequired");
+    } else if (formData.password.length < 6) {
+      newErrors.password = t("register.errors.passwordTooShort");
+    }
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = t("register.errors.passwordMismatch");
+    }
+    return newErrors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Registration submitted:", formData);
+    } catch (error) {
+      console.error("Registration error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="auth-page-wrapper auth-bg-cover py-5 d-flex justify-content-center align-items-center min-vh-100">
-      <div className="bg-overlay" />
-      <div className="auth-page-content overflow-hidden pt-lg-5">
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-12">
-              <div className="card overflow-hidden m-0">
-                <div className="row justify-content-center g-0">
-                  <div className="col-lg-6">
-                    <div className="p-lg-5 p-4 auth-one-bg h-100">
-                      <div className="bg-overlay" />
-                      <div className="position-relative h-100 d-flex flex-column">
-                        <div className="mb-4">
-                          <a href="index.html" className="d-block">
-                            <img
-                              src="assets/images/logo-light.png"
-                              alt
-                              height={18}
-                            />
-                          </a>
-                        </div>
-                        <div className="mt-auto">
-                          <div className="mb-3">
-                            <i className="ri-double-quotes-l display-4 text-success" />
-                          </div>
-                          <Carousel
-                            indicators={true}
-                            controls={false}
-                            interval={2000}
-                            fade={true}
-                            id="qoutescarouselIndicators"
-                          >
-                            {quotes.map((quote, index) => (
-                              <Carousel.Item
-                                key={index}
-                                className="text-center text-white pb-5"
-                              >
-                                <p className="fs-15 fst-italic">
-                                  "{quote.text}"
-                                </p>
-                                <span className="text-white-50 small">
-                                  - {quote.author}
-                                </span>
-                              </Carousel.Item>
-                            ))}
-                          </Carousel>
-                          <div
-                            id="qoutescarouselIndicators"
-                            className="carousel slide"
-                            data-bs-ride="carousel"
-                          >
-                            <div className="carousel-indicators">
-                              <button
-                                type="button"
-                                data-bs-target="#qoutescarouselIndicators"
-                                data-bs-slide-to={0}
-                                className="active"
-                                aria-current="true"
-                                aria-label="Slide 1"
-                              />
-                              <button
-                                type="button"
-                                data-bs-target="#qoutescarouselIndicators"
-                                data-bs-slide-to={1}
-                                aria-label="Slide 2"
-                              />
-                              <button
-                                type="button"
-                                data-bs-target="#qoutescarouselIndicators"
-                                data-bs-slide-to={2}
-                                aria-label="Slide 3"
-                              />
-                            </div>
-                            <div className="carousel-inner text-center text-white-50 pb-5">
-                              <div className="carousel-item active">
-                                <p className="fs-15 fst-italic">
-                                  " Great! Clean code, clean design, easy for
-                                  customization. Thanks very much! "
-                                </p>
-                              </div>
-                              <div className="carousel-item">
-                                <p className="fs-15 fst-italic">
-                                  " The theme is really great with an amazing
-                                  customer support."
-                                </p>
-                              </div>
-                              <div className="carousel-item">
-                                <p className="fs-15 fst-italic">
-                                  " Great! Clean code, clean design, easy for
-                                  customization. Thanks very much! "
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+    <div
+      className="auth-page-wrapper bg-light d-flex align-items-center justify-content-center min-vh-100 py-4"
+      style={{ overflowY: "auto" }}
+    >
+      <div className="container p-0">
+        <div className="row justify-content-center g-0">
+          <div className="col-xl-9 col-lg-10 col-md-11 p-0">
+            <div className="auth-card d-flex flex-column flex-lg-row border-0 shadow-lg mx-3 mx-lg-auto bg-white">
+              <AuthLeft />
+              <div className="col-lg-6 auth-right bg-white p-0 d-flex flex-column h-100">
+                <div className="auth-form-container flex-grow-1">
+                  <div className="auth-form-content p-4 p-lg-5">
+                    <div className="text-center mb-4">
+                      <Link to="/" className="d-block mb-3">
+                        <img
+                          src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842054/logo-1_jc0rul.png"
+                          alt="logo"
+                          height="40"
+                        />
+                      </Link>
+                      <h2 className="mb-1">{t("register.createAccount")}</h2>
+                      <p className="text-muted mb-0">
+                        {t("register.joinToStart")}
+                      </p>
                     </div>
-                  </div>
-                  <div className="col-lg-6">
-                    <div className="p-lg-5 p-4">
-                      <div>
-                        <h5 className="text-primary">{t("register.title")}</h5>
-                        <p className="text-muted">
-                          {t("register.labelData")} {t("register.precision")}
-                        </p>
+
+                    <form onSubmit={handleSubmit} className="auth-form">
+                      <div className="mb-3">
+                        <label htmlFor="fullName" className="form-label">
+                          {t("register.fullName")}
+                        </label>
+                        <input
+                          type="text"
+                          className={`form-control ${errors.fullName ? "is-invalid" : ""}`}
+                          id="fullName"
+                          name="fullName"
+                          placeholder={t("register.enterFullName")}
+                          value={formData.fullName}
+                          onChange={handleChange}
+                        />
+                        {errors.fullName && (
+                          <div className="invalid-feedback">{errors.fullName}</div>
+                        )}
                       </div>
-                      <div className="mt-4">
-                        <form
-                          className="needs-validation"
-                          noValidate
-                          onSubmit={handleRegister}
+
+                      <div className="mb-3">
+                        <label htmlFor="email" className="form-label">
+                          {t("register.email")}
+                        </label>
+                        <input
+                          type="email"
+                          className={`form-control ${errors.email ? "is-invalid" : ""}`}
+                          id="email"
+                          name="email"
+                          placeholder={t("register.enterEmail")}
+                          value={formData.email}
+                          onChange={handleChange}
+                        />
+                        {errors.email && (
+                          <div className="invalid-feedback">{errors.email}</div>
+                        )}
+                      </div>
+
+                      <div className="mb-3">
+                        <label htmlFor="password" className="form-label">
+                          {t("register.password")}
+                        </label>
+                        <input
+                          type="password"
+                          className={`form-control ${errors.password ? "is-invalid" : ""}`}
+                          id="password"
+                          name="password"
+                          placeholder={t("register.enterPassword")}
+                          value={formData.password}
+                          onChange={handleChange}
+                        />
+                        {errors.password && (
+                          <div className="invalid-feedback">{errors.password}</div>
+                        )}
+                      </div>
+
+                      <div className="mb-4">
+                        <label htmlFor="confirmPassword" className="form-label">
+                          {t("register.confirmPassword")}
+                        </label>
+                        <input
+                          type="password"
+                          className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          placeholder={t("register.confirmPasswordPlaceholder")}
+                          value={formData.confirmPassword}
+                          onChange={handleChange}
+                        />
+                        {errors.confirmPassword && (
+                          <div className="invalid-feedback">{errors.confirmPassword}</div>
+                        )}
+                      </div>
+
+                      <div className="mb-4">
+                        <div className="form-check">
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id="agreeTerms"
+                            required
+                          />
+                          <label className="form-check-label" htmlFor="agreeTerms">
+                            {t("register.agreeTo")}{" "}
+                            <a href="#" className="text-primary">
+                              {t("register.termsOfService")}
+                            </a>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="d-grid mb-3">
+                        <button
+                          type="submit"
+                          className="btn btn-primary"
+                          disabled={isSubmitting}
                         >
-                          <div className="mb-3">
-                            <label htmlFor="useremail" className="form-label">
-                              {t("register.email")} <span className="text-danger">*</span>
-                            </label>
-                            <input
-                              type="email"
-                              className="form-control"
-                              id="useremail"
-                              placeholder={t("register.emailPlaceholder")}
-                              value={email}
-                              onChange={(e) => setEmail(e.target.value)}
-                              required
-                            />
-                            <div className="invalid-feedback">
-                              {t("register.emailPlaceholder")}
-                            </div>
-                          </div>
-                          <div className="mb-3">
-                            <label htmlFor="username" className="form-label">
-                              {t("register.fullName")} <span className="text-danger">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              className="form-control"
-                              id="username"
-                              placeholder={t("register.fullNamePlaceholder")}
-                              value={fullName}
-                              onChange={(e) => setFullName(e.target.value)}
-                              required
-                            />
-                            <div className="invalid-feedback">
-                              {t("register.fullNamePlaceholder")}
-                            </div>
-                          </div>
-                          <div className="mb-3">
-                            <label
-                              className="form-label"
-                              htmlFor="password-input"
-                            >
-                              {t("register.password")}
-                            </label>
-                            <div className="position-relative auth-pass-inputgroup">
-                              <input
-                                type="password"
-                                className="form-control pe-5 password-input"
-                                onpaste="return false"
-                                placeholder={t("register.passwordPlaceholder")}
-                                id="password-input"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                aria-describedby="passwordInput"
-                                pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-                                required
-                              />
-                              <button
-                                className="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
-                                type="button"
-                                id="password-addon"
-                              >
-                                <i className="ri-eye-fill align-middle" />
-                              </button>
-                              <div className="invalid-feedback">
-                                {t("register.passwordPlaceholder")}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="mb-4">
-                            <p className="mb-0 fs-12 text-muted fst-italic">
-                              By registering you agree to the Velzon
-                              <a
-                                href="#"
-                                className="text-primary text-decoration-underline fst-normal fw-medium"
-                              >
-                                Terms of Use
-                              </a>
-                            </p>
-                          </div>
-                          <div
-                            id="password-contain"
-                            className="p-3 bg-light mb-2 rounded"
-                          >
-                            <h5 className="fs-13">Password must contain:</h5>
-                            <p id="pass-length" className="invalid fs-12 mb-2">
-                              Minimum <b>8 characters</b>
-                            </p>
-                            <p id="pass-lower" className="invalid fs-12 mb-2">
-                              At <b>lowercase</b> letter (a-z)
-                            </p>
-                            <p id="pass-upper" className="invalid fs-12 mb-2">
-                              At least <b>uppercase</b> letter (A-Z)
-                            </p>
-                            <p id="pass-number" className="invalid fs-12 mb-0">
-                              A least <b>number</b> (0-9)
-                            </p>
-                          </div>
-                          <div className="mt-4">
-                            <button
-                              className="btn btn-success w-100"
-                              type="submit"
-                            >
-                              {error && (
-                                <div className="alert alert-danger text-center">
-                                  {error}
-                                </div>
-                              )}
-                              {t("register.submitBtn")}
-                            </button>
-                          </div>
-                          <div className="mt-4 text-center">
-                            <div className="signin-other-title">
-                              <h5 className="fs-13 mb-4 title text-muted">
-                                Create account with
-                              </h5>
-                            </div>
-                            <div>
-                              <button
-                                type="button"
-                                className="btn btn-primary btn-icon waves-effect waves-light"
-                              >
-                                <i className="ri-facebook-fill fs-16" />
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-danger btn-icon waves-effect waves-light"
-                              >
-                                <i className="ri-google-fill fs-16" />
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-dark btn-icon waves-effect waves-light"
-                              >
-                                <i className="ri-github-fill fs-16" />
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-info btn-icon waves-effect waves-light"
-                              >
-                                <i className="ri-twitter-fill fs-16" />
-                              </button>
-                            </div>
-                          </div>
-                        </form>
+                          {isSubmitting ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2" />
+                              {t("register.registering")}
+                            </>
+                          ) : (
+                            t("register.createAccountBtn")
+                          )}
+                        </button>
                       </div>
-                      <div className="mt-5 text-center">
-                        <p className="mb-0">
-                          {t("register.haveAccount")}{" "}
-                          <a
-                            href="/login"
-                            className="fw-semibold text-primary text-decoration-underline"
-                          >
-                            {t("register.loginLink")}
-                          </a>
+
+                      <div className="text-center mt-3">
+                        <p className="text-muted mb-0">
+                          {t("register.alreadyHaveAccount")}{" "}
+                          <Link to="/login" className="text-primary fw-medium">
+                            {t("register.signIn")}
+                          </Link>
                         </p>
                       </div>
-                    </div>
+                    </form>
                   </div>
                 </div>
               </div>
@@ -310,20 +219,6 @@ const RegisterPage = () => {
           </div>
         </div>
       </div>
-      <footer className="footer">
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-12">
-              <div className="text-center">
-                <p className="mb-0">
-                  © Velzon. Crafted with
-                  <i className="mdi mdi-heart text-danger" /> by Themesbrand
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

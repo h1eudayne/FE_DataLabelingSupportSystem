@@ -23,7 +23,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
 
-  // Split labels into default (flag) and custom (drawing)
+  
   const defaultLabels = useMemo(
     () => labels.filter((l) => l.isDefault),
     [labels],
@@ -55,7 +55,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
     return customLabels.filter((l) => l.name.toLowerCase().includes(term));
   }, [customLabels, searchTerm]);
 
-  // Count annotations per label for current image
+  
   const annotationCountByLabel = useMemo(() => {
     const counts = {};
     annotations.forEach((a) => {
@@ -101,7 +101,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
 
 
 
-      {/* Search bar */}
+      {}
       {showSearch && (
         <div style={{ padding: "8px 14px 0 14px", position: "relative" }}>
           <i
@@ -144,7 +144,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
         </div>
       )}
 
-      {/* Label list — auto height, sidebar handles scroll */}
+      {}
       <div className="stitch-ws-card-body p-0">
         {filteredLabels.length === 0 && (
           <div
@@ -175,14 +175,14 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
 
           return (
             <div key={label.id}>
-              {/* Label row */}
+              {}
               <div
                 className={`stitch-ws-label-item ${isSelected ? "selected" : ""} ${!isUnlocked ? "locked" : ""}`}
                 style={{
                   borderLeftColor: isSelected ? label.color : "transparent",
                 }}
               >
-                {/* LEFT ZONE — click to select label */}
+                {}
                 <div
                   className="d-flex align-items-center flex-grow-1 px-2 py-1"
                   style={{ cursor: "pointer" }}
@@ -217,7 +217,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                     {label.name}
                   </span>
 
-                  {/* Sample image indicator */}
+                  {}
                   {hasSampleImage && (
                     <i
                       className="ri-image-line me-1"
@@ -238,7 +238,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                     ></i>
                   )}
 
-                  {/* Annotation count badge */}
+                  {}
                   {annotationCountByLabel[label.id] > 0 && (
                     <span
                       className="stitch-ws-badge stitch-ws-badge-count me-1"
@@ -267,7 +267,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                   )}
                 </div>
 
-                {/* RIGHT ZONE — toggle button for expandable content */}
+                {}
                 {hasExpandableContent && (
                   <button
                     className={`stitch-ws-chevron-btn ${isExpanded ? "expanded" : ""}`}
@@ -290,7 +290,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                 )}
               </div>
 
-              {/* Inline expanded panel */}
+              {}
               {isExpanded && hasExpandableContent && (
                 <div
                   className="stitch-ws-checklist-panel stitch-ws-expand-enter"
@@ -303,7 +303,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
                     </div>
                   )}
 
-                  {/* Sample image display */}
+                  {}
                   {hasSampleImage && (
                     <div
                       style={{
@@ -416,7 +416,7 @@ const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
         })}
       </div>
 
-      {/* Image Preview Modal */}
+      {}
       {previewImage && (
         <div
           style={{

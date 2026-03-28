@@ -101,7 +101,7 @@ const ReviewAuditPage = () => {
     }
   }, []);
 
-  // Realtime: auto-refetch audit tasks when notification arrives
+  
   useSignalRRefresh(
     useCallback(() => {
       if (selectedProjectId) handleProjectChange(selectedProjectId);
@@ -276,7 +276,7 @@ const ReviewAuditPage = () => {
         </Row>
       )}
 
-      {/* BR-MNG-17: Override Rate for Reviewer evaluation */}
+      {}
       {selectedProjectId && !loading && reviewerStats.totalAudited > 0 && (
         <Row className="mb-3">
           <Col md={4}>

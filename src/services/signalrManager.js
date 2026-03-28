@@ -2,22 +2,14 @@ import * as signalR from "@microsoft/signalr";
 import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
 import { BACKEND_URL } from "./axios.customize";
 
-/**
- * Singleton SignalR Connection Manager.
- *
- * Maintains a single shared WebSocket connection for the entire app.
- * Uses reference counting to start/stop the connection automatically.
- */
+
 
 let connection = null;
 let subscriberCount = 0;
 let startPromise = null;
-const listeners = new Map(); // eventName -> Set<callback>
+const listeners = new Map(); 
 
-/**
- * Get or create the singleton connection.
- * Does NOT start it — call subscribe() for that.
- */
+
 function getOrCreateConnection() {
   if (connection) return connection;
 
@@ -35,9 +27,10 @@ function getOrCreateConnection() {
     .configureLogging(signalR.LogLevel.Warning)
     .build();
 
-  // Reconnect handler — re-notify all subscribers
+  
   connection.onreconnected(() => {
     console.log("[SignalR Manager] Reconnected");
+    window.dispatchEvent(new Event("signalr-reconnected"));
   });
 
   connection.onreconnecting(() => {
@@ -46,7 +39,7 @@ function getOrCreateConnection() {
 
   connection.onclose((err) => {
     console.log("[SignalR Manager] Connection closed", err);
-    // Reset state so next subscribe() creates a fresh connection
+    
     connection = null;
     startPromise = null;
   });
@@ -54,10 +47,7 @@ function getOrCreateConnection() {
   return connection;
 }
 
-/**
- * Start the connection if not already started.
- * Returns a promise that resolves when connected.
- */
+
 async function ensureStarted() {
   if (!connection) return;
 
@@ -83,34 +73,28 @@ async function ensureStarted() {
   return startPromise;
 }
 
-/**
- * Subscribe to a SignalR event on the shared connection.
- *
- * @param {string}   eventName  - The hub method name (e.g. "ReceiveNotification")
- * @param {Function} callback   - Handler for incoming messages
- * @returns {Function} unsubscribe — call this in your cleanup/useEffect return
- */
+
 export function subscribe(eventName, callback) {
   const conn = getOrCreateConnection();
   if (!conn) return () => {};
 
-  // Track listeners
+  
   if (!listeners.has(eventName)) {
     listeners.set(eventName, new Set());
   }
   listeners.get(eventName).add(callback);
 
-  // Register on connection
+  
   conn.on(eventName, callback);
 
   subscriberCount++;
 
-  // Start connection if this is the first subscriber
+  
   if (subscriberCount === 1) {
     ensureStarted();
   }
 
-  // Return unsubscribe function
+  
   return () => {
     conn.off(eventName, callback);
 
@@ -124,7 +108,7 @@ export function subscribe(eventName, callback) {
 
     subscriberCount = Math.max(0, subscriberCount - 1);
 
-    // Stop connection when no one is listening
+    
     if (subscriberCount === 0 && connection) {
       connection.stop().catch(() => {});
       connection = null;
@@ -133,9 +117,7 @@ export function subscribe(eventName, callback) {
   };
 }
 
-/**
- * Force disconnect and reset. Call on logout.
- */
+
 export function disconnect() {
   if (connection) {
     connection.stop().catch(() => {});
@@ -146,9 +128,7 @@ export function disconnect() {
   listeners.clear();
 }
 
-/**
- * Get the current connection state (for debugging).
- */
+
 export function getConnectionState() {
   if (!connection) return "Disconnected";
   return connection.state;
