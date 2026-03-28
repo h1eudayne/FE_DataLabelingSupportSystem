@@ -125,6 +125,30 @@ const DisputeTab = ({ projectId }) => {
     return <span className={`dispute-badge ${s.cls}`}>{s.text}</span>;
   };
 
+  // Get verdict display with icon
+  const getVerdictBadge = (verdict) => {
+    if (verdict === "Approved" || verdict === "Approve") {
+      return <Badge color="success"><i className="ri-check-line me-1"></i>Approved</Badge>;
+    }
+    return <Badge color="danger"><i className="ri-close-line me-1"></i>Rejected</Badge>;
+  };
+
+  // Analyze reviewer feedback for display
+  const analyzeReviewerFeedback = (feedbacks) => {
+    const approved = feedbacks?.find(f => f.verdict === "Approved" || f.verdict === "Approve");
+    const rejected = feedbacks?.find(f => f.verdict === "Rejected" || f.verdict === "Reject");
+    return { approved, rejected };
+  };
+
+  // Count votes for display
+  const countVotes = (feedbacks) => {
+    const approved = feedbacks?.filter(f => f.verdict === "Approved" || f.verdict === "Approve") || [];
+    const rejected = feedbacks?.filter(f => f.verdict === "Rejected" || f.verdict === "Reject") || [];
+    const total = approved.length + rejected.length;
+    const isConflict = total >= 2 && approved.length === rejected.length;
+    return { approvedCount: approved.length, rejectedCount: rejected.length, total, isConflict };
+  };
+
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -316,6 +340,14 @@ const DisputeTab = ({ projectId }) => {
                 </Alert>
               )}
 
+              {/* Calculate voteInfo for majority voting display */}
+              {(() => {
+                const voteInfo = selectedDispute.reviewerFeedbacks
+                  ? countVotes(selectedDispute.reviewerFeedbacks)
+                  : { approvedCount: 0, rejectedCount: 0, total: 0, isConflict: false };
+                return null; // Just compute, don't render
+              })()}
+
               <div className="mb-3 p-3 rounded" style={{ background: "var(--pd-table-header-bg)" }}>
                 <h6 className="fw-bold mb-2" style={{ color: "var(--pd-text-primary)" }}>
                   {t("dispute.complaintInfo")}
@@ -349,6 +381,166 @@ const DisputeTab = ({ projectId }) => {
                   )}
                 </p>
               </div>
+
+              {/* Reviewer Feedback Section with Majority Voting Display */}
+              {selectedDispute.reviewerFeedbacks && selectedDispute.reviewerFeedbacks.length > 0 && (() => {
+                const voteInfo = countVotes(selectedDispute.reviewerFeedbacks);
+                const approvedFeedbacks = selectedDispute.reviewerFeedbacks.filter(f => f.verdict === "Approved" || f.verdict === "Approve");
+                const rejectedFeedbacks = selectedDispute.reviewerFeedbacks.filter(f => f.verdict === "Rejected" || f.verdict === "Reject");
+                const majorityDecision = voteInfo.approvedCount > voteInfo.rejectedCount ? "APPROVED" : "REJECTED";
+                const majorityClass = voteInfo.approvedCount > voteInfo.rejectedCount ? "success" : "danger";
+
+                return (
+                  <div className="mb-3 p-3 border rounded" style={{ borderColor: "var(--pd-table-border)" }}>
+                    <div className="d-flex justify-content-between align-items-start mb-3">
+                      <h6 className="fw-bold mb-0" style={{ color: "var(--pd-tab-active-text)" }}>
+                        <i className="ri-user-follow-line me-1"></i>
+                        Reviewer Votes ({voteInfo.total} reviewers)
+                      </h6>
+                      <div className="d-flex gap-2">
+                        <Badge color="success" style={{ fontSize: "12px" }}>
+                          <i className="ri-check-line me-1"></i>{voteInfo.approvedCount}
+                        </Badge>
+                        <Badge color="danger" style={{ fontSize: "12px" }}>
+                          <i className="ri-close-line me-1"></i>{voteInfo.rejectedCount}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Vote Summary Bar */}
+                    <div className="mb-3 p-2 rounded" style={{ background: "var(--pd-table-header-bg)" }}>
+                      <div className="d-flex align-items-center gap-2 mb-2">
+                        <span className="small fw-bold">Majority Decision:</span>
+                        {voteInfo.isConflict ? (
+                          <Badge color="warning" className="px-2 py-1">
+                            <i className="ri-alert-line me-1"></i>CONFLICT (50-50)
+                          </Badge>
+                        ) : (
+                          <Badge color={majorityClass} className="px-2 py-1">
+                            <i className={`ri-${majorityClass === "success" ? "check-line" : "close-line"} me-1`}></i>
+                            {majorityDecision} (Majority)
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="progress" style={{ height: "8px" }}>
+                        <div
+                          className="progress-bar bg-success"
+                          style={{ width: `${(voteInfo.approvedCount / voteInfo.total) * 100}%` }}
+                        ></div>
+                        <div
+                          className="progress-bar bg-danger"
+                          style={{ width: `${(voteInfo.rejectedCount / voteInfo.total) * 100}%` }}
+                        ></div>
+                      </div>
+                      <small className="text-muted mt-1 d-block">
+                        {voteInfo.isConflict
+                          ? "Equal votes detected - Manager decision required"
+                          : voteInfo.approvedCount > voteInfo.rejectedCount
+                            ? `${voteInfo.approvedCount} approved, ${voteInfo.rejectedCount} rejected - APPROVED by majority`
+                            : `${voteInfo.approvedCount} approved, ${voteInfo.rejectedCount} rejected - REJECTED by majority`
+                        }
+                      </small>
+                    </div>
+
+                    {/* Individual Reviewer Cards */}
+                    <div className="mb-3">
+                      {voteInfo.approvedCount > 0 && (
+                        <>
+                          <small className="text-success fw-bold d-block mb-2">
+                            <i className="ri-check-line me-1"></i>Approved ({voteInfo.approvedCount})
+                          </small>
+                          <div className="d-flex flex-column gap-2 mb-3">
+                            {approvedFeedbacks.map((feedback, idx) => (
+                              <div key={`approved-${idx}`} className="p-3 rounded border border-success bg-success-subtle">
+                                <div className="d-flex justify-content-between align-items-start">
+                                  <div>
+                                    <strong className="text-success">
+                                      <i className="ri-user-line me-1"></i>
+                                      {feedback.reviewerName || "Unknown Reviewer"}
+                                    </strong>
+                                    <Badge color="success" className="ms-2" pill style={{ fontSize: "10px" }}>
+                                      APPROVED
+                                    </Badge>
+                                  </div>
+                                  <small className="text-muted">
+                                    {feedback.reviewedAt ? new Date(feedback.reviewedAt).toLocaleString("vi-VN") : ""}
+                                  </small>
+                                </div>
+                                {feedback.comment && (
+                                  <p className="mb-0 mt-2 small" style={{ color: "var(--pd-text-primary)" }}>
+                                    "{feedback.comment}"
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {voteInfo.rejectedCount > 0 && (
+                        <>
+                          <small className="text-danger fw-bold d-block mb-2">
+                            <i className="ri-close-line me-1"></i>Rejected ({voteInfo.rejectedCount})
+                          </small>
+                          <div className="d-flex flex-column gap-2">
+                            {rejectedFeedbacks.map((feedback, idx) => (
+                              <div key={`rejected-${idx}`} className="p-3 rounded border border-danger bg-danger-subtle">
+                                <div className="d-flex justify-content-between align-items-start">
+                                  <div>
+                                    <strong className="text-danger">
+                                      <i className="ri-user-line me-1"></i>
+                                      {feedback.reviewerName || "Unknown Reviewer"}
+                                    </strong>
+                                    <Badge color="danger" className="ms-2" pill style={{ fontSize: "10px" }}>
+                                      REJECTED
+                                    </Badge>
+                                  </div>
+                                  <small className="text-muted">
+                                    {feedback.reviewedAt ? new Date(feedback.reviewedAt).toLocaleString("vi-VN") : ""}
+                                  </small>
+                                </div>
+                                {feedback.comment && (
+                                  <p className="mb-0 mt-2 small" style={{ color: "var(--pd-text-primary)" }}>
+                                    "{feedback.comment}"
+                                  </p>
+                                )}
+                                {feedback.errorCategories && (
+                                  <div className="mt-2 d-flex flex-wrap gap-1">
+                                    {(() => {
+                                      try {
+                                        const errors = JSON.parse(feedback.errorCategories);
+                                        return errors.map((err, i) => (
+                                          <Badge key={i} color="warning" pill style={{ fontSize: "10px" }}>
+                                            {err}
+                                          </Badge>
+                                        ));
+                                      } catch { return null; }
+                                    })()}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Workflow explanation for pending disputes */}
+                    {selectedDispute.status === "Pending" && (
+                      <div className="mt-3 p-2 rounded" style={{ background: "#fff3cd", border: "1px solid #ffc107" }}>
+                        <small className="text-warning-emphasis">
+                          <i className="ri-information-line me-1"></i>
+                          <strong>Note:</strong> Annotator disputes when rejected. Manager's decision will determine the final outcome.
+                          <br />
+                          <span className="text-muted">
+                            Accept = Annotator correct, Rejectors must re-review | Reject = Annotator wrong, all must redo
+                          </span>
+                        </small>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {projectDetail?.labels?.length > 0 && (
                 <div className="mb-3 p-3 border rounded" style={{ borderColor: "var(--pd-table-border)" }}>
@@ -386,20 +578,84 @@ const DisputeTab = ({ projectId }) => {
               )}
 
               {selectedDispute.status === "Pending" ? (
-                <>
+                <div className="mb-3 p-3 border rounded" style={{ borderColor: "#e9ecef" }}>
+                  <h6 className="fw-bold mb-3" style={{ color: "var(--pd-text-primary)" }}>
+                    <i className="ri-decision-tree me-1"></i>
+                    Manager Decision
+                  </h6>
+
+                  <Alert color={voteInfo.isConflict ? "warning" : "info"} className="mb-3">
+                    <div className="d-flex align-items-center gap-2">
+                      <i className={`ri-${voteInfo.isConflict ? "alert" : "information"}-line`}></i>
+                      <div>
+                        <strong>Current Vote: {voteInfo.approvedCount} Approve / {voteInfo.rejectedCount} Reject</strong>
+                        <br/>
+                        <small>
+                          {voteInfo.isConflict
+                            ? "CONFLICT detected (50-50). You are the deciding vote."
+                            : voteInfo.approvedCount > voteInfo.rejectedCount
+                              ? "Majority voted APPROVE. This dispute contests the rejection."
+                              : "Majority voted REJECT. Annotator is disputing the decision."
+                          }
+                        </small>
+                      </div>
+                    </div>
+                  </Alert>
+
                   <FormGroup>
                     <Label className="fw-semibold">{t("dispute.decision")}</Label>
-                    <div className="d-flex gap-3">
-                      <FormGroup check>
+                    <div className="d-flex flex-column gap-2">
+                      <FormGroup check className="p-3 border border-success rounded">
                         <Input type="radio" name="decision" checked={isAccepted} onChange={() => setIsAccepted(true)} />
-                        <Label check className="text-success fw-semibold">
-                          <i className="ri-check-line me-1"></i>{t("dispute.acceptComplaint")}
+                        <Label check className="text-success fw-semibold w-100">
+                          <div className="d-flex align-items-start">
+                            <i className="ri-check-line me-2 mt-1 fs-5"></i>
+                            <div>
+                              <strong>Accept Dispute</strong>
+                              <span className="badge bg-success ms-2" style={{ fontSize: "10px" }}>Annotator Correct</span>
+                              <p className="mb-0 small text-muted fw-normal mt-1">
+                                <strong>Decision:</strong> Annotator's labeling was correct.
+                                <br/>
+                                <strong>Action:</strong> Task remains APPROVED.
+                                {voteInfo.rejectedCount > 0 && (
+                                  <>
+                                    <br/>
+                                    <span className="text-danger">
+                                      <i className="ri-user-follow-line me-1"></i>
+                                      {voteInfo.rejectedCount} Rejector(s) must re-review their decision.
+                                    </span>
+                                  </>
+                                )}
+                              </p>
+                            </div>
+                          </div>
                         </Label>
                       </FormGroup>
-                      <FormGroup check>
+                      <FormGroup check className="p-3 border border-danger rounded">
                         <Input type="radio" name="decision" checked={!isAccepted} onChange={() => setIsAccepted(false)} />
-                        <Label check className="text-danger fw-semibold">
-                          <i className="ri-close-line me-1"></i>{t("dispute.rejectComplaint")}
+                        <Label check className="text-danger fw-semibold w-100">
+                          <div className="d-flex align-items-start">
+                            <i className="ri-close-line me-2 mt-1 fs-5"></i>
+                            <div>
+                              <strong>Reject Dispute</strong>
+                              <span className="badge bg-danger ms-2" style={{ fontSize: "10px" }}>Annotator Wrong</span>
+                              <p className="mb-0 small text-muted fw-normal mt-1">
+                                <strong>Decision:</strong> Annotator's labeling was incorrect.
+                                <br/>
+                                <strong>Action:</strong>
+                                <br/>
+                                <span className="text-danger">
+                                  <i className="ri-edit-line me-1"></i>
+                                  Annotator must redo the labeling.
+                                </span>
+                                <br/>
+                                <span className="text-warning">
+                                  <i className="ri-refresh-line me-1"></i>
+                                  ALL {voteInfo.total} reviewer(s) must re-review when resubmitted.
+                                </span>
+                              </p>
+                            </div>
+                          </div>
                         </Label>
                       </FormGroup>
                     </div>
@@ -424,26 +680,72 @@ const DisputeTab = ({ projectId }) => {
                       </small>
                     )}
                   </FormGroup>
-                </>
+                </div>
               ) : (
                 <div className="mb-3 p-3 rounded" style={{ background: "var(--pd-table-header-bg)" }}>
-                  <h6 className="fw-bold mb-2" style={{ color: "var(--pd-text-primary)" }}>
+                  <h6 className="fw-bold mb-3" style={{ color: "var(--pd-text-primary)" }}>
                     <i className="ri-checkbox-circle-line me-1"></i>
-                    {t("dispute.resolutionResult", "Kết quả phân xử")}
+                    Resolution Result
                   </h6>
-                  <p className="mb-1">
-                    <strong>{t("dispute.decision")}:</strong>{" "}
-                    <Badge color={selectedDispute.status === "Resolved" ? "success" : "danger"}>
-                      {selectedDispute.status === "Resolved"
-                        ? t("dispute.acceptComplaint")
-                        : t("dispute.rejectComplaint")}
+                  <div className="mb-3">
+                    <strong>Decision:</strong>{" "}
+                    <Badge color={selectedDispute.status === "Resolved" ? "success" : "danger"} className="ms-1">
+                      {selectedDispute.status === "Resolved" ? "ACCEPTED" : "REJECTED"}
                     </Badge>
-                  </p>
+                    <Badge color="info" className="ms-2">
+                      {selectedDispute.resolutionType === "annotator_correct" ? "Annotator Correct" : "Annotator Wrong"}
+                    </Badge>
+                  </div>
+
+                  {/* Show actions taken */}
+                  {selectedDispute.resolutionType === "annotator_correct" && (
+                    <Alert color="success" className="mb-2">
+                      <div className="d-flex align-items-start gap-2">
+                        <i className="ri-check-line fs-5"></i>
+                        <div>
+                          <strong>Decision:</strong> Annotator was correct.
+                          <div className="mt-1">
+                            <i className="ri-user-follow-line me-1"></i>
+                            <strong>Actions Taken:</strong>
+                            <ul className="mb-0 mt-1 small">
+                              <li>Task status: <strong>APPROVED</strong></li>
+                              {selectedDispute.reviewerFeedbacks?.filter(f => f.verdict === "Rejected" || f.verdict === "Reject").map((f, i) => (
+                                <li key={i}>Reviewer <strong>{f.reviewerName}</strong> has been notified to re-review</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </Alert>
+                  )}
+
+                  {selectedDispute.resolutionType === "annotator_wrong" && (
+                    <Alert color="danger" className="mb-2">
+                      <div className="d-flex align-items-start gap-2">
+                        <i className="ri-close-line fs-5"></i>
+                        <div>
+                          <strong>Decision:</strong> Annotator was incorrect.
+                          <div className="mt-1">
+                            <i className="ri-refresh-line me-1"></i>
+                            <strong>Actions Taken:</strong>
+                            <ul className="mb-0 mt-1 small">
+                              <li><strong>Annotator</strong> must redo the labeling</li>
+                              <li>ALL reviewers have been notified to re-review when resubmitted</li>
+                              <li className="text-muted">Even reviewers who previously approved must review again</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </Alert>
+                  )}
+
                   {selectedDispute.managerComment && (
-                    <p className="mb-0" style={{ color: "var(--pd-text-primary)" }}>
-                      <strong>{t("dispute.managerComment")}:</strong>{" "}
-                      {selectedDispute.managerComment}
-                    </p>
+                    <div className="mt-3 p-2 rounded" style={{ background: "white", border: "1px solid #dee2e6" }}>
+                      <small className="text-muted">Manager's Comment:</small>
+                      <p className="mb-0 fw-normal" style={{ color: "var(--pd-text-primary)" }}>
+                        "{selectedDispute.managerComment}"
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
