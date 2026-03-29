@@ -404,7 +404,7 @@ const LabelingWorkspace = ({
               onClick={() => setDrawingMode("bbox")}
               title={t("workspace.drawBBox")}
             >
-              <i className="ri-shape-line me-1"></i> BBox
+              <i className="ri-shape-line me-1"></i> {t("workspace.bboxTool")}
             </button>
             <button
               className={`stitch-ws-toolbar-btn ${drawingMode === "polygon" ? "primary" : ""}`}
@@ -414,7 +414,7 @@ const LabelingWorkspace = ({
               }}
               title={t("workspace.drawPolygon")}
             >
-              <i className="ri-share-line me-1"></i> Polygon
+              <i className="ri-share-line me-1"></i> {t("workspace.polygonTool")}
             </button>
           </>
         )}
@@ -425,7 +425,7 @@ const LabelingWorkspace = ({
           title={t("workspace.resetView")}
         >
           <i className="ri-fullscreen-line me-1"></i>
-          Reset
+          {t("workspace.reset")}
         </button>
         {!readOnly && (
           <button
@@ -434,13 +434,14 @@ const LabelingWorkspace = ({
             title={t("workspace.undoShortcut")}
           >
             <i className="ri-arrow-go-back-line me-1"></i>
-            Undo
+            {t("workspace.undo")}
           </button>
         )}
         {annotations.length > 0 && (
           <span className="stitch-ws-badge stitch-ws-badge-inprogress ms-1">
             <i className="ri-shape-line"></i>
-            {annotations.length} shape{annotations.length > 1 ? "s" : ""}
+            {annotations.length}{" "}
+            {t(annotations.length === 1 ? "workspace.shape" : "workspace.shapes")}
           </span>
         )}
         <div
@@ -462,7 +463,7 @@ const LabelingWorkspace = ({
             </span>
           )}
           <span style={{ whiteSpace: "nowrap" }}>
-            <i className="ri-mouse-line"></i> Ctrl+Scroll: Zoom
+            <i className="ri-mouse-line"></i> {t("workspace.zoomHint")}
           </span>
           <span style={{ whiteSpace: "nowrap" }}>
             <i className="ri-drag-move-line"></i> {t("workspace.moveDraw")}

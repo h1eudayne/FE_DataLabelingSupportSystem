@@ -88,6 +88,10 @@ const WorkplaceLabelingTaskPage = () => {
     (state) => state.labeling.annotationsByAssignment || {},
   );
 
+  const allChecklistStates = useSelector(
+    (state) => state.labeling.checklistByAssignment || {},
+  );
+
   const allDefaultFlags = useSelector(
     (state) => state.labeling.defaultFlagsByAssignment || {},
   );
@@ -121,6 +125,24 @@ const WorkplaceLabelingTaskPage = () => {
     return ids;
   }, [labels, checklistState]);
 
+  const getErrorMessage = useCallback((err, fallbackMessage) => {
+    const responseData = err?.response?.data;
+
+    if (typeof responseData?.message === "string" && responseData.message.trim()) {
+      return responseData.message;
+    }
+
+    if (typeof responseData === "string" && responseData.trim()) {
+      return responseData;
+    }
+
+    if (typeof err?.message === "string" && err.message.trim()) {
+      return err.message;
+    }
+
+    return fallbackMessage;
+  }, []);
+
   const hasValidAnnotations = useCallback((annotationData) => {
     if (!annotationData) return false;
     try {
@@ -139,6 +161,29 @@ const WorkplaceLabelingTaskPage = () => {
     }
     return false;
   }, []);
+
+  const buildDataJSONForAssignment = useCallback(
+    (assignmentId, fallbackDataJSON = "") => {
+      const assignmentAnnotations = allAnnotations[assignmentId];
+      const assignmentChecklist = allChecklistStates[assignmentId];
+      const assignmentFlags = allDefaultFlags[assignmentId];
+      const hasLocalState =
+        assignmentAnnotations !== undefined ||
+        assignmentChecklist !== undefined ||
+        assignmentFlags !== undefined;
+
+      if (!hasLocalState) {
+        return fallbackDataJSON || "";
+      }
+
+      return JSON.stringify({
+        annotations: assignmentAnnotations || [],
+        __checklist: assignmentChecklist || {},
+        __defaultFlags: assignmentFlags || [],
+      });
+    },
+    [allAnnotations, allChecklistStates, allDefaultFlags],
+  );
 
   const eligibleForSubmit = useMemo(() => {
     return images.filter((img) => {
@@ -322,12 +367,13 @@ const WorkplaceLabelingTaskPage = () => {
   }, [annotations, checklistState, currentDefaultFlags]);
 
   const buildDataJSON = useCallback(() => {
-    return JSON.stringify({
-      annotations: annotations,
-      __checklist: checklistState,
-      __defaultFlags: currentDefaultFlags,
-    });
-  }, [annotations, checklistState, currentDefaultFlags]);
+    if (!currentImage) return "";
+
+    return buildDataJSONForAssignment(
+      currentImage.id,
+      currentImage.annotationData || "",
+    );
+  }, [currentImage, buildDataJSONForAssignment]);
 
   const saveDraft = useCallback(
     async (silent = false) => {
@@ -452,7 +498,7 @@ const WorkplaceLabelingTaskPage = () => {
     }
   };
 
-  const refetchImages = useCallback(async () => {
+  const refetchImages = useCallback(async (preferredImage = null) => {
     try {
       const imgRes = await taskService.getProjectImages(assignmentId);
 
@@ -491,10 +537,89 @@ const WorkplaceLabelingTaskPage = () => {
       });
 
       setImages(sortedSlice);
+      setCurrentImgIndex((prev) => {
+        if (sortedSlice.length === 0) return 0;
+
+        if (preferredImage?.dataItemId != null) {
+          const nextIndex = sortedSlice.findIndex(
+            (img) => img.dataItemId === preferredImage.dataItemId,
+          );
+          if (nextIndex >= 0) return nextIndex;
+        }
+
+        if (preferredImage?.id != null) {
+          const nextIndex = sortedSlice.findIndex(
+            (img) => img.id === preferredImage.id,
+          );
+          if (nextIndex >= 0) return nextIndex;
+        }
+
+        return Math.min(prev, sortedSlice.length - 1);
+      });
     } catch (err) {
       console.error("Refetch images failed:", err);
     }
   }, [assignmentId, searchParams]);
+
+  const syncDraftsForAssignments = useCallback(
+    async (assignmentIds) => {
+      const pendingIds = assignmentIds.filter((id) => id != null);
+      if (pendingIds.length === 0) return [];
+
+      const imageLookup = new Map(images.map((img) => [img.id, img]));
+      const syncedDrafts = new Map();
+      const syncErrors = [];
+
+      for (const assignmentId of pendingIds) {
+        const image = imageLookup.get(assignmentId);
+        if (!image) continue;
+
+        const dataJSON = buildDataJSONForAssignment(
+          assignmentId,
+          image.annotationData || "",
+        );
+
+        if (!hasValidAnnotations(dataJSON)) {
+          syncErrors.push(
+            `${t("workspace.draftFailed")} (Task ID ${assignmentId})`,
+          );
+          continue;
+        }
+
+        try {
+          await taskService.saveDraft({
+            assignmentId,
+            dataJSON,
+          });
+
+          syncedDrafts.set(assignmentId, {
+            annotationData: dataJSON,
+            status: image.status === "New" ? "InProgress" : image.status,
+          });
+        } catch (err) {
+          syncErrors.push(
+            getErrorMessage(
+              err,
+              `${t("workspace.draftFailed")} (Task ID ${assignmentId})`,
+            ),
+          );
+        }
+      }
+
+      if (syncedDrafts.size > 0) {
+        setImages((prev) =>
+          prev.map((img) =>
+            syncedDrafts.has(img.id)
+              ? { ...img, ...syncedDrafts.get(img.id) }
+              : img,
+          ),
+        );
+      }
+
+      return syncErrors;
+    },
+    [images, buildDataJSONForAssignment, hasValidAnnotations, getErrorMessage, t],
+  );
 
   const handleBatchSubmit = async () => {
     if (selectedIds.size === 0) {
@@ -509,44 +634,70 @@ const WorkplaceLabelingTaskPage = () => {
 
     setBatchSubmitting(true);
     try {
+      const assignmentIds = [...selectedIds];
+      const preferredImage = currentImage
+        ? { id: currentImage.id, dataItemId: currentImage.dataItemId }
+        : null;
+
+      const draftSyncErrors = await syncDraftsForAssignments(assignmentIds);
+      if (draftSyncErrors.length > 0) {
+        draftSyncErrors.forEach((message) =>
+          toast.error(message, { autoClose: 5000 }),
+        );
+        return;
+      }
+
       const res = await taskService.submitMultiple({
-        assignmentIds: [...selectedIds],
+        assignmentIds,
       });
 
-      const result = res.data || res;
+      const result = res?.data || res || {};
+      const successCount = result.successCount ?? result.SuccessCount ?? 0;
+      const failureCount = result.failureCount ?? result.FailureCount ?? 0;
+      const errors = result.errors ?? result.Errors ?? [];
 
-      if (result.successCount > 0 && result.failureCount === 0) {
+      if (successCount > 0 && failureCount === 0) {
         toast.success(
-          t("workspace.batchSuccess", { count: result.successCount }),
+          t("workspace.batchSuccess", { count: successCount }),
         );
-      } else if (result.successCount > 0 && result.failureCount > 0) {
+      } else if (successCount > 0 && failureCount > 0) {
         toast.warning(
           t("workspace.batchPartial", {
-            success: result.successCount,
-            total: selectedIds.size,
-            fail: result.failureCount,
+            success: successCount,
+            total: assignmentIds.length,
+            fail: failureCount,
           }),
         );
-        if (result.errors && result.errors.length > 0) {
-          result.errors.forEach((errMsg) =>
+        if (errors.length > 0) {
+          errors.forEach((errMsg) =>
             toast.error(errMsg, { autoClose: 5000 }),
           );
         }
       } else {
         toast.error(t("workspace.batchFailed"));
-        if (result.errors && result.errors.length > 0) {
-          result.errors.forEach((errMsg) =>
+        if (errors.length > 0) {
+          errors.forEach((errMsg) =>
             toast.error(errMsg, { autoClose: 5000 }),
           );
         }
       }
 
-      await refetchImages();
-      setSelectedIds(new Set());
-      setShowBatchPanel(false);
+      if (successCount > 0) {
+        await refetchImages(preferredImage);
+      }
+
+      const failedIds = errors
+        .map((message) => {
+          const match = /Task ID\s+(\d+)/i.exec(message);
+          return match ? Number(match[1]) : null;
+        })
+        .filter((id) => Number.isInteger(id));
+
+      setSelectedIds(new Set(successCount > 0 ? failedIds : assignmentIds));
+      setShowBatchPanel(successCount === 0 || failedIds.length > 0);
     } catch (err) {
       console.error(err);
-      toast.error(t("workspace.batchError"));
+      toast.error(getErrorMessage(err, t("workspace.batchError")));
     } finally {
       setBatchSubmitting(false);
     }
@@ -563,6 +714,7 @@ const WorkplaceLabelingTaskPage = () => {
     try {
       if (
         currentImage &&
+        isDirtyRef.current &&
         currentImage.status !== "Submitted" &&
         currentImage.status !== "Approved"
       ) {
@@ -1050,9 +1202,9 @@ const WorkplaceLabelingTaskPage = () => {
               <div className="d-flex align-items-start gap-2">
                 <i className="ri-eye-line" style={{ fontSize: "1rem", marginTop: 1, flexShrink: 0 }}></i>
                 <div>
-                  <strong style={{ fontSize: "0.8rem" }}>Do not skip visible objects</strong>
+                  <strong style={{ fontSize: "0.8rem" }}>{t("workspace.skipVisibleTitle")}</strong>
                   <p style={{ fontSize: "0.72rem", margin: "2px 0 0", opacity: 0.85 }}>
-                    If you see any valid objects in the image, please label them before submitting. Skipping visible objects may affect your quality score.
+                    {t("workspace.skipVisibleHint")}
                   </p>
                 </div>
               </div>
@@ -1189,7 +1341,7 @@ const WorkplaceLabelingTaskPage = () => {
               onClick={() => togglePanel("annotations")}
             >
               <span>
-                <i className="ri-list-check-2 me-1"></i> Annotations
+                <i className="ri-list-check-2 me-1"></i> {t("workspace.annotations")}
               </span>
               <span className="d-flex align-items-center gap-2">
                 <span className="stitch-ws-badge stitch-ws-badge-inprogress">
@@ -1279,7 +1431,7 @@ const WorkplaceLabelingTaskPage = () => {
               className={`stitch-ws-nav-btn w-100 ${showBatchPanel ? "" : "primary"}`}
               style={{ justifyContent: "center" }}
               onClick={async () => {
-                if (!showBatchPanel) await saveDraft(true);
+                if (!showBatchPanel && isDirtyRef.current) await saveDraft(true);
                 setShowBatchPanel(!showBatchPanel);
               }}
             >
