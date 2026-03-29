@@ -337,12 +337,7 @@ const DisputeTab = ({ projectId }) => {
                 </Alert>
               )}
 
-              {(() => {
-                const voteInfo = selectedDispute.reviewerFeedbacks
-                  ? countVotes(selectedDispute.reviewerFeedbacks)
-                  : { approvedCount: 0, rejectedCount: 0, total: 0, isConflict: false };
-                return null;
-              })()}
+
 
               <div className="mb-3 p-3 rounded" style={{ background: "var(--pd-table-header-bg)" }}>
                 <h6 className="fw-bold mb-2" style={{ color: "var(--pd-text-primary)" }}>
@@ -569,7 +564,11 @@ const DisputeTab = ({ projectId }) => {
                 </div>
               )}
 
-              {selectedDispute.status === "Pending" ? (
+              {selectedDispute.status === "Pending" ? (() => {
+                const voteInfo = selectedDispute.reviewerFeedbacks
+                  ? countVotes(selectedDispute.reviewerFeedbacks)
+                  : { approvedCount: 0, rejectedCount: 0, total: 0, isConflict: false };
+                return (
                 <div className="mb-3 p-3 border rounded" style={{ borderColor: "#e9ecef" }}>
                   <h6 className="fw-bold mb-3" style={{ color: "var(--pd-text-primary)" }}>
                     <i className="ri-decision-tree me-1"></i>
@@ -673,7 +672,8 @@ const DisputeTab = ({ projectId }) => {
                     )}
                   </FormGroup>
                 </div>
-              ) : (
+                );
+              })() : (
                 <div className="mb-3 p-3 rounded" style={{ background: "var(--pd-table-header-bg)" }}>
                   <h6 className="fw-bold mb-3" style={{ color: "var(--pd-text-primary)" }}>
                     <i className="ri-checkbox-circle-line me-1"></i>
