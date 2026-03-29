@@ -2,14 +2,10 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Container, Button } from "react-bootstrap";
-import { LogOut } from "lucide-react";
 
 import LandingNavbar from "../components/landing/LandingNavbar";
 import HeroSection from "../components/landing/HeroSection";
 import FeaturesSection from "../components/landing/FeaturesSection";
-import ManagerContainer from "../container/ManagerContainer";
-import AnnotatorContainer from "../container/AnnotatorContainer";
 import ReviewerContainer from "../container/ReviewerContainer";
 import AnnotatorDashboard from "./annotator/dashboard/AnnotatorDashboard";
 import DashboardAnalytics from "./manager/analytics/DashboardAnalyticsPage";
@@ -33,10 +29,8 @@ const HomePage = () => {
   }
 
   return (
-    <div className="dashboard-layout bg-light min-vh-100">
-      <Container fluid className="px-4 py-2">
-        <RoleBasedRenderer role={user?.role} />
-      </Container>
+    <div className="dashboard-layout min-vh-100">
+      <RoleBasedRenderer role={user?.role} />
     </div>
   );
 };

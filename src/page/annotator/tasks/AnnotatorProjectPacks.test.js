@@ -1,12 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-/**
- * Unit test cho lỗi đếm ảnh off-by-one trong AnnotatorProjectPacks
- *
- * Bug: pack.endIdx là giá trị exclusive (dùng cho Array.slice)
- * nhưng được hiển thị trực tiếp làm chỉ số kết thúc (inclusive)
- * Fix: dùng Math.min(endIdx - 1, total - 1) + 1 để hiển thị đúng
- */
+
 describe("AnnotatorProjectPacks - image index display (off-by-one fix)", () => {
   const PACK_SIZE = 50;
 
@@ -23,11 +17,7 @@ describe("AnnotatorProjectPacks - image index display (off-by-one fix)", () => {
     return result;
   }
 
-  /**
-   * Display function mô phỏng fix off-by-one trong UI:
-   * pack.endIdx là exclusive (dùng slice), nên cần trừ 1.
-   * Nhưng cũng cần đảm bảo không âm với single-element.
-   */
+  
   function getDisplayRange(pack, total) {
     const end = Math.min(pack.endIdx, total) - 1;
     return `${pack.startIdx + 1} – ${Math.max(pack.startIdx + 1, end + 1)}`;

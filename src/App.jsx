@@ -4,6 +4,7 @@ import "./assets/css/custom.min.css";
 import "./assets/css/icons.min.css";
 import "./assets/css/usertable.min.css";
 import "./App.css";
+import "./assets/css/admin-ui.css";
 
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import MainLayouts from "./components/layouts/MainLayouts";
@@ -27,7 +28,6 @@ import AnnotatorProjectPacks from "./page/annotator/tasks/AnnotatorProjectPacks"
 import ProjectImportData from "./page/manager/project/ProjectImportData";
 import ProjectAssignTask from "./page/manager/project/ProjectAssignTask";
 import CreateProject from "./page/manager/project/CreateProject";
-import ProjectsDatasetsPage from "./page/manager/datasets/ProjectsDatasetsPage";
 
 import LoginPage from "./page/auth/login/LoginPage";
 import ForgotPasswordPage from "./page/auth/ForgotPasswordPage";
@@ -108,11 +108,11 @@ function App() {
               />
               <Route
                 path="projects-datasets"
-                element={<ProjectsDatasetsPage />}
+                element={<Navigate to="/projects-all-projects" replace />}
               />
               <Route
                 path="projects-datasets/:id"
-                element={<ProjectsDatasetsPage />}
+                element={<Navigate to="/projects-all-projects" replace />}
               />
               <Route
                 path="projects-assign/:id"

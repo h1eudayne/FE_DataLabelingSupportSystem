@@ -11,7 +11,6 @@ import {
   Table,
   ProgressBar,
   Button,
-  ListGroup,
   Spinner,
 } from "react-bootstrap";
 import { ArrowLeft, Calendar, User, Users, Info } from "lucide-react";
@@ -19,230 +18,243 @@ import { ArrowLeft, Calendar, User, Users, Info } from "lucide-react";
 const DetailProject = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectProject, setSelectProject] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const localeTag = i18n.language === "vi" ? "vi-VN" : "en-US";
+
   useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await projectApi.getProjectById(id);
+        if (res.data) setSelectProject(res.data);
+      } catch (error) {
+        console.error(error);
+        setSelectProject(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchData();
   }, [id]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await projectApi.getProjectById(id);
-      if (res.data) setSelectProject(res.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading)
+  if (loading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ minHeight: "80vh" }}
-      >
-        <Spinner animation="border" variant="primary" />
-      </div>
-    );
-
-  if (!selectProject)
-    return <div className="p-5 text-center">{t("admin.project.noResult")}</div>;
-
-  return (
-    <Container fluid className="p-4 bg-light min-vh-100">
-      {/* Header */}
-      <div className="d-flex align-items-center mb-4">
-        <Button
-          variant="outline-secondary"
-          onClick={() => navigate(-1)}
-          className="me-3 shadow-sm bg-white d-flex align-items-center justify-content-center"
-          style={{ width: "40px", height: "40px", border: "1px solid #dee2e6" }}
-        >
-          <ArrowLeft size={20} color="#333" />
-        </Button>
-        <div>
-          <h3 className="mb-0 fw-bold text-dark">{selectProject.name}</h3>
-          <div className="d-flex gap-2 mt-1">
-            <Badge bg="info" className="fw-normal text-dark">
-              {t("admin.projectDetail.type")}:{" "}
-              {selectProject.allowGeometryTypes}
-            </Badge>
+      <Container fluid className="admin-shell">
+        <div className="admin-shell__inner">
+          <div className="admin-loading-state">
+            <Spinner animation="border" variant="primary" />
           </div>
         </div>
-      </div>
+      </Container>
+    );
+  }
 
-      <Row>
-        <Col lg={8}>
-          {/* Project Description */}
-          <Card className="border-0 shadow-sm mb-4">
-            <Card.Body>
-              <h6 className="fw-bold mb-3 text-primary d-flex align-items-center">
-                <Info size={18} className="me-2" />{" "}
-                {t("admin.projectDetail.description")}
-              </h6>
-              <div
-                className="p-3 bg-light rounded-3 text-secondary"
-                style={{ fontSize: "14px" }}
+  if (!selectProject) {
+    return (
+      <Container fluid className="admin-shell">
+        <div className="admin-shell__inner">
+          <div className="admin-mobile-card text-center">
+            {t("common.noData")}
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  return (
+    <Container fluid className="admin-shell">
+      <div className="admin-shell__inner">
+        <section className="admin-page-header">
+          <div className="admin-page-header__content">
+            <div className="d-flex align-items-center gap-3 flex-wrap">
+              <Button
+                variant="light"
+                onClick={() => navigate(-1)}
+                className="admin-icon-button"
               >
-                {selectProject.description ||
-                  t("admin.projectDetail.noDescription")}
+                <ArrowLeft size={18} />
+              </Button>
+              <div>
+                <div className="admin-page-header__eyebrow">
+                  {t("admin.project.listTitle")}
+                </div>
+                <h1 className="admin-page-header__title">{selectProject.name}</h1>
               </div>
-            </Card.Body>
-          </Card>
+            </div>
+            <p className="admin-page-header__subtitle">
+              {t("admin.projectDetail.detailSubtitle")}
+            </p>
+          </div>
 
-          {/* Member Performance Table */}
-          <Card className="border-0 shadow-sm">
-            <Card.Body>
-              <h6 className="fw-bold mb-3 text-primary d-flex align-items-center">
-                <Users size={18} className="me-2" />{" "}
-                {t("admin.projectDetail.memberPerformance")}
-              </h6>
-              <Table responsive hover className="align-middle border-top">
-                <thead>
-                  <tr className="text-muted small">
-                    <th className="border-0">
-                      {t("admin.projectDetail.tableMember")}
-                    </th>
-                    <th className="border-0 text-center">
-                      {t("admin.projectDetail.tableRole")}
-                    </th>
-                    <th className="border-0 text-center">
-                      {t("admin.projectDetail.tableTasks")}
-                    </th>
-                    <th className="border-0">
-                      {t("admin.projectDetail.tableProgress")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectProject.members?.map((member) => (
-                    <tr key={member.id}>
-                      <td>
-                        <div className="fw-bold text-dark">
-                          {member.fullName}
-                        </div>
-                        <div
-                          className="text-muted"
-                          style={{ fontSize: "12px" }}
-                        >
-                          {member.email}
-                        </div>
-                      </td>
-                      <td className="text-center">
-                        <Badge
-                          bg={member.role === "Reviewer" ? "info" : "light"}
-                          className="text-dark border"
-                        >
-                          {member.role}
-                        </Badge>
-                      </td>
-                      <td className="text-center fw-medium">
-                        {member.tasksAssigned} /{" "}
-                        <span className="text-success">
-                          {member.tasksCompleted}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center gap-2">
-                          <ProgressBar
-                            now={member.progress}
-                            className="flex-grow-1"
-                            style={{ height: "6px" }}
-                          />
-                          <small className="fw-bold">{member.progress}%</small>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </Card.Body>
-          </Card>
-        </Col>
+          <div className="admin-page-header__meta">
+            <div className="admin-page-header__chip">
+              <Info size={18} />
+              <span>
+                {t("admin.projectDetail.type")}: {selectProject.allowGeometryTypes}
+              </span>
+            </div>
+          </div>
+        </section>
 
-        {/* Sidebar Info */}
-        <Col lg={4}>
-          <Card className="border-0 shadow-sm mb-4">
-            <Card.Body className="p-4">
-              <h6 className="small fw-bold text-muted text-uppercase mb-3">
-                {t("admin.projectDetail.totalProgress")}
-              </h6>
+        <Row className="g-4 admin-detail-grid">
+          <Col lg={8}>
+            <Card className="admin-detail-surface mb-4">
+              <Card.Body className="p-4">
+                <h2 className="admin-section-card__title d-flex align-items-center gap-2 mb-3">
+                  <Info size={18} className="text-primary" />
+                  {t("admin.projectDetail.description")}
+                </h2>
+                <div className="admin-detail-description">
+                  {selectProject.description || t("admin.projectDetail.noDescription")}
+                </div>
+              </Card.Body>
+            </Card>
 
-              <div className="d-flex align-items-end gap-2 mb-2">
-                <h1
-                  className={`display-5 fw-bold mb-0 ${selectProject.progress === 100 ? "text-success" : "text-primary"}`}
-                >
+            <Card className="admin-detail-surface">
+              <Card.Body className="p-4">
+                <h2 className="admin-section-card__title d-flex align-items-center gap-2 mb-3">
+                  <Users size={18} className="text-primary" />
+                  {t("admin.projectDetail.memberPerformance")}
+                </h2>
+                <div className="admin-table-shell">
+                  <div className="admin-table-scroll admin-table">
+                    <Table responsive hover className="align-middle mb-0">
+                      <thead>
+                        <tr>
+                          <th>{t("admin.projectDetail.tableMember")}</th>
+                          <th className="text-center">
+                            {t("admin.projectDetail.tableRole")}
+                          </th>
+                          <th className="text-center">
+                            {t("admin.projectDetail.tableTasks")}
+                          </th>
+                          <th>{t("admin.projectDetail.tableProgress")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectProject.members?.map((member) => (
+                          <tr key={member.id}>
+                            <td>
+                              <div className="admin-table-user">
+                                <div className="admin-table-user__avatar">
+                                  {member.fullName?.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="admin-table-user__title text-break">
+                                    {member.fullName}
+                                  </div>
+                                  <div className="admin-table-user__subtitle text-break">
+                                    {member.email}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="text-center">
+                              <Badge
+                                bg={member.role === "Reviewer" ? "info" : "secondary"}
+                                className="text-uppercase"
+                              >
+                                {member.role}
+                              </Badge>
+                            </td>
+                            <td className="text-center fw-medium">
+                              {member.tasksAssigned} /{" "}
+                              <span className="text-success">
+                                {member.tasksCompleted}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="admin-progress">
+                                <div className="admin-progress__track">
+                                  <div
+                                    className="admin-progress__fill"
+                                    style={{ width: `${member.progress}%` }}
+                                  ></div>
+                                </div>
+                                <span className="admin-progress__text">
+                                  {member.progress}%
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </div>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          <Col lg={4}>
+            <Card className="admin-detail-surface mb-4">
+              <Card.Body className="admin-detail-progress-card">
+                <div className="admin-detail-progress-card__label">
+                  {t("admin.projectDetail.totalProgress")}
+                </div>
+                <div className="admin-detail-progress-card__value">
                   {selectProject.progress}%
-                </h1>
-              </div>
+                </div>
 
-              <ProgressBar
-                now={selectProject.progress}
-                variant={selectProject.progress === 100 ? "success" : "primary"}
-                className="bg-light"
-                style={{ height: "10px", borderRadius: "5px" }}
-              />
+                <ProgressBar
+                  now={selectProject.progress}
+                  variant={selectProject.progress === 100 ? "success" : "primary"}
+                  style={{ height: "10px", borderRadius: "999px" }}
+                />
 
-              <Row className="mt-4 g-0 border-top pt-3 text-center">
-                <Col>
-                  <div className="small text-muted">
-                    {t("admin.projectDetail.items")}
+                <div className="admin-detail-split">
+                  <div className="admin-detail-split__item">
+                    <div className="admin-detail-split__label">
+                      {t("admin.projectDetail.items")}
+                    </div>
+                    <div className="admin-detail-split__value">
+                      {selectProject.totalDataItems}
+                    </div>
                   </div>
-                  <div className="fw-bold fs-5 text-dark">
-                    {selectProject.totalDataItems}
+                  <div className="admin-detail-split__item">
+                    <div className="admin-detail-split__label">
+                      {t("admin.projectDetail.processed")}
+                    </div>
+                    <div className="admin-detail-split__value">
+                      {selectProject.processedItems}
+                    </div>
                   </div>
-                </Col>
-                <Col className="border-start">
-                  <div className="small text-muted">
-                    {t("admin.projectDetail.processed")}
-                  </div>
-                  <div
-                    className={`fw-bold fs-5 ${selectProject.progress === 100 ? "text-success" : "text-dark"}`}
-                  >
-                    {selectProject.processedItems}
-                  </div>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
+                </div>
+              </Card.Body>
+            </Card>
 
-          <Card className="border-0 shadow-sm">
-            <ListGroup variant="flush">
-              <ListGroup.Item className="p-3">
-                <div
-                  className="text-muted small mb-1 uppercase fw-bold"
-                  style={{ fontSize: "11px" }}
-                >
-                  <Calendar size={12} className="me-1" />{" "}
-                  {t("admin.projectDetail.deadline")}
-                </div>
-                <div className="fw-bold">
-                  {new Date(selectProject.deadline).toLocaleDateString("vi-VN")}
-                </div>
-              </ListGroup.Item>
-              <ListGroup.Item className="p-3">
-                <div
-                  className="text-muted small mb-1 uppercase fw-bold"
-                  style={{ fontSize: "11px" }}
-                >
-                  <User size={12} className="me-1" />{" "}
-                  {t("admin.projectDetail.manager")}
-                </div>
-                <div className="fw-bold text-primary">
-                  {selectProject.managerName}
-                </div>
-                <div className="small text-muted text-truncate">
-                  {selectProject.managerEmail}
-                </div>
-              </ListGroup.Item>
-            </ListGroup>
-          </Card>
-        </Col>
-      </Row>
+            <Card className="admin-detail-surface">
+              <ul className="admin-info-list">
+                <li className="admin-info-list__item">
+                  <div className="admin-info-list__label">
+                    <Calendar size={12} />
+                    {t("admin.projectDetail.deadline")}
+                  </div>
+                  <div className="admin-info-list__value">
+                    {new Date(selectProject.deadline).toLocaleDateString(localeTag)}
+                  </div>
+                </li>
+                <li className="admin-info-list__item">
+                  <div className="admin-info-list__label">
+                    <User size={12} />
+                    {t("admin.projectDetail.manager")}
+                  </div>
+                  <div className="admin-info-list__value">
+                    {selectProject.managerName}
+                  </div>
+                  <div className="admin-info-list__subvalue">
+                    {selectProject.managerEmail}
+                  </div>
+                </li>
+              </ul>
+            </Card>
+          </Col>
+        </Row>
+      </div>
     </Container>
   );
 };

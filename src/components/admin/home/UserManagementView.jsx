@@ -1,12 +1,10 @@
 import {
   Row,
-  Col,
   Card,
   Button,
   InputGroup,
   Form,
   Table,
-  Badge,
   Pagination,
 } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
@@ -36,9 +34,9 @@ const UserManagementView = ({
   const { t } = useTranslation();
   const { page, pageSize, onPageChange } = pagination;
 
-  const totalPages = Math.ceil(stats.workers / pageSize);
-  const fromEntry = stats.workers === 0 ? 0 : (page - 1) * pageSize + 1;
-  const toEntry = Math.min(page * pageSize, stats.workers);
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const fromEntry = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const toEntry = Math.min(page * pageSize, totalCount);
 
   const regularUsers = users.filter((user) => user.role !== "Admin");
 
@@ -65,191 +63,271 @@ const UserManagementView = ({
         />
       </Row>
 
-      <div className="mb-5">
-        <div className="d-flex align-items-center gap-2 mb-3">
-          <ShieldAlert className="text-warning" size={24} />
-          <h5 className="fw-bold mb-0">{t("userMgmt.adminBoard")}</h5>
+      <section className="admin-section-card">
+        <div className="admin-section-card__header">
+          <div className="d-flex align-items-center gap-2">
+            <ShieldAlert className="text-warning" size={22} />
+            <h2 className="admin-section-card__title">
+              {t("userMgmt.adminBoard")}
+            </h2>
+          </div>
+          <p className="admin-section-card__description">
+            {t("userMgmt.systemAdmin")}
+          </p>
         </div>
-        <Row className="g-3">
-          {admins.map((admin) => (
-            <Col md={4} key={admin.id}>
-              <Card
-                className="border-0 shadow-sm position-relative overflow-hidden"
-                style={{ borderRadius: "12px" }}
-              >
-                <div
-                  className="position-absolute top-0 start-0 h-100 bg-warning"
-                  style={{ width: "4px" }}
-                ></div>
-                <Card.Body className="d-flex align-items-center p-3">
-                  <div
-                    className="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center me-3"
-                    style={{
-                      width: "45px",
-                      height: "45px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {admin.email.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-grow-1">
-                    <div className="fw-bold small text-truncate">
+
+        <div className="admin-section-card__body">
+          <div className="admin-admins-grid">
+            {admins.map((admin) => (
+              <article className="admin-admin-card" key={admin.id}>
+                  <div className="admin-admin-card__content">
+                    <div className="admin-admin-card__avatar">
+                      {admin.email.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                    <div className="admin-admin-card__name admin-table-user__subtitle--email">
                       {admin.email}
                     </div>
-                    <div
-                      className="text-muted fst-italic"
-                      style={{ fontSize: "10px" }}
-                    >
-                      {t("userMgmt.systemAdmin")}
-                    </div>
+                      <div className="admin-admin-card__role">
+                        {t("userMgmt.systemAdmin")}
+                      </div>
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </div>
+                </div>
+              </article>
+            ))}
 
-      <Card className="border-0 shadow-sm" style={{ borderRadius: "15px" }}>
-        <Card.Header className="bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-          <div>
-            <h5 className="fw-bold mb-0 text-primary">
-              {t("userMgmt.staffList")}
-            </h5>
-            <small className="text-muted">{t("userMgmt.staffListDesc")}</small>
+            {admins.length === 0 && (
+              <div className="admin-mobile-card">
+                <div className="admin-mobile-card__value text-center">
+                  {t("common.noData")}
+                </div>
+              </div>
+            )}
           </div>
-          <Button
-            variant="primary"
-            className="d-flex align-items-center gap-2 shadow-sm px-3 py-2"
-            style={{ borderRadius: "10px" }}
-            onClick={() => openCreateModal(true)}
-          >
-            <UserPlus size={18} />
-            <span className="fw-semibold">{t("userMgmt.addStaff")}</span>
-          </Button>
-        </Card.Header>
+        </div>
+      </section>
 
-        <Card.Body className="px-4 pb-4">
-          <InputGroup className="mb-3 border rounded-3 overflow-hidden">
-            <InputGroup.Text className="bg-white border-0">
-              <Search size={18} className="text-muted" />
+      <section className="admin-section-card">
+        <div className="admin-section-card__header">
+          <div className="admin-toolbar">
+            <div className="admin-toolbar__group">
+              <h2 className="admin-section-card__title">
+                {t("userMgmt.staffList")}
+              </h2>
+              <p className="admin-section-card__description">
+                {t("userMgmt.staffListDesc")}
+              </p>
+            </div>
+
+            <div className="admin-toolbar__actions">
+              <Button
+                variant="primary"
+                className="admin-primary-btn"
+                onClick={() => openCreateModal(true)}
+              >
+                <UserPlus size={18} />
+                <span>{t("userMgmt.addStaff")}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="admin-section-card__body">
+          <InputGroup className="admin-search-group admin-search-group--full mb-4">
+            <InputGroup.Text>
+              <Search size={18} />
             </InputGroup.Text>
             <Form.Control
               placeholder={t("userMgmt.searchPlaceholder")}
-              className="border-0 shadow-none"
               onChange={(e) => onSearch(e.target.value)}
             />
           </InputGroup>
 
-          <Table responsive hover className="align-middle mb-0">
-            <thead className="table-light">
-              <tr className="text-muted small text-uppercase fw-bold">
-                <th>{t("userMgmt.user")}</th>
-                <th>{t("userMgmt.role")}</th>
-                <th className="text-center">{t("userMgmt.totalProjects")}</th>
-                <th className="text-center">{t("userMgmt.actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {regularUsers.length > 0 ? (
-                regularUsers.map((user) => (
-                  <tr key={user.id}>
-                    <td>
-                      <div className="d-flex align-items-center gap-3">
-                        <div
-                          className="bg-light text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center"
-                          style={{ width: "40px", height: "40px" }}
-                        >
-                          {user.email.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="fw-bold mb-0">{user.email}</div>
-                          <div
-                            className="text-muted"
-                            style={{ fontSize: "11px" }}
-                          >
-                            {user.fullName}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <Badge bg="info" className="text-uppercase px-2 py-1">
-                        {user.role}
-                      </Badge>
-                    </td>
-                    <td className="text-center">
-                      <Badge
-                        pill
-                        bg="secondary"
-                        className="bg-opacity-10 text-secondary fw-bold border"
-                        style={{ fontSize: "13px", minWidth: "35px" }}
-                      >
-                        {user.totalProjects || 0}
-                      </Badge>
-                    </td>
-                    <td className="text-center">
-                      <div className="d-flex justify-content-center align-items-center">
-                        <Button
-                          variant="link"
-                          className="text-muted p-1 me-2"
-                          onClick={() => onEdit(user)}
-                        >
-                          <Edit2 size={16} />
-                        </Button>
-                        <Button
-                          variant="link"
-                          className={`p-1 shadow-none border-0 ${user.isActive ? "text-success" : "text-danger"}`}
-                          onClick={() => onActive(user.id, !user.isActive)}
-                        >
-                          <div
-                            className={`d-flex align-items-center px-2 py-1 rounded ${user.isActive ? "bg-success bg-opacity-10" : "bg-danger bg-opacity-10"}`}
-                            style={{
-                              minWidth: "95px",
-                              justifyContent: "center",
-                            }}
-                          >
-                            {user.isActive ? (
-                              <>
-                                <CheckCircle size={14} className="me-1" />
-                                <span style={{ fontSize: "12px" }}>
-                                  {t("userMgmt.active")}
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <Power size={14} className="me-1" />
-                                <span style={{ fontSize: "12px" }}>
-                                  {t("userMgmt.inactive")}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </Button>
-                      </div>
-                    </td>
+          <div className="admin-table-shell d-none d-lg-block">
+            <div className="admin-table-scroll admin-table">
+              <Table responsive hover className="align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>{t("userMgmt.user")}</th>
+                    <th>{t("userMgmt.role")}</th>
+                    <th className="text-center">{t("userMgmt.totalProjects")}</th>
+                    <th className="text-end">{t("userMgmt.actions")}</th>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="3" className="text-center py-4 text-muted">
-                    {t("userMgmt.noStaffFound")}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
+                </thead>
+                <tbody>
+                  {regularUsers.length > 0 ? (
+                    regularUsers.map((user) => (
+                      <tr key={user.id}>
+                        <td>
+                          <div className="admin-table-user">
+                            <div className="admin-table-user__avatar">
+                              {user.email.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="admin-table-user__title text-break">
+                                {user.fullName}
+                              </div>
+                              <div className="admin-table-user__subtitle admin-table-user__subtitle--email">
+                                {user.email}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="admin-badge admin-badge--info">
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          <span className="admin-badge admin-badge--neutral admin-pill-count">
+                            {user.totalProjects || 0}
+                          </span>
+                        </td>
+                        <td className="text-end">
+                          <div className="admin-row-actions">
+                            <Button
+                              variant="light"
+                              className={`admin-row-action-btn admin-row-action-btn--state ${
+                                user.isActive
+                                  ? "admin-row-action-btn--success"
+                                  : "admin-row-action-btn--danger"
+                              }`}
+                              onClick={() => onActive(user.id, !user.isActive)}
+                            >
+                              {user.isActive ? (
+                                <>
+                                  <CheckCircle size={14} />
+                                  <span>{t("userMgmt.active")}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Power size={14} />
+                                  <span>{t("userMgmt.inactive")}</span>
+                                </>
+                              )}
+                            </Button>
+
+                            <Button
+                              variant="light"
+                              className="admin-row-action-btn admin-row-action-btn--neutral"
+                              onClick={() => onEdit(user)}
+                              title={t("common.edit")}
+                            >
+                              <Edit2 size={16} />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="text-center py-5 text-muted">
+                        {t("userMgmt.noStaffFound")}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </Table>
+            </div>
+          </div>
+
+          <div className="admin-mobile-list d-lg-none">
+            {regularUsers.length > 0 ? (
+              regularUsers.map((user) => (
+                <article className="admin-mobile-card" key={user.id}>
+                  <div className="admin-mobile-card__top">
+                    <div className="admin-table-user">
+                      <div className="admin-table-user__avatar">
+                        {user.email.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="admin-table-user__title text-break">
+                          {user.fullName}
+                        </div>
+                        <div className="admin-table-user__subtitle admin-table-user__subtitle--email">
+                          {user.email}
+                        </div>
+                        <div className="admin-table-user__role">
+                          <span className="admin-badge admin-badge--info">
+                            {user.role}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="admin-mobile-card__meta">
+                    <div>
+                      <div className="admin-mobile-card__label">
+                        {t("userMgmt.totalProjects")}
+                      </div>
+                      <div className="admin-mobile-card__value">
+                        {user.totalProjects || 0}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="admin-mobile-card__label">
+                        {t("userMgmt.actions")}
+                      </div>
+                      <div className="admin-mobile-card__value">
+                        {user.isActive
+                          ? t("userMgmt.active")
+                          : t("userMgmt.inactive")}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="admin-mobile-card__actions">
+                    <Button
+                      variant="light"
+                      className={`admin-row-action-btn admin-row-action-btn--state ${
+                        user.isActive
+                          ? "admin-row-action-btn--success"
+                          : "admin-row-action-btn--danger"
+                      }`}
+                      onClick={() => onActive(user.id, !user.isActive)}
+                    >
+                      {user.isActive ? (
+                        <>
+                          <CheckCircle size={14} />
+                          <span>{t("userMgmt.active")}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Power size={14} />
+                          <span>{t("userMgmt.inactive")}</span>
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      variant="light"
+                      className="admin-row-action-btn admin-row-action-btn--neutral"
+                      onClick={() => onEdit(user)}
+                    >
+                      <Edit2 size={16} />
+                      <span>{t("common.edit")}</span>
+                    </Button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="admin-mobile-card text-center text-muted">
+                {t("userMgmt.noStaffFound")}
+              </div>
+            )}
+          </div>
 
           {totalPages > 1 && (
-            <div className="d-flex justify-content-between align-items-center mt-3 px-3">
-              <div className="text-muted small">
+            <div className="admin-pagination-wrap">
+              <div className="admin-pagination-summary">
                 {t("userMgmt.showingRange", {
                   from: fromEntry,
                   to: toEntry,
-                  total: stats.workers,
+                  total: totalCount,
                 })}
               </div>
-              <Pagination className="mb-0">
+              <Pagination className="admin-pagination mb-0">
                 <Pagination.Prev
                   disabled={page === 1}
                   onClick={() => onPageChange(page - 1)}
@@ -270,8 +348,8 @@ const UserManagementView = ({
               </Pagination>
             </div>
           )}
-        </Card.Body>
-      </Card>
+        </div>
+      </section>
     </>
   );
 };

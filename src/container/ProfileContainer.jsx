@@ -70,7 +70,7 @@ const ProfileContainer = () => {
       await fetchSelf();
       setIsModalOpen(false);
     } catch (error) {
-      console.error("Lỗi:", error);
+      console.error("Error:", error);
     }
   };
 

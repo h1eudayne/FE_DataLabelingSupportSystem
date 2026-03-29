@@ -17,7 +17,7 @@ const CreateProject = () => {
 
   const [projectData, setProjectData] = useState({
     name: "",
-    description: "Dự án mới khởi tạo",
+    description: "",
     allowGeometryTypes: "BoundingBox",
     deadline: "",
   });

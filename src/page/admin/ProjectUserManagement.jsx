@@ -2,14 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import projectApi from "../../services/admin/managementUsers/project.api";
 import { useTranslation } from "react-i18next";
 import {
-  Badge,
   Button,
   Card,
-  Col,
+  Container,
   Form,
   InputGroup,
   Pagination,
-  Row,
   Spinner,
   Table,
 } from "react-bootstrap";
@@ -46,9 +44,10 @@ const ProjectUserManagement = () => {
         setIsSearching(false);
       }, 300);
       return () => clearTimeout(handler);
-    } else {
-      setIsSearching(false);
     }
+
+    setIsSearching(false);
+    return undefined;
   }, [searchTerm]);
 
   const fetchData = async () => {
@@ -60,73 +59,78 @@ const ProjectUserManagement = () => {
       }
     } catch (error) {
       console.error(error);
+      setProjects([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredProjects = useMemo(() => {
-    return projects.filter((p) =>
-      p.name?.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-  }, [projects, searchTerm]);
+  const filteredProjects = useMemo(
+    () =>
+      projects.filter((project) =>
+        project.name?.toLowerCase().includes(searchTerm.toLowerCase()),
+      ),
+    [projects, searchTerm],
+  );
 
   const pendingProjectsCount = projects.filter(
-    (p) => p.status === "In Process",
+    (project) => project.status === "In Process",
   ).length;
   const completedProjectsCount = projects.filter(
-    (p) => p.status === "Completed",
+    (project) => project.status === "Completed",
   ).length;
   const overdueProjectsCount = projects.filter(
-    (p) => p.status === "Expired",
+    (project) => project.status === "Expired",
   ).length;
-  const newProjectsCount = projects.filter((p) => p.status === "New").length;
+  const newProjectsCount = projects.filter(
+    (project) => project.status === "New",
+  ).length;
 
   const statsConfig = [
     {
       label: t("admin.stats.totalProjects"),
       value: projects.length,
       icon: <Briefcase size={22} />,
-      color: "primary",
+      tone: "primary",
     },
     {
       label: t("admin.stats.new"),
       value: newProjectsCount,
       icon: <PlusCircle size={22} />,
-      color: "warning",
+      tone: "warning",
     },
     {
       label: t("admin.stats.pending"),
       value: pendingProjectsCount,
       icon: <Clock size={22} />,
-      color: "info",
+      tone: "info",
     },
     {
       label: t("admin.stats.completed"),
       value: completedProjectsCount,
       icon: <CheckCircle size={22} />,
-      color: "success",
+      tone: "success",
     },
     {
       label: t("admin.stats.overdue"),
       value: overdueProjectsCount,
       icon: <AlertCircle size={22} />,
-      color: "danger",
+      tone: "danger",
     },
   ];
 
   const getStatusBadge = (status) => {
     switch (status) {
       case "New":
-        return { bg: "primary", label: "New" };
+        return "new";
       case "Completed":
-        return { bg: "success", label: "Completed" };
+        return "completed";
       case "Expired":
-        return { bg: "danger", label: "Expired" };
+        return "expired";
       case "In Process":
-        return { bg: "warning", label: "In Process" };
+        return "process";
       default:
-        return { bg: "secondary", label: status };
+        return "default";
     }
   };
 
@@ -138,8 +142,8 @@ const ProjectUserManagement = () => {
   );
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
 
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
+  const handleSearch = (event) => {
+    setSearchTerm(event.target.value);
     setCurrentPage(1);
   };
 
@@ -149,211 +153,334 @@ const ProjectUserManagement = () => {
 
   if (loading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ minHeight: "400px" }}
-      >
-        <div className="text-center">
-          <Spinner animation="border" variant="primary" role="status" />
-          <p className="mt-2 text-muted fw-medium">
-            {t("adminSettings.loading")}
-          </p>
+      <Container fluid className="admin-shell">
+        <div className="admin-shell__inner">
+          <div className="admin-loading-state">
+            <div className="text-center">
+              <Spinner animation="border" variant="primary" role="status" />
+              <p className="mt-2 text-muted fw-medium">
+                {t("adminSettings.loading")}
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </Container>
     );
   }
+
   return (
-    <>
-      <div className="p-3">
-        <Row className="mb-4 g-3">
-          {statsConfig.map((stat, index) => (
-            <Col
-              key={index}
-              xs={12}
-              sm={6}
-              md={4}
-              className="col-lg-custom"
-              style={{ flex: "0 0 auto", width: "20%" }}
-            >
-              <Card
-                className="border-0 shadow-sm"
-                style={{ borderRadius: "12px" }}
-              >
-                <Card.Body className="d-flex align-items-center p-3">
+    <Container fluid className="admin-shell">
+      <div className="admin-shell__inner">
+        <section className="admin-page-header">
+          <div className="admin-page-header__content">
+            <div className="admin-page-header__eyebrow">
+              {t("navbar.projects-overview")}
+            </div>
+            <h1 className="admin-page-header__title">
+              {t("admin.project.listTitle")}
+            </h1>
+            <p className="admin-page-header__subtitle">
+              {t("admin.project.overviewSubtitle")}
+            </p>
+          </div>
+          <div className="admin-page-header__meta admin-page-header__meta--compact">
+            <div className="admin-page-header__chip admin-page-header__chip--compact">
+              <Briefcase size={18} />
+              <span>{projects.length}</span>
+            </div>
+            <div className="admin-page-header__chip admin-page-header__chip--compact">
+              <CheckCircle size={18} />
+              <span>{completedProjectsCount}</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="admin-overview-stats">
+          {statsConfig.map((stat) => (
+            <Card className="admin-overview-stat" key={stat.label}>
+              <Card.Body className="p-0">
+                <div className="admin-overview-stat__top">
                   <div
-                    className={`rounded-circle p-3 bg-${stat.color} bg-opacity-10 text-${stat.color} me-3 d-flex align-items-center justify-content-center`}
-                    style={{ width: "50px", height: "50px" }}
+                    className={`admin-overview-stat__icon admin-tone admin-tone--${stat.tone}`}
                   >
                     {stat.icon}
                   </div>
-                  <div>
-                    <h6
-                      className="text-muted mb-1 small uppercase fw-bold"
-                      style={{ letterSpacing: "0.5px" }}
-                    >
-                      {stat.label}
-                    </h6>
-                    <h4 className="mb-0 fw-bold">{stat.value}</h4>
+                  <div className="admin-overview-stat__content">
+                    <div className="admin-overview-stat__label">{stat.label}</div>
+                    <div className="admin-overview-stat__value">{stat.value}</div>
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
+                </div>
+              </Card.Body>
+            </Card>
           ))}
-        </Row>
+        </section>
 
-        <div className="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
-          <h5 className="mb-0 fw-bold text-dark">
-            {t("admin.project.listTitle")}
-          </h5>
-          <InputGroup style={{ maxWidth: "300px" }} className="shadow-sm">
-            <InputGroup.Text className="bg-white border-end-0">
-              <Search size={18} className="text-muted" />
-            </InputGroup.Text>
-            <Form.Control
-              placeholder={t("admin.project.searchPlaceholder")}
-              className="border-start-0 ps-0"
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-          </InputGroup>
-        </div>
+        <section className="admin-section-card">
+          <div className="admin-section-card__header">
+            <div className="admin-toolbar">
+              <div className="admin-toolbar__group">
+                <h2 className="admin-section-card__title">
+                  {t("admin.project.listTitle")}
+                </h2>
+                <p className="admin-section-card__description">
+                  {t("admin.project.paginationInfo", {
+                    current: currentProjects.length,
+                    total: filteredProjects.length,
+                  })}
+                </p>
+              </div>
+              <div className="admin-toolbar__actions">
+                <InputGroup className="admin-search-group">
+                  <InputGroup.Text>
+                    <Search size={18} />
+                  </InputGroup.Text>
+                  <Form.Control
+                    placeholder={t("admin.project.searchPlaceholder")}
+                    value={searchTerm}
+                    onChange={handleSearch}
+                  />
+                </InputGroup>
+              </div>
+            </div>
+          </div>
 
-        <Card className="border-0 shadow-sm" style={{ borderRadius: "15px" }}>
-          <Card.Body className="p-0">
-            <Table responsive hover className="align-middle mb-0">
-              <thead className="bg-light text-muted">
-                <tr>
-                  <th className="ps-4 py-3">{t("admin.project.name")}</th>
-                  <th>{t("admin.project.status")}</th>
-                  <th>{t("admin.project.progress")}</th>
-                  <th>{t("admin.project.members")}</th>
-                  <th className="text-center">{t("admin.project.actions")}</th>
-                </tr>
-              </thead>
-              <tbody
-                style={{
-                  opacity: isSearching ? 0.5 : 1,
-                  transition: "opacity 0.2s",
-                }}
-              >
-                {isSearching ? (
-                  <tr>
-                    <td colSpan="5" className="text-center py-5">
-                      <Spinner
-                        animation="border"
-                        variant="primary"
-                        size="sm"
-                        className="me-2"
-                      />
-                      <span className="text-muted">
-                        {t("admin.project.searching")}
-                      </span>
-                    </td>
-                  </tr>
-                ) : currentProjects.length > 0 ? (
-                  currentProjects.map((project) => {
-                    const statusInfo = getStatusBadge(project.status);
-                    return (
-                      <tr key={project.id}>
-                        <td className="ps-4 fw-bold">{project.name}</td>
-                        <td>
-                          <Badge
-                            bg={statusInfo.bg}
-                            className={
-                              statusInfo.bg === "warning" ? "text-dark" : ""
-                            }
-                            style={{ padding: "6px 12px", borderRadius: "6px" }}
-                          >
-                            {statusInfo.label}
-                          </Badge>
-                        </td>
-                        <td>
-                          <div
-                            className="d-flex align-items-center gap-2"
-                            style={{ minWidth: "120px" }}
-                          >
-                            <div
-                              className="progress flex-grow-1"
-                              style={{ height: "6px" }}
-                            >
-                              <div
-                                className="progress-bar bg-primary"
-                                style={{ width: `${project.progress}%` }}
-                              ></div>
-                            </div>
-                            <small className="fw-medium">
-                              {project.progress}%
-                            </small>
-                          </div>
-                        </td>
-                        <td>
-                          {project.totalMembers} {t("admin.project.members")}
-                        </td>
-                        <td className="text-center">
-                          <Button
-                            variant="link"
+          <div className="admin-section-card__body">
+            <div className="admin-table-shell d-none d-lg-block">
+              <div className="admin-table-scroll admin-table">
+                <Table responsive hover className="align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>{t("admin.project.name")}</th>
+                      <th>{t("admin.project.status")}</th>
+                      <th>{t("admin.project.progress")}</th>
+                      <th>{t("admin.project.members")}</th>
+                      <th className="text-end">{t("admin.project.actions")}</th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    style={{
+                      opacity: isSearching ? 0.5 : 1,
+                      transition: "opacity 0.2s",
+                    }}
+                  >
+                    {isSearching ? (
+                      <tr>
+                        <td colSpan="5" className="text-center py-5 text-muted">
+                          <Spinner
+                            animation="border"
+                            variant="primary"
                             size="sm"
-                            className="text-primary p-0 me-2 shadow-none"
-                            onClick={() => handleViewDetail(project.id)}
-                          >
-                            <Eye size={18} />
-                          </Button>
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="text-info p-0 shadow-none"
-                            onClick={() => navigate(`/view-detail-project/${project.id}?tab=statistics`)}
-                            title={t("admin.project.statistics", { defaultValue: "View Statistics" })}
-                          >
-                            <BarChart2 size={18} />
-                          </Button>
+                            className="me-2"
+                          />
+                          {t("admin.project.searching")}
                         </td>
                       </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="text-center py-4 text-muted">
-                      {t("admin.project.noResult", { searchTerm: searchTerm })}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </Table>
-          </Card.Body>
-
-          {totalPages > 1 && (
-            <Card.Footer className="bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-              <div className="text-muted small">
-                {t("admin.project.paginationInfo", {
-                  current: currentProjects.length,
-                  total: filteredProjects.length,
-                })}
+                    ) : currentProjects.length > 0 ? (
+                      currentProjects.map((project) => (
+                        <tr key={project.id}>
+                          <td>
+                            <div className="admin-table-user">
+                              <div className="admin-table-user__avatar">
+                                {project.name?.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="admin-table-user__title text-break">
+                                  {project.name}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span
+                              className={`admin-status-pill admin-status-pill--${getStatusBadge(project.status)}`}
+                            >
+                              {project.status}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="admin-progress">
+                              <div className="admin-progress__track">
+                                <div
+                                  className="admin-progress__fill"
+                                  style={{ width: `${project.progress}%` }}
+                                ></div>
+                              </div>
+                              <span className="admin-progress__text">
+                                {project.progress}%
+                              </span>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="admin-badge admin-badge--neutral">
+                              {project.totalMembers} {t("admin.project.members")}
+                            </span>
+                          </td>
+                          <td className="text-end">
+                            <div className="admin-row-actions">
+                              <Button
+                                variant="light"
+                                size="sm"
+                                className="admin-row-action-btn admin-row-action-btn--primary"
+                                onClick={() => handleViewDetail(project.id)}
+                                title={t("admin.project.viewDetail")}
+                              >
+                                <Eye size={16} />
+                              </Button>
+                              <Button
+                                variant="light"
+                                size="sm"
+                                className="admin-row-action-btn admin-row-action-btn--info"
+                                onClick={() =>
+                                  navigate(
+                                    `/view-detail-project/${project.id}?tab=statistics`,
+                                  )
+                                }
+                                title={t("admin.project.statistics")}
+                              >
+                                <BarChart2 size={16} />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="text-center py-5 text-muted">
+                          {searchTerm
+                            ? t("admin.project.noResult", { searchTerm })
+                            : t("common.noData")}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </Table>
               </div>
-              <Pagination className="mb-0">
-                <Pagination.Prev
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((prev) => prev - 1)}
-                />
-                {[...Array(totalPages)].map((_, i) => (
-                  <Pagination.Item
-                    key={i + 1}
-                    active={i + 1 === currentPage}
-                    onClick={() => setCurrentPage(i + 1)}
-                  >
-                    {i + 1}
-                  </Pagination.Item>
-                ))}
-                <Pagination.Next
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((prev) => prev + 1)}
-                />
-              </Pagination>
-            </Card.Footer>
-          )}
-        </Card>
+            </div>
+
+            <div className="admin-mobile-list d-lg-none">
+              {isSearching ? (
+                <div className="admin-mobile-card text-center text-muted">
+                  <Spinner
+                    animation="border"
+                    variant="primary"
+                    size="sm"
+                    className="me-2"
+                  />
+                  {t("admin.project.searching")}
+                </div>
+              ) : currentProjects.length > 0 ? (
+                currentProjects.map((project) => (
+                  <article className="admin-mobile-card" key={project.id}>
+                    <div className="admin-mobile-card__top">
+                      <div className="admin-table-user">
+                        <div className="admin-table-user__avatar">
+                          {project.name?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="admin-table-user__title text-break">
+                            {project.name}
+                          </div>
+                        </div>
+                      </div>
+                      <span
+                        className={`admin-status-pill admin-status-pill--${getStatusBadge(project.status)}`}
+                      >
+                        {project.status}
+                      </span>
+                    </div>
+
+                    <div className="admin-mobile-card__meta">
+                      <div>
+                        <div className="admin-mobile-card__label">
+                          {t("admin.project.progress")}
+                        </div>
+                        <div className="admin-progress mt-2">
+                          <div className="admin-progress__track">
+                            <div
+                              className="admin-progress__fill"
+                              style={{ width: `${project.progress}%` }}
+                            ></div>
+                          </div>
+                          <span className="admin-progress__text">
+                            {project.progress}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="admin-mobile-card__label">
+                          {t("admin.project.members")}
+                        </div>
+                        <div className="admin-mobile-card__value">
+                          {project.totalMembers}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="admin-mobile-card__actions">
+                      <Button
+                        variant="light"
+                        className="admin-row-action-btn admin-row-action-btn--primary"
+                        onClick={() => handleViewDetail(project.id)}
+                      >
+                        <Eye size={16} />
+                        <span>{t("admin.project.viewDetail")}</span>
+                      </Button>
+                      <Button
+                        variant="light"
+                        className="admin-row-action-btn admin-row-action-btn--info"
+                        onClick={() =>
+                          navigate(`/view-detail-project/${project.id}?tab=statistics`)
+                        }
+                      >
+                        <BarChart2 size={16} />
+                        <span>{t("admin.project.statistics")}</span>
+                      </Button>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="admin-mobile-card text-center text-muted">
+                  {searchTerm
+                    ? t("admin.project.noResult", { searchTerm })
+                    : t("common.noData")}
+                </div>
+              )}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="admin-pagination-wrap">
+                <div className="admin-pagination-summary">
+                  {t("admin.project.paginationInfo", {
+                    current: currentProjects.length,
+                    total: filteredProjects.length,
+                  })}
+                </div>
+                <Pagination className="admin-pagination mb-0">
+                  <Pagination.Prev
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                  />
+                  {[...Array(totalPages)].map((_, index) => (
+                    <Pagination.Item
+                      key={index + 1}
+                      active={index + 1 === currentPage}
+                      onClick={() => setCurrentPage(index + 1)}
+                    >
+                      {index + 1}
+                    </Pagination.Item>
+                  ))}
+                  <Pagination.Next
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                  />
+                </Pagination>
+              </div>
+            )}
+          </div>
+        </section>
       </div>
-    </>
+    </Container>
   );
 };
 

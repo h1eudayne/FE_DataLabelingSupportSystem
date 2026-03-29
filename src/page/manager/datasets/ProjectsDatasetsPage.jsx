@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -89,9 +89,10 @@ const convertToXML = (data, rootName = "export") => {
 };
 
 const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id: routeParamId } = useParams();
   const paramId = embeddedProjectId || routeParamId;
+  const localeTag = i18n.language?.startsWith("vi") ? "vi-VN" : "en-US";
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [projectStats, setProjectStats] = useState(null);
@@ -159,58 +160,25 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
     );
   }, [projects, searchTerm]);
 
-  useEffect(() => {
-    fetchList();
-  }, []);
-
-  useEffect(() => {
-    if (paramId && projects.length > 0 && !selectedProject) {
-      handleProjectClick(Number(paramId));
-    }
-  }, [paramId, projects]);
-
-  const fetchList = async () => {
+  const fetchList = useCallback(async () => {
     try {
       const res = await projectService.getManagerProjects(managerId);
       setProjects(res.data || []);
     } catch (error) {
       toast.error(t("datasets.loadProjectFailed"), error);
     }
-  };
+  }, [managerId, t]);
 
-  const fetchProjectStats = async (id) => {
+  const fetchProjectStats = useCallback(async (id) => {
     try {
       const statsRes = await analyticsService.getProjectStats(id);
       setProjectStats(statsRes.data);
     } catch {
       setProjectStats(null);
     }
-  };
+  }, []);
 
-  const handleProjectClick = async (id) => {
-    setLoading(true);
-    setProjectStats(null);
-    setExportCheck({
-      ready: false,
-      allApproved: false,
-      noPendingDisputes: false,
-      checking: true,
-    });
-    try {
-      const [res] = await Promise.all([
-        projectService.getProjectById(id),
-        fetchProjectStats(id),
-      ]);
-      setSelectedProject(res.data);
-      checkExportEligibility(id);
-    } catch (error) {
-      toast.error(t("datasets.projectDetailError"), error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const checkExportEligibility = async (projectId) => {
+  const checkExportEligibility = useCallback(async (projectId) => {
     try {
       const [statsRes, disputesRes] = await Promise.all([
         analyticsService.getProjectStats(projectId),
@@ -242,7 +210,40 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
         checking: false,
       });
     }
-  };
+  }, []);
+
+  const handleProjectClick = useCallback(async (id) => {
+    setLoading(true);
+    setProjectStats(null);
+    setExportCheck({
+      ready: false,
+      allApproved: false,
+      noPendingDisputes: false,
+      checking: true,
+    });
+    try {
+      const [res] = await Promise.all([
+        projectService.getProjectById(id),
+        fetchProjectStats(id),
+      ]);
+      setSelectedProject(res.data);
+      checkExportEligibility(id);
+    } catch (error) {
+      toast.error(t("datasets.projectDetailError"), error);
+    } finally {
+      setLoading(false);
+    }
+  }, [checkExportEligibility, fetchProjectStats, t]);
+
+  useEffect(() => {
+    fetchList();
+  }, [fetchList]);
+
+  useEffect(() => {
+    if (paramId && projects.length > 0 && !selectedProject) {
+      handleProjectClick(Number(paramId));
+    }
+  }, [handleProjectClick, paramId, projects, selectedProject]);
 
   const handleFileUpload = async (event) => {
     const files = Array.from(event.target.files);
@@ -301,7 +302,9 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
       if (typeof rawData === "string") {
         try {
           rawData = JSON.parse(rawData);
-        } catch {}
+        } catch {
+          rawData = res.data;
+        }
       }
 
       let content;
@@ -330,7 +333,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
       window.URL.revokeObjectURL(url);
       toast.success(t("datasets.exportSuccess"));
       setShowExportModal(false);
-    } catch (error) {
+    } catch {
       toast.error(t("datasets.exportFailed"));
     } finally {
       setExporting(false);
@@ -340,11 +343,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
   return (
     <>
       <div
-        className="chat-wrapper d-lg-flex gap-1 mx-n4 mt-n4 p-1"
+        className="chat-wrapper responsive-dataset-shell d-lg-flex gap-1 mx-n4 mt-n4 p-1"
         style={{ height: "calc(100vh - 70px)", overflow: "hidden" }}
       >
         <div
-          className="file-manager-sidebar border-end"
+          className="file-manager-sidebar responsive-dataset-sidebar border-end"
           style={{ minWidth: "300px", maxWidth: "300px" }}
         >
           <div className="p-3 d-flex flex-column h-100">
@@ -416,31 +419,30 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
           </div>
         </div>
 
-        <div className="file-manager-content w-100 d-flex flex-column bg-white">
-          <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-white shadow-sm z-3">
-            <h5 className="fs-16 mb-0 fw-bold">
+        <div className="file-manager-content responsive-dataset-content w-100 d-flex flex-column bg-white">
+          <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-white shadow-sm z-3 responsive-dataset-toolbar">
+            <h5 className="fs-16 mb-0 fw-bold responsive-dataset-toolbar-title">
               {selectedProject
                 ? `${t("datasets.projectPrefix")}: ${selectedProject.name}`
                 : t("datasets.selectProject")}
             </h5>
-            <div className="hstack gap-2">
+            <div className="hstack gap-2 responsive-dataset-actions">
               <input
                 type="file"
                 multiple
                 className="d-none"
                 ref={fileInputRef}
                 onChange={handleFileUpload}
-                accept="image/*"
               />
               <button
-                className={`btn btn-sm px-3 ${exportCheck.ready ? "btn-success" : "btn-outline-secondary"}`}
+                className={`btn btn-sm px-3 responsive-dataset-action-btn ${exportCheck.ready ? "btn-success" : "btn-outline-secondary"}`}
                 disabled={!selectedProject || exportCheck.checking}
                 onClick={openExportModal}
                 style={{ minWidth: "160px" }}
                 title={
                   !exportCheck.ready && selectedProject
                     ? `${t("datasets.exportNotReady")}: ${!exportCheck.allApproved ? t("datasets.notAllApproved") : ""} ${!exportCheck.noPendingDisputes ? t("datasets.disputePendingShort") : ""}`
-                    : t("datasets.exportData", "Export Data")
+                    : t("datasets.exportData")
                 }
               >
                 {exportCheck.checking ? (
@@ -450,11 +452,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                 )}
                 {exportCheck.checking
                   ? t("datasets.checking")
-                  : t("datasets.exportData", "Export Data")}
+                  : t("datasets.exportData")}
               </button>
               {!readOnly && (
                 <button
-                  className="btn btn-primary btn-sm px-3"
+                  className="btn btn-primary btn-sm px-3 responsive-dataset-action-btn"
                   disabled={!selectedProject || uploading}
                   onClick={() => fileInputRef.current.click()}
                 >
@@ -463,13 +465,13 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                   ) : (
                     <i className="ri-upload-cloud-2-line align-middle me-1" />
                   )}
-                  {uploading ? t("datasets.uploading") : "Upload Data"}
+                  {uploading ? t("datasets.uploading") : t("datasets.uploadData")}
                 </button>
               )}
             </div>
           </div>
 
-          <div className="flex-grow-1 overflow-auto p-4">
+          <div className="flex-grow-1 overflow-auto p-3 p-lg-4">
             {loading ? (
               <div className="text-center py-5">
                 <div className="spinner-border text-primary"></div>
@@ -516,168 +518,170 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                     </div>
                     {!collapsedSections.labelConfig && (
                       <div className="card-body p-0">
-                        <table
-                          className="table table-hover align-middle mb-0"
-                          style={{ tableLayout: "fixed" }}
-                        >
-                          <thead className="table-light">
-                            <tr>
-                              <th
-                                style={{ width: "16%", whiteSpace: "nowrap" }}
-                              >
-                                {t("datasets.labelName")}
-                              </th>
-                              <th
-                                style={{ width: "15%", whiteSpace: "nowrap" }}
-                              >
-                                {t("datasets.labelType")}
-                              </th>
-                              <th
-                                style={{ width: "12%", whiteSpace: "nowrap" }}
-                              >
-                                {t("datasets.color")}
-                              </th>
-                              <th
-                                style={{ width: "20%", whiteSpace: "nowrap" }}
-                              >
-                                {t("datasets.guideline")}
-                              </th>
-                              <th
-                                style={{ width: "20%", whiteSpace: "nowrap" }}
-                              >
-                                {t("datasets.checklist")}
-                              </th>
-                              {!readOnly && (
+                        <div className="table-responsive">
+                          <table
+                            className="table table-hover align-middle mb-0 responsive-dataset-label-table"
+                            style={{ tableLayout: "fixed" }}
+                          >
+                            <thead className="table-light">
+                              <tr>
                                 <th
-                                  style={{
-                                    width: "17%",
-                                    whiteSpace: "nowrap",
-                                    textAlign: "center",
-                                  }}
+                                  style={{ width: "16%", whiteSpace: "nowrap" }}
                                 >
-                                  {t("common.actions")}
+                                  {t("datasets.labelName")}
                                 </th>
-                              )}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedProject.labels?.map((label) => (
-                              <tr key={label.id}>
-                                <td
-                                  className="fw-semibold text-truncate"
-                                  style={{ maxWidth: 0 }}
-                                  title={label.name}
+                                <th
+                                  style={{ width: "15%", whiteSpace: "nowrap" }}
                                 >
-                                  {label.name}
-                                </td>
-                                <td style={{ whiteSpace: "nowrap" }}>
-                                  {label.isDefault ? (
-                                    <span
-                                      className="badge bg-warning-subtle text-warning px-2 py-1"
-                                      style={{
-                                        fontSize: "0.7rem",
-                                        whiteSpace: "nowrap",
-                                      }}
-                                    >
-                                      <i className="ri-error-warning-line me-1" />
-                                      {t("datasets.labelDefault")}
-                                    </span>
-                                  ) : (
-                                    <span
-                                      className="badge bg-info-subtle text-info px-2 py-1"
-                                      style={{
-                                        fontSize: "0.7rem",
-                                        whiteSpace: "nowrap",
-                                      }}
-                                    >
-                                      <i className="ri-folder-line me-1" />
-                                      {t("datasets.labelProject")}
-                                    </span>
-                                  )}
-                                </td>
-                                <td>
-                                  <span
-                                    className="badge px-2 py-1"
-                                    style={{ backgroundColor: label.color }}
-                                  >
-                                    {label.color}
-                                  </span>
-                                </td>
-                                <td
-                                  className="text-muted small text-truncate"
-                                  style={{ maxWidth: 0 }}
-                                  title={label.guideLine}
+                                  {t("datasets.labelType")}
+                                </th>
+                                <th
+                                  style={{ width: "12%", whiteSpace: "nowrap" }}
                                 >
-                                  {label.guideLine}
-                                </td>
-                                <td>
-                                  {label.checklist?.length > 0 ? (
-                                    <ul className="list-unstyled mb-0">
-                                      {label.checklist.map((item, idx) => (
-                                        <li
-                                          key={idx}
-                                          className="small text-truncate"
-                                          title={item}
-                                        >
-                                          <i className="ri-checkbox-circle-line text-success me-1"></i>
-                                          {item}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  ) : (
-                                    <span className="text-muted small">—</span>
-                                  )}
-                                </td>
+                                  {t("datasets.color")}
+                                </th>
+                                <th
+                                  style={{ width: "20%", whiteSpace: "nowrap" }}
+                                >
+                                  {t("datasets.guideline")}
+                                </th>
+                                <th
+                                  style={{ width: "20%", whiteSpace: "nowrap" }}
+                                >
+                                  {t("datasets.checklist")}
+                                </th>
                                 {!readOnly && (
-                                  <td>
-                                    <div className="d-flex gap-1 justify-content-center">
-                                      <button
-                                        className="btn btn-sm btn-soft-primary p-1"
-                                        title={t("common.edit")}
-                                        onClick={() => startEditLabel(label)}
-                                      >
-                                        <i className="ri-pencil-line" />
-                                      </button>
-                                      <button
-                                        className="btn btn-sm btn-soft-danger p-1"
-                                        title={t("common.delete")}
-                                        onClick={async () => {
-                                          if (
-                                            !window.confirm(
-                                              t("datasets.confirmDeleteLabel"),
-                                            )
-                                          )
-                                            return;
-                                          try {
-                                            await labelService.deleteLabel(
-                                              label.id,
-                                            );
-                                            toast.success(
-                                              t("datasets.deleteLabelSuccess"),
-                                            );
-                                            await handleProjectClick(
-                                              selectedProject.id,
-                                            );
-                                          } catch {
-                                            toast.error(
-                                              t("datasets.deleteLabelFailed"),
-                                            );
-                                          }
-                                        }}
-                                      >
-                                        <i className="ri-delete-bin-line" />
-                                      </button>
-                                    </div>
-                                  </td>
+                                  <th
+                                    style={{
+                                      width: "17%",
+                                      whiteSpace: "nowrap",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    {t("common.actions")}
+                                  </th>
                                 )}
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {selectedProject.labels?.map((label) => (
+                                <tr key={label.id}>
+                                  <td
+                                    className="fw-semibold text-truncate"
+                                    style={{ maxWidth: 0 }}
+                                    title={label.name}
+                                  >
+                                    {label.name}
+                                  </td>
+                                  <td style={{ whiteSpace: "nowrap" }}>
+                                    {label.isDefault ? (
+                                      <span
+                                        className="badge bg-warning-subtle text-warning px-2 py-1"
+                                        style={{
+                                          fontSize: "0.7rem",
+                                          whiteSpace: "nowrap",
+                                        }}
+                                      >
+                                        <i className="ri-error-warning-line me-1" />
+                                        {t("datasets.labelDefault")}
+                                      </span>
+                                    ) : (
+                                      <span
+                                        className="badge bg-info-subtle text-info px-2 py-1"
+                                        style={{
+                                          fontSize: "0.7rem",
+                                          whiteSpace: "nowrap",
+                                        }}
+                                      >
+                                        <i className="ri-folder-line me-1" />
+                                        {t("datasets.labelProject")}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    <span
+                                      className="badge px-2 py-1"
+                                      style={{ backgroundColor: label.color }}
+                                    >
+                                      {label.color}
+                                    </span>
+                                  </td>
+                                  <td
+                                    className="text-muted small text-truncate"
+                                    style={{ maxWidth: 0 }}
+                                    title={label.guideLine}
+                                  >
+                                    {label.guideLine}
+                                  </td>
+                                  <td>
+                                    {label.checklist?.length > 0 ? (
+                                      <ul className="list-unstyled mb-0">
+                                        {label.checklist.map((item, idx) => (
+                                          <li
+                                            key={idx}
+                                            className="small text-truncate"
+                                            title={item}
+                                          >
+                                            <i className="ri-checkbox-circle-line text-success me-1"></i>
+                                            {item}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : (
+                                      <span className="text-muted small">—</span>
+                                    )}
+                                  </td>
+                                  {!readOnly && (
+                                    <td>
+                                      <div className="d-flex gap-1 justify-content-center">
+                                        <button
+                                          className="btn btn-sm btn-soft-primary p-1"
+                                          title={t("common.edit")}
+                                          onClick={() => startEditLabel(label)}
+                                        >
+                                          <i className="ri-pencil-line" />
+                                        </button>
+                                        <button
+                                          className="btn btn-sm btn-soft-danger p-1"
+                                          title={t("common.delete")}
+                                          onClick={async () => {
+                                            if (
+                                              !window.confirm(
+                                                t("datasets.confirmDeleteLabel"),
+                                              )
+                                            )
+                                              return;
+                                            try {
+                                              await labelService.deleteLabel(
+                                                label.id,
+                                              );
+                                              toast.success(
+                                                t("datasets.deleteLabelSuccess"),
+                                              );
+                                              await handleProjectClick(
+                                                selectedProject.id,
+                                              );
+                                            } catch {
+                                              toast.error(
+                                                t("datasets.deleteLabelFailed"),
+                                              );
+                                            }
+                                          }}
+                                        >
+                                          <i className="ri-delete-bin-line" />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  )}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     )}
 
-                    {}
+                    { }
                     {!readOnly && showAddLabel && (
                       <div className="card-footer bg-white border-top p-3">
                         <h6 className="fw-bold fs-13 mb-3">
@@ -1092,7 +1096,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                           <span className="fw-bold text-danger">
                             {new Date(
                               selectedProject.deadline,
-                            ).toLocaleDateString()}
+                            ).toLocaleDateString(localeTag)}
                           </span>
                         </div>
 
@@ -1138,10 +1142,10 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                         const statsProgress =
                           projectStats?.totalItems > 0
                             ? Math.round(
-                                (projectStats.completedItems /
-                                  projectStats.totalItems) *
-                                  100,
-                              )
+                              (projectStats.completedItems /
+                                projectStats.totalItems) *
+                              100,
+                            )
                             : selectedProject.progress;
                         return (
                           <div className="mt-4">
@@ -1191,10 +1195,10 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                 {exportCheck.allApproved
                                   ? t("datasets.allTasksApproved")
                                   : t("datasets.tasksNotApproved", {
-                                      count:
-                                        (exportCheck.totalTasks || 0) -
-                                        (exportCheck.approved || 0),
-                                    })}
+                                    count:
+                                      (exportCheck.totalTasks || 0) -
+                                      (exportCheck.approved || 0),
+                                  })}
                               </small>
                             </div>
                             <div className="d-flex align-items-center">
@@ -1211,8 +1215,8 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                 {exportCheck.noPendingDisputes
                                   ? t("datasets.noDisputePending")
                                   : t("datasets.disputesPending", {
-                                      count: exportCheck.pendingDisputeCount,
-                                    })}
+                                    count: exportCheck.pendingDisputeCount,
+                                  })}
                               </small>
                             </div>
                             {exportCheck.ready && (
@@ -1239,7 +1243,6 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
         </div>
       </div>
 
-      {/* Export Modal */}
       {showExportModal && (
         <div
           className="modal fade show d-block"
@@ -1257,7 +1260,6 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
               className="modal-content border-0 shadow-lg"
               style={{ borderRadius: "16px", overflow: "hidden" }}
             >
-              {/* Modal Header */}
               <div
                 className="modal-header border-0 text-white"
                 style={{
@@ -1282,7 +1284,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                   </div>
                   <div>
                     <h5 className="modal-title mb-0 fw-bold">
-                      {t("datasets.exportModalTitle", "Xuất dữ liệu")}
+                      {t("datasets.exportModalTitle")}
                     </h5>
                     <small style={{ opacity: 0.85 }}>
                       {selectedProject?.name}
@@ -1296,13 +1298,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                 ></button>
               </div>
 
-              {/* Modal Body */}
               <div className="modal-body p-4">
-                {/* Eligibility Check */}
                 <div className="mb-4">
                   <h6 className="fw-bold text-uppercase fs-12 text-muted mb-3">
                     <i className="ri-shield-check-line me-1"></i>
-                    {t("datasets.exportEligibility", "Điều kiện xuất dữ liệu")}
+                    {t("datasets.exportEligibility")}
                   </h6>
                   {exportCheck.checking ? (
                     <div className="text-center py-3">
@@ -1325,10 +1325,10 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                           {exportCheck.allApproved
                             ? t("datasets.allTasksApproved")
                             : t("datasets.tasksNotApproved", {
-                                count:
-                                  (exportCheck.totalTasks || 0) -
-                                  (exportCheck.approved || 0),
-                              })}
+                              count:
+                                (exportCheck.totalTasks || 0) -
+                                (exportCheck.approved || 0),
+                            })}
                         </span>
                       </div>
                       <div
@@ -1343,8 +1343,8 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                           {exportCheck.noPendingDisputes
                             ? t("datasets.noDisputePending")
                             : t("datasets.disputesPending", {
-                                count: exportCheck.pendingDisputeCount,
-                              })}
+                              count: exportCheck.pendingDisputeCount,
+                            })}
                         </span>
                       </div>
                       {exportCheck.ready && (
@@ -1357,21 +1357,19 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                   )}
                 </div>
 
-                {/* Format Selection */}
                 <div className="mb-3">
                   <h6 className="fw-bold text-uppercase fs-12 text-muted mb-3">
                     <i className="ri-settings-3-line me-1"></i>
-                    {t("datasets.exportFormat", "Định dạng xuất")}
+                    {t("datasets.exportFormat")}
                   </h6>
                   <div className="d-flex gap-2">
                     {EXPORT_FORMATS.map((f) => (
                       <button
                         key={f.value}
-                        className={`btn flex-fill ${
-                          selectedFormat === f.value
+                        className={`btn flex-fill ${selectedFormat === f.value
                             ? "btn-primary"
                             : "btn-outline-secondary"
-                        }`}
+                          }`}
                         onClick={() => setSelectedFormat(f.value)}
                         style={{
                           borderRadius: 10,
@@ -1381,13 +1379,12 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                       >
                         <div className="d-flex flex-column align-items-center">
                           <i
-                            className={`fs-20 mb-1 ${
-                              f.value === "json"
+                            className={`fs-20 mb-1 ${f.value === "json"
                                 ? "ri-braces-line"
                                 : f.value === "csv"
                                   ? "ri-file-excel-line"
                                   : "ri-code-s-slash-line"
-                            }`}
+                              }`}
                           ></i>
                           <span className="fw-semibold">{f.label}</span>
                           <small style={{ opacity: 0.7, fontSize: "0.7rem" }}>
@@ -1399,7 +1396,6 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                   </div>
                 </div>
 
-                {/* Project Info Summary */}
                 {selectedProject && (
                   <div className="bg-light rounded p-3">
                     <div className="d-flex justify-content-between small mb-1">
@@ -1425,8 +1421,8 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                       <span className="fw-bold">
                         {selectedProject.deadline
                           ? new Date(
-                              selectedProject.deadline,
-                            ).toLocaleDateString("vi-VN")
+                            selectedProject.deadline,
+                          ).toLocaleDateString(localeTag)
                           : "—"}
                       </span>
                     </div>
@@ -1434,14 +1430,13 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                 )}
               </div>
 
-              {/* Modal Footer */}
               <div className="modal-footer border-0 px-4 pb-4 pt-0">
                 <button
                   className="btn btn-light px-4"
                   onClick={() => setShowExportModal(false)}
                   style={{ borderRadius: 10 }}
                 >
-                  {t("common.cancel", "Hủy")}
+                  {t("common.cancel")}
                 </button>
                 <button
                   className={`btn px-4 ${exportCheck.ready ? "btn-success" : "btn-secondary"}`}
@@ -1462,7 +1457,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                   ) : (
                     <>
                       <i className="ri-file-download-line me-1"></i>
-                      {`Export ${EXPORT_FORMATS.find((f) => f.value === selectedFormat)?.label}`}
+                      {t("datasets.exportAction", {
+                        format: EXPORT_FORMATS.find(
+                          (f) => f.value === selectedFormat,
+                        )?.label,
+                      })}
                     </>
                   )}
                 </button>

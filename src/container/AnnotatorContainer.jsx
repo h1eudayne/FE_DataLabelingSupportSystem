@@ -33,7 +33,7 @@ const AnnotatorContainer = () => {
           profile: profileData,
         });
       } catch (error) {
-        console.error("Lỗi khi tải dữ liệu dashboard:", error);
+        console.error("Error loading dashboard data:", error);
       } finally {
         setLoading(false);
       }

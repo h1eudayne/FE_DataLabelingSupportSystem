@@ -98,7 +98,7 @@ const ExportTab = ({ projectId, project }) => {
 
   const handleExport = async () => {
     if (!eligibility.ready) {
-      toast.error(t("exportPage.cannotExport", "Chưa đủ điều kiện xuất dữ liệu"), { autoClose: 5000 });
+      toast.error(t("exportPage.cannotExport"), { autoClose: 5000 });
       return;
     }
     setExporting(true);
@@ -126,7 +126,7 @@ const ExportTab = ({ projectId, project }) => {
       window.URL.revokeObjectURL(url);
       toast.success(t("exportPage.exportSuccess", { name: project?.name, format: format.label }));
     } catch {
-      toast.error(t("exportPage.exportError", "Lỗi khi xuất dữ liệu"));
+      toast.error(t("exportPage.exportError"));
     } finally {
       setExporting(false);
     }
@@ -142,23 +142,23 @@ const ExportTab = ({ projectId, project }) => {
             <i className="ri-file-download-line"></i>
           </div>
           <div className="export-title">
-            {t("exportPage.title", "Xuất dữ liệu")}
+            {t("exportPage.title")}
           </div>
           <div className="export-desc">
-            {t("exportPage.exportDesc", "Xuất dữ liệu đã gán nhãn của dự án này")}
+            {t("exportPage.exportDesc")}
           </div>
         </div>
 
         <div className="export-section">
           <div className="export-section-title">
             <i className="ri-checkbox-circle-line"></i>
-            {t("exportPage.colEligibility", "Điều kiện xuất")}
+            {t("exportPage.colEligibility")}
           </div>
           {eligibility.checking ? (
             <div className="text-center py-3">
               <Spinner size="sm" color="primary" className="me-2" />
               <span style={{ color: "var(--pd-text-secondary)" }}>
-                {t("exportPage.checking", "Đang kiểm tra...")}
+                {t("exportPage.checking")}
               </span>
             </div>
           ) : (
@@ -167,16 +167,16 @@ const ExportTab = ({ projectId, project }) => {
                 <i className={`fs-5 ${eligibility.allApproved ? "ri-checkbox-circle-fill" : "ri-close-circle-fill"}`}></i>
                 <span>
                   {eligibility.allApproved
-                    ? t("exportPage.allApproved", "Tất cả task đã được approved")
-                    : `${(eligibility.totalTasks || 0) - (eligibility.approved || 0)} ${t("exportPage.taskNotApproved", "task chưa approved")}`}
+                    ? t("exportPage.allApproved")
+                    : `${(eligibility.totalTasks || 0) - (eligibility.approved || 0)} ${t("exportPage.taskNotApproved")}`}
                 </span>
               </div>
               <div className={`eligibility-item ${eligibility.noPendingDisputes ? "passed" : "failed"}`}>
                 <i className={`fs-5 ${eligibility.noPendingDisputes ? "ri-checkbox-circle-fill" : "ri-close-circle-fill"}`}></i>
                 <span>
                   {eligibility.noPendingDisputes
-                    ? t("exportPage.noDisputes", "Không có tranh chấp đang chờ")
-                    : `${eligibility.pendingDisputeCount} ${t("exportPage.disputePending", "tranh chấp đang chờ")}`}
+                    ? t("exportPage.noDisputes")
+                    : `${eligibility.pendingDisputeCount} ${t("exportPage.disputePending")}`}
                 </span>
               </div>
             </>
@@ -186,7 +186,7 @@ const ExportTab = ({ projectId, project }) => {
         <div className="export-section">
           <div className="export-section-title">
             <i className="ri-settings-3-line"></i>
-            {t("exportPage.format", "Định dạng xuất")}
+            {t("exportPage.format")}
           </div>
           <div className="format-btn-group">
             {EXPORT_FORMATS.map((f) => (
@@ -210,12 +210,12 @@ const ExportTab = ({ projectId, project }) => {
             {exporting ? (
               <>
                 <Spinner size="sm" className="me-2" />
-                {t("exportPage.exporting", "Đang xuất...")}
+                {t("exportPage.exporting")}
               </>
             ) : !eligibility.ready ? (
               <>
                 <i className="ri-lock-line me-2"></i>
-                {t("exportPage.locked", "Chưa đủ điều kiện")}
+                {t("exportPage.locked")}
               </>
             ) : (
               <>

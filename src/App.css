@@ -9,6 +9,24 @@
     padding-right: 0 !important;
 }
 
+.layout-content-shell {
+    width: 100%;
+    min-width: 0;
+}
+
+.page-content.page-content--flush-shell {
+    padding-top: 70px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 1rem !important;
+}
+
+.page-content.page-content--flush-shell>.layout-content-shell,
+.page-content.page-content--flush-shell .layout-content-shell--flush {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
 :root {
     --dark-page: #0F172A;
     --dark-card: #1E293B;
@@ -3083,4 +3101,350 @@ footer,
 [data-bs-theme="light"] .stitch-ws-canvas-wrap {
     background: #F1F5F9;
     border: 1px solid #E2E8F0;
+}
+
+.mobile-quick-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    padding: 0.45rem 0.35rem calc(0.45rem + env(safe-area-inset-bottom));
+    z-index: 1002;
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
+    backdrop-filter: blur(14px);
+}
+
+[data-bs-theme="dark"] .mobile-quick-nav {
+    background: rgba(15, 23, 42, 0.94);
+    border-top-color: rgba(51, 65, 85, 0.7);
+}
+
+[data-bs-theme="light"] .mobile-quick-nav {
+    background: rgba(255, 255, 255, 0.96);
+    border-top-color: rgba(226, 232, 240, 0.9);
+    box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.mobile-quick-nav-item {
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.45rem 0.2rem;
+    border-radius: 12px;
+    min-height: 56px;
+    cursor: pointer;
+}
+
+.mobile-quick-nav-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.mobile-quick-nav-label {
+    font-size: 0.68rem;
+    line-height: 1.1;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+[data-bs-theme="dark"] .mobile-quick-nav-item {
+    color: #94A3B8;
+}
+
+[data-bs-theme="light"] .mobile-quick-nav-item {
+    color: #64748B;
+}
+
+.mobile-quick-nav-item.active {
+    color: #2563EB !important;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* ================================================================
+   RESPONSIVE ADJUSTMENTS
+   Preserves current UI/logic while improving small-screen behavior.
+   ================================================================ */
+@media (max-width: 991.98px) {
+    html,
+    body,
+    #root,
+    #layout-wrapper {
+        overflow-x: hidden;
+    }
+
+    body.layout-mobile .app-header {
+        left: 0 !important;
+        width: 100% !important;
+    }
+
+    body.layout-mobile .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    body.layout-mobile .app-menu.navbar-menu {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: min(92vw, 360px) !important;
+        max-width: 360px;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        z-index: 1005 !important;
+    }
+
+    body.layout-mobile .navbar-brand-box {
+        position: relative;
+        padding-right: 1rem;
+    }
+
+    body.layout-mobile.sidebar-enable .app-menu.navbar-menu {
+        transform: translateX(0);
+        box-shadow: 0 18px 48px rgba(15, 23, 42, 0.28);
+    }
+
+    body.layout-mobile.sidebar-enable {
+        overflow: hidden;
+    }
+
+    .vertical-overlay {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    body.layout-mobile.sidebar-enable .vertical-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        opacity: 1;
+        visibility: visible;
+        z-index: 1000;
+    }
+
+    body.layout-mobile .page-content>.container-fluid,
+    body.layout-mobile .page-content .container-fluid {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+        padding-bottom: 5.5rem !important;
+    }
+
+    body.layout-mobile .page-content.page-content--flush-shell {
+        padding-top: 70px !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        padding-bottom: 5.5rem !important;
+    }
+
+    .page-title-box {
+        gap: 0.75rem;
+    }
+
+    .page-title-box .page-title-right {
+        width: 100%;
+    }
+
+    .page-title-box .breadcrumb {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .search-box,
+    .search-box .form-control,
+    .w-md,
+    .form-select.w-md {
+        width: 100% !important;
+    }
+
+    .stitch-page-title-box {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .stitch-ws-header-bar {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        padding: 10px 12px;
+    }
+
+    .stitch-ws-header-title {
+        width: 100%;
+    }
+
+    .stitch-ws-layout {
+        flex-direction: column;
+        height: auto;
+        min-height: 0;
+    }
+
+    .stitch-ws-left-panel,
+    .stitch-ws-right-panel {
+        width: 100%;
+        min-width: 0;
+        overflow: visible;
+        padding-right: 0;
+    }
+
+    .stitch-ws-center-panel {
+        min-height: clamp(360px, 58vh, 640px);
+    }
+
+    .stitch-ws-toolbar {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .stitch-ws-toolbar-hint {
+        width: 100%;
+        margin-left: 0 !important;
+        justify-content: flex-start;
+    }
+
+    .stitch-ws-bottom-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .stitch-ws-thumb-strip {
+        width: 100%;
+    }
+
+    .stitch-ws-bottom-bar .action-group {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: stretch;
+    }
+
+    .stitch-ws-bottom-bar .action-btn {
+        flex: 1 1 150px;
+    }
+
+    .responsive-dataset-shell {
+        flex-direction: column !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .responsive-dataset-sidebar {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        border-right: 0 !important;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.25) !important;
+    }
+
+    .responsive-dataset-content {
+        min-height: 70vh;
+    }
+
+    .responsive-dataset-toolbar {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: stretch !important;
+    }
+
+    .responsive-dataset-toolbar-title {
+        width: 100%;
+        min-width: 0;
+        line-height: 1.35;
+        word-break: break-word;
+    }
+
+    .responsive-dataset-actions {
+        width: 100%;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        justify-content: stretch;
+    }
+
+    .responsive-dataset-actions .btn,
+    .responsive-dataset-action-btn {
+        width: 100%;
+        min-height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        flex: 1 1 auto;
+    }
+
+    .mobile-sidebar-scroll {
+        height: calc(100dvh - 70px);
+    }
+
+    .responsive-dataset-label-table {
+        min-width: 760px;
+        table-layout: auto !important;
+    }
+
+    .responsive-dataset-label-table th,
+    .responsive-dataset-label-table td {
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 575.98px) {
+    body.layout-mobile .page-content>.container-fluid,
+    body.layout-mobile .page-content .container-fluid {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        padding-bottom: 5.25rem !important;
+    }
+
+    body.layout-mobile .page-content.page-content--flush-shell {
+        padding-bottom: 5.25rem !important;
+    }
+
+    .stitch-ws-header-bar .back-btn,
+    .stitch-ws-save-badge {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .stitch-ws-toolbar-btn {
+        padding: 6px 10px;
+    }
+
+    .stitch-ws-bottom-bar .nav-arrow {
+        width: 100%;
+    }
+
+    .mobile-quick-nav-label {
+        font-size: 0.64rem;
+    }
+
+    .responsive-dataset-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .responsive-dataset-actions .btn,
+    .responsive-dataset-action-btn {
+        min-height: 44px;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+        font-size: 0.78rem;
+    }
+
+    .responsive-dataset-label-table {
+        min-width: 680px;
+    }
 }

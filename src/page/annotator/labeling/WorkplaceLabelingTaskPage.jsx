@@ -65,7 +65,7 @@ const WorkplaceLabelingTaskPage = () => {
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeSubmitting, setDisputeSubmitting] = useState(false);
   const [disputeStatus, setDisputeStatus] = useState(null);
-  const [disputeResult, setDisputeResult] = useState(null); // Store resolved dispute info
+  const [disputeResult, setDisputeResult] = useState(null);
 
   const [highlightedAnnotationId, setHighlightedAnnotationId] = useState(null);
   const [collapsedPanels, setCollapsedPanels] = useState(new Set());
@@ -152,7 +152,7 @@ const WorkplaceLabelingTaskPage = () => {
     });
   }, [images, hasValidAnnotations, allAnnotations, allDefaultFlags]);
 
-  
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [assignmentId]);
@@ -179,14 +179,14 @@ const WorkplaceLabelingTaskPage = () => {
         } else {
           allImages = [];
         }
-        
+
         if (!Array.isArray(allImages)) {
           allImages = [];
         }
 
         const packStart = parseInt(searchParams.get("packStart"), 10);
         const packEnd = parseInt(searchParams.get("packEnd"), 10);
-        
+
         let sliced;
         if (!isNaN(packStart) && !isNaN(packEnd) && packEnd > packStart) {
           sliced = allImages.slice(packStart, packEnd);
@@ -225,7 +225,7 @@ const WorkplaceLabelingTaskPage = () => {
   useEffect(() => {
     if (!currentImage) return;
 
-    
+
     dispatch(setSelectedLabel(null));
     dispatch(setCurrentTask(currentImage));
 
@@ -346,10 +346,10 @@ const WorkplaceLabelingTaskPage = () => {
           prev.map((img) =>
             img.id === currentImage.id
               ? {
-                  ...img,
-                  annotationData: dataJSON,
-                  status: img.status === "New" ? "InProgress" : img.status,
-                }
+                ...img,
+                annotationData: dataJSON,
+                status: img.status === "New" ? "InProgress" : img.status,
+              }
               : img,
           ),
         );
@@ -455,7 +455,7 @@ const WorkplaceLabelingTaskPage = () => {
   const refetchImages = useCallback(async () => {
     try {
       const imgRes = await taskService.getProjectImages(assignmentId);
-      
+
       let allImages = imgRes?.data;
       if (Array.isArray(imgRes)) {
         allImages = imgRes;
@@ -464,14 +464,14 @@ const WorkplaceLabelingTaskPage = () => {
       } else {
         allImages = [];
       }
-      
+
       if (!Array.isArray(allImages)) {
         allImages = [];
       }
 
       const packStart = parseInt(searchParams.get("packStart"), 10);
       const packEnd = parseInt(searchParams.get("packEnd"), 10);
-      
+
       let sliced;
       if (!isNaN(packStart) && !isNaN(packEnd) && packEnd > packStart) {
         sliced = allImages.slice(packStart, packEnd);
@@ -618,12 +618,9 @@ const WorkplaceLabelingTaskPage = () => {
 
         if (!currentImageId) return;
 
-        // Find pending dispute for current image
         const pending = disputes.find(
           (d) => d.assignmentId === currentImageId && d.status === "Pending",
         );
-
-        // Find resolved dispute for current image
         const resolved = disputes.find(
           (d) => d.assignmentId === currentImageId && (d.status === "Resolved" || d.status === "Rejected"),
         );
@@ -631,12 +628,9 @@ const WorkplaceLabelingTaskPage = () => {
         setDisputeStatus(pending ? "Pending" : null);
         setDisputeResult(resolved || null);
 
-        // Show/hide dispute form based on status
         if (resolved) {
           setShowDisputeForm(false);
-          // If dispute was accepted (Resolved), check if task is back to editable
           if (resolved.status === "Resolved" && currentImage.status !== "Rejected") {
-            // Dispute accepted - annotator was correct, task should be approved
           }
         }
       } catch {
@@ -645,7 +639,6 @@ const WorkplaceLabelingTaskPage = () => {
       }
     };
 
-    // Only check disputes when image is rejected
     if (currentImage.status === "Rejected") {
       checkDispute();
     } else {
@@ -764,11 +757,6 @@ const WorkplaceLabelingTaskPage = () => {
   if (!currentImage)
     return <div className="text-center mt-5">{t("workspace.noImages")}</div>;
 
-  // ReadOnly logic:
-  // - Submitted/Approved: read only
-  // - Rejected with pending dispute: read only (waiting for manager decision)
-  // - Rejected with resolved dispute (annotator_correct): read only (was approved)
-  // - Rejected with resolved dispute (annotator_wrong): NOT read only (must redo)
   const isReadOnly =
     currentImage.status === "Submitted" ||
     currentImage.status === "Approved" ||
@@ -777,7 +765,6 @@ const WorkplaceLabelingTaskPage = () => {
 
   const isRejected = currentImage.status === "Rejected";
 
-  // When dispute is rejected (annotator was wrong), show resubmit option
   const needsResubmit = isRejected && disputeResult?.status === "Rejected" && disputeResult?.resolutionType === "annotator_wrong";
 
   const doneCount = images.filter(
@@ -788,7 +775,7 @@ const WorkplaceLabelingTaskPage = () => {
 
   return (
     <div>
-      {}
+      { }
       <div className="stitch-ws-header-bar">
         <button
           className="back-btn"
@@ -858,7 +845,7 @@ const WorkplaceLabelingTaskPage = () => {
         </button>
       </div>
 
-      {}
+      { }
       {showShortcuts && (
         <div className="stitch-ws-card mb-2">
           <div className="stitch-ws-card-body" style={{ padding: "8px 14px" }}>
@@ -895,11 +882,11 @@ const WorkplaceLabelingTaskPage = () => {
         </div>
       )}
 
-      {}
+      { }
       <div className="stitch-ws-layout">
-        {}
+        { }
         <div className="stitch-ws-left-panel">
-          {}
+          { }
           <div className={`stitch-ws-card ${collapsedPanels.has("progress") ? "collapsed" : ""}`}>
             <div
               className="stitch-ws-card-header"
@@ -930,7 +917,7 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           </div>
 
-          {}
+          { }
           {isRejected && !disputeResult && (
             <div className="stitch-ws-alert danger">
               <div className="d-flex align-items-start gap-2">
@@ -968,7 +955,6 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           )}
 
-          {/* Dispute Result Display */}
           {disputeResult && (
             <div className={`stitch-ws-alert ${disputeResult.status === "Resolved" ? "success" : "warning"}`}>
               <div className="d-flex align-items-start gap-2">
@@ -983,7 +969,6 @@ const WorkplaceLabelingTaskPage = () => {
                       : "Dispute Rejected - Manager upheld the rejection"}
                   </strong>
 
-                  {/* Show reviewer votes summary */}
                   {disputeResult.reviewerFeedbacks && disputeResult.reviewerFeedbacks.length > 0 && (
                     <div className="mb-2 d-flex gap-2 align-items-center">
                       <small className="text-muted">Reviewer votes:</small>
@@ -1045,7 +1030,7 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           )}
 
-          {}
+          { }
           {currentImage.status === "Rejected" &&
             disputeStatus === "Pending" && (
               <div className="stitch-ws-alert warning">
@@ -1059,7 +1044,7 @@ const WorkplaceLabelingTaskPage = () => {
               {t("workspace.readOnly")}
             </div>
           )}
-          {}
+          { }
           {!isReadOnly && annotations.length === 0 && (
             <div className="stitch-ws-alert warning mb-2" style={{ padding: "10px 14px" }}>
               <div className="d-flex align-items-start gap-2">
@@ -1073,14 +1058,14 @@ const WorkplaceLabelingTaskPage = () => {
               </div>
             </div>
           )}
-          {}
+          { }
           {!isReadOnly && (() => {
             const isFlagEnabled = currentDefaultFlags.includes("__flag_enabled");
-            
+
             const defaultLabels = labels.filter((l) => l.isDefault);
             const flagOptions = defaultLabels.length > 0
               ? defaultLabels.map((l) => ({ id: l.id, label: l.name, color: l.color }))
-              : [{ id: "__image_flagged", label: t("workspace.flagImage") || "Ảnh bị lỗi", color: "#EF4444" }];
+              : [{ id: "__image_flagged", label: t("workspace.flagImage"), color: "#EF4444" }];
 
             return (
               <div className={`stitch-ws-card ${!isFlagEnabled ? "collapsed" : ""}`}>
@@ -1107,7 +1092,7 @@ const WorkplaceLabelingTaskPage = () => {
                       className={`ri-flag-${isFlagEnabled ? "fill" : "line"}`}
                       style={{ color: isFlagEnabled ? "#EF4444" : "inherit" }}
                     ></i>
-                    {t("workspace.flagImage") || "Đánh dấu ảnh lỗi"}
+                    {t("workspace.flagImage")}
                   </span>
                   <i className={`ri-arrow-${isFlagEnabled ? "up" : "down"}-s-line`} style={{ fontSize: 14, opacity: 0.5 }}></i>
                 </div>
@@ -1196,7 +1181,7 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           )}
 
-          {}
+          { }
           <div className={`stitch-ws-card ${collapsedPanels.has("annotations") ? "collapsed" : ""}`}>
             <div
               className="stitch-ws-card-header"
@@ -1288,7 +1273,7 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           </div>
 
-          {}
+          { }
           <div>
             <button
               className={`stitch-ws-nav-btn w-100 ${showBatchPanel ? "" : "primary"}`}
@@ -1307,7 +1292,7 @@ const WorkplaceLabelingTaskPage = () => {
             </button>
           </div>
 
-          {}
+          { }
           {showBatchPanel && (
             <div className="stitch-ws-card">
               <div className="stitch-ws-card-header">
@@ -1416,7 +1401,7 @@ const WorkplaceLabelingTaskPage = () => {
           )}
         </div>
 
-        {}
+        { }
         <div className="stitch-ws-center-panel">
           <LabelingWorkspace
             assignmentId={currentImage.id}
@@ -1427,7 +1412,7 @@ const WorkplaceLabelingTaskPage = () => {
             projectType={projectInfo?.allowGeometryTypes}
           />
 
-          {}
+          { }
           <div className="stitch-ws-bottom-bar">
             <button
               className="nav-arrow"
@@ -1438,7 +1423,7 @@ const WorkplaceLabelingTaskPage = () => {
               <i className="ri-arrow-left-s-line"></i>
             </button>
 
-            {}
+            { }
             <div className="stitch-ws-thumb-strip">
               {images.map((img, idx) => {
                 const isCurrent = idx === currentImgIndex;
@@ -1481,7 +1466,7 @@ const WorkplaceLabelingTaskPage = () => {
               <i className="ri-arrow-right-s-line"></i>
             </button>
 
-            {}
+            { }
             <div className="action-group">
               {!isReadOnly && (
                 <>
@@ -1499,7 +1484,7 @@ const WorkplaceLabelingTaskPage = () => {
                       className={`ri-${needsResubmit || isRejected ? "restart-line" : "check-line"}`}
                     ></i>
                     {needsResubmit
-                      ? t("workspace.resubmitAfterDispute", "Resubmit (Dispute Rejected)")
+                      ? t("workspace.resubmitAfterDispute")
                       : isRejected
                         ? t("workspace.resubmit")
                         : t("workspace.submitTask")}
@@ -1514,7 +1499,7 @@ const WorkplaceLabelingTaskPage = () => {
                       style={{ fontSize: "0.78rem", padding: "5px 12px" }}
                     >
                       <i className="ri-edit-line me-1"></i>{" "}
-                      {t("workspace.waitingForResubmit", "Awaiting your revision")}
+                      {t("workspace.waitingForResubmit")}
                     </span>
                   ) : (
                     <span
@@ -1531,15 +1516,15 @@ const WorkplaceLabelingTaskPage = () => {
           </div>
         </div>
 
-        {}
+        { }
         <div className="stitch-ws-right-panel">
-          {}
+          { }
           <CommentSection
             rejectionReason={currentImage.rejectionReason}
             status={currentImage.status}
           />
 
-          {}
+          { }
           {showDisputeForm && isRejected && (
             <div
               className="stitch-ws-card"

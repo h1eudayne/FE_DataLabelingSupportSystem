@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import NavigationTabs from "../components/admin/home/NavigationTabs";
-import { Container } from "react-bootstrap";
+import { Container, Spinner } from "react-bootstrap";
 import {
   getUsers,
   getUserProfile,
@@ -15,7 +15,6 @@ import LogsView from "../components/admin/home/LogsView";
 import UserModal from "../components/admin/managementUser/UserModal";
 import AddUser from "../components/admin/home/AddUser";
 import projectApi from "../services/admin/managementUsers/project.api";
-import { Spinner } from "reactstrap";
 import { useTranslation } from "react-i18next";
 
 const AdminContainer = () => {
@@ -27,7 +26,7 @@ const AdminContainer = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const pageSize = 10;
   const [systemStats, setSystemStats] = useState({ admins: 0, workers: 0 });
 
   const [selectUser, setSelectUser] = useState(null);
@@ -41,7 +40,7 @@ const AdminContainer = () => {
 
   const { t } = useTranslation();
 
-  const fetchSelf = async () => {
+  const fetchSelf = useCallback(async () => {
     try {
       const res = await getUserProfile();
       setCurrentRole(res.data.role);
@@ -49,9 +48,9 @@ const AdminContainer = () => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, []);
 
-  const fetchUsers = async (currentPage = page) => {
+  const fetchUsers = useCallback(async (currentPage = page) => {
     setLoading(true);
     try {
       const resAdmins = await getAdmins();
@@ -75,7 +74,7 @@ const AdminContainer = () => {
       }
       setPage(resUser.data.page);
     } catch (error) {
-      console.error("Lỗi lấy danh sách user:", error);
+      console.error("Error fetching user list:", error);
       setUsers([]);
       setFilteredUsers([]);
     } finally {
@@ -83,7 +82,7 @@ const AdminContainer = () => {
         setLoading(false);
       }, 300);
     }
-  };
+  }, [page, pageSize]);
 
   const fetchProjectsUser = async (userId) => {
     try {
@@ -107,7 +106,7 @@ const AdminContainer = () => {
       fetchUsers(page);
       fetchSelf();
     }
-  }, [activeTab, page]);
+  }, [activeTab, page, fetchSelf, fetchUsers]);
 
   const handleSearch = (searchTerm) => {
     if (!searchTerm) {
@@ -141,12 +140,12 @@ const AdminContainer = () => {
         serverMessage.includes("pending tasks") ||
         error.response?.status === 400
       ) {
-        alert(`Không thể đổi vai trò: User này vẫn còn dự án chưa hoàn thành!`);
+        alert(t("admin.cannotChangeRole"));
       } else {
-        alert("Đã xảy ra lỗi: " + serverMessage);
+        alert(t("admin.errorOccurred") + ": " + serverMessage);
       }
 
-      console.error("Lỗi cập nhật:", error);
+      console.error("Error updating:", error);
     }
   };
 
@@ -188,68 +187,67 @@ const AdminContainer = () => {
 
   if (loading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ minHeight: "400px" }}
-      >
-        <div className="text-center">
-          <Spinner animation="border" variant="primary" role="status" />
-          <p className="mt-2 text-muted fw-medium">
-            {t("adminSettings.loading")}
-          </p>
+      <div className="admin-shell">
+        <div className="admin-shell__inner">
+          <div className="admin-loading-state">
+            <div className="text-center">
+              <Spinner animation="border" variant="primary" role="status" />
+              <p className="mt-2 text-muted fw-medium">
+                {t("adminSettings.loading")}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
   return (
-    <Container
-      fluid
-      className="p-4"
-      style={{ backgroundColor: "#f3f3f9", minHeight: "100vh" }}
-    >
-      <AdminHeader fullName={currentName} />
+    <Container fluid className="admin-shell">
+      <div className="admin-shell__inner">
+        <AdminHeader fullName={currentName} />
 
-      <NavigationTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        <NavigationTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {activeTab === "users" && (
-        <>
-          <UserManagementView
-            stats={systemStats}
-            totalCount={totalCount}
-            users={filteredUsers}
-            onSearch={handleSearch}
-            onActive={handleActive}
-            onEdit={handleEdit}
-            currentRole={currentRole}
-            openCreateModal={setIsCreateModalOpen}
-            getProjects={fetchProjectsUser}
-            userProjects={userProjects}
-            admins={admins}
-            pagination={{
-              totalCount,
-              page,
-              pageSize,
-              onPageChange: (newPage) => setPage(newPage),
-            }}
-          />
-          <UserModal
-            isOpen={isUserModalOpen}
-            toggle={toggleModal}
-            user={selectUser}
-            handleSave={handleSave}
-            managers={managers}
-          />
-          <AddUser
-            isOpen={isCreateModalOpen}
-            onClose={onCloseCreateModal}
-            uploadUser={uploadUser}
-            file={file}
-            setFile={setFile}
-          />
-        </>
-      )}
+        {activeTab === "users" && (
+          <>
+            <UserManagementView
+              stats={systemStats}
+              totalCount={totalCount}
+              users={filteredUsers}
+              onSearch={handleSearch}
+              onActive={handleActive}
+              onEdit={handleEdit}
+              currentRole={currentRole}
+              openCreateModal={setIsCreateModalOpen}
+              getProjects={fetchProjectsUser}
+              userProjects={userProjects}
+              admins={admins}
+              pagination={{
+                totalCount,
+                page,
+                pageSize,
+                onPageChange: (newPage) => setPage(newPage),
+              }}
+            />
+            <UserModal
+              isOpen={isUserModalOpen}
+              toggle={toggleModal}
+              user={selectUser}
+              handleSave={handleSave}
+              managers={managers}
+            />
+            <AddUser
+              isOpen={isCreateModalOpen}
+              onClose={onCloseCreateModal}
+              uploadUser={uploadUser}
+              file={file}
+              setFile={setFile}
+            />
+          </>
+        )}
 
-      {activeTab === "logs" && <LogsView />}
+        {activeTab === "logs" && <LogsView embedded />}
+      </div>
     </Container>
   );
 };

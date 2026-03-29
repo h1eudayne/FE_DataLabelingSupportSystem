@@ -13,15 +13,15 @@ const AuthRight = () => {
     const saved = localStorage.getItem("i18nLang") || "vi";
     return saved === "en"
       ? {
-          code: "en",
-          flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/us.svg",
-          name: "English",
-        }
+        code: "en",
+        flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/us.svg",
+        name: "English",
+      }
       : {
-          code: "vi",
-          flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/vn.svg",
-          name: "Tiếng Việt",
-        };
+        code: "vi",
+        flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/vn.svg",
+        name: "Tiếng Việt",
+      };
   });
 
   const popperConfig = {
@@ -30,7 +30,6 @@ const AuthRight = () => {
 
   return (
     <div className="col-lg-6 auth-right bg-white p-0 d-flex flex-column h-100">
-      {/* Banner Mobile */}
       <div className="auth-banner-mobile d-lg-none">
         <img
           alt="Banner"
@@ -128,8 +127,7 @@ const AuthRight = () => {
           <div className="mt-4 text-center text-muted small">
             <p className="mb-0">
               <i className="ri-information-line me-1"></i>
-              {t("auth.contactAdminForAccount") ||
-                "Liên hệ Admin để được tạo tài khoản"}
+              {t("auth.contactAdminForAccount")}
             </p>
           </div>
         </div>

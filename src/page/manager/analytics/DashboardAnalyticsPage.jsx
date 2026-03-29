@@ -77,7 +77,6 @@ const DashboardAnalytics = () => {
   const [avgProjectAccuracy, setAvgProjectAccuracy] = useState(null);
   const [projectAccuracies, setProjectAccuracies] = useState([]);
 
-  // ============= 3 KEY METRICS STATES =============
   const [projectFinalAccuracy, setProjectFinalAccuracy] = useState(null);
   const [projectFirstPassAccuracy, setProjectFirstPassAccuracy] = useState(null);
   const [projectReworkRate, setProjectReworkRate] = useState(null);
@@ -85,6 +84,7 @@ const DashboardAnalytics = () => {
   const [projectFirstPassCorrect, setProjectFirstPassCorrect] = useState(0);
   const [projectTotalReworks, setProjectTotalReworks] = useState(0);
   const [projectTotalSubmitted, setProjectTotalSubmitted] = useState(0);
+  const [projectTotalItems, setProjectTotalItems] = useState(0);
 
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.id;
@@ -119,7 +119,6 @@ const DashboardAnalytics = () => {
         let totalAccItems = 0;
         let totalAccWeighted = 0;
 
-        // ============= 3 KEY METRICS ACCUMULATORS =============
         let totalFinalCorrect = 0;
         let totalFirstPassCorrect = 0;
         let totalReworks = 0;
@@ -187,7 +186,6 @@ const DashboardAnalytics = () => {
               totalAccItems += s.totalItems;
             }
 
-            // ============= COLLECT 3 KEY METRICS =============
             totalFinalCorrect += s.finalCorrect ?? 0;
             totalFirstPassCorrect += s.firstPassCorrect ?? 0;
             totalReworks += s.totalReworks ?? 0;
@@ -200,7 +198,6 @@ const DashboardAnalytics = () => {
               accuracy: s.projectAccuracy ?? 0,
               totalItems: s.totalItems ?? 0,
               completedItems: s.completedItems ?? 0,
-              // Also push new metrics for per-project display
               finalAccuracy: s.finalAccuracy ?? 0,
               firstPassAccuracy: s.firstPassAccuracy ?? 0,
               reworkRate: s.reworkRate ?? 0,
@@ -270,9 +267,9 @@ const DashboardAnalytics = () => {
             });
             const daysLeft = project.deadline
               ? Math.ceil(
-                  (new Date(project.deadline) - new Date()) /
-                    (1000 * 60 * 60 * 24),
-                )
+                (new Date(project.deadline) - new Date()) /
+                (1000 * 60 * 60 * 24),
+              )
               : null;
             if (daysLeft !== null && daysLeft < 7 && progressPct < 50) {
               alerts.push({
@@ -289,7 +286,7 @@ const DashboardAnalytics = () => {
                 completed: Math.round(
                   (Number(project.totalDataItems || 0) *
                     Number(project.progress || 0)) /
-                    100,
+                  100,
                 ),
               });
               continue;
@@ -367,7 +364,7 @@ const DashboardAnalytics = () => {
               }
               reviewerMap[reviewerKey].projectDetails[project.id].disputes++;
             });
-          } catch {}
+          } catch { }
         }
 
         projectProgressArr.forEach((pp) => {
@@ -508,9 +505,9 @@ const DashboardAnalytics = () => {
             existing.annotatorAccuracy =
               totalWeight > 0
                 ? existing._accuracyScores.reduce(
-                    (s, v) => s + v.score * v.weight,
-                    0,
-                  ) / totalWeight
+                  (s, v) => s + v.score * v.weight,
+                  0,
+                ) / totalWeight
                 : 0;
             existing.projectDetails.push(projectDetail);
           }
@@ -567,9 +564,9 @@ const DashboardAnalytics = () => {
           const reviewerAccuracy =
             accData && accData.totalMgrDecisions > 0
               ? (
-                  (accData.totalCorrect / accData.totalMgrDecisions) *
-                  100
-                ).toFixed(1)
+                (accData.totalCorrect / accData.totalMgrDecisions) *
+                100
+              ).toFixed(1)
               : "100.0";
           return {
             ...r,
@@ -608,17 +605,15 @@ const DashboardAnalytics = () => {
         );
         setProjectAccuracies(projectAccuraciesArr);
 
-        // ============= SET 3 KEY METRICS =============
-        // ✅ 1. Final Accuracy = FinalCorrect / TotalItems
         setProjectFinalCorrect(totalFinalCorrect);
         setProjectTotalSubmitted(totalSubmittedTasks);
+        setProjectTotalItems(totalItemsForMetrics);
         setProjectFinalAccuracy(
           totalItemsForMetrics > 0
             ? Math.round((totalFinalCorrect / totalItemsForMetrics) * 100 * 10) / 10
             : null
         );
 
-        // ✅ 2. First-pass Accuracy = FirstPassCorrect / TotalItems
         setProjectFirstPassCorrect(totalFirstPassCorrect);
         setProjectFirstPassAccuracy(
           totalItemsForMetrics > 0
@@ -626,7 +621,6 @@ const DashboardAnalytics = () => {
             : null
         );
 
-        // ✅ 3. Rework Rate = TotalReworks / TotalSubmittedTasks
         setProjectTotalReworks(totalReworks);
         setProjectReworkRate(
           totalSubmittedTasks > 0
@@ -717,77 +711,106 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
-      {/* ============= 3 KEY METRICS SECTION ============= */}
       <Row className="mt-3">
         <Col xl={12}>
-          <Card className="shadow-sm border-0" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-            <CardBody>
-              <h5 className="text-white mb-3">
-                <i className="ri-bar-chart-box-line me-2"></i>
-                {t('analytics.threeKeyMetrics') || '3 Key Metrics (Best Practice)'}
+          <Card className="shadow-sm border-0">
+            <CardHeader className="bg-white border-bottom">
+              <h5 className="mb-0">
+                <i className="ri-bar-chart-box-line me-2 text-primary"></i>
+                {t('analytics.threeKeyMetrics')}
               </h5>
-              <Row>
-                {/* ✅ 1. Final Accuracy */}
+            </CardHeader>
+            <CardBody>
+              <Row className="g-3">
                 <Col md={4}>
-                  <Card className="border-0 h-100" style={{ background: 'rgba(255,255,255,0.15)' }}>
-                    <CardBody className="text-center py-3">
-                      <Award size={32} className="text-white mb-2" />
-                      <h3 className="text-white mb-1">
-                        {projectFinalAccuracy !== null ? `${projectFinalAccuracy}%` : '—'}
-                      </h3>
-                      <p className="text-white-50 mb-1 small">{t('analytics.finalAccuracy') || 'Final Accuracy'}</p>
-                      <small className="text-white">
-                        {projectFinalCorrect} / {totalItemsForMetrics} {t('analytics.tasksCorrect') || 'tasks correct'}
-                      </small>
-                      <div className="mt-2">
-                        <Badge color="light" className="px-2 py-1">
-                          <i className="ri-customer-2-line me-1"></i>
-                          {t('analytics.forCustomer') || 'For Customer'}
-                        </Badge>
+                  <Card className="border-0 h-100 shadow-sm">
+                    <CardBody className="p-2 text-center">
+                      <div
+                        className="rounded-3 py-3 px-2 h-100 text-white"
+                        style={{
+                          backgroundImage: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          backgroundColor: '#059669',
+                        }}
+                      >
+                        <Award size={28} className="text-white mb-2" />
+                        <h3 className="text-white fw-bold mb-1">
+                          {projectFinalAccuracy !== null ? `${projectFinalAccuracy}%` : '—'}
+                        </h3>
+                        <p className="text-white mb-1 small fw-semibold">{t('analytics.finalAccuracy')}</p>
+                        <small className="text-white" style={{ opacity: 0.9 }}>
+                          {projectFinalCorrect} / {projectTotalItems} {t('analytics.tasksCorrect')}
+                        </small>
+                        <div className="mt-2">
+                          <Badge color="light" className="px-2 py-1 text-success">
+                            <i className="ri-customer-2-line me-1"></i>
+                            {t('analytics.forCustomer')}
+                          </Badge>
+                        </div>
                       </div>
                     </CardBody>
                   </Card>
                 </Col>
 
-                {/* ✅ 2. First-pass Accuracy */}
                 <Col md={4}>
-                  <Card className="border-0 h-100" style={{ background: 'rgba(255,255,255,0.15)' }}>
-                    <CardBody className="text-center py-3">
-                      <Zap size={32} className="text-warning mb-2" />
-                      <h3 className="text-white mb-1">
-                        {projectFirstPassAccuracy !== null ? `${projectFirstPassAccuracy}%` : '—'}
-                      </h3>
-                      <p className="text-white-50 mb-1 small">{t('analytics.firstPassAccuracy') || 'First-pass Accuracy'}</p>
-                      <small className="text-white">
-                        {projectFirstPassCorrect} / {totalItemsForMetrics} {t('analytics.correctFirstTime') || 'correct first time'}
-                      </small>
-                      <div className="mt-2">
-                        <Badge color="warning" className="px-2 py-1">
-                          <i className="ri-team-line me-1"></i>
-                          {t('analytics.forInternal') || 'For Internal'}
-                        </Badge>
+                  <Card className="border-0 h-100 shadow-sm">
+                    <CardBody className="p-2 text-center">
+                      <div
+                        className="rounded-3 py-3 px-2 h-100 text-white"
+                        style={{
+                          backgroundImage: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                          backgroundColor: '#d97706',
+                        }}
+                      >
+                        <Zap size={28} className="text-white mb-2" />
+                        <h3 className="text-white fw-bold mb-1">
+                          {projectFirstPassAccuracy !== null ? `${projectFirstPassAccuracy}%` : '—'}
+                        </h3>
+                        <p className="text-white mb-1 small fw-semibold">{t('analytics.firstPassAccuracy')}</p>
+                        <small className="text-white" style={{ opacity: 0.9 }}>
+                          {projectFirstPassCorrect} / {projectTotalItems} {t('analytics.correctFirstTime')}
+                        </small>
+                        <div className="mt-2">
+                          <Badge color="light" className="px-2 py-1 text-warning">
+                            <i className="ri-team-line me-1"></i>
+                            {t('analytics.forInternal')}
+                          </Badge>
+                        </div>
                       </div>
                     </CardBody>
                   </Card>
                 </Col>
 
-                {/* ✅ 3. Rework Rate */}
                 <Col md={4}>
-                  <Card className="border-0 h-100" style={{ background: 'rgba(255,255,255,0.15)' }}>
-                    <CardBody className="text-center py-3">
-                      <RefreshCw size={32} className={projectReworkRate > 15 ? 'text-danger' : 'text-success'} />
-                      <h3 className="text-white mb-1">
-                        {projectReworkRate !== null ? `${projectReworkRate}%` : '—'}
-                      </h3>
-                      <p className="text-white-50 mb-1 small">{t('analytics.reworkRate') || 'Rework Rate'}</p>
-                      <small className="text-white">
-                        {projectTotalReworks} / {projectTotalSubmitted} {t('analytics.tasksRejected') || 'tasks rejected'}
-                      </small>
-                      <div className="mt-2">
-                        <Badge color={projectReworkRate > 15 ? 'danger' : 'success'} className="px-2 py-1">
-                          <i className="ri-error-warning-line me-1"></i>
-                          {projectReworkRate > 15 ? t('analytics.highRework') || 'HIGH' : t('analytics.goodRework') || 'Good'}
-                        </Badge>
+                  <Card className="border-0 h-100 shadow-sm">
+                    <CardBody className="p-2 text-center">
+                      <div
+                        className="rounded-3 py-3 px-2 h-100 text-white"
+                        style={
+                          projectReworkRate > 15
+                            ? {
+                              backgroundImage: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                              backgroundColor: '#dc2626',
+                            }
+                            : {
+                              backgroundImage: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                              backgroundColor: '#4f46e5',
+                            }
+                        }
+                      >
+                        <RefreshCw size={28} className="text-white mb-2" />
+                        <h3 className="text-white fw-bold mb-1">
+                          {projectReworkRate !== null ? `${projectReworkRate}%` : '—'}
+                        </h3>
+                        <p className="text-white mb-1 small fw-semibold">{t('analytics.reworkRate')}</p>
+                        <small className="text-white" style={{ opacity: 0.9 }}>
+                          {projectTotalReworks} / {projectTotalSubmitted} {t('analytics.tasksRejected')}
+                        </small>
+                        <div className="mt-2">
+                          <Badge color="light" className={`px-2 py-1 ${projectReworkRate > 15 ? 'text-danger' : 'text-primary'}`}>
+                            <i className="ri-error-warning-line me-1"></i>
+                            {projectReworkRate > 15 ? t('analytics.highRework') : t('analytics.goodRework')}
+                          </Badge>
+                        </div>
                       </div>
                     </CardBody>
                   </Card>
@@ -798,7 +821,7 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
-      {}
+      { }
       {qualityAlerts.length > 0 && (
         <Row className="mt-3">
           <Col xl={12}>
@@ -822,7 +845,7 @@ const DashboardAnalytics = () => {
         </Row>
       )}
 
-      {}
+      { }
       <Row className="mt-3">
         <Col xl={8}>
           <Card className="shadow-sm border-0 h-100">
@@ -890,7 +913,7 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
-      {}
+      { }
       {projectAccuracies.length > 0 && (
         <Row className="mt-3">
           <Col xl={12}>
@@ -920,7 +943,7 @@ const DashboardAnalytics = () => {
               <CardBody>
                 <p className="text-muted small mb-3">
                   <i className="ri-information-line me-1"></i>
-                  Các metrics chất lượng chuẩn: Final Accuracy (cho khách hàng), First-pass Accuracy (độ sạch pipeline nội bộ), Rework Rate (đo lường hiệu quả).
+                  {t('analytics.qualityMetricsDesc')}
                 </p>
                 <div className="table-responsive">
                   <Table className="table-hover align-middle mb-0">
@@ -929,18 +952,17 @@ const DashboardAnalytics = () => {
                         <th>{t('analytics.project')}</th>
                         <th className="text-center">{t('analytics.totalImages')}</th>
                         <th className="text-center">{t('analytics.completedImages')}</th>
-                        {/* ============= 3 KEY METRICS COLUMNS ============= */}
-                        <th className="text-center bg-success bg-opacity-10">
+                        <th className="text-center">
                           <RefreshCw size={14} className="me-1 text-success" />
-                          Final Accuracy
+                          {t('analytics.finalAccuracyCol')}
                         </th>
-                        <th className="text-center bg-warning bg-opacity-10">
+                        <th className="text-center">
                           <Zap size={14} className="me-1 text-warning" />
-                          First-pass
+                          {t('analytics.firstPassCol')}
                         </th>
-                        <th className="text-center bg-danger bg-opacity-10">
+                        <th className="text-center">
                           <AlertOctagon size={14} className="me-1 text-danger" />
-                          Rework Rate
+                          {t('analytics.reworkRateCol')}
                         </th>
                         <th style={{ minWidth: "150px" }}>{t('analytics.accuracyProgress')}</th>
                       </tr>
@@ -956,8 +978,7 @@ const DashboardAnalytics = () => {
                           <td className="text-center text-success fw-bold">
                             {pa.completedItems}
                           </td>
-                          {/* ============= 3 KEY METRICS VALUES ============= */}
-                          <td className="text-center bg-success bg-opacity-5">
+                          <td className="text-center">
                             <Badge
                               color={
                                 (pa.finalAccuracy ?? 0) >= 80
@@ -970,7 +991,7 @@ const DashboardAnalytics = () => {
                               {pa.finalAccuracy > 0 ? `${pa.finalAccuracy}%` : "—"}
                             </Badge>
                           </td>
-                          <td className="text-center bg-warning bg-opacity-5">
+                          <td className="text-center">
                             <Badge
                               color={
                                 (pa.firstPassAccuracy ?? 0) >= 80
@@ -983,7 +1004,7 @@ const DashboardAnalytics = () => {
                               {pa.firstPassAccuracy > 0 ? `${pa.firstPassAccuracy}%` : "—"}
                             </Badge>
                           </td>
-                          <td className="text-center bg-danger bg-opacity-5">
+                          <td className="text-center">
                             {(pa.reworkRate ?? 0) > 15 ? (
                               <Badge color="danger">{pa.reworkRate > 0 ? `${pa.reworkRate}%` : "0%"}</Badge>
                             ) : (
@@ -1023,7 +1044,7 @@ const DashboardAnalytics = () => {
         </Row>
       )}
 
-      {}
+      { }
       <Row className="mt-3">
         <Col xl={12}>
           <Card className="shadow-sm border-0">
@@ -1050,16 +1071,15 @@ const DashboardAnalytics = () => {
                         <th className="text-center">{t('analytics.imagesDone')}</th>
                         <th className="text-center">{t('statusCommon.qualityScore')}</th>
                         <th className="text-center">{t('analytics.criticalErrors')}</th>
-                        {/* ============= 3 KEY METRICS COLUMNS FOR ANNOTATOR ============= */}
-                        <th className="text-center bg-success bg-opacity-10">
+                        <th className="text-center">
                           <RefreshCw size={12} className="me-1 text-success" />
                           Final
                         </th>
-                        <th className="text-center bg-warning bg-opacity-10">
+                        <th className="text-center">
                           <Zap size={12} className="me-1 text-warning" />
                           1st Pass
                         </th>
-                        <th className="text-center bg-danger bg-opacity-10">
+                        <th className="text-center">
                           <RefreshCw size={12} className="me-1 text-danger" />
                           Rework
                         </th>
@@ -1070,13 +1090,13 @@ const DashboardAnalytics = () => {
                         const completionRate =
                           a.totalImages > 0
                             ? Math.round(
-                                (a.completedImages / a.totalImages) * 100,
-                              )
+                              (a.completedImages / a.totalImages) * 100,
+                            )
                             : 0;
                         const isExpanded = expandedAnnotators[a.annotatorId];
                         return (
                           <React.Fragment key={a.annotatorId}>
-                            {}
+                            { }
                             <tr
                               style={{ cursor: "pointer" }}
                               onClick={() =>
@@ -1125,8 +1145,7 @@ const DashboardAnalytics = () => {
                                   <span className="text-muted">0</span>
                                 )}
                               </td>
-                              {/* ============= 3 KEY METRICS VALUES FOR ANNOTATOR ============= */}
-                              <td className="text-center bg-success bg-opacity-5">
+                              <td className="text-center">
                                 <Badge
                                   color={
                                     (a.finalAccuracy ?? a.annotatorAccuracy ?? 0) >= 80
@@ -1141,7 +1160,7 @@ const DashboardAnalytics = () => {
                                     : "—"}
                                 </Badge>
                               </td>
-                              <td className="text-center bg-warning bg-opacity-5">
+                              <td className="text-center">
                                 <Badge
                                   color={
                                     (a.firstPassAccuracy ?? 0) >= 80
@@ -1156,7 +1175,7 @@ const DashboardAnalytics = () => {
                                     : "—"}
                                 </Badge>
                               </td>
-                              <td className="text-center bg-danger bg-opacity-5">
+                              <td className="text-center">
                                 {(a.reworkRate ?? 0) > 15 ? (
                                   <Badge color="danger">
                                     {a.reworkRate > 0 ? `${a.reworkRate.toFixed(1)}%` : "0%"}
@@ -1170,15 +1189,15 @@ const DashboardAnalytics = () => {
                                 )}
                               </td>
                             </tr>
-                            {}
+                            { }
                             {isExpanded &&
                               a.projectDetails?.map((pd) => {
                                 const pdRate =
                                   pd.totalImages > 0
                                     ? Math.round(
-                                        (pd.completedImages / pd.totalImages) *
-                                          100,
-                                      )
+                                      (pd.completedImages / pd.totalImages) *
+                                      100,
+                                    )
                                     : 0;
                                 return (
                                   <tr
@@ -1219,7 +1238,6 @@ const DashboardAnalytics = () => {
                                     <td className="text-center text-muted">
                                       —
                                     </td>
-                                    {/* ============= 3 KEY METRICS PLACEHOLDERS FOR EXPANDED ROW ============= */}
                                     <td className="text-center text-muted">
                                       —
                                     </td>
@@ -1249,7 +1267,7 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
-      {}
+      { }
       <Row className="mt-3">
         <Col xl={12}>
           <Card className="shadow-sm border-0">
@@ -1276,16 +1294,15 @@ const DashboardAnalytics = () => {
                         <th className="text-center">{t('statusCommon.overrideRate')}</th>
                         <th className="text-center">{t('statusCommon.disputes')}</th>
                         <th className="text-center">{t('statusCommon.disputeRate')}</th>
-                        {/* ============= 3 KEY METRICS COLUMNS FOR REVIEWER ============= */}
-                        <th className="text-center bg-success bg-opacity-10">
+                        <th className="text-center">
                           <RefreshCw size={12} className="me-1 text-success" />
                           Final Accuracy
                         </th>
-                        <th className="text-center bg-warning bg-opacity-10">
+                        <th className="text-center">
                           <Zap size={12} className="me-1 text-warning" />
                           1st Pass
                         </th>
-                        <th className="text-center bg-info bg-opacity-10">
+                        <th className="text-center">
                           <AlertTriangle size={12} className="me-1 text-info" />
                           Dispute Rate
                         </th>
@@ -1300,7 +1317,7 @@ const DashboardAnalytics = () => {
                         const isExpanded = expandedReviewers[r.name];
                         return (
                           <React.Fragment key={idx}>
-                            {}
+                            { }
                             <tr
                               style={{ cursor: "pointer" }}
                               onClick={() =>
@@ -1351,8 +1368,7 @@ const DashboardAnalytics = () => {
                                   {r.disputeRate}%
                                 </Badge>
                               </td>
-                              {/* ============= 3 KEY METRICS VALUES FOR REVIEWER ============= */}
-                              <td className="text-center bg-success bg-opacity-5">
+                              <td className="text-center">
                                 <Badge
                                   color={
                                     accNum >= 80
@@ -1366,8 +1382,7 @@ const DashboardAnalytics = () => {
                                   {`${accValue}%`}
                                 </Badge>
                               </td>
-                              <td className="text-center bg-warning bg-opacity-5">
-                                {/* First-pass accuracy for reviewers = correct without disputes */}
+                              <td className="text-center">
                                 <Badge
                                   color={
                                     (100 - parseFloat(r.disputeRate)) >= 80
@@ -1381,7 +1396,7 @@ const DashboardAnalytics = () => {
                                   {isNaN(accNum) ? "—" : `${Math.max(0, 100 - parseFloat(r.disputeRate)).toFixed(1)}%`}
                                 </Badge>
                               </td>
-                              <td className="text-center bg-info bg-opacity-5">
+                              <td className="text-center">
                                 <Badge
                                   color={disputeHigh ? "danger" : "success"}
                                 >
@@ -1389,7 +1404,7 @@ const DashboardAnalytics = () => {
                                 </Badge>
                               </td>
                             </tr>
-                            {}
+                            { }
                             {isExpanded &&
                               r.projectDetailsList?.map((pd, pdIdx) => (
                                 <tr
@@ -1408,9 +1423,9 @@ const DashboardAnalytics = () => {
                                   <td className="text-center">
                                     {pd.reviews > 0
                                       ? (
-                                          (pd.overridden / pd.reviews) *
-                                          100
-                                        ).toFixed(1) + "%"
+                                        (pd.overridden / pd.reviews) *
+                                        100
+                                      ).toFixed(1) + "%"
                                       : "—"}
                                   </td>
                                   <td className="text-center">
@@ -1419,12 +1434,11 @@ const DashboardAnalytics = () => {
                                   <td className="text-center">
                                     {pd.reviews > 0
                                       ? (
-                                          (pd.disputes / pd.reviews) *
-                                          100
-                                        ).toFixed(1) + "%"
+                                        (pd.disputes / pd.reviews) *
+                                        100
+                                      ).toFixed(1) + "%"
                                       : "—"}
                                   </td>
-                                  {/* ============= 3 KEY METRICS PLACEHOLDERS FOR EXPANDED ROW ============= */}
                                   <td className="text-center text-muted">—</td>
                                   <td className="text-center text-muted">—</td>
                                   <td className="text-center text-muted">—</td>
@@ -1447,7 +1461,7 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
-      {}
+      { }
       <Row className="mt-3">
         {errorBreakdown.length > 0 && (
           <Col xl={6}>
@@ -1574,7 +1588,7 @@ const DashboardAnalytics = () => {
         </Col>
       </Row>
 
-      {}
+      { }
       <Row className="mt-3">
         <Col xl={12}>
           <Card className="shadow-sm border-0">
@@ -1608,7 +1622,7 @@ const DashboardAnalytics = () => {
                         const isExpanded = expandedProjects[pp.projectId];
                         return (
                           <React.Fragment key={pp.projectId}>
-                            {}
+                            { }
                             <tr
                               style={{ cursor: "pointer" }}
                               onClick={() =>
@@ -1664,7 +1678,7 @@ const DashboardAnalytics = () => {
                                 </div>
                               </td>
                             </tr>
-                            {}
+                            { }
                             {isExpanded && (
                               <>
                                 {pp.annotators.map((person) => (
@@ -1755,7 +1769,7 @@ const DashboardAnalytics = () => {
                                     </td>
                                   </tr>
                                 ))}
-                                {}
+                                { }
                                 <tr
                                   className="bg-light border-bottom"
                                   style={{ fontSize: "0.85em" }}

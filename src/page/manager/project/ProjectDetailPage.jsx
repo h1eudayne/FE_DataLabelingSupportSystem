@@ -13,19 +13,14 @@ import {
 } from "reactstrap";
 import { toast } from "react-toastify";
 import projectService from "../../../services/manager/project/projectService";
-
-
 import ProjectsDatasetsPage from "../datasets/ProjectsDatasetsPage";
 import ProjectAssignTask from "./ProjectAssignTask";
 import DisputeTab from "./tabs/DisputeTab";
 import ReviewAuditTab from "./tabs/ReviewAuditTab";
-
-
-
 import "../../../assets/css/project-detail.css";
 
 const ProjectDetailPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
@@ -33,6 +28,7 @@ const ProjectDetailPage = () => {
   const [activeTab, setActiveTab] = useState("datasets");
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
+  const localeTag = i18n.language?.startsWith("vi") ? "vi-VN" : "en-US";
 
   useEffect(() => {
     if (isAdminView) setActiveTab("datasets");
@@ -46,13 +42,13 @@ const ProjectDetailPage = () => {
         const res = await projectService.getProjectById(id);
         setProject(res.data || null);
       } catch {
-        toast.error(t("projectDetail.loadError", "Không thể tải dự án"));
+        toast.error(t("projectDetail.loadError"));
       } finally {
         setLoading(false);
       }
     };
     fetchProject();
-  }, [id]);
+  }, [id, t]);
 
   const toggleTab = (tab) => {
     if (activeTab !== tab) setActiveTab(tab);
@@ -63,7 +59,7 @@ const ProjectDetailPage = () => {
       <div className="text-center p-5">
         <Spinner color="primary" />
         <p className="mt-2" style={{ color: "var(--pd-text-secondary)" }}>
-          {t("projectDetail.loading", "Đang tải dự án...")}
+          {t("projectDetail.loading")}
         </p>
       </div>
     );
@@ -73,24 +69,24 @@ const ProjectDetailPage = () => {
     return (
       <div className="text-center p-5" style={{ color: "var(--pd-text-muted)" }}>
         <i className="ri-folder-warning-line display-1 opacity-25"></i>
-        <h5 className="mt-3">{t("projectDetail.notFound", "Không tìm thấy dự án")}</h5>
+        <h5 className="mt-3">{t("projectDetail.notFound")}</h5>
         <button
           className="btn btn-primary mt-2"
           onClick={() =>
             navigate(isAdminView ? "/projects-overview" : "/projects-all-projects")
           }
         >
-          {t("projectDetail.backToProjects", "← Quay lại danh sách dự án")}
+          {t("projectDetail.backToProjects")}
         </button>
       </div>
     );
   }
 
   const tabConfigFull = [
-    { key: "datasets", icon: "ri-database-2-line", label: t("projectDetail.tabDatasets", "Datasets & Labels") },
-    { key: "assign", icon: "ri-user-add-line", label: t("projectDetail.tabAssign", "Giao việc") },
-    { key: "disputes", icon: "ri-scales-3-line", label: t("projectDetail.tabDisputes", "Tranh chấp") },
-    { key: "review", icon: "ri-shield-check-line", label: t("projectDetail.tabReview", "Review Audit") },
+    { key: "datasets", icon: "ri-database-2-line", label: t("projectDetail.tabDatasets") },
+    { key: "assign", icon: "ri-user-add-line", label: t("projectDetail.tabAssign") },
+    { key: "disputes", icon: "ri-scales-3-line", label: t("projectDetail.tabDisputes") },
+    { key: "review", icon: "ri-shield-check-line", label: t("projectDetail.tabReview") },
   ];
   const tabConfig = isAdminView
     ? tabConfigFull.filter((tab) => ["datasets"].includes(tab.key))
@@ -102,43 +98,42 @@ const ProjectDetailPage = () => {
       <div className="project-detail-header mb-3">
         {isAdminView && (
           <div className="alert alert-info py-2 px-3 mb-3 small" role="status">
-            {t(
-              "projectDetail.adminReadOnly",
-              "Chế độ xem dành cho Admin (BR-ADM-17). Không chỉnh sửa dự án (BR-ADM-18).",
-            )}
+            {t("projectDetail.adminReadOnly")}
           </div>
         )}
-        <div className="d-flex align-items-center justify-content-between">
-          <div className="d-flex align-items-center gap-3">
-        <button
-          className="btn-back"
-          onClick={() =>
-            navigate(isAdminView ? "/projects-overview" : "/projects-all-projects")
-          }
-              title={t("projectDetail.back", "Quay lại")}
+        <div className="project-detail-header-row d-flex align-items-center justify-content-between">
+          <div className="project-detail-header-main d-flex align-items-center gap-3">
+            <button
+              className="btn-back"
+              onClick={() =>
+                navigate(
+                  isAdminView ? "/projects-overview" : "/projects-all-projects",
+                )
+              }
+              title={t("projectDetail.back")}
             >
               <i className="ri-arrow-left-line fs-5"></i>
             </button>
-            <div>
+            <div className="project-detail-header-main-copy">
               <h4 className="project-name text-white">{project.name}</h4>
               <p className="project-desc">
-                {project.description || t("projectDetail.noDescription", "Không có mô tả")}
+                {project.description || t("projectDetail.noDescription")}
               </p>
             </div>
           </div>
-          <div className="d-flex align-items-center gap-2">
+          <div className="project-detail-header-meta d-flex align-items-center gap-2">
             <Badge
               className={`badge-status ${project.status !== "Expired" ? "badge-status-active" : ""}`}
               color={project.status === "Expired" ? "danger" : "success"}
             >
               {project.status === "Expired"
-                ? t("statusCommon.expired", "Hết hạn")
-                : t("statusCommon.active", "Đang hoạt động")}
+                ? t("statusCommon.expired")
+                : t("statusCommon.active")}
             </Badge>
             {project.deadline && (
               <span className="badge-deadline">
                 <i className="ri-calendar-line me-1"></i>
-                {new Date(project.deadline).toLocaleDateString("vi-VN")}
+                {new Date(project.deadline).toLocaleDateString(localeTag)}
               </span>
             )}
           </div>
@@ -153,9 +148,11 @@ const ProjectDetailPage = () => {
               <NavLink
                 className={activeTab === tab.key ? "active" : ""}
                 onClick={() => toggleTab(tab.key)}
+                title={tab.label}
+                aria-label={tab.label}
               >
                 <i className={tab.icon}></i>
-                <span>{tab.label}</span>
+                <span className="project-detail-tab-label">{tab.label}</span>
               </NavLink>
             </NavItem>
           ))}

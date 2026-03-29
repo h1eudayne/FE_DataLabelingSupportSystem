@@ -109,12 +109,6 @@ const ProjectCard = ({ project, onDelete }) => {
           >
             <i className="ri-database-2-line me-1"></i> {t('projectCard.dataBtn')}
           </Link>
-          <Link
-            to={`/projects-assign/${project.id}`}
-            className="btn btn-soft-primary btn-sm flex-grow-1"
-          >
-            <i className="ri-user-add-line me-1"></i> {t('projectCard.assignBtn')}
-          </Link>
           <button
             onClick={() => onDelete(project.id)}
             className="btn btn-soft-danger btn-sm"

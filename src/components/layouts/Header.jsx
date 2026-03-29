@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Container, Dropdown, Form, InputGroup, Button, Badge } from "react-bootstrap";
 import {
@@ -27,13 +27,26 @@ import { BACKEND_URL } from "../../services/axios.customize";
 import useNotifications from "../../hooks/useNotifications";
 import { disconnect as disconnectSignalR } from "../../services/signalrManager";
 
-const Header = ({ toggleSidebar, sidebarSize }) => {
+const getLanguageCode = (language) =>
+  language?.toLowerCase().startsWith("en") ? "en" : "vi";
+
+const HEADER_LOGOS = {
+  lightLarge:
+    "https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842054/logo-1_jc0rul.png",
+  darkLarge:
+    "https://res.cloudinary.com/deu3ur8w9/image/upload/v1773346453/logo-darkmode_txjdzq.png",
+};
+
+const Header = ({
+  toggleSidebar,
+  sidebarSize,
+  isMobile = false,
+}) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, user, unreadNotifications } = useSelector((state) => state.auth);
   const { t, i18n } = useTranslation();
 
-  const [userData, setUserData] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } =
     useNotifications(user?.id, unreadNotifications);
@@ -41,12 +54,23 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
     return localStorage.getItem("theme") === "dark";
   });
 
-  const [currentLang, setCurrentLang] = useState(() => {
-    const saved = localStorage.getItem("i18nLang") || "vi";
-    return saved === "en"
-      ? { code: "en", flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/us.svg", name: "English" }
-      : { code: "vi", flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/vn.svg", name: "Tiếng Việt" };
-  });
+  const languageOptions = {
+    vi: {
+      code: "vi",
+      flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/vn.svg",
+      label: t("header.languages.vietnamese"),
+    },
+    en: {
+      code: "en",
+      flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/us.svg",
+      label: t("header.languages.english"),
+    },
+  };
+
+  const currentLang = getLanguageCode(
+    i18n.resolvedLanguage || i18n.language || localStorage.getItem("i18nLang"),
+  );
+  const currentLanguage = languageOptions[currentLang] || languageOptions.vi;
 
   
   useEffect(() => {
@@ -59,20 +83,25 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
     setIsDarkMode((prev) => !prev);
   };
 
-  const fetchSelf = async () => {
-    try {
-      const res = await getUserProfile();
-      dispatch(updateUser(res.data));
-    } catch (error) {
-      console.error(error);
-    }
+  const handleLanguageChange = (languageCode) => {
+    localStorage.setItem("i18nLang", languageCode);
+    i18n.changeLanguage(languageCode);
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchSelf();
-    }
-  }, [isAuthenticated]);
+    if (!isAuthenticated) return;
+
+    const fetchSelf = async () => {
+      try {
+        const res = await getUserProfile();
+        dispatch(updateUser(res.data));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchSelf();
+  }, [dispatch, isAuthenticated]);
 
   const handleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -104,14 +133,41 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
 
         .custom-toggle-btn {
           background-color: #f5f7ff !important;
-          border-radius: 10px !important;
-          transition: all 0.3s ease !important;
+          border: 1px solid rgba(78, 115, 223, 0.08) !important;
+          border-radius: 16px !important;
+          box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+          transition: all 0.25s ease !important;
         }
         .custom-toggle-btn:hover {
-          background-color: #4e73df !important;
-          transform: rotate(90deg);
+          background-color: #ecf2ff !important;
+          transform: translateY(-1px);
         }
-        .custom-toggle-btn:hover .toggle-icon { color: white !important; }
+        .custom-toggle-btn.is-active {
+          background-color: #e7efff !important;
+          border-color: rgba(78, 115, 223, 0.18) !important;
+        }
+        .custom-toggle-btn .toggle-icon {
+          transition: transform 0.2s ease, color 0.2s ease;
+        }
+        .custom-toggle-btn:hover .toggle-icon,
+        .custom-toggle-btn.is-active .toggle-icon {
+          color: #405189 !important;
+          transform: scale(0.96);
+        }
+
+        .header-mobile-brand {
+          display: inline-flex;
+          align-items: center;
+          min-width: 0;
+          padding: 4px 0;
+        }
+        .header-mobile-brand img {
+          display: block;
+          width: auto;
+          height: 34px;
+          max-width: min(42vw, 170px);
+          object-fit: contain;
+        }
 
         .app-header .dropdown-menu {
           transform: none !important;
@@ -128,6 +184,22 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
         @keyframes dropdownFadeIn {
           from { opacity: 0; transform: translateY(-6px) !important; }
           to { opacity: 1; transform: translateY(0) !important; }
+        }
+
+        @media (max-width: 991.98px) {
+          .header-mobile-brand img {
+            height: 32px;
+            max-width: min(40vw, 150px);
+          }
+
+          .app-header .dropdown-menu {
+            position: fixed !important;
+            top: 74px !important;
+            right: 12px !important;
+            left: auto !important;
+            margin-top: 0 !important;
+            max-width: calc(100vw - 24px);
+          }
         }
 
         .theme-toggle-btn { transition: all 0.2s ease; }
@@ -166,13 +238,22 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
         [data-bs-theme="dark"] .custom-toggle-btn {
           background-color: #1F2937 !important;
           border: 1px solid #334155 !important;
+          box-shadow: none;
         }
         [data-bs-theme="dark"] .custom-toggle-btn:hover {
-          background-color: #3B82F6 !important;
-          border-color: #3B82F6 !important;
+          background-color: rgba(59, 130, 246, 0.14) !important;
+          border-color: rgba(59, 130, 246, 0.28) !important;
+        }
+        [data-bs-theme="dark"] .custom-toggle-btn.is-active {
+          background-color: rgba(59, 130, 246, 0.16) !important;
+          border-color: rgba(59, 130, 246, 0.3) !important;
         }
         [data-bs-theme="dark"] .custom-toggle-btn .toggle-icon {
           color: #94A3B8 !important;
+        }
+        [data-bs-theme="dark"] .custom-toggle-btn:hover .toggle-icon,
+        [data-bs-theme="dark"] .custom-toggle-btn.is-active .toggle-icon {
+          color: #BFDBFE !important;
         }
 
         [data-bs-theme="dark"] .header-search-input {
@@ -248,30 +329,52 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
         style={{
           zIndex: 1001,
           height: "70px",
-          left: sidebarSize === "lg" ? "250px" : "70px",
-          width: `calc(100% - ${sidebarSize === "lg" ? "250px" : "70px"})`,
+          left: isMobile ? 0 : sidebarSize === "lg" ? "250px" : "70px",
+          width: isMobile
+            ? "100%"
+            : `calc(100% - ${sidebarSize === "lg" ? "250px" : "70px"})`,
           transition: "all 0.3s ease-in-out",
         }}
       >
-        <Container fluid className="h-100 px-4">
+        <Container fluid className="h-100 px-2 px-sm-3 px-lg-4">
           <div className="d-flex justify-content-between align-items-center h-100">
-            <div className="d-flex align-items-center gap-3">
-              <Button
-                id="topnav-hamburger-icon"
-                onClick={toggleSidebar}
-                variant="light"
-                className="d-flex align-items-center justify-content-center p-0 border-0 custom-toggle-btn shadow-none"
-                style={{ width: "40px", height: "40px" }}
-              >
-                {sidebarSize === "sm" ? (
-                  <ChevronRight
-                    size={20}
-                    className="toggle-icon text-primary"
+            <div
+              className={`d-flex align-items-center ${isMobile ? "flex-grow-1 pe-2" : "gap-3"}`}
+            >
+              {!isMobile && (
+                <Button
+                  id="topnav-hamburger-icon"
+                  onClick={toggleSidebar}
+                  type="button"
+                  variant="light"
+                  aria-label={t("navbar.openMenu")}
+                  className="d-flex align-items-center justify-content-center p-0 border-0 custom-toggle-btn shadow-none"
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                  }}
+                >
+                  {sidebarSize !== "lg" ? (
+                    <ChevronRight
+                      size={20}
+                      className="toggle-icon text-primary"
+                    />
+                  ) : (
+                    <Menu size={20} className="toggle-icon text-primary" />
+                  )}
+                </Button>
+              )}
+
+              {isMobile && (
+                <div
+                  className="header-mobile-brand"
+                >
+                  <img
+                    src={isDarkMode ? HEADER_LOGOS.darkLarge : HEADER_LOGOS.lightLarge}
+                    alt={t("common.logo")}
                   />
-                ) : (
-                  <Menu size={20} className="toggle-icon text-primary" />
-                )}
-              </Button>
+                </div>
+              )}
 
               <Form className="d-none d-md-block ms-2">
                 <InputGroup
@@ -303,9 +406,9 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
 
               <Button
                 variant="light"
-                className="bg-transparent border-0 p-2 shadow-none rounded-circle"
+                className="d-none d-sm-inline-flex bg-transparent border-0 p-2 shadow-none rounded-circle"
                 onClick={handleFullscreen}
-                aria-label="Fullscreen"
+                aria-label={t("header.fullscreen")}
               >
                 {isFullscreen ? (
                   <Minimize size={20} className="text-muted" />
@@ -320,10 +423,10 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                   className="d-flex align-items-center gap-1 p-1 border-0 bg-transparent shadow-none hide-extra-icon"
                 >
                   <img
-                    src={currentLang.flag}
+                    src={currentLanguage.flag}
                     width="22"
                     className="rounded-1 shadow-sm"
-                    alt="flag"
+                    alt={t("header.language")}
                   />
                   <ChevronDown
                     size={12}
@@ -337,40 +440,26 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                   popperConfig={popperConfig}
                 >
                   <Dropdown.Item
-                    onClick={() => {
-                      i18n.changeLanguage("vi");
-                      setCurrentLang({
-                        code: "vi",
-                        name: "Tiếng Việt",
-                        flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/vn.svg",
-                      });
-                    }}
+                    onClick={() => handleLanguageChange("vi")}
                     className="d-flex align-items-center gap-2 py-2"
                   >
                     <img
-                      src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/vn.svg"
+                      src={languageOptions.vi.flag}
                       width="20"
-                      alt="VN"
+                      alt={languageOptions.vi.label}
                     />{" "}
-                    Tiếng Việt
+                    {languageOptions.vi.label}
                   </Dropdown.Item>
                   <Dropdown.Item
-                    onClick={() => {
-                      i18n.changeLanguage("en");
-                      setCurrentLang({
-                        code: "en",
-                        name: "English",
-                        flag: "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/us.svg",
-                      });
-                    }}
+                    onClick={() => handleLanguageChange("en")}
                     className="d-flex align-items-center gap-2 py-2"
                   >
                     <img
-                      src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/4x3/us.svg"
+                      src={languageOptions.en.flag}
                       width="20"
-                      alt="US"
+                      alt={languageOptions.en.label}
                     />{" "}
-                    English
+                    {languageOptions.en.label}
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
@@ -402,7 +491,9 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                   align="end"
                   className="shadow-lg border-0 py-0 dropdown-menu-animated"
                   style={{
-                    minWidth: "340px",
+                    width: isMobile ? "calc(100vw - 24px)" : undefined,
+                    minWidth: isMobile ? "0" : "340px",
+                    maxWidth: "340px",
                     maxHeight: "420px",
                   }}
                   popperConfig={popperConfig}
@@ -464,7 +555,9 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                                 style={{ fontSize: "10px" }}
                               >
                                 <Clock size={10} />
-                                {new Date(n.timestamp).toLocaleString(i18n.language === "vi" ? "vi-VN" : "en-US")}
+                                {new Date(n.timestamp).toLocaleString(
+                                  i18n.language === "vi" ? "vi-VN" : "en-US",
+                                )}
                               </div>
                             </div>
                           </div>
@@ -498,7 +591,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                         className="rounded-circle shadow-sm border border-2 border-white"
                         width="36"
                         height="36"
-                        alt="avatar"
+                        alt={t("header.avatarAlt")}
                       />
                       <span className="status-indicator"></span>
                     </div>
@@ -523,7 +616,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                     align="end"
                     className="shadow-lg border-0 py-2 dropdown-menu-animated"
                     style={{
-                      minWidth: "210px",
+                      minWidth: isMobile ? "200px" : "210px",
                     }}
                     popperConfig={popperConfig}
                   >
@@ -535,7 +628,7 @@ const Header = ({ toggleSidebar, sidebarSize }) => {
                         {t("header.account")}
                       </small>
                       <div className="fw-bold text-primary small">
-                        {user?.email || "staff1@gmail.com"}
+                        {user?.email || t("header.noEmail")}
                       </div>
                     </div>
                     <Dropdown.Item

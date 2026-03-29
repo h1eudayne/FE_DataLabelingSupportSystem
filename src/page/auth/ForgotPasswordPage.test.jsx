@@ -1,13 +1,13 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import ForgotPasswordPage from "./ForgotPasswordPage";
 import "@testing-library/jest-dom";
-import * as reacti18next from "react-i18next";
+import { useTranslation } from "react-i18next";
 
-vi.mock("../../../components/auth/auth-left/AuthLeft", () => ({
+vi.mock("../../components/auth/auth-left/AuthLeft", () => ({
   default: () => <div data-testid="auth-left">AuthLeft</div>,
 }));
 
@@ -33,13 +33,19 @@ const createMockStore = (preloadedState = {}) => {
   });
 };
 
+vi.mock("react-i18next", () => ({
+  useTranslation: vi.fn(),
+}));
+
 const mockUseTranslation = (overrides = {}) => {
-  return vi.spyOn(reacti18next, "useTranslation").mockReturnValue({
+  const returnValues = {
     t: (key) => key,
     i18n: { language: "en" },
     ready: true,
     ...overrides,
-  });
+  };
+  useTranslation.mockReturnValue(returnValues);
+  return returnValues;
 };
 
 describe("ForgotPasswordPage - Layout & UI Integration", () => {
@@ -100,10 +106,12 @@ describe("ForgotPasswordPage - Layout & UI Integration", () => {
     const emailInput = screen.getByLabelText(/auth.email/i);
     fireEvent.change(emailInput, { target: { value: "invalid-email" } });
 
-    const submitButton = screen.getByRole("button", { name: /forgotPassword.resetButton/i });
-    fireEvent.click(submitButton);
+    const form = emailInput.closest("form");
+    fireEvent.submit(form);
 
-    expect(screen.getByText(/forgotPassword.emailInvalid/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/forgotPassword.emailInvalid/i)).toBeInTheDocument();
+    });
   });
 
   it("nên render link quay lại đăng nhập", () => {
@@ -132,14 +140,14 @@ describe("ForgotPasswordPage - API Integration", () => {
     mockUseTranslation();
 
     forgotPasswordApiMock = vi.fn();
-    vi.doMock("../../../services/auth/forgotPassword/forgotPassword.api", () => ({
+    vi.doMock("../../services/auth/forgotPassword/forgotPassword.api", () => ({
       default: forgotPasswordApiMock,
     }));
   });
 
   it("nên gọi API khi submit với email hợp lệ", async () => {
     const { default: forgotPasswordApi } = await import(
-      "../../../services/auth/forgotPassword/forgotPassword.api"
+      "../../services/auth/forgotPassword/forgotPassword.api"
     );
     forgotPasswordApi.mockResolvedValue({
       data: { message: "Password sent to your email" },

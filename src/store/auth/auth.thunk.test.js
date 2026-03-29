@@ -158,11 +158,7 @@ describe("authThunk - Synced with Backend API Contract", () => {
     expect(result.payload.unreadNotifications).toBe(10);
   });
 
-  // Test for BUG FIX: Notification count after login
-  // Backend now returns unreadNotifications (camelCase) instead of UnreadNotifications (PascalCase)
   it("BUG-FIX: should correctly read unreadNotifications from backend response (camelCase)", async () => {
-    // This test verifies the fix for the notification bug where backend was returning
-    // "UnreadNotifications" (PascalCase) but frontend was reading "unreadNotifications" (camelCase)
     const mockRes = {
       data: {
         message: "Login successful.",

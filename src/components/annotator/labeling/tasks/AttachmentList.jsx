@@ -1,10 +1,12 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 const AttachmentList = ({ attachments }) => {
+  const { t } = useTranslation();
   return (
     <div className="card">
       <div className="card-header">
-        <h6 className="card-title mb-0">Tài liệu đính kèm</h6>
+        <h6 className="card-title mb-0">{t("labeling.attachments")}</h6>
       </div>
       <div className="card-body">
         <div className="vstack gap-3">

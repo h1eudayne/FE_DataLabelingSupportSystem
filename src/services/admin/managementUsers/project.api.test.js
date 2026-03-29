@@ -21,7 +21,7 @@ describe("admin/project.api", () => {
 
       const result = await projectApi.getAllProjectsUser();
 
-      expect(axios.get).toHaveBeenCalledWith("/api/projects");
+      expect(axios.get).toHaveBeenCalledWith("/api/projects/all");
       expect(result.data).toHaveLength(2);
       expect(result.data[0].name).toBe("Project A");
     });
