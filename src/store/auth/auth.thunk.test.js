@@ -27,15 +27,17 @@ describe("authThunk - Synced with Backend API Contract", () => {
     };
     loginAPI.mockResolvedValue(mockRes);
 
-    const result = await loginThunk({ email: "staff@test.com", password: "123" })(
-      dispatch,
-      getState,
-      undefined,
-    );
+    const result = await loginThunk({
+      email: "staff@test.com",
+      password: "123",
+    })(dispatch, getState, undefined);
 
     expect(localStorage.getItem("access_token")).toBe("jwt_token_xyz");
     expect(localStorage.getItem("unreadNotifications")).toBe("0");
-    expect(result.payload).toEqual({ token: "jwt_token_xyz", unreadNotifications: 0 });
+    expect(result.payload).toEqual({
+      token: "jwt_token_xyz",
+      unreadNotifications: 0,
+    });
   });
 
   it("should reject when server returns error 500 without message", async () => {
@@ -133,7 +135,10 @@ describe("authThunk - Synced with Backend API Contract", () => {
 
     expect(localStorage.getItem("access_token")).toBe("final_token");
     expect(localStorage.getItem("unreadNotifications")).toBe("5");
-    expect(result.payload).toEqual({ token: "final_token", unreadNotifications: 5 });
+    expect(result.payload).toEqual({
+      token: "final_token",
+      unreadNotifications: 5,
+    });
   });
 
   it("should handle login with pending notifications", async () => {
@@ -148,11 +153,10 @@ describe("authThunk - Synced with Backend API Contract", () => {
     };
     loginAPI.mockResolvedValue(mockRes);
 
-    const result = await loginThunk({ email: "user@test.com", password: "123" })(
-      dispatch,
-      getState,
-      undefined,
-    );
+    const result = await loginThunk({
+      email: "user@test.com",
+      password: "123",
+    })(dispatch, getState, undefined);
 
     expect(localStorage.getItem("unreadNotifications")).toBe("10");
     expect(result.payload.unreadNotifications).toBe(10);
@@ -165,7 +169,7 @@ describe("authThunk - Synced with Backend API Contract", () => {
         accessToken: "token_fixed_bug",
         refreshToken: "refresh_fixed_bug",
         tokenType: "Bearer",
-        unreadNotifications: 7, // camelCase as expected by frontend
+        unreadNotifications: 7,
       },
     };
     loginAPI.mockResolvedValue(mockRes);
@@ -176,7 +180,6 @@ describe("authThunk - Synced with Backend API Contract", () => {
       undefined,
     );
 
-    // Verify unreadNotifications is correctly extracted and saved
     expect(localStorage.getItem("unreadNotifications")).toBe("7");
     expect(result.payload.unreadNotifications).toBe(7);
   });
@@ -193,11 +196,10 @@ describe("authThunk - Synced with Backend API Contract", () => {
     };
     loginAPI.mockResolvedValue(mockRes);
 
-    const result = await loginThunk({ email: "zero@test.com", password: "123" })(
-      dispatch,
-      getState,
-      undefined,
-    );
+    const result = await loginThunk({
+      email: "zero@test.com",
+      password: "123",
+    })(dispatch, getState, undefined);
 
     expect(localStorage.getItem("unreadNotifications")).toBe("0");
     expect(result.payload.unreadNotifications).toBe(0);
@@ -215,11 +217,10 @@ describe("authThunk - Synced with Backend API Contract", () => {
     };
     loginAPI.mockResolvedValue(mockRes);
 
-    const result = await loginThunk({ email: "many@test.com", password: "123" })(
-      dispatch,
-      getState,
-      undefined,
-    );
+    const result = await loginThunk({
+      email: "many@test.com",
+      password: "123",
+    })(dispatch, getState, undefined);
 
     expect(localStorage.getItem("unreadNotifications")).toBe("999");
     expect(result.payload.unreadNotifications).toBe(999);
