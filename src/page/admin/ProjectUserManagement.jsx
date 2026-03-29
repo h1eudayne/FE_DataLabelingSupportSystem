@@ -206,8 +206,12 @@ const ProjectUserManagement = () => {
                     {stat.icon}
                   </div>
                   <div className="admin-overview-stat__content">
-                    <div className="admin-overview-stat__label">{stat.label}</div>
-                    <div className="admin-overview-stat__value">{stat.value}</div>
+                    <div className="admin-overview-stat__label">
+                      {stat.label}
+                    </div>
+                    <div className="admin-overview-stat__value">
+                      {stat.value}
+                    </div>
                   </div>
                 </div>
               </Card.Body>
@@ -306,13 +310,14 @@ const ProjectUserManagement = () => {
                                 ></div>
                               </div>
                               <span className="admin-progress__text">
-                                {project.progress}%
+                                {project.progress.toFixed(1)}%
                               </span>
                             </div>
                           </td>
                           <td>
                             <span className="admin-badge admin-badge--neutral">
-                              {project.totalMembers} {t("admin.project.members")}
+                              {project.totalMembers}{" "}
+                              {t("admin.project.members")}
                             </span>
                           </td>
                           <td className="text-end">
@@ -430,7 +435,9 @@ const ProjectUserManagement = () => {
                         variant="light"
                         className="admin-row-action-btn admin-row-action-btn--info"
                         onClick={() =>
-                          navigate(`/view-detail-project/${project.id}?tab=statistics`)
+                          navigate(
+                            `/view-detail-project/${project.id}?tab=statistics`,
+                          )
                         }
                       >
                         <BarChart2 size={16} />

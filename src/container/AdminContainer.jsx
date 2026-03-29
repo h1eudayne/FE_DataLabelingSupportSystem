@@ -37,6 +37,7 @@ const AdminContainer = () => {
   const [userProjects, setUserProjects] = useState([]);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isImporting, setIsImporting] = useState(false);
 
   const { t } = useTranslation();
 
@@ -50,39 +51,44 @@ const AdminContainer = () => {
     }
   }, []);
 
-  const fetchUsers = useCallback(async (currentPage = page) => {
-    setLoading(true);
-    try {
-      const resAdmins = await getAdmins();
-      const adminUsers = resAdmins.data.filter((user) => user.role === "Admin");
-      const managerUsers = resAdmins.data.filter(
-        (user) => user.role === "Manager",
-      );
+  const fetchUsers = useCallback(
+    async (currentPage = page) => {
+      setLoading(true);
+      try {
+        const resAdmins = await getAdmins();
+        const adminUsers = resAdmins.data.filter(
+          (user) => user.role === "Admin",
+        );
+        const managerUsers = resAdmins.data.filter(
+          (user) => user.role === "Manager",
+        );
 
-      const resUser = await getUsers(currentPage, pageSize);
-      const items = resUser.data.items || [];
-      setAdmins(adminUsers);
-      setManagers(managerUsers);
-      setUsers(items);
-      setFilteredUsers(items);
-      setTotalCount(resUser.data.totalCount || 0);
-      if (resUser.data.stats) {
-        setSystemStats({
-          admins: resUser.data.stats.totalAdmins,
-          workers: resUser.data.stats.totalWorkers,
-        });
+        const resUser = await getUsers(currentPage, pageSize);
+        const items = resUser.data.items || [];
+        setAdmins(adminUsers);
+        setManagers(managerUsers);
+        setUsers(items);
+        setFilteredUsers(items);
+        setTotalCount(resUser.data.totalCount || 0);
+        if (resUser.data.stats) {
+          setSystemStats({
+            admins: resUser.data.stats.totalAdmins,
+            workers: resUser.data.stats.totalWorkers,
+          });
+        }
+        setPage(resUser.data.page);
+      } catch (error) {
+        console.error("Error fetching user list:", error);
+        setUsers([]);
+        setFilteredUsers([]);
+      } finally {
+        setTimeout(() => {
+          setLoading(false);
+        }, 300);
       }
-      setPage(resUser.data.page);
-    } catch (error) {
-      console.error("Error fetching user list:", error);
-      setUsers([]);
-      setFilteredUsers([]);
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 300);
-    }
-  }, [page, pageSize]);
+    },
+    [page, pageSize],
+  );
 
   const fetchProjectsUser = async (userId) => {
     try {
@@ -171,6 +177,7 @@ const AdminContainer = () => {
   };
 
   const uploadUser = async (file) => {
+    setIsImporting(true);
     try {
       const res = await importUser(file);
       if (res.data) {
@@ -182,6 +189,8 @@ const AdminContainer = () => {
       onCloseCreateModal();
     } catch (error) {
       alert(`Import fail: `, error);
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -242,6 +251,7 @@ const AdminContainer = () => {
               uploadUser={uploadUser}
               file={file}
               setFile={setFile}
+              isImporting={isImporting}
             />
           </>
         )}
