@@ -19,10 +19,12 @@ const useAnnotatorDashboard = (projectId) => {
     queryFn: getAssignedProjects,
   });
 
+  const defaultProjectId = projectId ?? projects.data?.[0]?.projectId ?? null;
+
   const tasksByProject = useQuery({
-    queryKey: ["my-tasks", projectId],
-    queryFn: () => getMyTasks(projectId),
-    enabled: !!projectId,
+    queryKey: ["my-tasks", defaultProjectId],
+    queryFn: () => getMyTasks(defaultProjectId),
+    enabled: !!defaultProjectId,
     retry: false,
     staleTime: 1000 * 30,
   });
@@ -50,6 +52,7 @@ const useAnnotatorDashboard = (projectId) => {
   return {
     profile,
     projects,
+    defaultProjectId,
     tasksByProject,
     reviewerFeedback,
     projectProgress,

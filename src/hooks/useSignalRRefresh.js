@@ -19,7 +19,7 @@ const useSignalRRefresh = (onRefresh, options = {}) => {
     
     const unsubscribe = subscribe("ReceiveNotification", (notification) => {
       const message =
-        notification?.Message || notification?.message || "Cập nhật mới";
+        notification?.Message || notification?.message || "New update";
       const type = notification?.Type || notification?.type || "info";
 
       console.log("[SignalR Refresh] Received:", message);

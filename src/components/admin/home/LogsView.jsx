@@ -1,22 +1,39 @@
-import React, { useEffect, useState } from "react";
-import { Card, Badge, InputGroup, Form, Button } from "react-bootstrap";
-import { History, Activity, Search, User, Filter } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Card,
+  Badge,
+  InputGroup,
+  Form,
+  Button,
+  Container,
+  Spinner,
+} from "react-bootstrap";
+import { History, Activity, Search } from "lucide-react";
 import { getSysLogs } from "../../../services/admin/managementSystem/systemLog.api";
 import SysLogsModal from "../managementSystem/SysLogsModal";
 import { BACKEND_URL } from "../../../services/axios.customize";
 import { useTranslation } from "react-i18next";
-import { Spinner } from "reactstrap";
 
-const LogsView = () => {
+const LogsView = ({ embedded = false }) => {
   const { t } = useTranslation();
-  const [logData, setLogData] = useState(null);
+  const [logData, setLogData] = useState([]);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [selectUserLogs, setSelectUserLogs] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchLog();
   }, []);
+
+  const filteredLogs = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+    if (!keyword) return logData;
+
+    return logData.filter((log) =>
+      `${log.email || ""} ${log.role || ""}`.toLowerCase().includes(keyword),
+    );
+  }, [logData, searchTerm]);
 
   const fetchLog = async () => {
     setLoading(true);
@@ -52,6 +69,7 @@ const LogsView = () => {
       }
     } catch (error) {
       console.error(error);
+      setLogData([]);
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -64,121 +82,87 @@ const LogsView = () => {
     setIsOpenModal(false);
   };
 
-  if (loading) {
-    return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ minHeight: "400px" }}
-      >
-        <div className="text-center">
-          <Spinner animation="border" variant="primary" role="status" />
-          <p className="mt-2 text-muted fw-medium">
-            {t("adminSettings.loading")}
-          </p>
+  const content = loading ? (
+    <div className="admin-loading-state">
+      <div className="text-center">
+        <Spinner animation="border" variant="primary" role="status" />
+        <p className="mt-2 text-muted fw-medium">{t("adminSettings.loading")}</p>
+      </div>
+    </div>
+  ) : (
+    <section className="admin-section-card">
+      <div className="admin-section-card__header">
+        <div className="admin-toolbar">
+          <div className="admin-toolbar__group">
+            <div className="d-flex align-items-center gap-2">
+              <History className="text-primary" size={22} />
+              <h2 className="admin-section-card__title">{t("adminLogs.title")}</h2>
+            </div>
+            <p className="admin-section-card__description">
+              {t("adminLogs.subtitle")}
+            </p>
+          </div>
+
+          <div className="admin-toolbar__actions">
+            <InputGroup className="admin-search-group">
+              <InputGroup.Text>
+                <Search size={18} />
+              </InputGroup.Text>
+              <Form.Control
+                placeholder={t("adminLogs.searchPlaceholder")}
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </InputGroup>
+          </div>
         </div>
       </div>
-    );
-  }
-  return (
-    <>
-      <Card
-        className="border-0 shadow-sm overflow-hidden"
-        style={{ borderRadius: "15px" }}
-      >
-        <Card.Header className="bg-white border-bottom py-4 px-4">
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h5 className="fw-bold mb-0">
-                <History className="me-2 text-primary" /> {t("adminLogs.title")}
-              </h5>
-              <small className="text-muted">{t("adminLogs.subtitle")}</small>
-            </div>
-          </div>
-        </Card.Header>
 
-        <div className="p-4 bg-light bg-opacity-50">
-          <InputGroup className="border rounded-3 overflow-hidden bg-white">
-            <InputGroup.Text className="bg-white border-0">
-              <Search size={18} className="text-muted" />
-            </InputGroup.Text>
-            <Form.Control
-              placeholder={t("adminLogs.searchPlaceholder")}
-              className="border-0 shadow-none"
-            />
-          </InputGroup>
-        </div>
+      <div className="admin-log-list">
+        {filteredLogs.length > 0 ? (
+          filteredLogs.map((log) => (
+            <article className="admin-log-item" key={log.id}>
+              <div className="admin-log-item__main">
+                <img
+                  src={
+                    log.avatar
+                      ? log.avatar.startsWith("http")
+                        ? log.avatar
+                        : `${BACKEND_URL}${log.avatar.startsWith("/") ? "" : "/"}${log.avatar}`
+                      : `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`
+                  }
+                  alt={t("header.avatarAlt")}
+                  className="admin-log-item__avatar"
+                  onError={(event) => {
+                    event.target.onerror = null;
+                    event.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`;
+                  }}
+                />
 
-        <div className="list-group list-group-flush">
-          {logData?.map((log) => (
-            <div
-              key={log.id}
-              className="list-group-item p-3 d-flex justify-content-between align-items-center border-0 border-bottom bg-transparent main-log-item"
-              style={{ transition: "all 0.3s ease" }}
-            >
-              <div className="d-flex align-items-center gap-3">
-                <div className="position-relative">
-                  <img
-                    src={
-                      log.avatar
-                        ? log.avatar.startsWith("http")
-                          ? log.avatar
-                          : `${BACKEND_URL}${log.avatar.startsWith("/") ? "" : "/"}${log.avatar}`
-                        : `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`
-                    }
-                    alt="avatar"
-                    className="rounded-circle shadow-sm border"
-                    style={{
-                      width: "45px",
-                      height: "45px",
-                      objectFit: "cover",
-                    }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`;
-                    }}
-                  />
-                </div>
-
-                <div className="d-flex flex-column">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <span
-                      className="fw-bold text-dark mb-0"
-                      style={{ fontSize: "15px", letterSpacing: "-0.3px" }}
-                    >
-                      {log.email || "No Email"}
+                <div className="min-w-0">
+                  <div className="admin-log-item__title">
+                    <span className="admin-log-item__email">
+                      {log.email || t("header.noEmail")}
                     </span>
-
                     <Badge
                       bg={log.role === "Admin" ? "danger" : "info"}
                       className="text-uppercase"
-                      style={{ fontSize: "10px", padding: "3px 6px" }}
                     >
                       {log.role}
                     </Badge>
                   </div>
-                  <div className="d-flex align-items-center gap-2">
-                    <Badge
-                      bg="light"
-                      className="text-muted border-0 fw-normal p-0"
-                      style={{ fontSize: "11px" }}
-                    >
-                      <Activity size={10} className="me-1" />
-                      {t("adminLogs.activityCount", {
-                        count: log.logs?.length,
-                      })}
-                    </Badge>
+                  <div className="admin-log-item__subtext">
+                    <Activity size={14} className="me-1" />
+                    {t("adminLogs.activityCount", {
+                      count: log.logs?.length,
+                    })}
                   </div>
                 </div>
               </div>
 
               <Button
-                variant="primary"
-                size="sm"
-                style={{
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                  padding: "5px 15px",
-                }}
+                variant="light"
+                className="admin-secondary-btn"
                 onClick={() => {
                   setIsOpenModal(true);
                   setSelectUserLogs(log);
@@ -186,16 +170,52 @@ const LogsView = () => {
               >
                 {t("adminLogs.detail")}
               </Button>
+            </article>
+          ))
+        ) : (
+          <div className="admin-mobile-card m-3 text-center text-muted">
+            {t("common.noData")}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+
+  if (embedded) {
+    return (
+      <>
+        {content}
+        <SysLogsModal
+          isOpen={isOpenModal}
+          onClose={onCloseModal}
+          selectUserLogs={selectUserLogs}
+        />
+      </>
+    );
+  }
+
+  return (
+    <Container fluid className="admin-shell">
+      <div className="admin-shell__inner">
+        <div className="admin-page-header">
+          <div className="admin-page-header__content">
+            <div className="admin-page-header__eyebrow">
+              {t("adminNavTabs.activityLogs")}
             </div>
-          ))}
+            <h1 className="admin-page-header__title">{t("adminLogs.title")}</h1>
+            <p className="admin-page-header__subtitle">
+              {t("adminLogs.subtitle")}
+            </p>
+          </div>
         </div>
-      </Card>
-      <SysLogsModal
-        isOpen={isOpenModal}
-        onClose={onCloseModal}
-        selectUserLogs={selectUserLogs}
-      />
-    </>
+        {content}
+        <SysLogsModal
+          isOpen={isOpenModal}
+          onClose={onCloseModal}
+          selectUserLogs={selectUserLogs}
+        />
+      </div>
+    </Container>
   );
 };
 

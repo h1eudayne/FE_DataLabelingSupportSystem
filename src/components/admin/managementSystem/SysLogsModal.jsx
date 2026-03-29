@@ -2,12 +2,12 @@ import { Modal, Button, Table, Badge } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 const SysLogsModal = ({ isOpen, onClose, selectUserLogs }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const formatDateTime = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
 
-    return new Intl.DateTimeFormat("vi-VN", {
+    return new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-US", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
@@ -17,7 +17,13 @@ const SysLogsModal = ({ isOpen, onClose, selectUserLogs }) => {
     }).format(date);
   };
   return (
-    <Modal show={isOpen} onHide={onClose} size="lg" centered borderless>
+    <Modal
+      show={isOpen}
+      onHide={onClose}
+      size="lg"
+      centered
+      dialogClassName="admin-modal-dialog"
+    >
       <Modal.Header closeButton className="border-0 pb-0">
         <Modal.Title className="fw-bold">{t('sysLogs.activityDetail')}</Modal.Title>
       </Modal.Header>
@@ -63,7 +69,7 @@ const SysLogsModal = ({ isOpen, onClose, selectUserLogs }) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="3" className="text-center py-4 text-muted">
+                  <td colSpan="4" className="text-center py-4 text-muted">
                     {t('sysLogs.noData')}
                   </td>
                 </tr>

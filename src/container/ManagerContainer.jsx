@@ -10,6 +10,7 @@ import PerformanceBarChart from "../components/manager/home/PerformanceBarChart"
 import analyticsService from "../services/manager/analytics/analyticsService";
 
 const ManagerContainer = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.id;
@@ -25,12 +26,12 @@ const ManagerContainer = () => {
       <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
         <div className="text-center">
           <Spinner animation="border" variant="primary" />
-          <p className="mt-2 text-muted fw-bold">Đang tải dữ liệu...</p>
+          <p className="mt-2 text-muted fw-bold">{t("common.loadingData")}</p>
         </div>
       </div>
     );
 
-  const { t } = useTranslation();
+
 
   return (
     <Container fluid className="p-4 bg-light min-vh-100">

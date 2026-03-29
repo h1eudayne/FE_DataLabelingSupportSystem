@@ -4,10 +4,17 @@ import { useTranslation } from "react-i18next";
 import SimpleBar from "simplebar-react";
 import { useSelector } from "react-redux";
 
-const Navbar = () => {
+const Navbar = ({ isMobile = false, onCloseMobileMenu = () => {} }) => {
   const { user } = useSelector((state) => state.auth);
   const role = user?.role;
   const { t } = useTranslation();
+
+  const handleMenuClick = (event) => {
+    if (!isMobile) return;
+    if (event.target.closest("a")) {
+      onCloseMobileMenu();
+    }
+  };
 
   const menuItemStyle = {
     display: "flex",
@@ -28,7 +35,11 @@ const Navbar = () => {
   };
 
   return (
-    <div className="app-menu navbar-menu">
+    <div
+      className="app-menu navbar-menu"
+      onClick={handleMenuClick}
+      style={isMobile ? { width: "min(86vw, 320px)" } : undefined}
+    >
       <style>
         {`
           .nav-item .menu-link {
@@ -129,14 +140,14 @@ const Navbar = () => {
           <span className="logo-sm">
             <img
               src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1773346579/logo-darkmode-small_lknbuk.png"
-              alt="Logo"
+              alt={t("common.logo")}
               height="50"
             />
           </span>
           <span className="logo-lg">
             <img
               src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1773346453/logo-darkmode_txjdzq.png"
-              alt="Logo"
+              alt={t("common.logo")}
               height="55"
             />
           </span>
@@ -146,26 +157,26 @@ const Navbar = () => {
           <span className="logo-sm">
             <img
               src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842133/logo-2_v1wquw.png"
-              alt="Logo"
+              alt={t("common.logo")}
               height="50"
             />
           </span>
           <span className="logo-lg">
             <img
               src="https://res.cloudinary.com/deu3ur8w9/image/upload/v1769842054/logo-1_jc0rul.png"
-              alt="Logo"
+              alt={t("common.logo")}
               height="55"
             />
           </span>
         </Link>
       </div>
 
-      <div>
+      <SimpleBar className={`h-100 ${isMobile ? "mobile-sidebar-scroll" : ""}`}>
         <ul
           className="navbar-nav d-flex flex-column h-100"
           id="navbar-nav"
           style={{
-            minHeight: "calc(100vh - 60px)",
+            minHeight: isMobile ? "calc(100dvh - 60px)" : "calc(100vh - 60px)",
             gap: "8px",
           }}
         >
@@ -254,19 +265,6 @@ const Navbar = () => {
                       style={iconStyle}
                     ></i>
                     <span>{t("navbar.projects")}</span>
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link
-                    className="nav-link menu-link fs-18"
-                    to="/projects-datasets"
-                    style={menuItemStyle}
-                  >
-                    <i
-                      className="ri-database-2-line fs-20 me-2"
-                      style={iconStyle}
-                    ></i>
-                    <span>{t("navbar.datasets")}</span>
                   </Link>
                 </li>
               </>
@@ -373,7 +371,7 @@ const Navbar = () => {
             )}
           </div>
         </ul>
-      </div>
+      </SimpleBar>
     </div>
   );
 };

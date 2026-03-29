@@ -30,7 +30,7 @@ const WorkplaceReviewTask = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -39,7 +39,7 @@ const WorkplaceReviewTask = () => {
         const res = await projectService.getReviewProjects();
         setProjects(res.data || []);
       } catch (err) {
-        console.error("Lỗi tải dự án:", err);
+        console.error("Error loading projects:", err);
       } finally {
         setLoading(false);
       }
@@ -157,7 +157,7 @@ const WorkplaceReviewTask = () => {
                               {t("workplace.projectCard.assigned")}
                             </strong>{" "}
                             {new Date(project.assignedDate).toLocaleDateString(
-                              "vi-VN",
+                              i18n.language === "vi" ? "vi-VN" : "en-US",
                             )}
                           </span>
                         </div>
@@ -173,7 +173,7 @@ const WorkplaceReviewTask = () => {
                               {t("workplace.projectCard.deadline")}
                             </strong>{" "}
                             {new Date(project.deadline).toLocaleDateString(
-                              "vi-VN",
+                              i18n.language === "vi" ? "vi-VN" : "en-US",
                             )}
                             {isOverdue && (
                               <AlertTriangle size={12} className="ms-1" />

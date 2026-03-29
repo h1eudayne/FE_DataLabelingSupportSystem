@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import axios from "../../../axios.customize";
+import axios from "../../axios.customize";
 import forgotPasswordApi from "./forgotPassword.api";
 
-vi.mock("../../../axios.customize", () => ({
+vi.mock("../../axios.customize", () => ({
   default: {
     post: vi.fn(),
   },

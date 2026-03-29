@@ -1,19 +1,13 @@
-import { Card, Col } from "reactstrap";
+import { Card, Col } from "react-bootstrap";
 
 const StatCard = ({ icon, title, value, colorClass }) => (
-  <Col md={4}>
-    <Card
-      className="border-0 shadow-sm text-center p-3"
-      style={{ borderRadius: "15px" }}
-    >
-      <div className={`${colorClass} mb-2`}>{icon}</div>
-      <div
-        className="text-muted small fw-bold text-uppercase"
-        style={{ fontSize: "10px" }}
-      >
-        {title}
-      </div>
-      <h2 className="fw-bold m-0">{value}</h2>
+  <Col xs={12} sm={6} xl={4}>
+    <Card className="admin-metric-card">
+      <Card.Body>
+        <div className={`admin-metric-card__icon ${colorClass}`}>{icon}</div>
+        <div className="admin-metric-card__label">{title}</div>
+        <h2 className="admin-metric-card__value">{value}</h2>
+      </Card.Body>
     </Card>
   </Col>
 );

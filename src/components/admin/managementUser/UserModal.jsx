@@ -42,7 +42,7 @@ const UserModal = (props) => {
         <ModalBody>
           <Form>
             <FormGroup>
-              <Label>{t("userMgmt.role") || "Role"}</Label>
+              <Label>{t("userMgmt.role")}</Label>
               <Input
                 type="select"
                 name="role"
@@ -76,7 +76,7 @@ const UserModal = (props) => {
         </ModalBody>
         <ModalFooter>
           <button className="btn btn-light" onClick={toggle}>
-            {t("common.cancel") || "Cancel"}
+            {t("common.cancel")}
           </button>
           <button
             className="btn btn-primary"
@@ -89,7 +89,7 @@ const UserModal = (props) => {
               toggle();
             }}
           >
-            {t("common.save") || "Save Changes"}
+            {t("common.save")}
           </button>
         </ModalFooter>
       </Modal>

@@ -1,9 +1,11 @@
 import React, { useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { toggleChecklistItem } from "../../../store/annotator/labelling/labelingSlice";
+import { useTranslation } from "react-i18next";
 
 const GuidelineChecklistPanel = ({ labels, assignmentId }) => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
 
   const checklistState = useSelector(
     (state) => state.labeling.checklistByAssignment[assignmentId] || {},
@@ -34,10 +36,10 @@ const GuidelineChecklistPanel = ({ labels, assignmentId }) => {
     <div className="card shadow-sm border-0 mb-3">
       <div className="card-header bg-white border-bottom py-3">
         <h6 className="card-title mb-0 text-warning fw-bold">
-          <i className="ri-file-list-3-line me-2"></i>GUIDELINE CHECKLIST
+          <i className="ri-file-list-3-line me-2"></i>{t("guidelineChecklist.title")}
         </h6>
         <small className="text-muted">
-          Tick hết tiêu chí → mở khóa nhãn tương ứng
+          {t("guidelineChecklist.hint")}
         </small>
       </div>
       <div
@@ -92,7 +94,7 @@ const GuidelineChecklistPanel = ({ labels, assignmentId }) => {
                       </span>
                     ) : (
                       <span className="badge bg-success-subtle text-success me-2">
-                        <i className="ri-check-line me-1"></i>Tự do
+                        <i className="ri-check-line me-1"></i>{t("guidelineChecklist.free")}
                       </span>
                     )}
                   </button>
@@ -151,7 +153,7 @@ const GuidelineChecklistPanel = ({ labels, assignmentId }) => {
                     ) : (
                       <p className="text-muted small mb-0">
                         <i className="ri-information-line me-1"></i>
-                        Nhãn này không có tiêu chí, sử dụng tự do.
+                        {t("guidelineChecklist.noCriteria")}
                       </p>
                     )}
                   </div>

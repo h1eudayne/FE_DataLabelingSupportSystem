@@ -32,7 +32,7 @@ const ReviewWorkspace = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [taskList, setTaskList] = useState(location.state?.taskList || []);
   const [data, setData] = useState(location.state?.workspaceData || null);
@@ -124,7 +124,7 @@ const ReviewWorkspace = () => {
         setTaskList(tasks);
       }
     } catch (error) {
-      console.error("Lỗi lấy dữ liệu:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
       setRejectComment("");
@@ -204,7 +204,7 @@ const ReviewWorkspace = () => {
         );
       }
     } catch (error) {
-      alert("Lỗi hệ thống, không thể lưu phán quyết.");
+      alert(t("review.messages.systemError"));
     } finally {
       setSubmitting(false);
     }
@@ -339,7 +339,7 @@ const ReviewWorkspace = () => {
                   className={`border ${isOverdue ? "text-white" : "text-primary"} fw-bold px-2`}
                 >
                   <Clock size={12} className="me-1" />{" "}
-                  {new Date(data.deadline).toLocaleDateString("vi-VN")}
+                  {new Date(data.deadline).toLocaleDateString(i18n.language === "vi" ? "vi-VN" : "en-US")}
                 </Badge>
               </div>
             </div>

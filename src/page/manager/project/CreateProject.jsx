@@ -21,8 +21,30 @@ import projectService from "../../../services/manager/project/projectService";
 import { userService } from "../../../services/manager/project/userService";
 import taskService from "../../../services/manager/project/taskService";
 
+const DEFAULT_LABEL_PRESETS = [
+  { translationKey: "defaultLabel1", color: "#EF4444" },
+  { translationKey: "defaultLabel2", color: "#F59E0B" },
+];
+
+const createTranslatedDefaultLabel = (t, translationKey, color) => ({
+  translationKey,
+  isNameCustomized: false,
+  isChecklistCustomized: false,
+  name: t(`createProject.${translationKey}`),
+  color,
+  guideLine: "",
+  checklist: [t("createProject.defaultChecklistPlaceholder")],
+  exampleImage: null,
+  exampleImagePreview: null,
+});
+
+const createInitialDefaultLabels = (t) =>
+  DEFAULT_LABEL_PRESETS.map((label) =>
+    createTranslatedDefaultLabel(t, label.translationKey, label.color),
+  );
+
 const CreateProject = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const isSubmittingRef = useRef(false);
@@ -56,13 +78,25 @@ const CreateProject = () => {
     },
   ]);
 
-  const [defaultLabels, setDefaultLabels] = useState([
-    { name: "Ảnh bị lỗi", color: "#EF4444", guideLine: "", checklist: [""], exampleImage: null, exampleImagePreview: null },
-    { name: "Task không đạt yêu cầu", color: "#F59E0B", guideLine: "", checklist: [""], exampleImage: null, exampleImagePreview: null },
-  ]);
+  const [defaultLabels, setDefaultLabels] = useState(() =>
+    createInitialDefaultLabels(t),
+  );
 
   const addDefaultLabel = () =>
-    setDefaultLabels([...defaultLabels, { name: "", color: "#6B7280", guideLine: "", checklist: [""], exampleImage: null, exampleImagePreview: null }]);
+    setDefaultLabels([
+      ...defaultLabels,
+      {
+        translationKey: null,
+        isNameCustomized: false,
+        isChecklistCustomized: false,
+        name: "",
+        color: "#6B7280",
+        guideLine: "",
+        checklist: [t("createProject.defaultChecklistPlaceholder")],
+        exampleImage: null,
+        exampleImagePreview: null,
+      },
+    ]);
 
   const removeDefaultLabel = (index) => {
     if (defaultLabels.length === 0) return;
@@ -74,24 +108,30 @@ const CreateProject = () => {
   const updateDefaultLabel = (index, field, value) => {
     const clone = [...defaultLabels];
     clone[index][field] = value;
+    if (field === "name") {
+      clone[index].isNameCustomized = true;
+    }
     setDefaultLabels(clone);
   };
 
   const addDefaultChecklistItem = (labelIndex) => {
     const clone = [...defaultLabels];
     clone[labelIndex].checklist.push("");
+    clone[labelIndex].isChecklistCustomized = true;
     setDefaultLabels(clone);
   };
 
   const removeDefaultChecklistItem = (labelIndex, itemIndex) => {
     const clone = [...defaultLabels];
     clone[labelIndex].checklist = clone[labelIndex].checklist.filter((_, i) => i !== itemIndex);
+    clone[labelIndex].isChecklistCustomized = true;
     setDefaultLabels(clone);
   };
 
   const updateDefaultChecklistItem = (labelIndex, itemIndex, value) => {
     const clone = [...defaultLabels];
     clone[labelIndex].checklist[itemIndex] = value;
+    clone[labelIndex].isChecklistCustomized = true;
     setDefaultLabels(clone);
   };
 
@@ -110,6 +150,21 @@ const CreateProject = () => {
     clone[index].exampleImagePreview = null;
     setDefaultLabels(clone);
   };
+
+  useEffect(() => {
+    setDefaultLabels((prev) =>
+      prev.map((label) => ({
+        ...label,
+        name:
+          label.translationKey && !label.isNameCustomized
+            ? t(`createProject.${label.translationKey}`)
+            : label.name,
+        checklist: label.isChecklistCustomized
+          ? label.checklist
+          : [t("createProject.defaultChecklistPlaceholder")],
+      })),
+    );
+  }, [i18n.resolvedLanguage, t]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -142,7 +197,7 @@ const CreateProject = () => {
       }
     };
     fetchUsers();
-  }, []);
+  }, [t]);
 
   const addLabel = () =>
     setLabels([
@@ -227,17 +282,24 @@ const CreateProject = () => {
       toast.warning(t("createProject.warnDeadlineFuture"));
       return false;
     }
-    const validLabels = labels.filter((l) => l.name.trim());
-    if (validLabels.length === 0) {
+    const validDefaultLabels = defaultLabels.filter((l) => l.name.trim());
+    const validCustomLabels = labels.filter((l) => l.name.trim());
+    if (validDefaultLabels.length === 0 && validCustomLabels.length === 0) {
       toast.warning(t("createProject.warnLabel"));
       return false;
     }
-    for (let i = 0; i < validLabels.length; i++) {
-      const filledChecklist = validLabels[i].checklist.filter((c) => c.trim());
+    for (const lbl of validDefaultLabels) {
+      const filledChecklist = (lbl.checklist || []).filter((c) => c.trim());
       if (filledChecklist.length === 0) {
-        toast.warning(
-          t("createProject.warnChecklist", { name: validLabels[i].name }),
-        );
+        setShowDefaultLabels(true);
+        toast.warning(t("createProject.warnChecklist", { name: lbl.name }));
+        return false;
+      }
+    }
+    for (const lbl of validCustomLabels) {
+      const filledChecklist = (lbl.checklist || []).filter((c) => c.trim());
+      if (filledChecklist.length === 0) {
+        toast.warning(t("createProject.warnChecklist", { name: lbl.name }));
         return false;
       }
     }
@@ -266,6 +328,9 @@ const CreateProject = () => {
 
     try {
       const deadlineISO = new Date(projectInfo.deadline).toISOString();
+      const translatedDefaultChecklistPlaceholder = t(
+        "createProject.defaultChecklistPlaceholder",
+      );
 
       const validDefaultLabels = defaultLabels.filter((l) => l.name.trim());
       const defaultLabelClassesPayload = [];
@@ -278,11 +343,20 @@ const CreateProject = () => {
             console.error("Failed to upload default label sample image:", err);
           }
         }
+        const resolvedDefaultName =
+          l.translationKey && !l.isNameCustomized
+            ? t(`createProject.${l.translationKey}`)
+            : l.name;
+        const resolvedDefaultChecklist =
+          l.translationKey && !l.isChecklistCustomized
+            ? [translatedDefaultChecklistPlaceholder]
+            : l.checklist || [];
+
         defaultLabelClassesPayload.push({
-          name: l.name?.trim() || "",
+          name: resolvedDefaultName?.trim() || "",
           color: l.color || "#EF4444",
           guideLine: l.guideLine?.trim() || "",
-          checklist: l.checklist?.filter((c) => c.trim()) || [],
+          checklist: resolvedDefaultChecklist.filter((c) => c.trim()),
           exampleImageUrl,
           isDefault: true,
         });
@@ -397,7 +471,7 @@ const CreateProject = () => {
         </h4>
       </div>
 
-      <Form onSubmit={handleSubmit}>
+      <Form onSubmit={handleSubmit} noValidate>
         <Row>
           <Col lg={7}>
             <Card className="shadow-sm border-0 mb-4">
@@ -593,14 +667,14 @@ const CreateProject = () => {
                 <div>
                   <h6 className="card-title mb-0 fs-13 fw-bold">
                     <i className="ri-flag-line me-1"></i>
-                    {t("createProject.defaultLabelsTitle") || "Nhãn mặc định (Flag)"}
+                    {t("createProject.defaultLabelsTitle")}
                     <span className="badge bg-warning text-dark ms-2">
                       {defaultLabels.length}
                     </span>
                   </h6>
                   {!showDefaultLabels && defaultLabels.length > 0 && (
                     <small className="text-muted">
-                      {defaultLabels.map((dl) => dl.name).filter(Boolean).join(", ") || "(chưa đặt tên)"}
+                      {defaultLabels.map((dl) => dl.name).filter(Boolean).join(", ") || "(unnamed)"}
                     </small>
                   )}
                 </div>
@@ -611,14 +685,14 @@ const CreateProject = () => {
                 >
                   <i className={`ri-${showDefaultLabels ? "arrow-up-s" : "pencil"}-line me-1`}></i>
                   {showDefaultLabels
-                    ? (t("createProject.collapseDefaultLabels") || "Thu gọn")
-                    : (t("createProject.editDefaultLabels") || "Chỉnh sửa")}
+                    ? t("createProject.collapseDefaultLabels")
+                    : t("createProject.editDefaultLabels")}
                 </button>
               </div>
               {showDefaultLabels && (
                 <CardBody className="p-3">
                   <small className="text-muted d-block mb-2">
-                    {t("createProject.defaultLabelsHint") || "Các nhãn dùng để đánh dấu ảnh lỗi / task không đạt yêu cầu. Annotator có thể chọn mà không cần vẽ annotation."}
+                    {t("createProject.defaultLabelsHint")}
                   </small>
                   {defaultLabels.map((dl, index) => (
                     <div
@@ -633,7 +707,7 @@ const CreateProject = () => {
                       ></button>
                       <div className="d-flex gap-2 mb-2">
                         <Input
-                          placeholder={t("createProject.defaultLabelName") || "Tên nhãn flag..."}
+                          placeholder={t("createProject.defaultLabelName")}
                           value={dl.name}
                           onChange={(e) =>
                             updateDefaultLabel(index, "name", e.target.value)
@@ -713,7 +787,7 @@ const CreateProject = () => {
                       <div className="mt-2 ps-2 border-start border-2 border-warning">
                         <small className="text-muted fw-semibold d-block mb-1">
                           <i className="ri-checkbox-multiple-line me-1"></i>
-                          Checklist
+                          {t("createProject.checklistSection")}
                         </small>
                         {dl.checklist.map((item, itemIdx) => (
                           <div
@@ -754,7 +828,7 @@ const CreateProject = () => {
                     onClick={addDefaultLabel}
                   >
                     <i className="ri-add-line me-1"></i>
-                    {t("createProject.addDefaultLabel") || "Thêm nhãn mặc định"}
+                    {t("createProject.addDefaultLabel")}
                   </Button>
                 </CardBody>
               )}
@@ -864,8 +938,8 @@ const CreateProject = () => {
                       </div>
 
                       <div className="mt-2 ps-2 border-start border-2 border-info">
-                        <small className="text-danger fw-bold d-block mb-1">
-                          <i className="ri-checkbox-multiple-line me-1"></i>
+                        <small className="text-body fw-semibold d-block mb-1">
+                          <i className="ri-checkbox-multiple-line me-1 text-info"></i>
                           {t("createProject.checklistRequired")}
                         </small>
                         {label.checklist.map((item, itemIdx) => (

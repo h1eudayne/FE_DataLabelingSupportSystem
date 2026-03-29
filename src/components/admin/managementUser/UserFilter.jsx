@@ -1,25 +1,19 @@
 import { useTranslation } from "react-i18next";
-import { Col, Row } from "reactstrap";
 
-const UserFilter = (props) => {
-  const { onSearch } = props;
+const UserFilter = ({ onSearch }) => {
   const { t } = useTranslation();
+
   return (
-    <>
-      <Row className="g-3">
-        <Col sm={4}>
-          <div className="search-box">
-            <input
-              type="text"
-              className="form-control"
-              placeholder={t("userFilter.searchPlaceholder")}
-              onChange={(e) => onSearch(e.target.value)}
-            />
-            <i className="ri-search-line search-icon"></i>
-          </div>
-        </Col>
-      </Row>
-    </>
+    <div className="mb-4">
+      <div className="admin-search-field">
+        <i className="ri-search-line"></i>
+        <input
+          type="text"
+          placeholder={t("userFilter.searchPlaceholder")}
+          onChange={(event) => onSearch(event.target.value)}
+        />
+      </div>
+    </div>
   );
 };
 

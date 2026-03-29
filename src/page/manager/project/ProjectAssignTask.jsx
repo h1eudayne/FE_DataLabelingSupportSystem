@@ -145,19 +145,19 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
     const totalAssignments = targetAnnotators.length;
     const totalImages = quantityMode === "all" ? safeAvailable : qtyPerAnnotator * targetAnnotators.length;
     const confirmResult = await Swal.fire({
-      title: t("projectAssign.confirmTitle") || "Confirm Assignment",
+      title: t("projectAssign.confirmTitle"),
       html: `
         <div style="text-align:left; font-size:14px;">
-          <p><strong>${t("projectAssign.annotatorCount") || "Annotators"}:</strong> ${targetAnnotators.length}</p>
-          <p><strong>${t("projectAssign.reviewerCount") || "Reviewers"}:</strong> ${targetReviewers.length}</p>
-          <p><strong>${t("projectAssign.imagesPerAnnotator") || "Images/Annotator"}:</strong> ~${qtyPerAnnotator}</p>
-          <p><strong>${t("projectAssign.totalAssignments") || "Total calls"}:</strong> ${totalAssignments}</p>
+          <p><strong>${t("projectAssign.annotatorCount")}:</strong> ${targetAnnotators.length}</p>
+          <p><strong>${t("projectAssign.reviewerCount")}:</strong> ${targetReviewers.length}</p>
+          <p><strong>${t("projectAssign.imagesPerAnnotator")}:</strong> ~${qtyPerAnnotator}</p>
+          <p><strong>${t("projectAssign.totalAssignments")}:</strong> ${totalAssignments}</p>
         </div>
       `,
       icon: "question",
       showCancelButton: true,
       confirmButtonText: t("projectAssign.submitBtn"),
-      cancelButtonText: t("projectAssign.cancelBtn") || "Cancel",
+      cancelButtonText: t("projectAssign.cancelBtn"),
     });
 
     if (!confirmResult.isConfirmed) return;
@@ -208,11 +208,11 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
       setAssignLog(log);
 
       if (errorCount === 0) {
-        Swal.fire(t("projectAssign.assignSuccess"), `${successCount} ${t("projectAssign.assignmentsCreated") || "assignments created successfully"}`, "success");
+        Swal.fire(t("projectAssign.assignSuccess"), `${successCount} ${t("projectAssign.assignmentsCreated")}`, "success");
       } else {
         Swal.fire(
-          t("projectAssign.partialSuccess") || "Partial Success",
-          `${successCount} ${t("projectAssign.successMsgShort") || "succeeded"}, ${errorCount} ${t("projectAssign.failedMsgShort") || "failed"}`,
+          t("projectAssign.partialSuccess"),
+          `${successCount} ${t("projectAssign.successMsgShort")}, ${errorCount} ${t("projectAssign.failedMsgShort")}`,
           "warning",
         );
       }
@@ -278,7 +278,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                 className="btn btn-sm btn-soft-primary"
                 onClick={fetchProject}
                 disabled={loading}
-                title={t("common.refresh") || "Refresh"}
+                title={t("common.refresh")}
               >
                 <i className={`ri-refresh-line ${loading ? 'ri-spin' : ''}`}></i>
               </button>
@@ -317,7 +317,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
               {}
               <div className="mb-3">
                 <div className="d-flex justify-content-between mb-1 small">
-                  <span className="text-muted">{t("projectAssign.assignProgress") || "Assignment Progress"}</span>
+                  <span className="text-muted">{t("projectAssign.assignProgress")}</span>
                   <span className="fw-semibold">{assignPercent}%</span>
                 </div>
                 <div className="progress progress-sm mb-2" style={{ height: '6px' }}>
@@ -327,7 +327,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                   ></div>
                 </div>
                 <div className="d-flex justify-content-between mb-1 small">
-                  <span className="text-muted">{t("projectAssign.completionProgress") || "Completion Progress"}</span>
+                  <span className="text-muted">{t("projectAssign.completionProgress")}</span>
                   <span className="fw-semibold">{progressPercent}%</span>
                 </div>
                 <div className="progress progress-sm" style={{ height: '6px' }}>
@@ -372,7 +372,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                   <div className="mb-2">
                     <small className="text-muted fw-semibold d-block mb-1">
                       <i className="ri-flag-line me-1"></i>
-                      {t("datasets.labelDefault") || "Default"}
+                      {t("datasets.labelDefault")}
                     </small>
                     <div className="d-flex flex-wrap gap-2">
                       {defaultLabels.map((l) => (
@@ -387,7 +387,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                   <div>
                     <small className="text-muted fw-semibold d-block mb-1">
                       <i className="ri-folder-line me-1"></i>
-                      {t("datasets.labelProject") || "Project"}
+                      {t("datasets.labelProject")}
                     </small>
                     <div className="d-flex flex-wrap gap-2">
                       {projectLabels.map((l) => (
@@ -543,7 +543,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
               <div className="card-header bg-light d-flex justify-content-between align-items-center">
                 <h6 className="card-title mb-0">
                   <i className="ri-file-list-3-line me-1"></i>
-                  {t("projectAssign.assignmentLog") || "Assignment Log"}
+                  {t("projectAssign.assignmentLog")}
                 </h6>
                 <button className="btn btn-sm btn-soft-secondary" onClick={() => setAssignLog([])}>
                   <i className="ri-close-line"></i>
@@ -557,7 +557,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                         <th>Annotator</th>
                         <th>Reviewer</th>
                         <th className="text-center">{t("projectAssign.colTasks")}</th>
-                        <th className="text-center">{t("projectAssign.colStatus") || "Status"}</th>
+                        <th className="text-center">{t("projectAssign.colStatus")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -614,7 +614,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                     onClick={() => setAnnotatorMode("all")}
                   >
                     <i className="ri-team-line me-1"></i>
-                    {t("projectAssign.allInProject") || "All in Project"} ({projectAnnotators.length || annotators.length})
+                    {t("projectAssign.allInProject")} ({projectAnnotators.length || annotators.length})
                   </button>
                   <button
                     type="button"
@@ -622,7 +622,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                     onClick={() => setAnnotatorMode("individual")}
                   >
                     <i className="ri-user-line me-1"></i>
-                    {t("projectAssign.individual") || "Individual"}
+                    {t("projectAssign.individual")}
                   </button>
                 </div>
                 {annotatorMode === "individual" && (
@@ -631,21 +631,21 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                       <input
                         type="text"
                         className="form-control form-control-sm"
-                        placeholder={t("projectAssign.searchPlaceholder") || "Search by name or email..."}
+                        placeholder={t("projectAssign.searchPlaceholder")}
                         value={annotatorSearch}
                         onChange={(e) => setAnnotatorSearch(e.target.value)}
                       />
                     </div>
                     <div className="p-2" style={{ maxHeight: '180px', overflowY: 'auto' }}>
                       {annotators.length === 0 ? (
-                        <small className="text-muted">{t("projectAssign.noAnnotatorsAvailable") || "No annotators available"}</small>
+                        <small className="text-muted">{t("projectAssign.noAnnotatorsAvailable")}</small>
                       ) : (() => {
                         const filtered = annotators.filter((u) =>
                           u.fullName?.toLowerCase().includes(annotatorSearch.toLowerCase()) ||
                           u.email?.toLowerCase().includes(annotatorSearch.toLowerCase())
                         );
                         return filtered.length === 0 ? (
-                          <small className="text-muted">{t("projectAssign.noResults") || "No results found"}</small>
+                          <small className="text-muted">{t("projectAssign.noResults")}</small>
                         ) : filtered.map((u) => (
                           <div key={u.id} className="form-check mb-1">
                             <input
@@ -671,7 +671,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                     {annotators.length > 0 && (
                       <div className="border-top px-2 py-1">
                         <small className="text-muted">
-                          {t("projectAssign.selected") || "Selected"}: {selectedAnnotators.length}/{annotators.length}
+                          {t("projectAssign.selected")}: {selectedAnnotators.length}/{annotators.length}
                         </small>
                       </div>
                     )}
@@ -681,7 +681,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                   <div className="border rounded p-2 bg-success-subtle">
                     <small className="text-success">
                       <i className="ri-check-double-line me-1"></i>
-                      {t("projectAssign.allAnnotatorsSelected") || "All annotators in project will be assigned"}
+                      {t("projectAssign.allAnnotatorsSelected")}
                       {projectAnnotators.length > 0 && (
                         <span className="d-block mt-1 text-muted">
                           {projectAnnotators.map((m) => m.fullName).join(", ")}
@@ -705,7 +705,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                     onClick={() => setReviewerMode("all")}
                   >
                     <i className="ri-team-line me-1"></i>
-                    {t("projectAssign.allInProject") || "All in Project"} ({projectReviewers.length || reviewers.length})
+                    {t("projectAssign.allInProject")} ({projectReviewers.length || reviewers.length})
                   </button>
                   <button
                     type="button"
@@ -713,7 +713,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                     onClick={() => setReviewerMode("individual")}
                   >
                     <i className="ri-user-line me-1"></i>
-                    {t("projectAssign.individual") || "Individual"}
+                    {t("projectAssign.individual")}
                   </button>
                 </div>
                 {reviewerMode === "individual" && (
@@ -722,21 +722,21 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                       <input
                         type="text"
                         className="form-control form-control-sm"
-                        placeholder={t("projectAssign.searchPlaceholder") || "Search by name or email..."}
+                        placeholder={t("projectAssign.searchPlaceholder")}
                         value={reviewerSearch}
                         onChange={(e) => setReviewerSearch(e.target.value)}
                       />
                     </div>
                     <div className="p-2" style={{ maxHeight: '180px', overflowY: 'auto' }}>
                       {reviewers.length === 0 ? (
-                        <small className="text-muted">{t("projectAssign.noReviewersAvailable") || "No reviewers available"}</small>
+                        <small className="text-muted">{t("projectAssign.noReviewersAvailable")}</small>
                       ) : (() => {
                         const filtered = reviewers.filter((u) =>
                           u.fullName?.toLowerCase().includes(reviewerSearch.toLowerCase()) ||
                           u.email?.toLowerCase().includes(reviewerSearch.toLowerCase())
                         );
                         return filtered.length === 0 ? (
-                          <small className="text-muted">{t("projectAssign.noResults") || "No results found"}</small>
+                          <small className="text-muted">{t("projectAssign.noResults")}</small>
                         ) : filtered.map((u) => (
                           <div key={u.id} className="form-check mb-1">
                             <input
@@ -762,7 +762,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                     {reviewers.length > 0 && (
                       <div className="border-top px-2 py-1">
                         <small className="text-muted">
-                          {t("projectAssign.selected") || "Selected"}: {selectedReviewers.length}/{reviewers.length}
+                          {t("projectAssign.selected")}: {selectedReviewers.length}/{reviewers.length}
                         </small>
                       </div>
                     )}
@@ -772,7 +772,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                   <div className="border rounded p-2 bg-info-subtle">
                     <small className="text-info">
                       <i className="ri-check-double-line me-1"></i>
-                      {t("projectAssign.allReviewersSelected") || "Reviewers assigned by round-robin"}
+                      {t("projectAssign.allReviewersSelected")}
                       {projectReviewers.length > 0 && (
                         <span className="d-block mt-1 text-muted">
                           {projectReviewers.map((m) => m.fullName).join(", ")}
@@ -796,7 +796,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                     onClick={() => { setQuantityMode("all"); setQuantity(""); }}
                   >
                     <i className="ri-checkbox-multiple-line me-1"></i>
-                    {t("projectAssign.allAvailable") || "All Available"} ({Math.max(availableItems, 0)})
+                    {t("projectAssign.allAvailable")} ({Math.max(availableItems, 0)})
                   </button>
                   <button
                     type="button"
@@ -804,7 +804,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                     onClick={() => setQuantityMode("custom")}
                   >
                     <i className="ri-edit-line me-1"></i>
-                    {t("projectAssign.customQuantity") || "Custom"}
+                    {t("projectAssign.customQuantity")}
                   </button>
                 </div>
                 {quantityMode === "custom" ? (
@@ -829,9 +829,9 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                   <div className="border rounded p-2 bg-primary-subtle">
                     <small className="text-primary">
                       <i className="ri-check-double-line me-1"></i>
-                      {t("projectAssign.allAvailableDesc") || "All available images will be distributed evenly across selected annotators"}
+                      {t("projectAssign.allAvailableDesc")}
                       <span className="d-block mt-1 fw-semibold">
-                        ~{Math.max(availableItems, 0)} {t("projectAssign.imagesToAssign") || "images to assign"}
+                        ~{Math.max(availableItems, 0)} {t("projectAssign.imagesToAssign")}
                       </span>
                     </small>
                   </div>
@@ -840,15 +840,15 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
 
               {}
               <div className="border rounded p-2 mb-3 bg-light">
-                <small className="fw-bold d-block mb-1">{t("projectAssign.summary") || "Summary"}:</small>
+                <small className="fw-bold d-block mb-1">{t("projectAssign.summary")}:</small>
                 <small className="text-muted d-block">
-                  • Annotators: {annotatorMode === "all" ? `${t("projectAssign.allLabel") || "All"} (${projectAnnotators.length || annotators.length})` : (selectedAnnotators.length > 0 ? selectedAnnotators.length : "—")}
+                  • Annotators: {annotatorMode === "all" ? `${t("projectAssign.allLabel")} (${projectAnnotators.length || annotators.length})` : (selectedAnnotators.length > 0 ? selectedAnnotators.length : "—")}
                 </small>
                 <small className="text-muted d-block">
-                  • Reviewers: {reviewerMode === "all" ? `${t("projectAssign.allLabel") || "All"} (${projectReviewers.length || reviewers.length})` : (selectedReviewers.length > 0 ? selectedReviewers.length : "—")}
+                  • Reviewers: {reviewerMode === "all" ? `${t("projectAssign.allLabel")} (${projectReviewers.length || reviewers.length})` : (selectedReviewers.length > 0 ? selectedReviewers.length : "—")}
                 </small>
                 <small className="text-muted d-block">
-                  • {t("projectAssign.imagesLabel") || "Images"}: {quantityMode === "all" ? `${t("projectAssign.allLabel") || "All"} (${Math.max(availableItems, 0)})` : (quantity || "—")}
+                  • {t("projectAssign.imagesLabel")}: {quantityMode === "all" ? `${t("projectAssign.allLabel")} (${Math.max(availableItems, 0)})` : (quantity || "—")}
                 </small>
               </div>
 

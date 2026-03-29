@@ -10,7 +10,14 @@
     "settings": "Cài đặt hệ thống",
     "logout": "Đăng xuất",
     "defaultUser": "Người dùng",
-    "language": "Ngôn ngữ"
+    "language": "Ngôn ngữ",
+    "fullscreen": "Toàn màn hình",
+    "avatarAlt": "Ảnh đại diện người dùng",
+    "noEmail": "Chưa có email",
+    "languages": {
+      "english": "Tiếng Anh",
+      "vietnamese": "Tiếng Việt"
+    }
   },
   "navbar": {
     "dashboard": "Dashboard",
@@ -25,7 +32,10 @@
     "userManagement": "Quản lý người dùng",
     "systemLogs": "Nhật ký hệ thống",
     "settingsMenu": "Cài đặt",
-    "projects-overview": "Tổng dự án"
+    "projects-overview": "Tổng dự án",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu",
+    "mobileNavigation": "Điều hướng di động"
   },
   "auth": {
     "welcomeBack": "Chào mừng trở lại!",
@@ -283,7 +293,24 @@
     "resolveSuccess": "Dispute đã được xử lý thành công!",
     "resolveError": "Không thể xử lý dispute",
     "cancel": "Hủy",
-    "confirmArbitrate": "Xác nhận phân xử"
+    "confirmArbitrate": "Xác nhận phân xử",
+    "totalDisputes": "Tổng tranh chấp",
+    "disputeLog": "Dispute Log",
+    "filter": "Lọc",
+    "escalated": "Đã leo thang",
+    "ago": "trước",
+    "resolve": "Xử lý",
+    "view": "Xem",
+    "showing": "Hiển thị",
+    "of": "trên",
+    "results": "kết quả",
+    "previous": "Trước",
+    "next": "Tiếp",
+    "viewModalTitle": "Chi tiết tranh chấp",
+    "escalationWarning": "Cảnh báo leo thang",
+    "escalationDesc": "Tranh chấp này đã chờ {{days}} ngày. Có thể sẽ được chuyển lên Admin nếu không xử lý sớm.",
+    "pending": "đang chờ",
+    "close": "Đóng"
   },
   "reviewAudit": {
     "title": "Review Audit — Sampling",
@@ -366,6 +393,8 @@
     "labelName": "Tên nhãn...",
     "labelGuide": "Hướng dẫn chung cho nhãn này...",
     "checklistRequired": "Checklist bắt buộc * (tick đầy đủ mới gán nhãn):",
+    "defaultChecklistPlaceholder": "Xác nhận đối tượng đúng nhãn / chỉnh sửa theo dự án",
+    "checklistSection": "Checklist *",
     "conditionPlaceholder": "Điều kiện",
     "addCondition": "+ Thêm điều kiện",
     "addLabel": "+ Thêm nhãn mới",
@@ -519,6 +548,33 @@
     "deleteError": "Lỗi!",
     "deleteErrorMsg": "Không thể xóa dự án này."
   },
+  "projectDetail": {
+    "loading": "Đang tải chi tiết dự án...",
+    "loadError": "Không thể tải chi tiết dự án",
+    "notFound": "Không tìm thấy dự án",
+    "backToProjects": "Quay lại danh sách dự án",
+    "tabDatasets": "Dữ liệu",
+    "tabAssign": "Phân công",
+    "tabDisputes": "Tranh chấp",
+    "tabReview": "Kiểm duyệt",
+    "back": "Quay lại",
+    "adminReadOnly": "Chế độ Admin chỉ được xem dữ liệu dự án, không chỉnh sửa.",
+    "type": "Loại",
+    "description": "Mô tả dự án",
+    "noDescription": "Không có mô tả nào được cung cấp.",
+    "labelConfig": "Cấu hình nhãn",
+    "defaultLabel": "MẶC ĐỊNH",
+    "memberPerformance": "Hiệu suất thành viên",
+    "tableMember": "Thành viên",
+    "tableRole": "Vai trò",
+    "tableTasks": "Công việc (Giao/Xong)",
+    "tableProgress": "Tiến độ",
+    "totalProgress": "Tiến độ tổng thể",
+    "items": "Dữ liệu",
+    "processed": "Đã xử lý",
+    "deadline": "Hạn chót",
+    "manager": "Người quản lý phụ trách"
+  },
   "exportPage": {
     "title": "Xuất dữ liệu",
     "breadcrumbManage": "Quản lý",
@@ -551,7 +607,10 @@
     "exportError": "Xuất dữ liệu thất bại.",
     "cannotExport": "Không thể Export",
     "taskNotApprovedReason": "Còn {{count}} task chưa Approved",
-    "disputePendingReason": "Còn {{count}} dispute đang chờ xử lý"
+    "disputePendingReason": "Còn {{count}} dispute đang chờ xử lý",
+    "allApproved": "Tất cả task đã được Approved",
+    "noDisputes": "Không có tranh chấp đang chờ",
+    "exportDesc": "Xuất dữ liệu đã gán nhãn của dự án này"
   },
 
   "profile": {
@@ -570,6 +629,7 @@
   "admin": {
     "project": {
       "listTitle": "Danh sách dự án",
+      "overviewSubtitle": "Theo dõi trạng thái triển khai, tiến độ và thành viên tham gia trên toàn bộ dự án.",
       "searchPlaceholder": "Tìm tên dự án...",
       "searching": "Đang tìm kiếm...",
       "noResult": "Không tìm thấy dự án nào phù hợp với \"{{searchTerm}}\"",
@@ -590,6 +650,16 @@
       "new":"Dự án mới"
     },
     "projectDetail": {
+      "loading": "Đang tải chi tiết dự án...",
+      "loadError": "Không thể tải chi tiết dự án",
+      "notFound": "Không tìm thấy dự án",
+      "backToProjects": "Quay lại danh sách dự án",
+      "tabDatasets": "Dữ liệu",
+      "tabAssign": "Phân công",
+      "tabDisputes": "Tranh chấp",
+      "tabReview": "Kiểm duyệt",
+      "back": "Quay lại",
+      "adminReadOnly": "Chế độ Admin chỉ được xem dữ liệu dự án, không chỉnh sửa.",
       "type": "Loại",
       "description": "Mô tả dự án",
       "noDescription": "Không có mô tả nào được cung cấp.",
@@ -604,7 +674,8 @@
       "items": "Dữ liệu",
       "processed": "Đã xử lý",
       "deadline": "Hạn chót",
-      "manager": "Người quản lý phụ trách"
+      "manager": "Người quản lý phụ trách",
+      "detailSubtitle": "Xem nhanh phạm vi dự án, hiệu suất thành viên và tín hiệu hoàn thành trong cùng một màn hình."
     },
     "userManagement": "Quản lý người dùng",
     "systemLogs": "Nhật ký hệ thống",
@@ -624,7 +695,9 @@
     "logAction": "Hành động",
     "logUser": "Người thực hiện",
     "logDetail": "Chi tiết",
-    "errorStatus": "Không thể vô hiệu hóa: User này vẫn còn dự án chưa hoàn thành!"
+    "errorStatus": "Không thể vô hiệu hóa: User này vẫn còn dự án chưa hoàn thành!",
+    "cannotChangeRole": "Không thể đổi vai trò: User này vẫn còn dự án chưa hoàn thành!",
+    "errorOccurred": "Đã xảy ra lỗi"
   },
   "common": {
     "loading": "Đang tải...",
@@ -656,7 +729,10 @@
     "download": "Tải xuống",
     "upload": "Tải lên",
     "refresh": "Làm mới",
-    "welcomeBack":"Chào mừng trở lại!"
+    "welcomeBack":"Chào mừng trở lại!",
+    "menu": "Menu",
+    "logo": "Logo ứng dụng",
+    "loadingData": "Đang tải dữ liệu..."
   },
   "annotatorDashboardComp": {
     "reviewerFeedback": "Phản hồi từ Reviewer",
@@ -943,7 +1019,7 @@
     "statistics": "Thống kê",
     "totalProjects": "Tổng dự án",
     "selectProject": "Vui lòng chọn dự án",
-    "projectPrefix": "Project",
+    "projectPrefix": "Dự án",
     "loadingData": "Đang tải dữ liệu...",
     "labelConfig": "Cấu hình nhãn",
     "labelName": "Tên Nhãn",
@@ -978,8 +1054,14 @@
     "notAllApproved": "Chưa Approved hết task",
     "disputePendingShort": "Còn Dispute pending",
     "exportJson": "Xuất dữ liệu JSON",
+    "exportData": "Xuất dữ liệu",
+    "exportModalTitle": "Xuất dữ liệu dự án",
+    "exportEligibility": "Điều kiện xuất dữ liệu",
+    "exportFormat": "Định dạng xuất",
+    "exportAction": "Xuất {{format}}",
     "exporting": "Đang xuất...",
     "exportNotEligible": "Export (Chưa đủ ĐK)",
+    "uploadData": "Tải dữ liệu lên",
     "uploading": "Đang tải...",
     "cannotExport": "Không thể Export!",
     "tasksNotApprovedDetail": "Còn {{remaining}} task chưa Approved ({{approved}}/{{total}})",
@@ -1009,7 +1091,8 @@
     "editLabelFailed": "Cập nhật nhãn thất bại",
     "labelType": "Loại",
     "labelDefault": "Mặc định",
-    "labelProject": "Dự án"
+    "labelProject": "Dự án",
+    "taskLockedTitle": "Task đã hoàn tất, không thể chỉnh sửa"
   },
   "analytics": {
     "totalProjects": "Tổng Dự án",
@@ -1072,7 +1155,22 @@
     "alertHighRejectProject": "Dự án \"{{name}}\" có Rejection Rate {{rate}}% (> 30%) — Cần xem xét lại quy trình.",
     "alertHighRejectAvg": "Tỷ lệ Reject trung bình {{rate}}% vượt ngưỡng 30% — Cần điều chỉnh quy trình.",
     "alertDeadlineRisk": "Dự án \"{{name}}\" còn {{days}} ngày nhưng tiến độ mới {{progress}}% — Nguy cơ trễ deadline.",
-    "alertCriticalErrors": "Annotator \"{{name}}\" có {{count}} lỗi nghiêm trọng — Cần đào tạo lại."
+    "alertCriticalErrors": "Annotator \"{{name}}\" có {{count}} lỗi nghiêm trọng — Cần đào tạo lại.",
+    "threeKeyMetrics": "3 Chỉ số Chất lượng Chính",
+    "finalAccuracy": "Độ chính xác cuối cùng",
+    "tasksCorrect": "tasks đúng",
+    "forCustomer": "Cho khách hàng",
+    "firstPassAccuracy": "Đúng từ lần đầu",
+    "correctFirstTime": "đúng ngay lần đầu",
+    "forInternal": "Nội bộ",
+    "reworkRate": "Tỷ lệ làm lại",
+    "tasksRejected": "tasks bị reject",
+    "highRework": "Cần cải thiện",
+    "goodRework": "Tốt",
+    "qualityMetricsDesc": "PA = Tỷ lệ approved đúng từ lần review đầu tiên / Tổng data items. Final Accuracy, First-pass và Rework Rate là 3 chỉ số đo lường chất lượng chính.",
+    "finalAccuracyCol": "Độ chính xác",
+    "firstPassCol": "Lần đầu",
+    "reworkRateCol": "Làm lại"
   },
   "reviewWorkspace": {
     "backBtn": "Quay lại",
@@ -1153,7 +1251,33 @@
     "enterNewPassword": "Nhập mật khẩu mới",
     "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
     "passwordResetSuccess": "Mật khẩu đã được đặt lại thành công",
-    "passwordResetFailed": "Đặt lại mật khẩu thất bại"
+    "passwordResetFailed": "Đặt lại mật khẩu thất bại",
+    "unlockSuccess": "Tài khoản đã được mở khóa",
+    "lockSuccess": "Tài khoản đã bị khóa",
+    "statusUpdateFailed": "Cập nhật trạng thái thất bại",
+    "unlockAccount": "Mở khóa tài khoản",
+    "lockAccount": "Khóa tài khoản",
+    "confirmUnlock": "Xác nhận mở khóa tài khoản?",
+    "confirmLock": "Xác nhận khóa tài khoản?",
+    "userInProjectWarning": "Người dùng đang tham gia {{count}} dự án!",
+    "userInProjectNote": "Việc khóa tài khoản này cần được bàn giao cho Manager quản lý dự án của người dùng. Hãy liên hệ Manager trước khi khóa.",
+    "unlockInProjectNote": "Người dùng đang trong {{count}} dự án. Mở khóa sẽ cho phép họ tiếp tục làm việc.",
+    "lockNoProjectNote": "Người dùng không tham gia dự án nào. Có thể khóa an toàn.",
+    "importExcel": "Import Excel",
+    "importInvalidType": "Chỉ chấp nhận file .xlsx và .xls",
+    "importFileTooLarge": "File phải nhỏ hơn 5MB",
+    "selectFile": "Chọn file Excel",
+    "importHint": "Tối đa 5MB, chỉ .xlsx hoặc .xls. Chỉ có thể import Annotator và Reviewer.",
+    "importing": "Đang import...",
+    "importReport": "Báo cáo Import",
+    "success": "Thành công",
+    "failed": "Thất bại",
+    "row": "Dòng",
+    "error": "Lỗi",
+    "import": "Import",
+    "resetPasswordConfirmTitle": "Xác nhận đặt lại mật khẩu?",
+    "resetPasswordDefaultNote": "Mật khẩu sẽ được đặt lại về mặc định",
+    "passwordResetSuccess2": "Mật khẩu đã được đặt lại về mặc định thành công"
   },
   "addUser": {
     "title": "Nhập người dùng từ Excel",
@@ -1284,8 +1408,11 @@
     "originalImage": "Ảnh gốc: {{width}} × {{height}}px"
   },
   "guidelineChecklist": {
+    "title": "GUIDELINE CHECKLIST",
+    "hint": "Tick hết tiêu chí → mở khóa nhãn tương ứng",
     "checkAllHint": "Tick hết tiêu chí → mở khóa nhãn tương ứng",
     "free": "Tự do",
+    "noCriteria": "Nhãn này không có tiêu chí, sử dụng tự do.",
     "noCriteriaHint": "Nhãn này không có tiêu chí, sử dụng tự do."
   },
   "projectStatusSidebar": {
@@ -1302,6 +1429,7 @@
     "activate": "Nhấn để kích hoạt",
     "deactivate": "Nhấn để tạm dừng",
     "edit": "Chỉnh sửa thông tin",
+    "resetPassword": "Đặt lại mật khẩu",
     "showingRange": "Hiển thị từ {{from}} đến {{to}} trên tổng số {{total}} nhân sự",
     "totalProjects":"Tổng dự án"
   },

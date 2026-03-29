@@ -1,14 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-/**
- * Unit tests cho logic xử lý notification trong useNotifications hook
- *
- * BUG-FIX: Infinite loop trong useNotifications
- * - Nguyên nhân: hasFetchedOnce state nằm trong dependency array của useEffect
- * - Fix: Thay hasFetchedOnce bằng hasFetchedRef (useRef) để tránh re-run vô hạn
- * - Kết quả: Notification badge hiện đúng sau login
- */
-
 const normalizeServerNotification = (n) => ({
   id: n.id,
   message: n.message || "New notification",

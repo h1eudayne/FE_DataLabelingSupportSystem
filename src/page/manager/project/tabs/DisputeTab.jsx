@@ -125,7 +125,6 @@ const DisputeTab = ({ projectId }) => {
     return <span className={`dispute-badge ${s.cls}`}>{s.text}</span>;
   };
 
-  // Get verdict display with icon
   const getVerdictBadge = (verdict) => {
     if (verdict === "Approved" || verdict === "Approve") {
       return <Badge color="success"><i className="ri-check-line me-1"></i>Approved</Badge>;
@@ -133,14 +132,12 @@ const DisputeTab = ({ projectId }) => {
     return <Badge color="danger"><i className="ri-close-line me-1"></i>Rejected</Badge>;
   };
 
-  // Analyze reviewer feedback for display
   const analyzeReviewerFeedback = (feedbacks) => {
     const approved = feedbacks?.find(f => f.verdict === "Approved" || f.verdict === "Approve");
     const rejected = feedbacks?.find(f => f.verdict === "Rejected" || f.verdict === "Reject");
     return { approved, rejected };
   };
 
-  // Count votes for display
   const countVotes = (feedbacks) => {
     const approved = feedbacks?.filter(f => f.verdict === "Approved" || f.verdict === "Approve") || [];
     const rejected = feedbacks?.filter(f => f.verdict === "Rejected" || f.verdict === "Reject") || [];
@@ -162,45 +159,45 @@ const DisputeTab = ({ projectId }) => {
 
   return (
     <>
-      {}
+      { }
       <Row className="mb-3 g-3">
         <Col md={3}>
           <div className="pd-stat-card stat-primary">
-            <div className="stat-label">{t("dispute.totalDisputes", "Tổng tranh chấp")}</div>
+            <div className="stat-label">{t("dispute.totalDisputes")}</div>
             <div className="stat-value">{stats.total}</div>
           </div>
         </Col>
         <Col md={3}>
           <div className="pd-stat-card stat-warning">
-            <div className="stat-label">{t("dispute.statusPending", "Đang chờ")}</div>
+            <div className="stat-label">{t("dispute.statusPending")}</div>
             <div className="stat-value">{stats.pending}</div>
           </div>
         </Col>
         <Col md={3}>
           <div className="pd-stat-card stat-success">
-            <div className="stat-label">{t("dispute.statusResolved", "Đã giải quyết")}</div>
+            <div className="stat-label">{t("dispute.statusResolved")}</div>
             <div className="stat-value">{stats.resolved}</div>
           </div>
         </Col>
         <Col md={3}>
           <div className="pd-stat-card stat-danger">
-            <div className="stat-label">{t("dispute.statusRejected", "Đã từ chối")}</div>
+            <div className="stat-label">{t("dispute.statusRejected")}</div>
             <div className="stat-value">{stats.rejected}</div>
           </div>
         </Col>
       </Row>
 
-      {}
+      { }
       <Row>
         <Col xl={12}>
           <Card>
             <CardHeader className="d-flex justify-content-between align-items-center">
               <h5 className="mb-0" style={{ color: "var(--pd-text-primary)" }}>
-                {t("dispute.disputeLog", "Dispute Log")}
+                {t("dispute.disputeLog")}
               </h5>
               <Button color="light" size="sm" className="border">
                 <i className="ri-filter-3-line me-1"></i>
-                {t("dispute.filter", "Filter")}
+                {t("dispute.filter")}
               </Button>
             </CardHeader>
             <CardBody>
@@ -254,7 +251,7 @@ const DisputeTab = ({ projectId }) => {
                                 {isEscalated(d) && (
                                   <span className="badge bg-danger bg-opacity-10 text-danger" style={{ fontSize: "10px" }}>
                                     <i className="ri-alarm-warning-line me-1"></i>
-                                    {t("dispute.escalated", "Escalated")}
+                                    {t("dispute.escalated")}
                                   </span>
                                 )}
                               </div>
@@ -265,18 +262,18 @@ const DisputeTab = ({ projectId }) => {
                                 : "—"}
                               {d.status === "Pending" && d.createdAt && (
                                 <div style={{ fontSize: "10px", color: isEscalated(d) ? "var(--bs-danger)" : "var(--pd-text-muted)" }}>
-                                  {getDaysPending(d.createdAt)}d {t("dispute.ago", "ago")}
+                                  {getDaysPending(d.createdAt)}d {t("dispute.ago")}
                                 </div>
                               )}
                             </td>
                             <td className="text-end">
                               {d.status === "Pending" ? (
                                 <button className="dispute-btn-resolve" onClick={() => openResolveModal(d)}>
-                                  {t("dispute.resolve", "Resolve")}
+                                  {t("dispute.resolve")}
                                 </button>
                               ) : (
                                 <button className="dispute-btn-view" onClick={() => openResolveModal(d)}>
-                                  {t("dispute.view", "View")}
+                                  {t("dispute.view")}
                                 </button>
                               )}
                             </td>
@@ -285,7 +282,7 @@ const DisputeTab = ({ projectId }) => {
                       </tbody>
                     </Table>
                   </div>
-                  {}
+                  { }
                   <div
                     className="d-flex align-items-center justify-content-between px-3 py-3 border-top"
                     style={{
@@ -295,14 +292,14 @@ const DisputeTab = ({ projectId }) => {
                     }}
                   >
                     <span>
-                      {t("dispute.showing", "Showing")} {disputes.length} {t("dispute.of", "of")} {stats.total} {t("dispute.results", "results")}
+                      {t("dispute.showing")} {disputes.length} {t("dispute.of")} {stats.total} {t("dispute.results")}
                     </span>
                     <div className="d-flex gap-2">
                       <Button color="light" size="sm" disabled className="border">
-                        {t("dispute.previous", "Previous")}
+                        {t("dispute.previous")}
                       </Button>
                       <Button color="light" size="sm" className="border">
-                        {t("dispute.next", "Next")}
+                        {t("dispute.next")}
                       </Button>
                     </div>
                   </div>
@@ -313,13 +310,13 @@ const DisputeTab = ({ projectId }) => {
         </Col>
       </Row>
 
-      {}
+      { }
       <Modal isOpen={modalOpen} toggle={() => setModalOpen(false)} size="lg" centered>
         <ModalHeader toggle={() => setModalOpen(false)}>
           <i className="ri-scales-3-line me-2 text-primary"></i>
           {selectedDispute?.status === "Pending"
             ? t("dispute.modalTitle")
-            : t("dispute.viewModalTitle", "Chi tiết tranh chấp")}{" "}
+            : t("dispute.viewModalTitle")}{" "}
           #{selectedDispute?.id}
         </ModalHeader>
         <ModalBody>
@@ -329,7 +326,7 @@ const DisputeTab = ({ projectId }) => {
                 <Alert color="danger" className="d-flex align-items-start gap-2 mb-3">
                   <i className="ri-alarm-warning-line fs-5 mt-1"></i>
                   <div>
-                    <strong>{t("dispute.escalationWarning", "Escalation Warning")}</strong>
+                    <strong>{t("dispute.escalationWarning")}</strong>
                     <p className="mb-0 small">
                       {t("dispute.escalationDesc", {
                         days: getDaysPending(selectedDispute.createdAt),
@@ -340,12 +337,11 @@ const DisputeTab = ({ projectId }) => {
                 </Alert>
               )}
 
-              {/* Calculate voteInfo for majority voting display */}
               {(() => {
                 const voteInfo = selectedDispute.reviewerFeedbacks
                   ? countVotes(selectedDispute.reviewerFeedbacks)
                   : { approvedCount: 0, rejectedCount: 0, total: 0, isConflict: false };
-                return null; // Just compute, don't render
+                return null;
               })()}
 
               <div className="mb-3 p-3 rounded" style={{ background: "var(--pd-table-header-bg)" }}>
@@ -366,7 +362,7 @@ const DisputeTab = ({ projectId }) => {
                     : "—"}
                   {selectedDispute.status === "Pending" && (
                     <span className={`ms-2 small fw-semibold ${isEscalated(selectedDispute) ? "text-danger" : "text-muted"}`}>
-                      ({getDaysPending(selectedDispute.createdAt)}d {t("dispute.pending", "pending")})
+                      ({getDaysPending(selectedDispute.createdAt)}d {t("dispute.pending")})
                     </span>
                   )}
                 </p>
@@ -376,13 +372,12 @@ const DisputeTab = ({ projectId }) => {
                   {isEscalated(selectedDispute) && (
                     <Badge color="danger" className="ms-2">
                       <i className="ri-alarm-warning-line me-1"></i>
-                      {t("dispute.escalated", "Escalated")}
+                      {t("dispute.escalated")}
                     </Badge>
                   )}
                 </p>
               </div>
 
-              {/* Reviewer Feedback Section with Majority Voting Display */}
               {selectedDispute.reviewerFeedbacks && selectedDispute.reviewerFeedbacks.length > 0 && (() => {
                 const voteInfo = countVotes(selectedDispute.reviewerFeedbacks);
                 const approvedFeedbacks = selectedDispute.reviewerFeedbacks.filter(f => f.verdict === "Approved" || f.verdict === "Approve");
@@ -407,7 +402,6 @@ const DisputeTab = ({ projectId }) => {
                       </div>
                     </div>
 
-                    {/* Vote Summary Bar */}
                     <div className="mb-3 p-2 rounded" style={{ background: "var(--pd-table-header-bg)" }}>
                       <div className="d-flex align-items-center gap-2 mb-2">
                         <span className="small fw-bold">Majority Decision:</span>
@@ -442,7 +436,6 @@ const DisputeTab = ({ projectId }) => {
                       </small>
                     </div>
 
-                    {/* Individual Reviewer Cards */}
                     <div className="mb-3">
                       {voteInfo.approvedCount > 0 && (
                         <>
@@ -525,7 +518,6 @@ const DisputeTab = ({ projectId }) => {
                       )}
                     </div>
 
-                    {/* Workflow explanation for pending disputes */}
                     {selectedDispute.status === "Pending" && (
                       <div className="mt-3 p-2 rounded" style={{ background: "#fff3cd", border: "1px solid #ffc107" }}>
                         <small className="text-warning-emphasis">
@@ -589,7 +581,7 @@ const DisputeTab = ({ projectId }) => {
                       <i className={`ri-${voteInfo.isConflict ? "alert" : "information"}-line`}></i>
                       <div>
                         <strong>Current Vote: {voteInfo.approvedCount} Approve / {voteInfo.rejectedCount} Reject</strong>
-                        <br/>
+                        <br />
                         <small>
                           {voteInfo.isConflict
                             ? "CONFLICT detected (50-50). You are the deciding vote."
@@ -615,11 +607,11 @@ const DisputeTab = ({ projectId }) => {
                               <span className="badge bg-success ms-2" style={{ fontSize: "10px" }}>Annotator Correct</span>
                               <p className="mb-0 small text-muted fw-normal mt-1">
                                 <strong>Decision:</strong> Annotator's labeling was correct.
-                                <br/>
+                                <br />
                                 <strong>Action:</strong> Task remains APPROVED.
                                 {voteInfo.rejectedCount > 0 && (
                                   <>
-                                    <br/>
+                                    <br />
                                     <span className="text-danger">
                                       <i className="ri-user-follow-line me-1"></i>
                                       {voteInfo.rejectedCount} Rejector(s) must re-review their decision.
@@ -641,14 +633,14 @@ const DisputeTab = ({ projectId }) => {
                               <span className="badge bg-danger ms-2" style={{ fontSize: "10px" }}>Annotator Wrong</span>
                               <p className="mb-0 small text-muted fw-normal mt-1">
                                 <strong>Decision:</strong> Annotator's labeling was incorrect.
-                                <br/>
+                                <br />
                                 <strong>Action:</strong>
-                                <br/>
+                                <br />
                                 <span className="text-danger">
                                   <i className="ri-edit-line me-1"></i>
                                   Annotator must redo the labeling.
                                 </span>
-                                <br/>
+                                <br />
                                 <span className="text-warning">
                                   <i className="ri-refresh-line me-1"></i>
                                   ALL {voteInfo.total} reviewer(s) must re-review when resubmitted.
@@ -697,7 +689,6 @@ const DisputeTab = ({ projectId }) => {
                     </Badge>
                   </div>
 
-                  {/* Show actions taken */}
                   {selectedDispute.resolutionType === "annotator_correct" && (
                     <Alert color="success" className="mb-2">
                       <div className="d-flex align-items-start gap-2">
@@ -754,7 +745,7 @@ const DisputeTab = ({ projectId }) => {
         </ModalBody>
         <ModalFooter>
           <Button color="light" onClick={() => setModalOpen(false)}>
-            {selectedDispute?.status === "Pending" ? t("dispute.cancel") : t("dispute.close", "Đóng")}
+            {selectedDispute?.status === "Pending" ? t("dispute.cancel") : t("dispute.close")}
           </Button>
           {selectedDispute?.status === "Pending" && (
             <Button color="primary" onClick={handleResolve} disabled={submitting || !managerComment.trim()}>

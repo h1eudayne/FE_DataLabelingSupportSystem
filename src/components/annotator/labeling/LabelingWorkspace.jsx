@@ -11,6 +11,7 @@ import {
 } from "react-konva";
 import useImage from "use-image";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import {
   addAnnotation,
   removeAnnotation,
@@ -33,6 +34,7 @@ const LabelingWorkspace = ({
   projectType = "BBOX",
 }) => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const containerRef = useRef(null);
   const stageWrapperRef = useRef(null);
   const lastPolyClickTime = useRef(0);
@@ -377,7 +379,7 @@ const LabelingWorkspace = ({
         <button
           className="stitch-ws-toolbar-btn"
           onClick={handleZoomOut}
-          title="Thu nhỏ"
+          title={t("workspace.zoomOut")}
         >
           <i className="ri-zoom-out-line"></i>
         </button>
@@ -390,7 +392,7 @@ const LabelingWorkspace = ({
         <button
           className="stitch-ws-toolbar-btn"
           onClick={handleZoomIn}
-          title="Phóng to"
+          title={t("workspace.zoomIn")}
         >
           <i className="ri-zoom-in-line"></i>
         </button>
@@ -400,7 +402,7 @@ const LabelingWorkspace = ({
             <button
               className={`stitch-ws-toolbar-btn ${drawingMode === "bbox" ? "primary" : ""}`}
               onClick={() => setDrawingMode("bbox")}
-              title="Vẽ hình hộp (BBox)"
+              title={t("workspace.drawBBox")}
             >
               <i className="ri-shape-line me-1"></i> BBox
             </button>
@@ -410,7 +412,7 @@ const LabelingWorkspace = ({
                 setDrawingMode("polygon");
                 setNewRect(null);
               }}
-              title="Vẽ đa giác (Polygon)"
+              title={t("workspace.drawPolygon")}
             >
               <i className="ri-share-line me-1"></i> Polygon
             </button>
@@ -420,7 +422,7 @@ const LabelingWorkspace = ({
         <button
           className="stitch-ws-toolbar-btn"
           onClick={handleResetView}
-          title="Về mặc định"
+          title={t("workspace.resetView")}
         >
           <i className="ri-fullscreen-line me-1"></i>
           Reset
@@ -429,7 +431,7 @@ const LabelingWorkspace = ({
           <button
             className="stitch-ws-toolbar-btn warning"
             onClick={handleUndo}
-            title="Hoàn tác (Ctrl+Z)"
+            title={t("workspace.undoShortcut")}
           >
             <i className="ri-arrow-go-back-line me-1"></i>
             Undo
@@ -451,19 +453,19 @@ const LabelingWorkspace = ({
         >
           {drawingMode === "polygon" && !readOnly && (
             <span style={{ color: "#FACC15", whiteSpace: "nowrap" }}>
-              <i className="ri-corner-down-left-line"></i> Enter: Hoàn tất
+              <i className="ri-corner-down-left-line"></i> {t("workspace.finishDraw")}
             </span>
           )}
           {drawingMode === "polygon" && currentPolygon.length > 0 && (
             <span style={{ color: "#F87171", whiteSpace: "nowrap" }}>
-              <i className="ri-close-line"></i> Esc: Hủy
+              <i className="ri-close-line"></i> {t("workspace.cancelDraw")}
             </span>
           )}
           <span style={{ whiteSpace: "nowrap" }}>
             <i className="ri-mouse-line"></i> Ctrl+Scroll: Zoom
           </span>
           <span style={{ whiteSpace: "nowrap" }}>
-            <i className="ri-drag-move-line"></i> Scroll: Di chuyển
+            <i className="ri-drag-move-line"></i> {t("workspace.moveDraw")}
           </span>
         </div>
       </div>
@@ -673,7 +675,7 @@ const LabelingWorkspace = ({
       {}
       <div className="stitch-ws-coord-bar">
         <span className="fw-bold" style={{ color: "#22D3EE" }}>
-          <i className="ri-crosshair-2-line me-1"></i>Toạ độ:
+          <i className="ri-crosshair-2-line me-1"></i>{t("workspace.coordinates")}:
         </span>
         {cursorPos ? (
           <>
@@ -685,7 +687,7 @@ const LabelingWorkspace = ({
             </span>
           </>
         ) : (
-          <span style={{ opacity: 0.5 }}>Di chuột vào canvas</span>
+          <span style={{ opacity: 0.5 }}>{t("workspace.hoverCanvas")}</span>
         )}
 
         {newRect && drawingMode === "bbox" && (
@@ -711,14 +713,14 @@ const LabelingWorkspace = ({
             ></div>
             <span style={{ color: "#FACC15" }}>
               <i className="ri-share-line me-1"></i>
-              Điểm: <strong>{currentPolygon.length}</strong>
+              {t("workspace.points", { count: currentPolygon.length })}
             </span>
           </>
         )}
 
         {image && (
           <span className="ms-auto" style={{ opacity: 0.5 }}>
-            Ảnh gốc: {image.width} × {image.height}px
+            {t("workspace.originalImage", { width: image.width, height: image.height })}
           </span>
         )}
       </div>

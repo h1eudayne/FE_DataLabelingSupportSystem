@@ -10,7 +10,14 @@
     "settings": "System Settings",
     "logout": "Log out",
     "defaultUser": "User",
-    "language": "Language"
+    "language": "Language",
+    "fullscreen": "Fullscreen",
+    "avatarAlt": "User avatar",
+    "noEmail": "No email available",
+    "languages": {
+      "english": "English",
+      "vietnamese": "Vietnamese"
+    }
   },
   "navbar": {
     "dashboard": "Dashboard",
@@ -25,7 +32,10 @@
     "userManagement": "User Management",
     "systemLogs": "System Logs",
     "settingsMenu": "Settings",
-    "projects-overview": "Projects"
+    "projects-overview": "Projects",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "mobileNavigation": "Mobile navigation"
   },
   "auth": {
     "welcomeBack": "Welcome back!",
@@ -181,7 +191,24 @@
     "resolveSuccess": "Dispute resolved successfully!",
     "resolveError": "Unable to resolve dispute",
     "cancel": "Cancel",
-    "confirmArbitrate": "Confirm Arbitration"
+    "confirmArbitrate": "Confirm Arbitration",
+    "totalDisputes": "Total Disputes",
+    "disputeLog": "Dispute Log",
+    "filter": "Filter",
+    "escalated": "Escalated",
+    "ago": "ago",
+    "resolve": "Resolve",
+    "view": "View",
+    "showing": "Showing",
+    "of": "of",
+    "results": "results",
+    "previous": "Previous",
+    "next": "Next",
+    "viewModalTitle": "Dispute Details",
+    "escalationWarning": "Escalation Warning",
+    "escalationDesc": "This dispute has been pending for {{days}} days. It may be escalated to Admin if not resolved soon.",
+    "pending": "pending",
+    "close": "Close"
   },
   "reviewAudit": {
     "title": "Review Audit — Sampling",
@@ -264,6 +291,8 @@
     "labelName": "Label name...",
     "labelGuide": "General guideline for this label...",
     "checklistRequired": "Required Checklist * (all items must be checked to label):",
+    "defaultChecklistPlaceholder": "Confirm the object matches this label class (edit as needed)",
+    "checklistSection": "Checklist *",
     "conditionPlaceholder": "Condition",
     "addCondition": "+ Add Condition",
     "addLabel": "+ Add New Label",
@@ -417,6 +446,33 @@
     "deleteError": "Error!",
     "deleteErrorMsg": "Unable to delete this project."
   },
+  "projectDetail": {
+    "loading": "Loading project details...",
+    "loadError": "Unable to load project details",
+    "notFound": "Project not found",
+    "backToProjects": "Back to Projects",
+    "tabDatasets": "Data",
+    "tabAssign": "Assign",
+    "tabDisputes": "Disputes",
+    "tabReview": "Review",
+    "back": "Back",
+    "adminReadOnly": "Admin view is read-only for project data.",
+    "type": "Type",
+    "description": "Project Description",
+    "noDescription": "No description provided.",
+    "labelConfig": "Label Configuration",
+    "defaultLabel": "DEFAULT",
+    "memberPerformance": "Member Performance",
+    "tableMember": "Member",
+    "tableRole": "Role",
+    "tableTasks": "Tasks (Assigned/Done)",
+    "tableProgress": "Progress",
+    "totalProgress": "Total Progress",
+    "items": "Items",
+    "processed": "Processed",
+    "deadline": "Deadline",
+    "manager": "Responsible Manager"
+  },
   "exportPage": {
     "title": "Export Data",
     "breadcrumbManage": "Management",
@@ -449,7 +505,10 @@
     "exportError": "Export failed.",
     "cannotExport": "Cannot Export",
     "taskNotApprovedReason": "{{count}} tasks not yet Approved",
-    "disputePendingReason": "{{count}} disputes pending resolution"
+    "disputePendingReason": "{{count}} disputes pending resolution",
+    "allApproved": "All tasks have been Approved",
+    "noDisputes": "No pending disputes",
+    "exportDesc": "Export labeled data from this project"
   },
   "profile": {
     "title": "My Profile",
@@ -465,8 +524,9 @@
     "saveChanges": "Save Changes"
   },
   "admin": {
-     "project": {
+    "project": {
       "listTitle": "Project List",
+      "overviewSubtitle": "Monitor delivery status, progress, and team participation across every project.",
       "searchPlaceholder": "Search project name...",
       "searching": "Searching...",
       "noResult": "No projects found matching \"{{searchTerm}}\"",
@@ -486,7 +546,17 @@
       "overdue": "Overdue",
       "new":"New Projects"
     },
-    "projectDetail": {
+  "projectDetail": {
+      "loading": "Loading project details...",
+      "loadError": "Unable to load project details",
+      "notFound": "Project not found",
+      "backToProjects": "Back to Projects",
+      "tabDatasets": "Data",
+      "tabAssign": "Assign",
+      "tabDisputes": "Disputes",
+      "tabReview": "Review",
+      "back": "Back",
+      "adminReadOnly": "Admin view is read-only for project data.",
       "type": "Type",
       "description": "Project Description",
       "noDescription": "No description provided.",
@@ -501,7 +571,8 @@
       "items": "Items",
       "processed": "Processed",
       "deadline": "Deadline",
-      "manager": "Responsible Manager"
+      "manager": "Responsible Manager",
+      "detailSubtitle": "Review project scope, member performance, and completion signals in one place."
     },
     "userManagement": "User Management",
     "systemLogs": "System Logs",
@@ -521,7 +592,9 @@
     "logAction": "Action",
     "logUser": "User",
     "logDetail": "Detail",
-    "errorStatus": "Cannot be inactive: This user still has unfinished projects!"
+    "errorStatus": "Cannot be inactive: This user still has unfinished projects!",
+    "cannotChangeRole": "Cannot change role: This user still has unfinished projects!",
+    "errorOccurred": "An error occurred"
   },
   "common": {
     "loading": "Loading...",
@@ -553,7 +626,10 @@
     "download": "Download",
     "upload": "Upload",
     "refresh": "Refresh",
-    "welcomeBack":"Welcome back!"
+    "welcomeBack":"Welcome back!",
+    "menu": "Menu",
+    "logo": "Application logo",
+    "loadingData": "Loading data..."
   },
   "annotatorDashboardComp": {
     "reviewerFeedback": "Reviewer Feedback",
@@ -839,7 +915,7 @@
     "searchProject": "Search project...",
     "statistics": "Statistics",
     "totalProjects": "Total Projects",
-    "selectProject": "Please select a project",
+    "selectProject": "Select a project",
     "projectPrefix": "Project",
     "loadingData": "Loading data...",
     "labelConfig": "Label Configuration",
@@ -875,8 +951,14 @@
     "notAllApproved": "Not all tasks Approved",
     "disputePendingShort": "Disputes still pending",
     "exportJson": "Export JSON Data",
+    "exportData": "Export Data",
+    "exportModalTitle": "Export Project Data",
+    "exportEligibility": "Export Eligibility",
+    "exportFormat": "Export Format",
+    "exportAction": "Export {{format}}",
     "exporting": "Exporting...",
     "exportNotEligible": "Export (Not Eligible)",
+    "uploadData": "Upload Data",
     "uploading": "Uploading...",
     "cannotExport": "Cannot Export!",
     "tasksNotApprovedDetail": "{{remaining}} tasks not Approved ({{approved}}/{{total}})",
@@ -906,7 +988,8 @@
     "editLabelFailed": "Failed to update label",
     "labelType": "Type",
     "labelDefault": "Default",
-    "labelProject": "Project"
+    "labelProject": "Project",
+    "taskLockedTitle": "Task is completed, cannot be edited"
   },
   "analytics": {
     "totalProjects": "Total Projects",
@@ -969,7 +1052,22 @@
     "alertHighRejectProject": "Project \"{{name}}\" has Rejection Rate {{rate}}% (> 30%) — Process review needed.",
     "alertHighRejectAvg": "Average Rejection Rate {{rate}}% exceeds 30% threshold — Process adjustment needed.",
     "alertDeadlineRisk": "Project \"{{name}}\" has {{days}} days left but only {{progress}}% progress — Deadline risk.",
-    "alertCriticalErrors": "Annotator \"{{name}}\" has {{count}} critical errors — Retraining needed."
+    "alertCriticalErrors": "Annotator \"{{name}}\" has {{count}} critical errors — Retraining needed.",
+    "threeKeyMetrics": "3 Key Quality Metrics",
+    "finalAccuracy": "Final Accuracy",
+    "tasksCorrect": "tasks correct",
+    "forCustomer": "For Customer",
+    "firstPassAccuracy": "First-pass Accuracy",
+    "correctFirstTime": "correct first time",
+    "forInternal": "Internal",
+    "reworkRate": "Rework Rate",
+    "tasksRejected": "tasks rejected",
+    "highRework": "Needs Improvement",
+    "goodRework": "Good",
+    "qualityMetricsDesc": "PA = First-pass approved ratio / Total data items. Final Accuracy, First-pass and Rework Rate are the 3 key quality metrics.",
+    "finalAccuracyCol": "Final Accuracy",
+    "firstPassCol": "First-pass",
+    "reworkRateCol": "Rework Rate"
   },
   "reviewWorkspace": {
     "backBtn": "Back",
@@ -1050,7 +1148,33 @@
     "enterNewPassword": "Enter new password",
     "passwordMinLength": "Password must be at least 6 characters",
     "passwordResetSuccess": "Password has been reset successfully",
-    "passwordResetFailed": "Failed to reset password"
+    "passwordResetFailed": "Failed to reset password",
+    "unlockSuccess": "Account has been unlocked",
+    "lockSuccess": "Account has been locked",
+    "statusUpdateFailed": "Failed to update status",
+    "unlockAccount": "Unlock account",
+    "lockAccount": "Lock account",
+    "confirmUnlock": "Confirm unlocking this account?",
+    "confirmLock": "Confirm locking this account?",
+    "userInProjectWarning": "This user is participating in {{count}} project(s)!",
+    "userInProjectNote": "Locking this account requires handover to the project Manager. Please contact the Manager before locking.",
+    "unlockInProjectNote": "This user is in {{count}} project(s). Unlocking will allow them to continue working.",
+    "lockNoProjectNote": "This user is not in any project. Safe to lock.",
+    "importExcel": "Import Excel",
+    "importInvalidType": "Only .xlsx and .xls files are allowed",
+    "importFileTooLarge": "File must be less than 5MB",
+    "selectFile": "Select Excel file",
+    "importHint": "Max 5MB, .xlsx or .xls only. Only Annotators and Reviewers can be imported.",
+    "importing": "Importing...",
+    "importReport": "Import Report",
+    "success": "Success",
+    "failed": "Failed",
+    "row": "Row",
+    "error": "Error",
+    "import": "Import",
+    "resetPasswordConfirmTitle": "Confirm password reset?",
+    "resetPasswordDefaultNote": "Password will be reset to default",
+    "passwordResetSuccess2": "Password has been reset to default successfully"
   },
   "addUser": {
     "title": "Import Users from Excel",
@@ -1181,8 +1305,11 @@
     "originalImage": "Original image: {{width}} × {{height}}px"
   },
   "guidelineChecklist": {
+    "title": "GUIDELINE CHECKLIST",
+    "hint": "Check all criteria → unlock corresponding label",
     "checkAllHint": "Check all criteria → unlock corresponding label",
     "free": "Free",
+    "noCriteria": "This label has no criteria, use freely.",
     "noCriteriaHint": "This label has no criteria, use freely."
   },
   "projectStatusSidebar": {
@@ -1199,6 +1326,7 @@
     "activate": "Click to activate",
     "deactivate": "Click to deactivate",
     "edit": "Edit Details",
+    "resetPassword": "Reset Password",
     "showingRange": "Showing {{from}} to {{to}} of {{total}} entries",
     "totalProjects":"Total Projects"
   },
