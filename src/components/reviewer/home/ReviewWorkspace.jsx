@@ -204,7 +204,12 @@ const ReviewWorkspace = () => {
         );
       }
     } catch (error) {
-      alert(t("review.messages.systemError"));
+      console.error("Review submission failed:", error);
+      const message =
+        error?.response?.data?.message ||
+        (typeof error?.response?.data === "string" ? error.response.data : "") ||
+        t("review.messages.systemError");
+      alert(message);
     } finally {
       setSubmitting(false);
     }
