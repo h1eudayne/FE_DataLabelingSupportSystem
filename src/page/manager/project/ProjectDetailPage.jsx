@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,6 +23,7 @@ const ProjectDetailPage = () => {
   const { t, i18n } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useSelector((state) => state.auth);
   const isAdminView = user?.role === "Admin";
   const [activeTab, setActiveTab] = useState("datasets");
@@ -33,6 +34,17 @@ const ProjectDetailPage = () => {
   useEffect(() => {
     if (isAdminView) setActiveTab("datasets");
   }, [isAdminView, id]);
+
+  useEffect(() => {
+    const requestedTab = searchParams.get("tab");
+    if (!requestedTab || isAdminView) {
+      return;
+    }
+
+    if (["datasets", "assign", "disputes", "review"].includes(requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [isAdminView, searchParams]);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -51,7 +63,14 @@ const ProjectDetailPage = () => {
   }, [id, t]);
 
   const toggleTab = (tab) => {
-    if (activeTab !== tab) setActiveTab(tab);
+    if (activeTab !== tab) {
+      setActiveTab(tab);
+      setSearchParams((prev) => {
+        const nextParams = new URLSearchParams(prev);
+        nextParams.set("tab", tab);
+        return nextParams;
+      });
+    }
   };
 
   if (loading) {

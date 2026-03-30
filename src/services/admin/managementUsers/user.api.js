@@ -45,6 +45,13 @@ export const updateStatus = (id, isActive) => {
   return axios.patch(`/api/users/${id}/status?isActive=${isActive}`);
 };
 
+export const resolveGlobalBanRequest = (requestId, approve, decisionNote = "") => {
+  return axios.post(`/api/users/global-ban-requests/${requestId}/resolve`, {
+    approve,
+    decisionNote,
+  });
+};
+
 export const importUser = (file) => {
   const formData = new FormData();
   formData.append("file", file);

@@ -40,6 +40,55 @@ const STATUS_LABEL_KEYS = {
   Approved: "workspace.statusApproved",
 };
 
+const STATUS_CONFIG = {
+  New: {
+    cls: STATUS_CLASSES.New,
+    labelKey: STATUS_LABEL_KEYS.New,
+  },
+  InProgress: {
+    cls: STATUS_CLASSES.InProgress,
+    labelKey: STATUS_LABEL_KEYS.InProgress,
+  },
+  Rejected: {
+    cls: STATUS_CLASSES.Rejected,
+    labelKey: STATUS_LABEL_KEYS.Rejected,
+  },
+  Submitted: {
+    cls: STATUS_CLASSES.Submitted,
+    labelKey: STATUS_LABEL_KEYS.Submitted,
+  },
+  Approved: {
+    cls: STATUS_CLASSES.Approved,
+    labelKey: STATUS_LABEL_KEYS.Approved,
+  },
+};
+
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
+
+const normalizeBatchErrors = (value) => {
+  if (Array.isArray(value)) {
+    return value.filter(
+      (message) => typeof message === "string" && message.trim().length > 0,
+    );
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    return [value];
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    typeof value.message === "string" &&
+    value.message.trim()
+  ) {
+    return [value.message];
+  }
+
+  return [];
+};
+
 const WorkplaceLabelingTaskPage = () => {
   const { t } = useTranslation();
   const { assignmentId } = useParams();
@@ -85,27 +134,30 @@ const WorkplaceLabelingTaskPage = () => {
   const currentImage = images[currentImgIndex];
 
   const allAnnotations = useSelector(
-    (state) => state.labeling.annotationsByAssignment || {},
+    (state) => state.labeling.annotationsByAssignment || EMPTY_OBJECT,
   );
 
   const allChecklistStates = useSelector(
-    (state) => state.labeling.checklistByAssignment || {},
+    (state) => state.labeling.checklistByAssignment || EMPTY_OBJECT,
   );
 
   const allDefaultFlags = useSelector(
-    (state) => state.labeling.defaultFlagsByAssignment || {},
+    (state) => state.labeling.defaultFlagsByAssignment || EMPTY_OBJECT,
   );
 
   const annotations = useSelector(
-    (state) => state.labeling.annotationsByAssignment[currentImage?.id] || [],
+    (state) =>
+      state.labeling.annotationsByAssignment[currentImage?.id] || EMPTY_ARRAY,
   );
 
   const checklistState = useSelector(
-    (state) => state.labeling.checklistByAssignment[currentImage?.id] || {},
+    (state) =>
+      state.labeling.checklistByAssignment[currentImage?.id] || EMPTY_OBJECT,
   );
 
   const currentDefaultFlags = useSelector(
-    (state) => state.labeling.defaultFlagsByAssignment[currentImage?.id] || [],
+    (state) =>
+      state.labeling.defaultFlagsByAssignment[currentImage?.id] || EMPTY_ARRAY,
   );
 
   const unlockedLabelIds = useMemo(() => {
@@ -654,7 +706,7 @@ const WorkplaceLabelingTaskPage = () => {
       const result = res?.data || res || {};
       const successCount = result.successCount ?? result.SuccessCount ?? 0;
       const failureCount = result.failureCount ?? result.FailureCount ?? 0;
-      const errors = result.errors ?? result.Errors ?? [];
+      const errors = normalizeBatchErrors(result.errors ?? result.Errors);
 
       if (successCount > 0 && failureCount === 0) {
         toast.success(
@@ -1523,7 +1575,7 @@ const WorkplaceLabelingTaskPage = () => {
                         {t("workspace.imageLabel")} {idx + 1}
                       </small>
                       <span className={`${config.cls} ms-1`}>
-                        {config.label}
+                        {t(config.labelKey)}
                       </span>
                     </div>
                   );

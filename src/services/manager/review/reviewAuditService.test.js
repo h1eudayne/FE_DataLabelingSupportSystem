@@ -115,4 +115,33 @@ describe("reviewAuditService", () => {
       ).rejects.toThrow("Internal Server Error");
     });
   });
+
+  describe("escalation APIs", () => {
+    it("should GET /api/reviews/projects/{id}/escalations", async () => {
+      axios.get.mockResolvedValue({ data: [{ assignmentId: 10, escalationType: "PenaltyReview" }] });
+
+      const result = await reviewAuditService.getEscalations(15);
+
+      expect(axios.get).toHaveBeenCalledWith(
+        "/api/reviews/projects/15/escalations",
+      );
+      expect(result.data[0].escalationType).toBe("PenaltyReview");
+    });
+
+    it("should POST /api/reviews/escalations/resolve", async () => {
+      const payload = {
+        assignmentId: 10,
+        action: "approve",
+        comment: "Aligned with guideline v1.0",
+      };
+      axios.post.mockResolvedValue({ data: { message: "OK" } });
+
+      await reviewAuditService.resolveEscalation(payload);
+
+      expect(axios.post).toHaveBeenCalledWith(
+        "/api/reviews/escalations/resolve",
+        payload,
+      );
+    });
+  });
 });
