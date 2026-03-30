@@ -73,18 +73,6 @@ const normalizeBatchErrors = (value) => {
     );
   }
 
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    const nestedMessages = Object.values(value)
-      .flatMap((entry) => (Array.isArray(entry) ? entry : [entry]))
-      .filter(
-        (message) => typeof message === "string" && message.trim().length > 0,
-      );
-
-    if (nestedMessages.length > 0) {
-      return nestedMessages;
-    }
-  }
-
   if (typeof value === "string" && value.trim()) {
     return [value];
   }
@@ -191,18 +179,9 @@ const WorkplaceLabelingTaskPage = () => {
 
   const getErrorMessage = useCallback((err, fallbackMessage) => {
     const responseData = err?.response?.data;
-    const validationErrors = normalizeBatchErrors(responseData?.errors);
-
-    if (validationErrors.length > 0) {
-      return validationErrors[0];
-    }
 
     if (typeof responseData?.message === "string" && responseData.message.trim()) {
       return responseData.message;
-    }
-
-    if (typeof responseData?.title === "string" && responseData.title.trim()) {
-      return responseData.title;
     }
 
     if (typeof responseData === "string" && responseData.trim()) {
@@ -707,15 +686,7 @@ const WorkplaceLabelingTaskPage = () => {
 
     setBatchSubmitting(true);
     try {
-      const assignmentIds = [...selectedIds]
-        .map((id) => Number(id))
-        .filter((id) => Number.isInteger(id) && id > 0);
-
-      if (assignmentIds.length === 0) {
-        toast.warning(t("workspace.batchNoSelection"));
-        return;
-      }
-
+      const assignmentIds = [...selectedIds];
       const preferredImage = currentImage
         ? { id: currentImage.id, dataItemId: currentImage.dataItemId }
         : null;
