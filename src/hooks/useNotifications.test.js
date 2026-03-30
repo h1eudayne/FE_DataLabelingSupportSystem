@@ -1,11 +1,45 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+const parseTimestamp = (timestamp) => {
+  const value = Date.parse(timestamp || "");
+  return Number.isNaN(value) ? 0 : value;
+};
+
+const sortNotifications = (notifications) =>
+  [...notifications].sort((left, right) => {
+    const timeDiff = parseTimestamp(right.timestamp) - parseTimestamp(left.timestamp);
+    if (timeDiff !== 0) {
+      return timeDiff;
+    }
+    return String(right.id).localeCompare(String(left.id));
+  });
+
+const mergeNotifications = (notifications) => {
+  const merged = new Map();
+
+  notifications.forEach((notification) => {
+    if (!notification?.id) {
+      return;
+    }
+
+    const existing = merged.get(notification.id);
+    merged.set(notification.id, existing ? { ...existing, ...notification } : notification);
+  });
+
+  return sortNotifications([...merged.values()]).slice(0, 50);
+};
+
 const normalizeServerNotification = (n) => ({
   id: n.id,
+  title: n.title || "Notification",
   message: n.message || "New notification",
   type: n.type || "info",
   timestamp: n.createdAt || new Date().toISOString(),
   read: !!n.isRead,
+  referenceType: n.referenceType || null,
+  referenceId: n.referenceId || null,
+  actionKey: n.actionKey || null,
+  metadata: n.metadata || null,
 });
 
 const buildInitialUnreadCount = (initialUnreadCount) => {
@@ -22,7 +56,7 @@ const markAsReadUpdate = (notifications, unreadCount, id) => {
   const updated = notifications.map((n) =>
     n.id === id ? { ...n, read: true } : n
   );
-  const updatedCount = Math.max(0, unreadCount - 1);
+  const updatedCount = updated.filter((notification) => !notification.read).length;
   return { notifications: updated, unreadCount: updatedCount };
 };
 
@@ -34,6 +68,7 @@ const markAllAsReadUpdate = (notifications) => ({
 const signalRNotificationUpdate = (notifications, unreadCount, notification) => {
   const newNotification = {
     id: notification?.Id || notification?.id || Date.now() + Math.random(),
+    title: notification?.Title || notification?.title || "Notification",
     message: notification?.Message || notification?.message || "New notification",
     type: notification?.Type || notification?.type || "info",
     timestamp:
@@ -42,10 +77,15 @@ const signalRNotificationUpdate = (notifications, unreadCount, notification) => 
       notification?.timestamp ||
       new Date().toISOString(),
     read: false,
+    referenceType: notification?.ReferenceType || notification?.referenceType || null,
+    referenceId: notification?.ReferenceId || notification?.referenceId || null,
+    actionKey: notification?.ActionKey || notification?.actionKey || null,
+    metadata: notification?.Metadata || notification?.metadata || null,
   };
+  const updatedNotifications = mergeNotifications([newNotification, ...notifications]);
   return {
-    notifications: [newNotification, ...notifications].slice(0, 50),
-    unreadCount: unreadCount + 1,
+    notifications: updatedNotifications,
+    unreadCount: updatedNotifications.filter((item) => !item.read).length,
   };
 };
 
@@ -67,6 +107,20 @@ describe("BUG-FIX: Notification badge hiện sau login", () => {
       const server = { id: 3, isRead: false };
       const result = normalizeServerNotification(server);
       expect(result.message).toBe("New notification");
+    });
+
+    it("nên giữ metadata/action cho notification cần xử lý", () => {
+      const server = {
+        id: 4,
+        title: "Approval",
+        actionKey: "ResolveGlobalUserBanRequest",
+        referenceType: "GlobalUserBanRequest",
+        referenceId: "42",
+        metadata: { requestStatus: "Pending" },
+      };
+      const result = normalizeServerNotification(server);
+      expect(result.actionKey).toBe("ResolveGlobalUserBanRequest");
+      expect(result.metadata.requestStatus).toBe("Pending");
     });
   });
 
@@ -158,7 +212,7 @@ describe("BUG-FIX: Notification badge hiện sau login", () => {
 
     it("nên tăng unreadCount thêm 1", () => {
       const result = signalRNotificationUpdate([], 5, { Id: 1 });
-      expect(result.unreadCount).toBe(6);
+      expect(result.unreadCount).toBe(1);
     });
 
     it("nên giới hạn tối đa 50 notifications", () => {
@@ -168,6 +222,32 @@ describe("BUG-FIX: Notification badge hiện sau login", () => {
       }));
       const result = signalRNotificationUpdate(existing, 0, { Id: 999 });
       expect(result.notifications.length).toBeLessThanOrEqual(50);
+    });
+
+    it("nên sort notification mới nhất lên trên cùng", () => {
+      const existing = [
+        { id: 1, message: "Oldest", timestamp: "2026-03-28T08:00:00.000Z", read: false },
+        { id: 2, message: "Older", timestamp: "2026-03-29T08:00:00.000Z", read: false },
+      ];
+      const result = signalRNotificationUpdate(existing, 2, {
+        Id: 3,
+        Message: "Newest",
+        Timestamp: "2026-03-30T08:00:00.000Z",
+      });
+      expect(result.notifications.map((item) => item.id)).toEqual([3, 2, 1]);
+    });
+
+    it("nên dedupe khi SignalR đẩy lại notification đã tồn tại", () => {
+      const existing = [
+        { id: 10, message: "Existing", timestamp: "2026-03-30T08:00:00.000Z", read: false },
+      ];
+      const result = signalRNotificationUpdate(existing, 1, {
+        Id: 10,
+        Message: "Existing",
+        Timestamp: "2026-03-30T08:00:00.000Z",
+      });
+      expect(result.notifications).toHaveLength(1);
+      expect(result.unreadCount).toBe(1);
     });
   });
 });

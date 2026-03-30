@@ -64,6 +64,12 @@ const analyticsService = {
           totalImages: s.totalItems ?? project.totalDataItems ?? 0,
           completedImages: s.completedItems ?? 0,
           deadline: project.deadline,
+          pendingDisputeCount: project.pendingDisputeCount || 0,
+          pendingPenaltyCount: project.pendingPenaltyCount || 0,
+          rejectedImageCount: project.rejectedImageCount || 0,
+          priorityIssueCount: project.priorityIssueCount || 0,
+          hasPriorityIssue: Boolean(project.hasPriorityIssue),
+          defaultActionTab: project.defaultActionTab || "datasets",
         });
       } catch (err) {
         if (err.response?.status === 400) {
@@ -75,6 +81,12 @@ const analyticsService = {
             totalImages: Number(project.totalDataItems || 0),
             completedImages: 0,
             deadline: project.deadline,
+            pendingDisputeCount: project.pendingDisputeCount || 0,
+            pendingPenaltyCount: project.pendingPenaltyCount || 0,
+            rejectedImageCount: project.rejectedImageCount || 0,
+            priorityIssueCount: project.priorityIssueCount || 0,
+            hasPriorityIssue: Boolean(project.hasPriorityIssue),
+            defaultActionTab: project.defaultActionTab || "datasets",
           });
           newProjects++;
           continue;
@@ -82,6 +94,18 @@ const analyticsService = {
         throw err;
       }
     }
+
+    const sortedActiveProjects = [...activeProjects].sort((left, right) => {
+      if (Boolean(right.hasPriorityIssue) !== Boolean(left.hasPriorityIssue)) {
+        return Number(Boolean(right.hasPriorityIssue)) - Number(Boolean(left.hasPriorityIssue));
+      }
+
+      if ((right.priorityIssueCount || 0) !== (left.priorityIssueCount || 0)) {
+        return (right.priorityIssueCount || 0) - (left.priorityIssueCount || 0);
+      }
+
+      return right.id - left.id;
+    });
 
     return {
       total: projects.length,
@@ -92,7 +116,8 @@ const analyticsService = {
       rejected,
       pending: inProgress + newProjects,
       totalMembers: managerStats?.totalMembers || 0,
-      activeProjects,
+      activeProjects: sortedActiveProjects,
+      priorityProjects: sortedActiveProjects.filter((project) => project.hasPriorityIssue),
     };
   },
   getManagerStats: (managerId) =>

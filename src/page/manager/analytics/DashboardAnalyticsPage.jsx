@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import {
   Row,
   Col,
@@ -12,6 +13,7 @@ import {
   Progress,
   Alert,
   Collapse,
+  Button,
 } from "reactstrap";
 import {
   BarChart,
@@ -48,6 +50,23 @@ import disputeService from "../../../services/manager/dispute/disputeService";
 
 const COLORS = ["#0ab39c", "#f7b84b", "#405189", "#f06548", "#299cdb"];
 
+const getProjectIssueScore = (project) =>
+  (project.pendingDisputeCount || 0) * 3 +
+  (project.pendingPenaltyCount || 0) * 3 +
+  (project.rejectedImageCount || 0);
+
+const sortProjectsByAttention = (projects) =>
+  [...projects].sort((left, right) => {
+    const leftScore = getProjectIssueScore(left);
+    const rightScore = getProjectIssueScore(right);
+
+    if (rightScore !== leftScore) {
+      return rightScore - leftScore;
+    }
+
+    return (right.id || right.projectId || 0) - (left.id || left.projectId || 0);
+  });
+
 const EMPTY_STATS = {
   totalProjects: 0,
   completed: 0,
@@ -58,6 +77,7 @@ const EMPTY_STATS = {
 
 const DashboardAnalytics = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [stats, setStats] = useState(EMPTY_STATS);
   const [projectChartData, setProjectChartData] = useState([]);
   const [annotatorData, setAnnotatorData] = useState([]);
@@ -101,7 +121,7 @@ const DashboardAnalytics = () => {
             return { data: null };
           }),
         ]);
-        const projects = resProjects.data || [];
+        const projects = sortProjectsByAttention(resProjects.data || []);
         const managerStats = resManagerStats.data;
         console.log("Manager stats API response:", managerStats);
 
@@ -259,6 +279,12 @@ const DashboardAnalytics = () => {
               approvedAssignments: approvedAsgn,
               submittedAssignments: subAsgn,
               rejectedAssignments: rejAsgn,
+              pendingDisputeCount: project.pendingDisputeCount || 0,
+              pendingPenaltyCount: project.pendingPenaltyCount || 0,
+              rejectedImageCount: project.rejectedImageCount || 0,
+              priorityIssueCount: project.priorityIssueCount || 0,
+              hasPriorityIssue: Boolean(project.hasPriorityIssue),
+              defaultActionTab: project.defaultActionTab || "datasets",
               overallProgress:
                 totalAsgn > 0
                   ? Math.round((approvedAsgn / totalAsgn) * 100)
@@ -588,7 +614,7 @@ const DashboardAnalytics = () => {
         setReviewerEvaluations(reviewerEvals);
 
         setProjectChartData(chartStatsArr);
-        setProjectProgressData(projectProgressArr);
+        setProjectProgressData(sortProjectsByAttention(projectProgressArr));
 
         const allStaffIds = new Set([
           ...annotatorsArr.map((a) => a.annotatorId),
@@ -657,6 +683,10 @@ const DashboardAnalytics = () => {
     );
   }
 
+  const priorityProjects = projectProgressData
+    .filter((project) => (project.priorityIssueCount || 0) > 0)
+    .slice(0, 5);
+
   return (
     <>
       <Row>
@@ -708,6 +738,79 @@ const DashboardAnalytics = () => {
             icon={Users}
             color="info"
           />
+        </Col>
+      </Row>
+
+      <Row className="mt-3">
+        <Col xl={12}>
+          <Card className="shadow-sm border-0">
+            <CardHeader className="bg-white border-bottom d-flex justify-content-between align-items-center">
+              <div>
+                <h5 className="mb-0">
+                  <i className="ri-alarm-warning-line me-2 text-danger"></i>
+                  {t('analytics.priorityQueue')}
+                </h5>
+                <small className="text-muted">{t('analytics.priorityQueueHint')}</small>
+              </div>
+              <Badge color={priorityProjects.length > 0 ? "danger" : "success"} pill>
+                {priorityProjects.length}
+              </Badge>
+            </CardHeader>
+            <CardBody>
+              {priorityProjects.length === 0 ? (
+                <div className="text-center text-muted py-4">
+                  <i className="ri-checkbox-circle-line display-6 d-block mb-2"></i>
+                  {t('analytics.priorityQueueEmpty')}
+                </div>
+              ) : (
+                <div className="d-flex flex-column gap-3">
+                  {priorityProjects.map((project) => (
+                    <div
+                      key={`priority-${project.projectId}`}
+                      className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 p-3 rounded-3"
+                      style={{ background: "#fff8f1", border: "1px solid #fed7aa" }}
+                    >
+                      <div>
+                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                          <strong>{project.projectName}</strong>
+                          {project.pendingPenaltyCount > 0 && (
+                            <Badge color="warning">
+                              {project.pendingPenaltyCount} {t('analytics.penaltyCases')}
+                            </Badge>
+                          )}
+                          {project.pendingDisputeCount > 0 && (
+                            <Badge color="danger">
+                              {project.pendingDisputeCount} {t('analytics.disputeCases')}
+                            </Badge>
+                          )}
+                          {project.rejectedImageCount > 0 && (
+                            <Badge color="secondary">
+                              {project.rejectedImageCount} {t('analytics.rejectCases')}
+                            </Badge>
+                          )}
+                        </div>
+                        <small className="text-muted d-block mt-1">
+                          {t('analytics.priorityQueueDetail', {
+                            penalty: project.pendingPenaltyCount || 0,
+                            dispute: project.pendingDisputeCount || 0,
+                            reject: project.rejectedImageCount || 0,
+                          })}
+                        </small>
+                      </div>
+                      <Button
+                        color="danger"
+                        outline
+                        onClick={() => navigate(`/project-detail/${project.projectId}?tab=disputes`)}
+                      >
+                        <i className="ri-scales-3-line me-1"></i>
+                        {t('analytics.openDisputeDesk')}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardBody>
+          </Card>
         </Col>
       </Row>
 
@@ -1614,6 +1717,7 @@ const DashboardAnalytics = () => {
                         <th className="text-center">{t('statusCommon.approved')}</th>
                         <th className="text-center">{t('statusCommon.submitted')}</th>
                         <th className="text-center">{t('statusCommon.rejected')}</th>
+                        <th>{t('analytics.attention')}</th>
                         <th>{t('statusCommon.overallProgress')}</th>
                       </tr>
                     </thead>
@@ -1654,6 +1758,43 @@ const DashboardAnalytics = () => {
                               </td>
                               <td className="text-center text-danger">
                                 {pp.rejectedAssignments}
+                              </td>
+                              <td style={{ minWidth: "260px" }}>
+                                <div className="d-flex flex-wrap align-items-center gap-2">
+                                  {pp.pendingPenaltyCount > 0 && (
+                                    <Badge color="warning">
+                                      {pp.pendingPenaltyCount} {t('analytics.penaltyCases')}
+                                    </Badge>
+                                  )}
+                                  {pp.pendingDisputeCount > 0 && (
+                                    <Badge color="danger">
+                                      {pp.pendingDisputeCount} {t('analytics.disputeCases')}
+                                    </Badge>
+                                  )}
+                                  {pp.rejectedImageCount > 0 && (
+                                    <Badge color="secondary">
+                                      {pp.rejectedImageCount} {t('analytics.rejectCases')}
+                                    </Badge>
+                                  )}
+                                  {(pp.priorityIssueCount || 0) > 0 ? (
+                                    <Button
+                                      color="danger"
+                                      outline
+                                      size="sm"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        navigate(`/project-detail/${pp.projectId}?tab=disputes`);
+                                      }}
+                                    >
+                                      <i className="ri-scales-3-line me-1"></i>
+                                      {t('analytics.openDisputeDesk')}
+                                    </Button>
+                                  ) : (
+                                    <span className="text-muted small">
+                                      {t('analytics.noUrgentIssue')}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td style={{ minWidth: "180px" }}>
                                 <div className="d-flex align-items-center gap-2">
@@ -1701,7 +1842,7 @@ const DashboardAnalytics = () => {
                                     <td className="text-center text-muted">
                                       {person.total}
                                     </td>
-                                    <td className="text-center" colSpan={3}>
+                                    <td className="text-center" colSpan={4}>
                                       <small className="text-muted">
                                         Submitted: {person.submitted} |
                                         Approved: {person.approved} →{" "}
@@ -1746,7 +1887,7 @@ const DashboardAnalytics = () => {
                                     <td className="text-center text-muted">
                                       {person.total}
                                     </td>
-                                    <td className="text-center" colSpan={3}>
+                                    <td className="text-center" colSpan={4}>
                                       <small className="text-muted">
                                         {t('analytics.reviewed')}: {person.done}/{person.total}
                                       </small>
@@ -1790,7 +1931,7 @@ const DashboardAnalytics = () => {
                                   </td>
                                   <td
                                     className="text-center fw-bold text-success"
-                                    colSpan={3}
+                                    colSpan={4}
                                   >
                                     Approved: {pp.approvedAssignments}/
                                     {pp.totalAssignments}

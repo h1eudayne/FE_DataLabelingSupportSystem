@@ -21,12 +21,14 @@ import {
 import { toast } from "react-toastify";
 import projectService from "../../../../services/manager/project/projectService";
 import disputeService from "../../../../services/manager/dispute/disputeService";
+import reviewAuditService from "../../../../services/manager/review/reviewAuditService";
 import useSignalRRefresh from "../../../../hooks/useSignalRRefresh";
 import { useTranslation } from "react-i18next";
 
 const DisputeTab = ({ projectId }) => {
   const { t } = useTranslation();
   const [disputes, setDisputes] = useState([]);
+  const [escalations, setEscalations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [projectDetail, setProjectDetail] = useState(null);
 
@@ -35,6 +37,11 @@ const DisputeTab = ({ projectId }) => {
   const [isAccepted, setIsAccepted] = useState(true);
   const [managerComment, setManagerComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [escalationModalOpen, setEscalationModalOpen] = useState(false);
+  const [selectedEscalation, setSelectedEscalation] = useState(null);
+  const [escalationAction, setEscalationAction] = useState("approve");
+  const [escalationComment, setEscalationComment] = useState("");
+  const [escalationSubmitting, setEscalationSubmitting] = useState(false);
 
   const ESCALATION_DAYS = 3;
 
@@ -55,18 +62,22 @@ const DisputeTab = ({ projectId }) => {
     const resolved = disputes.filter((d) => d.status === "Resolved").length;
     const rejected = disputes.filter((d) => d.status === "Rejected").length;
     const escalated = disputes.filter((d) => isEscalated(d)).length;
-    return { total, pending, resolved, rejected, escalated };
-  }, [disputes]);
+    const pendingPenalty = escalations.filter((item) => item.escalationType === "PenaltyReview").length;
+    const repeatedReject = escalations.filter((item) => item.escalationType === "RepeatedReject").length;
+    return { total, pending, resolved, rejected, escalated, pendingPenalty, repeatedReject };
+  }, [disputes, escalations]);
 
   const fetchDisputes = useCallback(async () => {
     if (!projectId) return;
     setLoading(true);
     try {
-      const [resDisputes, resDetail] = await Promise.all([
+      const [resDisputes, resEscalations, resDetail] = await Promise.all([
         disputeService.getDisputes(projectId),
+        reviewAuditService.getEscalations(projectId),
         projectService.getProjectById(projectId),
       ]);
       setDisputes(resDisputes.data || []);
+      setEscalations(resEscalations.data || []);
       setProjectDetail(resDetail.data || null);
     } catch {
       toast.error(t("dispute.loadDisputeError"));
@@ -115,6 +126,37 @@ const DisputeTab = ({ projectId }) => {
     }
   };
 
+  const openEscalationModal = (escalation) => {
+    setSelectedEscalation(escalation);
+    setEscalationAction("approve");
+    setEscalationComment("");
+    setEscalationModalOpen(true);
+  };
+
+  const handleResolveEscalation = async () => {
+    if (!selectedEscalation) return;
+    if (!escalationComment.trim()) {
+      toast.warning(t("dispute.commentWarning"));
+      return;
+    }
+
+    setEscalationSubmitting(true);
+    try {
+      await reviewAuditService.resolveEscalation({
+        assignmentId: selectedEscalation.assignmentId,
+        action: escalationAction,
+        comment: escalationComment,
+      });
+      toast.success(t("dispute.resolveSuccess"));
+      setEscalationModalOpen(false);
+      fetchDisputes();
+    } catch (err) {
+      toast.error(err.response?.data?.message || t("dispute.resolveError"));
+    } finally {
+      setEscalationSubmitting(false);
+    }
+  };
+
   const getStatusBadge = (status) => {
     const map = {
       Pending: { cls: "dispute-badge-pending", text: t("dispute.statusPending") },
@@ -130,6 +172,24 @@ const DisputeTab = ({ projectId }) => {
       return <Badge color="success"><i className="ri-check-line me-1"></i>Approved</Badge>;
     }
     return <Badge color="danger"><i className="ri-close-line me-1"></i>Rejected</Badge>;
+  };
+
+  const getEscalationBadge = (type) => {
+    if (type === "PenaltyReview") {
+      return (
+        <Badge color="warning">
+          <i className="ri-scales-3-line me-1"></i>
+          {t("analytics.penaltyCases")}
+        </Badge>
+      );
+    }
+
+    return (
+      <Badge color="danger">
+        <i className="ri-alarm-warning-line me-1"></i>
+        {t("analytics.rejectCases")}
+      </Badge>
+    );
   };
 
   const analyzeReviewerFeedback = (feedbacks) => {
@@ -184,6 +244,90 @@ const DisputeTab = ({ projectId }) => {
             <div className="stat-label">{t("dispute.statusRejected")}</div>
             <div className="stat-value">{stats.rejected}</div>
           </div>
+        </Col>
+      </Row>
+
+      <Row className="mb-3">
+        <Col xl={12}>
+          <Card>
+            <CardHeader className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0" style={{ color: "var(--pd-text-primary)" }}>
+                {t("analytics.priorityQueue")}
+              </h5>
+              <div className="d-flex gap-2">
+                <Badge color="warning">{stats.pendingPenalty} {t("analytics.penaltyCases")}</Badge>
+                <Badge color="danger">{stats.repeatedReject} {t("analytics.rejectCases")}</Badge>
+              </div>
+            </CardHeader>
+            <CardBody>
+              {escalations.length === 0 ? (
+                <div className="pd-empty-state">
+                  <i className="ri-checkbox-circle-line"></i>
+                  <p>{t("analytics.priorityQueueEmpty")}</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <Table className="table-hover align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>{t("dispute.colAssignmentId")}</th>
+                        <th>{t("analytics.project")}</th>
+                        <th>{t("analytics.attention")}</th>
+                        <th>{t("analytics.reviewed")}</th>
+                        <th className="text-end">{t("dispute.colAction")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {escalations.map((escalation, index) => {
+                        const voteInfo = countVotes(escalation.reviewerFeedbacks);
+
+                        return (
+                          <tr key={`escalation-${escalation.assignmentId}`}>
+                            <td>{index + 1}</td>
+                            <td>
+                              <strong>#{escalation.assignmentId}</strong>
+                              <div className="small text-muted">{escalation.annotatorName}</div>
+                            </td>
+                            <td>{escalation.projectName}</td>
+                            <td>
+                              <div className="d-flex flex-column gap-2">
+                                {getEscalationBadge(escalation.escalationType)}
+                                <small className="text-muted">
+                                  {t("analytics.priorityQueueDetail", {
+                                    penalty: escalation.escalationType === "PenaltyReview" ? 1 : 0,
+                                    dispute: 0,
+                                    reject: escalation.escalationType === "RepeatedReject" ? 1 : 0,
+                                  })}
+                                </small>
+                                {escalation.rejectCount > 0 && (
+                                  <small className="text-danger">
+                                    {escalation.rejectCount}x reject
+                                  </small>
+                                )}
+                              </div>
+                            </td>
+                            <td>
+                              <div className="d-flex align-items-center gap-2 flex-wrap">
+                                <Badge color="success">{voteInfo.approvedCount} approve</Badge>
+                                <Badge color="danger">{voteInfo.rejectedCount} reject</Badge>
+                              </div>
+                            </td>
+                            <td className="text-end">
+                              <Button color="danger" outline size="sm" onClick={() => openEscalationModal(escalation)}>
+                                <i className="ri-scales-3-line me-1"></i>
+                                {t("dispute.resolve")}
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
+            </CardBody>
+          </Card>
         </Col>
       </Row>
 
@@ -753,6 +897,95 @@ const DisputeTab = ({ projectId }) => {
               {t("dispute.confirmArbitrate")}
             </Button>
           )}
+        </ModalFooter>
+      </Modal>
+
+      <Modal isOpen={escalationModalOpen} toggle={() => setEscalationModalOpen(false)} centered>
+        <ModalHeader toggle={() => setEscalationModalOpen(false)}>
+          <i className="ri-scales-3-line me-2 text-danger"></i>
+          {t("analytics.openDisputeDesk")} #{selectedEscalation?.assignmentId}
+        </ModalHeader>
+        <ModalBody>
+          {selectedEscalation && (
+            <>
+              <Alert color={selectedEscalation.escalationType === "PenaltyReview" ? "warning" : "danger"}>
+                <strong>{selectedEscalation.projectName}</strong>
+                <div className="mt-2">
+                  {selectedEscalation.escalationType === "PenaltyReview"
+                    ? t("analytics.penaltyCases")
+                    : t("analytics.rejectCases")}
+                </div>
+                <small className="d-block mt-2 text-muted">
+                  {selectedEscalation.escalationType === "PenaltyReview"
+                    ? "Case 2-2. Approve means annotator and approvers are correct. Reject means annotator must redo and all reviewers review again."
+                    : "This task has crossed the repeated reject threshold and now requires manager direction."}
+                </small>
+              </Alert>
+
+              <div className="mb-3 d-flex flex-column gap-2">
+                <Label className="fw-semibold">{t("dispute.decision")}</Label>
+                <FormGroup check className="p-3 border rounded">
+                  <Input
+                    type="radio"
+                    name="escalationDecision"
+                    checked={escalationAction === "approve"}
+                    onChange={() => setEscalationAction("approve")}
+                  />
+                  <Label check className="w-100">
+                    <strong>Approve</strong>
+                    <small className="d-block text-muted">
+                      {selectedEscalation.escalationType === "PenaltyReview"
+                        ? "Finalize this image as approved."
+                        : "Approve the current annotation and close the escalation."}
+                    </small>
+                  </Label>
+                </FormGroup>
+                <FormGroup check className="p-3 border rounded">
+                  <Input
+                    type="radio"
+                    name="escalationDecision"
+                    checked={escalationAction === "reject"}
+                    onChange={() => setEscalationAction("reject")}
+                  />
+                  <Label check className="w-100">
+                    <strong>Reject</strong>
+                    <small className="d-block text-muted">
+                      {selectedEscalation.escalationType === "PenaltyReview"
+                        ? "Annotator must revise and the image will return to review in the next cycle."
+                        : "Keep this image rejected and send it back for another annotator pass."}
+                    </small>
+                  </Label>
+                </FormGroup>
+              </div>
+
+              <FormGroup>
+                <Label className="fw-semibold">
+                  {t("dispute.managerComment")}
+                  <small className="text-danger ms-1">{t("dispute.required")}</small>
+                </Label>
+                <Input
+                  type="textarea"
+                  rows="3"
+                  value={escalationComment}
+                  onChange={(event) => setEscalationComment(event.target.value)}
+                  placeholder={t("dispute.commentPlaceholder")}
+                />
+              </FormGroup>
+            </>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button color="light" onClick={() => setEscalationModalOpen(false)}>
+            {t("dispute.cancel")}
+          </Button>
+          <Button
+            color="primary"
+            onClick={handleResolveEscalation}
+            disabled={escalationSubmitting || !escalationComment.trim()}
+          >
+            {escalationSubmitting ? <Spinner size="sm" className="me-1" /> : <i className="ri-check-double-line me-1"></i>}
+            {t("dispute.confirmArbitrate")}
+          </Button>
         </ModalFooter>
       </Modal>
     </>

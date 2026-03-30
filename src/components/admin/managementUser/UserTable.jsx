@@ -16,6 +16,31 @@ const UserTable = ({
   };
   const { t } = useTranslation();
 
+  const getStatusConfig = (user) => {
+    if (user.isActive && user.hasPendingGlobalBanRequest) {
+      return {
+        buttonClass: "admin-row-action-btn--warning",
+        icon: "ri-time-line",
+        label: t("userTableComp.pendingApproval"),
+        title: t("userTableComp.pendingApproval"),
+      };
+    }
+
+    return user.isActive
+      ? {
+        buttonClass: "admin-row-action-btn--success",
+        icon: "ri-checkbox-circle-fill",
+        label: t("userTableComp.active"),
+        title: t("userTableComp.deactivate"),
+      }
+      : {
+        buttonClass: "admin-row-action-btn--danger",
+        icon: "ri-close-circle-fill",
+        label: t("userTableComp.inactive"),
+        title: t("userTableComp.activate"),
+      };
+  };
+
   const totalPages = Math.ceil(totalCount / pageSize);
   const fromEntry = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
   const toEntry = Math.min(page * pageSize, totalCount);
@@ -42,7 +67,10 @@ const UserTable = ({
             </thead>
             <tbody>
               {regularUsers.length > 0 ? (
-                regularUsers.map((user) => (
+                regularUsers.map((user) => {
+                  const statusConfig = getStatusConfig(user);
+
+                  return (
                   <tr key={user.id}>
                     <td>
                       <div className="admin-table-user">
@@ -65,36 +93,29 @@ const UserTable = ({
                       </span>
                     </td>
                     <td className="text-center">
-                      <span className="admin-badge admin-badge--neutral admin-pill-count">
-                        {user.totalProjects || 0}
-                      </span>
+                      <div className="d-flex flex-column align-items-center gap-1">
+                        <span className="admin-badge admin-badge--neutral admin-pill-count">
+                          {user.totalProjects || 0}
+                        </span>
+                        {user.unfinishedProjectCount > 0 && (
+                          <small className="text-muted">
+                            {t("userTableComp.unfinishedProjects", {
+                              count: user.unfinishedProjectCount,
+                            })}
+                          </small>
+                        )}
+                      </div>
                     </td>
                     <td className="text-end">
                       <div className="admin-row-actions">
                         <button
-                          className={`btn admin-row-action-btn admin-row-action-btn--state ${
-                            user.isActive
-                              ? "admin-row-action-btn--success"
-                              : "admin-row-action-btn--danger"
-                          }`}
+                          className={`btn admin-row-action-btn admin-row-action-btn--state ${statusConfig.buttonClass}`}
                           onClick={() => onActive(user, !user.isActive)}
-                          title={
-                            user.isActive
-                              ? t("userTableComp.deactivate")
-                              : t("userTableComp.activate")
-                          }
+                          title={statusConfig.title}
                         >
-                          <i
-                            className={
-                              user.isActive
-                                ? "ri-checkbox-circle-fill"
-                                : "ri-close-circle-fill"
-                            }
-                          ></i>
+                          <i className={statusConfig.icon}></i>
                           <span>
-                            {user.isActive
-                              ? t("userTableComp.active")
-                              : t("userTableComp.inactive")}
+                            {statusConfig.label}
                           </span>
                         </button>
 
@@ -118,7 +139,8 @@ const UserTable = ({
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="4" className="text-center py-5 text-muted">
@@ -133,7 +155,10 @@ const UserTable = ({
 
       <div className="admin-mobile-list d-lg-none">
         {regularUsers.length > 0 ? (
-          regularUsers.map((user) => (
+          regularUsers.map((user) => {
+            const statusConfig = getStatusConfig(user);
+
+            return (
             <article className="admin-mobile-card" key={user.id}>
               <div className="admin-mobile-card__top">
                 <div className="admin-table-user">
@@ -164,39 +189,32 @@ const UserTable = ({
                   <div className="admin-mobile-card__value">
                     {user.totalProjects || 0}
                   </div>
+                  {user.unfinishedProjectCount > 0 && (
+                    <small className="text-muted">
+                      {t("userTableComp.unfinishedProjects", {
+                        count: user.unfinishedProjectCount,
+                      })}
+                    </small>
+                  )}
                 </div>
                 <div>
                   <div className="admin-mobile-card__label">
                     {t("userTableComp.action")}
                   </div>
                   <div className="admin-mobile-card__value">
-                    {user.isActive
-                      ? t("userTableComp.active")
-                      : t("userTableComp.inactive")}
+                    {statusConfig.label}
                   </div>
                 </div>
               </div>
 
               <div className="admin-mobile-card__actions">
                 <button
-                  className={`btn admin-row-action-btn admin-row-action-btn--state ${
-                    user.isActive
-                      ? "admin-row-action-btn--success"
-                      : "admin-row-action-btn--danger"
-                  }`}
+                  className={`btn admin-row-action-btn admin-row-action-btn--state ${statusConfig.buttonClass}`}
                   onClick={() => onActive(user, !user.isActive)}
                 >
-                  <i
-                    className={
-                      user.isActive
-                        ? "ri-checkbox-circle-fill"
-                        : "ri-close-circle-fill"
-                    }
-                  ></i>
+                  <i className={statusConfig.icon}></i>
                   <span>
-                    {user.isActive
-                      ? t("userTableComp.active")
-                      : t("userTableComp.inactive")}
+                    {statusConfig.label}
                   </span>
                 </button>
 
@@ -219,7 +237,8 @@ const UserTable = ({
                 </button>
               </div>
             </article>
-          ))
+            );
+          })
         ) : (
           <div className="admin-mobile-card text-center text-muted">
             {t("common.noData")}

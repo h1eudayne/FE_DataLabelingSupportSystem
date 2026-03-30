@@ -6,6 +6,7 @@ import {
   updateUser,
   getUserProfile,
   updateStatus,
+  resolveGlobalBanRequest,
 } from "./user.api";
 
 vi.mock("../../axios.customize", () => ({
@@ -72,6 +73,20 @@ describe("User API Suite", () => {
 
     expect(axios.patch).toHaveBeenCalledWith(
       `/api/users/${id}/status?isActive=true`,
+    );
+  });
+
+  it("resolveGlobalBanRequest: nên gọi đúng endpoint và payload quyết định", async () => {
+    axios.post.mockResolvedValue({ status: 200 });
+
+    await resolveGlobalBanRequest(42, true, "Approve request");
+
+    expect(axios.post).toHaveBeenCalledWith(
+      "/api/users/global-ban-requests/42/resolve",
+      {
+        approve: true,
+        decisionNote: "Approve request",
+      },
     );
   });
 

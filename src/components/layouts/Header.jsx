@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Container, Dropdown, Form, InputGroup, Button, Badge } from "react-bootstrap";
+import { Container, Dropdown, Form, InputGroup, Button, Badge, Modal, Spinner } from "react-bootstrap";
 import {
   LogOut,
   User,
@@ -21,11 +21,12 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/auth/auth.slice";
-import { getUserProfile } from "../../services/admin/managementUsers/user.api";
+import { getUserProfile, resolveGlobalBanRequest } from "../../services/admin/managementUsers/user.api";
 import { updateUser } from "../../store/auth/auth.slice";
 import { BACKEND_URL } from "../../services/axios.customize";
 import useNotifications from "../../hooks/useNotifications";
 import { disconnect as disconnectSignalR } from "../../services/signalrManager";
+import { toast } from "react-toastify";
 
 const getLanguageCode = (language) =>
   language?.toLowerCase().startsWith("en") ? "en" : "vi";
@@ -36,6 +37,15 @@ const HEADER_LOGOS = {
   darkLarge:
     "https://res.cloudinary.com/deu3ur8w9/image/upload/v1773346453/logo-darkmode_txjdzq.png",
 };
+
+const isPendingGlobalBanNotification = (notification) =>
+  notification?.actionKey === "ResolveGlobalUserBanRequest" &&
+  notification?.metadata?.requestStatus === "Pending";
+
+const getGlobalBanProjects = (notification) =>
+  Array.isArray(notification?.metadata?.unfinishedProjects)
+    ? notification.metadata.unfinishedProjects
+    : [];
 
 const Header = ({
   toggleSidebar,
@@ -48,7 +58,13 @@ const Header = ({
   const { t, i18n } = useTranslation();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } =
+  const [banDecisionModal, setBanDecisionModal] = useState({
+    show: false,
+    approve: true,
+    notification: null,
+  });
+  const [banDecisionLoading, setBanDecisionLoading] = useState(false);
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll, refreshNotifications } =
     useNotifications(user?.id, unreadNotifications);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark";
@@ -117,6 +133,57 @@ const Header = ({
     disconnectSignalR();
     dispatch(logout());
     navigate("/login", { replace: true });
+  };
+
+  const openBanDecisionModal = (notification, approve) => {
+    setBanDecisionModal({
+      show: true,
+      approve,
+      notification,
+    });
+  };
+
+  const closeBanDecisionModal = (force = false) => {
+    if (banDecisionLoading && !force) {
+      return;
+    }
+
+    setBanDecisionModal({
+      show: false,
+      approve: true,
+      notification: null,
+    });
+  };
+
+  const handleResolveBanRequest = async () => {
+    const requestId = banDecisionModal.notification?.metadata?.banRequestId;
+
+    if (!requestId) {
+      toast.error(t("header.globalBanInvalidRequest"));
+      return;
+    }
+
+    setBanDecisionLoading(true);
+
+    try {
+      await resolveGlobalBanRequest(requestId, banDecisionModal.approve);
+      markAsRead(banDecisionModal.notification?.id);
+      await refreshNotifications();
+      toast.success(
+        banDecisionModal.approve
+          ? t("header.globalBanApproveSuccess")
+          : t("header.globalBanRejectSuccess"),
+      );
+      closeBanDecisionModal(true);
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message ||
+        error?.message ||
+        t("header.globalBanActionFailed"),
+      );
+    } finally {
+      setBanDecisionLoading(false);
+    }
   };
 
   const popperConfig = {
@@ -532,37 +599,119 @@ const Header = ({
                         <p className="small mb-0">{t("header.noNotifications")}</p>
                       </div>
                     ) : (
-                      notifications.map((n) => (
-                        <Dropdown.Item
-                          key={n.id}
-                          onClick={() => markAsRead(n.id)}
-                          className={`py-2 px-3 border-bottom ${
-                            !n.read ? "bg-light" : ""
-                          }`}
-                          style={{ whiteSpace: "normal" }}
-                        >
-                          <div className="d-flex align-items-start gap-2">
-                            <div
-                              className={`rounded-circle mt-1 flex-shrink-0 ${
-                                !n.read ? "bg-primary" : "bg-secondary opacity-25"
-                              }`}
-                              style={{ width: "8px", height: "8px" }}
-                            />
-                            <div className="flex-grow-1">
-                              <div className="small">{n.message}</div>
+                      notifications.map((n) => {
+                        const pendingGlobalBan = isPendingGlobalBanNotification(n);
+                        const globalBanProjects = getGlobalBanProjects(n);
+                        const requestStatus = n?.metadata?.requestStatus;
+
+                        return (
+                          <Dropdown.Item
+                            key={n.id}
+                            onClick={() => markAsRead(n.id)}
+                            className={`py-2 px-3 border-bottom ${
+                              !n.read ? "bg-light" : ""
+                            }`}
+                            style={{ whiteSpace: "normal" }}
+                          >
+                            <div className="d-flex align-items-start gap-2">
                               <div
-                                className="text-muted d-flex align-items-center gap-1"
-                                style={{ fontSize: "10px" }}
-                              >
-                                <Clock size={10} />
-                                {new Date(n.timestamp).toLocaleString(
-                                  i18n.language === "vi" ? "vi-VN" : "en-US",
+                                className={`rounded-circle mt-1 flex-shrink-0 ${
+                                  !n.read ? "bg-primary" : "bg-secondary opacity-25"
+                                }`}
+                                style={{ width: "8px", height: "8px" }}
+                              />
+                              <div className="flex-grow-1">
+                                <div className="d-flex align-items-start justify-content-between gap-2">
+                                  <div className="small fw-semibold text-wrap">
+                                    {n.message}
+                                  </div>
+                                  {pendingGlobalBan && (
+                                    <Badge bg="warning" text="dark" pill>
+                                      {t("header.approvalRequired")}
+                                    </Badge>
+                                  )}
+                                  {!pendingGlobalBan && requestStatus === "Approved" && (
+                                    <Badge bg="success" pill>
+                                      {t("header.approved")}
+                                    </Badge>
+                                  )}
+                                  {!pendingGlobalBan && requestStatus === "Rejected" && (
+                                    <Badge bg="secondary" pill>
+                                      {t("header.rejected")}
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                {globalBanProjects.length > 0 && (
+                                  <div className="mt-2">
+                                    <div className="text-muted fw-semibold" style={{ fontSize: "10px" }}>
+                                      {t("header.globalBanProjects")}
+                                    </div>
+                                    <div className="d-flex flex-wrap gap-1 mt-1">
+                                      {globalBanProjects.map((project) => (
+                                        <span
+                                          key={`${n.id}-${project.id}`}
+                                          className="badge bg-light text-dark border"
+                                          style={{ fontSize: "10px" }}
+                                        >
+                                          {project.name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
                                 )}
+
+                                {requestStatus && !pendingGlobalBan && (
+                                  <div className="mt-2 text-muted" style={{ fontSize: "10px" }}>
+                                    {requestStatus === "Approved"
+                                      ? t("header.globalBanResolvedApproved")
+                                      : t("header.globalBanResolvedRejected")}
+                                  </div>
+                                )}
+
+                                {pendingGlobalBan && (
+                                  <div className="mt-2 d-flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline-secondary"
+                                      className="py-1 px-2"
+                                      onClick={(event) => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        openBanDecisionModal(n, false);
+                                      }}
+                                    >
+                                      {t("header.reject")}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="danger"
+                                      className="py-1 px-2"
+                                      onClick={(event) => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        openBanDecisionModal(n, true);
+                                      }}
+                                    >
+                                      {t("header.approveBan")}
+                                    </Button>
+                                  </div>
+                                )}
+
+                                <div
+                                  className="text-muted d-flex align-items-center gap-1 mt-2"
+                                  style={{ fontSize: "10px" }}
+                                >
+                                  <Clock size={10} />
+                                  {new Date(n.timestamp).toLocaleString(
+                                    i18n.language === "vi" ? "vi-VN" : "en-US",
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </Dropdown.Item>
-                      ))
+                          </Dropdown.Item>
+                        );
+                      })
                     )}
                   </div>
                 </Dropdown.Menu>
@@ -659,6 +808,56 @@ const Header = ({
           </div>
         </Container>
       </header>
+
+      <Modal show={banDecisionModal.show} onHide={() => closeBanDecisionModal()} centered>
+        <Modal.Header closeButton={!banDecisionLoading}>
+          <Modal.Title>
+            {banDecisionModal.approve
+              ? t("header.globalBanApproveTitle")
+              : t("header.globalBanRejectTitle")}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="mb-2">
+            {banDecisionModal.approve
+              ? t("header.globalBanApproveDescription", {
+                userName: banDecisionModal.notification?.metadata?.targetUserName || t("header.defaultUser"),
+              })
+              : t("header.globalBanRejectDescription", {
+                userName: banDecisionModal.notification?.metadata?.targetUserName || t("header.defaultUser"),
+              })}
+          </p>
+          {banDecisionModal.approve && (
+            <div className="alert alert-danger mb-0">
+              {t("header.globalBanApproveImpact")}
+            </div>
+          )}
+          {!banDecisionModal.approve && (
+            <div className="alert alert-secondary mb-0">
+              {t("header.globalBanRejectImpact")}
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="light"
+            onClick={() => closeBanDecisionModal()}
+            disabled={banDecisionLoading}
+          >
+            {t("common.cancel")}
+          </Button>
+          <Button
+            variant={banDecisionModal.approve ? "danger" : "secondary"}
+            onClick={handleResolveBanRequest}
+            disabled={banDecisionLoading}
+          >
+            {banDecisionLoading && <Spinner size="sm" className="me-2" />}
+            {banDecisionModal.approve
+              ? t("header.globalBanApproveConfirm")
+              : t("header.globalBanRejectConfirm")}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 };

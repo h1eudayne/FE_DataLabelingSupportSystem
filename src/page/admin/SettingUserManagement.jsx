@@ -195,18 +195,21 @@ const SettingUserManagement = () => {
     if (!lockTargetUser) return;
     setLockLoading(true);
     try {
-      await updateStatus(lockTargetUser.id, lockTargetActive);
-      const updateList = (list) =>
-        list.map((u) =>
-          u.id === lockTargetUser.id ? { ...u, isActive: lockTargetActive } : u,
+      const response = await updateStatus(lockTargetUser.id, lockTargetActive);
+      const payload = response?.data || {};
+      await fetchUsers(pagination.page);
+
+      if (payload.requiresManagerApproval) {
+        toast.info(payload.message || t("userMgmt.lockRequestSent"));
+      } else {
+        toast.success(
+          payload.message ||
+          (lockTargetActive
+            ? t("userMgmt.unlockSuccess")
+            : t("userMgmt.lockSuccess")),
         );
-      setUsers((prev) => updateList(prev));
-      setFilteredUsers((prev) => updateList(prev));
-      toast.success(
-        lockTargetActive
-          ? t("userMgmt.unlockSuccess")
-          : t("userMgmt.lockSuccess"),
-      );
+      }
+
       setLockModalOpen(false);
       setLockTargetUser(null);
     } catch (error) {
@@ -248,6 +251,13 @@ const SettingUserManagement = () => {
   const onPageChange = (newPage) => {
     setPagination((prev) => ({ ...prev, page: newPage }));
   };
+
+  const requiresManagerApproval =
+    !lockTargetActive &&
+    lockTargetUser?.isActive &&
+    lockTargetUser?.managerId &&
+    (lockTargetUser?.unfinishedProjectCount || 0) > 0;
+  const hasPendingGlobalBanRequest = Boolean(lockTargetUser?.hasPendingGlobalBanRequest);
 
   if (loading) {
     return (
@@ -360,41 +370,66 @@ const SettingUserManagement = () => {
               </span>
             </div>
 
-            {lockTargetUser?.totalProjects > 0 && !lockTargetActive && (
-              <div className="alert alert-danger mt-3 mb-0 text-start">
+            {hasPendingGlobalBanRequest && !lockTargetActive && (
+              <div className="alert alert-warning mt-3 mb-0 text-start">
                 <div className="d-flex align-items-start gap-2">
-                  <i className="ri-error-warning-fill fs-18 mt-1 flex-shrink-0"></i>
+                  <i className="ri-time-line fs-18 mt-1 flex-shrink-0"></i>
                   <div>
                     <strong className="d-block mb-1">
-                      {t("userMgmt.userInProjectWarning", {
-                        count: lockTargetUser.totalProjects,
-                      })}
+                      {t("userMgmt.pendingApprovalTitle")}
                     </strong>
                     <span className="small">
-                      {t("userMgmt.userInProjectNote")}
+                      {t("userMgmt.pendingApprovalNote")}
                     </span>
                   </div>
                 </div>
               </div>
             )}
 
-            {lockTargetUser?.totalProjects > 0 && lockTargetActive && (
+            {requiresManagerApproval && !hasPendingGlobalBanRequest && (
+              <div className="alert alert-warning mt-3 mb-0 text-start">
+                <div className="d-flex align-items-start gap-2">
+                  <i className="ri-shield-user-line fs-18 mt-1 flex-shrink-0"></i>
+                  <div>
+                    <strong className="d-block mb-1">
+                      {t("userMgmt.managerApprovalRequired", {
+                        count: lockTargetUser?.unfinishedProjectCount || 0,
+                      })}
+                    </strong>
+                    <span className="small">
+                      {t("userMgmt.managerApprovalNote")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {lockTargetUser?.unfinishedProjectCount > 0 && lockTargetActive && (
               <div className="alert alert-info mt-3 mb-0 text-start small">
                 <i className="ri-information-line me-1"></i>
                 {t("userMgmt.unlockInProjectNote", {
-                  count: lockTargetUser.totalProjects,
+                  count: lockTargetUser.unfinishedProjectCount,
                 })}
               </div>
             )}
 
-            {(!lockTargetUser?.totalProjects ||
-              lockTargetUser?.totalProjects === 0) &&
+            {(!lockTargetUser?.unfinishedProjectCount ||
+              lockTargetUser?.unfinishedProjectCount === 0) &&
               !lockTargetActive && (
-                <div className="alert alert-warning mt-3 mb-0 text-start small">
-                  <i className="ri-information-line me-1"></i>
-                  {t("userMgmt.lockNoProjectNote")}
+              <div className="alert alert-danger mt-3 mb-0 text-start">
+                <div className="d-flex align-items-start gap-2">
+                  <i className="ri-error-warning-fill fs-18 mt-1 flex-shrink-0"></i>
+                  <div>
+                    <strong className="d-block mb-1">
+                      {t("userMgmt.lockDirectlyTitle")}
+                    </strong>
+                    <span className="small">
+                      {t("userMgmt.lockDirectlyNote")}
+                    </span>
+                  </div>
                 </div>
-              )}
+              </div>
+            )}
           </div>
         </ModalBody>
         <ModalFooter className="justify-content-center">
