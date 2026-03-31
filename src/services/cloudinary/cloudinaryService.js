@@ -1,18 +1,24 @@
 import cloudinaryAxios from "./cloudinaryAxios";
-
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+import {
+  CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_UPLOAD_PRESET,
+} from "../../config/runtime";
 
 export const uploadToCloudinary = async (file) => {
   if (!file) throw new Error("File is required");
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+    throw new Error(
+      "Cloudinary configuration is missing. Set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET.",
+    );
+  }
 
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("upload_preset", UPLOAD_PRESET);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
   try {
     const res = await cloudinaryAxios.post(
-      `/v1_1/${CLOUD_NAME}/image/upload`,
+      `/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
       formData,
       {
         headers: {

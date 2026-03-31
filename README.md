@@ -1,176 +1,80 @@
-# 🚀 Data Labeling Support System
-![Build Status](https://img.shields.io/github/actions/workflow/status/h1eudayne/FE_DataLabelingSupportSystem/main.yml?branch=main&label=Build&logo=github&style=flat-square)
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
----
-## 🚀 Các bước cài đặt (Chế độ Development)
+# FE Data Labeling Support System
 
-1. **Tạo dự án mới:**
+Frontend React + Vite cho hệ thống Data Labeling Support System.
 
-   ```bash
-   npm create vite@latest
-   ```
+## Stack
+* React 19
+* Vite 6
+* Redux Toolkit
+* React Router
+* Axios
+* SignalR
 
-2. **Làm theo hướng dẫn:**
-
-   - Nhập tên project
-   - Chọn `React` và `JavaScript + SWC`
-
-3. **Cài npm:**
-
-   ```bash
-   npm install
-   ```
-
-4. **Cài react phiên bản 18**
-
-   ```bash
-   npm install react@18 react-dom@18
-   ```
-
-   - Vì antd chỉ cho hỗ trợ react phiên bản 16 - 18
-
-5. **Cài đặt thư viện (nếu cần):**
-
-   ```bash
-   npm i
-   ```
-
-6. **Cập nhật file `.env.development`** (nếu cần thiết)
-
-7. **Chạy dự án:**
-
-   ```bash
-   npm run dev
-   ```
-
----
-
-## ⚙️ Cách chạy ở chế độ Production
-
-1. **Tạo dự án mới:**
-
-   ```bash
-   npm create vite@latest
-   ```
-
-2. **Làm theo hướng dẫn:**
-
-   - Nhập tên project
-   - Chọn `React` và `JavaScript + SWC`
-
-3. **Cài npm:**
-
-   ```bash
-   npm install
-   ```
-
-4. **Cài đặt thư viện (nếu cần):**
-
-   ```bash
-   npm i
-   ```
-
-5. **Cập nhật file `.env.production`** (nếu cần thiết)
-
-6. **Build dự án:**
-
-   ```bash
-   npm run build
-   ```
-
-7. **Chạy preview sản phẩm:**
-
-   ```bash
-   npm run preview
-   ```
-
----
-
-## 🗺️ Cài đặt React Router
+## Local Development
+1. Cài dependencies:
 
 ```bash
-npm install react-router-dom@latest
+npm install
 ```
 
----
-
-## 🌐 Cài đặt Axios
+2. Dùng file env local:
 
 ```bash
-npm install axios@latest
+cp .env.example .env.development
 ```
 
----
+3. Chạy app:
 
-## 🎨 UI Framework & Styling
+```bash
+npm run dev
+```
 
-1. **Bootstrap:**
+Frontend mặc định gọi backend local tại `https://localhost:7025`.
 
-   ```bash
-   npm install bootstrap react-bootstrap
-   ```
+## Frontend Environment Variables
+Các biến môi trường quan trọng:
 
-   - - Lưu ý: Thêm dòng sau vào file main.jsx hoặc App.jsx
-   - import "bootstrap/dist/css/bootstrap.min.css";
+* `VITE_BACKEND_URL`
+  URL public của backend API. Ví dụ `https://your-backend.up.railway.app`
 
-2. **Icons & Animations:**
+* `VITE_SIGNALR_URL`
+  URL base cho SignalR. Thường để giống `VITE_BACKEND_URL`
 
-   ```bash
-   npm install @fortawesome/react-fontawesome
-   ```
+* `VITE_CLOUDINARY_CLOUD_NAME`
+  Cloud name cho upload ảnh mẫu / ảnh nhãn
 
-   ```bash
-   npm install @lordicon/react
-   ```
+* `VITE_CLOUDINARY_UPLOAD_PRESET`
+  Unsigned upload preset cho Cloudinary
 
-   ```bash
-   npm install lottie-web
-   ```
+## Production Checklist
+Khi deploy frontend lên Vercel hoặc host khác:
 
-3. **Sliders & Scrolling:**
+1. Set `VITE_BACKEND_URL` thành domain backend Railway.
+2. Set `VITE_SIGNALR_URL` thành cùng domain backend Railway.
+3. Trên backend, set `Cors__AllowedOrigins` chứa domain frontend production.
+4. Set đủ 2 biến Cloudinary nếu frontend có upload ảnh trực tiếp.
+5. Build lại frontend sau khi cập nhật env.
+6. Kiểm tra các luồng sau:
+    Login
+    Avatar
+    Notifications realtime
+    Upload dataset / label example images
 
-   ```bash
-   npm install swiper
-   ```
+## Vercel + Railway
+Nếu frontend lên Vercel và backend lên Railway:
 
-   ```bash
-   npm install simplebar-react
-   ```
+* `VITE_BACKEND_URL=https://your-backend.up.railway.app`
+* `VITE_SIGNALR_URL=https://your-backend.up.railway.app`
+* Backend `Cors__AllowedOrigins=https://data-labeling-support-system.vercel.app`
 
----
+File `vercel.json` đã có rewrite cho SPA routing.
 
-## 📊 Data Visualization & Tables
+## Build
+```bash
+npm run build
+```
 
-1. **Charts (ApexCharts):**
-
-   ```bash
-   npm install apexcharts react-apexcharts
-   ```
-
-2. **TanStack Table:**
-
-   ```bash
-   npm install @tanstack/react-table
-   ```
-
----
-
-## 🛠️ Dev Dependencies
-
-1. **ESLint configuration:**
-
-   ```bash
-   npm install -D eslint @eslint/js eslint-plugin-react-hooks eslint-plugin-react-refresh globals
-   ```
-
-2. **Type definitions cho React:**
-
-   ```bash
-   npm install -D @types/react @types/react-dom
-   ```
-
----
-
-
-
+## Test
+```bash
+npm run test
+```

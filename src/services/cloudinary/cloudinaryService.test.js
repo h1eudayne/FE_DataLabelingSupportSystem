@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import cloudinaryAxios from "./cloudinaryAxios";
-import { uploadToCloudinary } from "./cloudinaryService";
 
 vi.mock("./cloudinaryAxios", () => ({
   default: {
@@ -9,8 +8,14 @@ vi.mock("./cloudinaryAxios", () => ({
 }));
 
 describe("cloudinaryService", () => {
-  beforeEach(() => {
+  let uploadToCloudinary;
+
+  beforeEach(async () => {
+    vi.stubEnv("VITE_CLOUDINARY_CLOUD_NAME", "test_cloud");
+    vi.stubEnv("VITE_CLOUDINARY_UPLOAD_PRESET", "test_preset");
+    vi.resetModules();
     vi.clearAllMocks();
+    uploadToCloudinary = (await import("./cloudinaryService")).uploadToCloudinary;
   });
 
   it("nên ném lỗi nếu không có file truyền vào", async () => {
@@ -41,6 +46,21 @@ describe("cloudinaryService", () => {
 
     await expect(uploadToCloudinary(mockFile)).rejects.toThrow(
       "Cloudinary upload failed",
+    );
+  });
+
+  it("nên báo lỗi rõ ràng nếu thiếu cấu hình Cloudinary", async () => {
+    vi.unstubAllEnvs();
+    vi.stubEnv("VITE_CLOUDINARY_CLOUD_NAME", "");
+    vi.stubEnv("VITE_CLOUDINARY_UPLOAD_PRESET", "");
+    vi.resetModules();
+    vi.clearAllMocks();
+
+    const { uploadToCloudinary: uploadWithoutConfig } = await import("./cloudinaryService");
+    const mockFile = new File([""], "test.png");
+
+    await expect(uploadWithoutConfig(mockFile)).rejects.toThrow(
+      "Cloudinary configuration is missing. Set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET.",
     );
   });
 });

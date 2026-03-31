@@ -23,7 +23,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/auth/auth.slice";
 import { getUserProfile, resolveGlobalBanRequest } from "../../services/admin/managementUsers/user.api";
 import { updateUser } from "../../store/auth/auth.slice";
-import { BACKEND_URL } from "../../services/axios.customize";
+import { resolveBackendAssetUrl } from "../../config/runtime";
 import useNotifications from "../../hooks/useNotifications";
 import { disconnect as disconnectSignalR } from "../../services/signalrManager";
 import { toast } from "react-toastify";
@@ -732,9 +732,7 @@ const Header = ({
                       <img
                         src={
                           user?.avatarUrl
-                            ? user.avatarUrl.startsWith("http")
-                              ? user.avatarUrl
-                              : `${BACKEND_URL}${user.avatarUrl}`
+                            ? resolveBackendAssetUrl(user.avatarUrl)
                             : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`
                         }
                         className="rounded-circle shadow-sm border border-2 border-white"

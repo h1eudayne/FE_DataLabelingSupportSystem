@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal, Form, Row, Col, Button, Badge } from "react-bootstrap";
-import { BACKEND_URL } from "../../services/axios.customize";
 import { useTranslation } from "react-i18next";
+import { resolveBackendAssetUrl } from "../../config/runtime";
 
 const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
   const { t } = useTranslation();
@@ -46,14 +46,7 @@ const ProfileModal = ({ toggleModal, userSelf, isOpen, handleSave }) => {
       return formData.avatarUrl;
     }
 
-    const baseUrl = BACKEND_URL.endsWith("/")
-      ? BACKEND_URL.slice(0, -1)
-      : BACKEND_URL;
-    const path = formData.avatarUrl.startsWith("/")
-      ? formData.avatarUrl
-      : `/${formData.avatarUrl}`;
-
-    return `${baseUrl}${path}`;
+    return resolveBackendAssetUrl(formData.avatarUrl);
   };
 
   const handleChange = (e) => {

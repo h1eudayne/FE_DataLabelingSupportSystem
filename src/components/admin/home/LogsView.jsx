@@ -11,8 +11,8 @@ import {
 import { History, Activity, Search } from "lucide-react";
 import { getSysLogs } from "../../../services/admin/managementSystem/systemLog.api";
 import SysLogsModal from "../managementSystem/SysLogsModal";
-import { BACKEND_URL } from "../../../services/axios.customize";
 import { useTranslation } from "react-i18next";
+import { resolveBackendAssetUrl } from "../../../config/runtime";
 
 const LogsView = ({ embedded = false }) => {
   const { t } = useTranslation();
@@ -126,9 +126,7 @@ const LogsView = ({ embedded = false }) => {
                 <img
                   src={
                     log.avatar
-                      ? log.avatar.startsWith("http")
-                        ? log.avatar
-                        : `${BACKEND_URL}${log.avatar.startsWith("/") ? "" : "/"}${log.avatar}`
+                      ? resolveBackendAssetUrl(log.avatar)
                       : `https://api.dicebear.com/7.x/initials/svg?seed=${log.email}`
                   }
                   alt={t("header.avatarAlt")}

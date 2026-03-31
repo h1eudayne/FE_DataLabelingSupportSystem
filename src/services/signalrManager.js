@@ -1,6 +1,6 @@
 import * as signalR from "@microsoft/signalr";
 import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
-import { BACKEND_URL } from "./axios.customize";
+import { NOTIFICATION_HUB_URL } from "../config/runtime";
 
 
 
@@ -16,10 +16,8 @@ function getOrCreateConnection() {
   const token = localStorage.getItem("access_token");
   if (!token) return null;
 
-  const hubUrl = `${BACKEND_URL}/hubs/notifications`;
-
   connection = new signalR.HubConnectionBuilder()
-    .withUrl(hubUrl, {
+    .withUrl(NOTIFICATION_HUB_URL, {
       accessTokenFactory: () => localStorage.getItem("access_token") || "",
     })
     .withHubProtocol(new MessagePackHubProtocol())

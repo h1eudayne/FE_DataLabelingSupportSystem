@@ -9,8 +9,8 @@ import {
   Button,
   Form,
 } from "react-bootstrap";
-import { BACKEND_URL } from "../../services/axios.customize";
 import { useTranslation } from "react-i18next";
+import { resolveBackendAssetUrl } from "../../config/runtime";
 
 const ProfileTable = ({ userSelf, onEditProfile, onChangePass }) => {
   const { t } = useTranslation();
@@ -67,10 +67,7 @@ const ProfileTable = ({ userSelf, onEditProfile, onChangePass }) => {
                   <img
                     src={
                       userSelf.avatarUrl
-                        ? userSelf.avatarUrl.startsWith("http") ||
-                          userSelf.avatarUrl.startsWith("blob:")
-                          ? userSelf.avatarUrl
-                          : `${BACKEND_URL}${userSelf.avatarUrl.startsWith("/") ? "" : "/"}${userSelf.avatarUrl}`
+                        ? resolveBackendAssetUrl(userSelf.avatarUrl)
                         : `https://api.dicebear.com/7.x/avataaars/svg?seed=${userSelf?.email}`
                     }
                     alt="user-profile"

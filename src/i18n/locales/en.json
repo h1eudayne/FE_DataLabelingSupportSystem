@@ -157,12 +157,12 @@
       "pending": "Pending",
       "completed": "Completed",
       "overdue": "Overdue",
-      "accuracy":"Accuracy"
+      "accuracy": "Accuracy"
     },
     "status": {
       "overdue": "OVERDUE"
     },
-    "completed":"Completed",
+    "completed": "Completed",
     "alerts": {
       "overdue": "OVERDUE",
       "nearDeadline": "DUE SOON",
@@ -565,9 +565,9 @@
       "pending": "Pending",
       "completed": "Completed",
       "overdue": "Overdue",
-      "new":"New Projects"
+      "new": "New Projects"
     },
-  "projectDetail": {
+    "projectDetail": {
       "loading": "Loading project details...",
       "loadError": "Unable to load project details",
       "notFound": "Project not found",
@@ -647,7 +647,7 @@
     "download": "Download",
     "upload": "Upload",
     "refresh": "Refresh",
-    "welcomeBack":"Welcome back!",
+    "welcomeBack": "Welcome back!",
     "menu": "Menu",
     "logo": "Application logo",
     "loadingData": "Loading data..."
@@ -1192,8 +1192,8 @@
     "inactive": "Inactive",
     "noStaffFound": "No staff members found.",
     "showingRange": "Showing {{from}} to {{to}} of {{total}} users",
-    "totalProjects":"Total Projects",
-    "assignManager":"Assign Manager",
+    "totalProjects": "Total Projects",
+    "assignManager": "Assign Manager",
     "noManager": "-- No Manager --",
     "resetPassword": "Reset Password",
     "resetPasswordFor": "Reset password for",
@@ -1246,7 +1246,7 @@
     "errorType": "Unsupported file format. Only .xlsx or .xls are accepted",
     "maxSizeLabel": "Maximum size:",
     "maxRowLabel": "Row limit:",
-    "rows":"rows"
+    "rows": "rows"
   },
   "annotatorContainerComp": {
     "workboard": "Workboard",
@@ -1337,7 +1337,7 @@
     "require2FA": "Require 2-factor authentication on Login",
     "require2FADesc": "Applies to flow /api/Auth/login",
     "saveConfig": "Save Configuration",
-    "loading":"Loading..."
+    "loading": "Loading..."
   },
   "adminNavTabs": {
     "userManagement": "User Management",
@@ -1389,10 +1389,10 @@
     "edit": "Edit Details",
     "resetPassword": "Reset Password",
     "showingRange": "Showing {{from}} to {{to}} of {{total}} entries",
-    "totalProjects":"Total Projects",
+    "totalProjects": "Total Projects",
     "unfinishedProjects": "{{count}} unfinished"
   },
-  "userFilter":{
+  "userFilter": {
     "searchPlaceholder": "Search by name, email or role..."
   },
   "projectCard": {
@@ -1441,8 +1441,9 @@
         "enter": "Enter Review",
         "completed": "Completed"
       }
-    }},
-    "review": {
+    }
+  },
+  "review": {
     "nav": {
       "back": "Back",
       "project": "PROJECT"
@@ -1472,16 +1473,46 @@
       "deselectAll": "Deselect all criteria",
       "footer": "Completed: {{count}} / {{total}} criteria",
       "items": {
-        "CL-01": { "title": "Correct Identification", "desc": "Object matches reality" },
-        "CL-02": { "title": "Correct Label Class", "desc": "Correct category selected" },
-        "CL-03": { "title": "Accurate Bounding Box", "desc": "Frame tightly fits the object" },
-        "CL-04": { "title": "No Omissions", "desc": "All objects in image are labeled" },
-        "CL-05": { "title": "No Mislabeling", "desc": "No labels on irrelevant artifacts" },
-        "CL-06": { "title": "Guideline Compliance", "desc": "Follows project instructions" },
-        "CL-07": { "title": "Consistency", "desc": "Consistent with previous labels" },
-        "CL-08": { "title": "Correct Tool", "desc": "Used correct Box/Polygon tool" },
-        "CL-09": { "title": "Full Coverage", "desc": "Visible parts are not cut off" },
-        "CL-10": { "title": "Standard Data Quality", "desc": "Image is clear enough for ID" }
+        "CL-01": {
+          "title": "Correct Identification",
+          "desc": "Object matches reality"
+        },
+        "CL-02": {
+          "title": "Correct Label Class",
+          "desc": "Correct category selected"
+        },
+        "CL-03": {
+          "title": "Accurate Bounding Box",
+          "desc": "Frame tightly fits the object"
+        },
+        "CL-04": {
+          "title": "No Omissions",
+          "desc": "All objects in image are labeled"
+        },
+        "CL-05": {
+          "title": "No Mislabeling",
+          "desc": "No labels on irrelevant artifacts"
+        },
+        "CL-06": {
+          "title": "Guideline Compliance",
+          "desc": "Follows project instructions"
+        },
+        "CL-07": {
+          "title": "Consistency",
+          "desc": "Consistent with previous labels"
+        },
+        "CL-08": {
+          "title": "Correct Tool",
+          "desc": "Used correct Box/Polygon tool"
+        },
+        "CL-09": {
+          "title": "Full Coverage",
+          "desc": "Visible parts are not cut off"
+        },
+        "CL-10": {
+          "title": "Standard Data Quality",
+          "desc": "Image is clear enough for ID"
+        }
       },
       "saveAndClose": "Save & Close"
     },
@@ -1493,16 +1524,46 @@
       "btnCancel": "Cancel",
       "btnConfirm": "Confirm Reject",
       "items": {
-        "CL-01": { "title": "Incorrect Identification", "desc": "Object labeling does not match reality" },
-        "CL-02": { "title": "Wrong Label Class", "desc": "Incorrect category or classification" },
-        "CL-03": { "title": "Inaccurate Bounding Box", "desc": "Box is too loose, too tight, or off-center" },
-        "CL-04": { "title": "Missing Objects", "desc": "Some target objects were not labeled" },
-        "CL-05": { "title": "Extra/Incorrect Labels", "desc": "Labeled irrelevant objects or artifacts" },
-        "CL-06": { "title": "Non-compliant with Guideline", "desc": "Violated specific project rules" },
-        "CL-07": { "title": "Inconsistency", "desc": "Not consistent with project standards" },
-        "CL-08": { "title": "Wrong Tool Used", "desc": "Incorrect tool (e.g., used Box for Polygon)" },
-        "CL-09": { "title": "Incomplete Coverage", "desc": "Visible area of object is not fully covered" },
-        "CL-10": { "title": "Data Quality Issue", "desc": "Blurry image or unidentifiable object" }
+        "CL-01": {
+          "title": "Incorrect Identification",
+          "desc": "Object labeling does not match reality"
+        },
+        "CL-02": {
+          "title": "Wrong Label Class",
+          "desc": "Incorrect category or classification"
+        },
+        "CL-03": {
+          "title": "Inaccurate Bounding Box",
+          "desc": "Box is too loose, too tight, or off-center"
+        },
+        "CL-04": {
+          "title": "Missing Objects",
+          "desc": "Some target objects were not labeled"
+        },
+        "CL-05": {
+          "title": "Extra/Incorrect Labels",
+          "desc": "Labeled irrelevant objects or artifacts"
+        },
+        "CL-06": {
+          "title": "Non-compliant with Guideline",
+          "desc": "Violated specific project rules"
+        },
+        "CL-07": {
+          "title": "Inconsistency",
+          "desc": "Not consistent with project standards"
+        },
+        "CL-08": {
+          "title": "Wrong Tool Used",
+          "desc": "Incorrect tool (e.g., used Box for Polygon)"
+        },
+        "CL-09": {
+          "title": "Incomplete Coverage",
+          "desc": "Visible area of object is not fully covered"
+        },
+        "CL-10": {
+          "title": "Data Quality Issue",
+          "desc": "Blurry image or unidentifiable object"
+        }
       }
     },
     "messages": {
