@@ -15,10 +15,12 @@ import { useNavigate } from "react-router-dom";
 import useSignalRRefresh from "../hooks/useSignalRRefresh";
 import { useTranslation } from "react-i18next";
 import ProjectCardItem from "../components/reviewer/home/ProjectCardItem";
+import { useSelector } from "react-redux";
 
 const REVIEWER_REFRESH_INTERVAL_MS = 30000;
 
 const ReviewerContainer = () => {
+  const { user } = useSelector((state) => state.auth);
   const { t } = useTranslation();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +68,7 @@ const ReviewerContainer = () => {
       );
     } catch (err) {
       console.error("Error loading projects:", err);
+      setGlobalAccuracy(100);
     } finally {
       if (showLoading) {
         setLoading(false);
