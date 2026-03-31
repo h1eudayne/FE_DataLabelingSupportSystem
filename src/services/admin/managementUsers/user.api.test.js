@@ -21,6 +21,7 @@ vi.mock("../../axios.customize", () => ({
 describe("User API Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   it("getUsers: nên gọi đúng URL và phương thức GET", async () => {
@@ -62,6 +63,30 @@ describe("User API Suite", () => {
 
     expect(axios.get).toHaveBeenCalledWith("/api/users/me");
     expect(result).toEqual(mockProfile);
+  });
+
+  it("getUserProfile: nên ưu tiên cached user và không gọi network", async () => {
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        id: "u-1",
+        role: "Admin",
+        fullName: "Cached Admin",
+        email: "cached@example.com",
+        avatarUrl: "/avatars/cached.png",
+      }),
+    );
+
+    const result = await getUserProfile();
+
+    expect(axios.get).not.toHaveBeenCalled();
+    expect(result.data).toEqual({
+      id: "u-1",
+      role: "Admin",
+      fullName: "Cached Admin",
+      email: "cached@example.com",
+      avatarUrl: "/avatars/cached.png",
+    });
   });
 
   it("updateStatus: nên truyền tham số query string chính xác cho PATCH", async () => {

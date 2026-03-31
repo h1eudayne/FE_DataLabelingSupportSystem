@@ -13,7 +13,12 @@ i18n.use(initReactI18next).init({
   },
   lng: savedLang,
   fallbackLng: "vi",
+  debug: false,
+  showSupportNotice: false,
   interpolation: { escapeValue: false },
+  react: {
+    useSuspense: false,
+  },
 });
 
 

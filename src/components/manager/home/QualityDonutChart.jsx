@@ -4,11 +4,11 @@ import {
   PieChart,
   Pie,
   Cell,
-  ResponsiveContainer,
   Tooltip,
   Legend,
 } from "recharts";
 import { useTranslation } from "react-i18next";
+import SafeResponsiveChart from "../../charts/SafeResponsiveChart";
 
 const QualityDonutChart = ({ data }) => {
   const { t } = useTranslation();
@@ -26,28 +26,26 @@ const QualityDonutChart = ({ data }) => {
         <h6 className="fw-bold mb-0">{t('qualityDonut.title')}</h6>
       </Card.Header>
       <Card.Body>
-        <div style={{ width: "100%", height: 300 }}>
-          <ResponsiveContainer>
-            <PieChart>
-              <Pie
-                data={chartData}
-                innerRadius={70}
-                outerRadius={90}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend verticalAlign="bottom" height={36} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+        <SafeResponsiveChart height={300}>
+          <PieChart>
+            <Pie
+              data={chartData}
+              innerRadius={70}
+              outerRadius={90}
+              paddingAngle={5}
+              dataKey="value"
+            >
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend verticalAlign="bottom" height={36} />
+          </PieChart>
+        </SafeResponsiveChart>
       </Card.Body>
     </Card>
   );

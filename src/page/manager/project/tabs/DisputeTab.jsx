@@ -8,15 +8,7 @@ import {
   Table,
   Badge,
   Button,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Input,
-  Label,
-  FormGroup,
   Spinner,
-  Alert,
 } from "reactstrap";
 import { toast } from "react-toastify";
 import projectService from "../../../../services/manager/project/projectService";
@@ -24,6 +16,7 @@ import disputeService from "../../../../services/manager/dispute/disputeService"
 import reviewAuditService from "../../../../services/manager/review/reviewAuditService";
 import useSignalRRefresh from "../../../../hooks/useSignalRRefresh";
 import { useTranslation } from "react-i18next";
+import ManagerDecisionEvidenceModal from "../../../../components/manager/dispute/ManagerDecisionEvidenceModal";
 
 const DisputeTab = ({ projectId }) => {
   const { t } = useTranslation();
@@ -31,17 +24,12 @@ const DisputeTab = ({ projectId }) => {
   const [escalations, setEscalations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [projectDetail, setProjectDetail] = useState(null);
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedDispute, setSelectedDispute] = useState(null);
-  const [isAccepted, setIsAccepted] = useState(true);
-  const [managerComment, setManagerComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [escalationModalOpen, setEscalationModalOpen] = useState(false);
-  const [selectedEscalation, setSelectedEscalation] = useState(null);
-  const [escalationAction, setEscalationAction] = useState("approve");
-  const [escalationComment, setEscalationComment] = useState("");
-  const [escalationSubmitting, setEscalationSubmitting] = useState(false);
+  const [decisionModal, setDecisionModal] = useState({
+    isOpen: false,
+    mode: "dispute",
+    item: null,
+  });
+  const [decisionSubmitting, setDecisionSubmitting] = useState(false);
 
   const ESCALATION_DAYS = 3;
 
@@ -97,63 +85,59 @@ const DisputeTab = ({ projectId }) => {
   );
 
   const openResolveModal = (dispute) => {
-    setSelectedDispute(dispute);
-    setIsAccepted(true);
-    setManagerComment("");
-    setModalOpen(true);
-  };
-
-  const handleResolve = async () => {
-    if (!selectedDispute) return;
-    if (!managerComment.trim()) {
-      toast.warning(t("dispute.commentWarning"));
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await disputeService.resolveDispute({
-        disputeId: selectedDispute.id,
-        isAccepted,
-        managerComment,
-      });
-      toast.success(t("dispute.resolveSuccess"));
-      setModalOpen(false);
-      fetchDisputes();
-    } catch (err) {
-      toast.error(err.response?.data?.message || t("dispute.resolveError"));
-    } finally {
-      setSubmitting(false);
-    }
+    setDecisionModal({
+      isOpen: true,
+      mode: "dispute",
+      item: dispute,
+    });
   };
 
   const openEscalationModal = (escalation) => {
-    setSelectedEscalation(escalation);
-    setEscalationAction("approve");
-    setEscalationComment("");
-    setEscalationModalOpen(true);
+    setDecisionModal({
+      isOpen: true,
+      mode: "escalation",
+      item: escalation,
+    });
   };
 
-  const handleResolveEscalation = async () => {
-    if (!selectedEscalation) return;
-    if (!escalationComment.trim()) {
+  const closeDecisionModal = () => {
+    setDecisionModal({
+      isOpen: false,
+      mode: "dispute",
+      item: null,
+    });
+  };
+
+  const handleDecisionConfirm = async ({ decision, comment }) => {
+    if (!decisionModal.item) return;
+    if (!comment?.trim()) {
       toast.warning(t("dispute.commentWarning"));
       return;
     }
 
-    setEscalationSubmitting(true);
+    setDecisionSubmitting(true);
     try {
-      await reviewAuditService.resolveEscalation({
-        assignmentId: selectedEscalation.assignmentId,
-        action: escalationAction,
-        comment: escalationComment,
-      });
+      if (decisionModal.mode === "dispute") {
+        await disputeService.resolveDispute({
+          disputeId: decisionModal.item.id,
+          isAccepted: decision === "accept",
+          managerComment: comment,
+        });
+      } else {
+        await reviewAuditService.resolveEscalation({
+          assignmentId: decisionModal.item.assignmentId,
+          action: decision,
+          comment,
+        });
+      }
+
       toast.success(t("dispute.resolveSuccess"));
-      setEscalationModalOpen(false);
-      fetchDisputes();
+      closeDecisionModal();
+      await fetchDisputes();
     } catch (err) {
       toast.error(err.response?.data?.message || t("dispute.resolveError"));
     } finally {
-      setEscalationSubmitting(false);
+      setDecisionSubmitting(false);
     }
   };
 
@@ -165,13 +149,6 @@ const DisputeTab = ({ projectId }) => {
     };
     const s = map[status] || { cls: "dispute-badge-pending", text: status };
     return <span className={`dispute-badge ${s.cls}`}>{s.text}</span>;
-  };
-
-  const getVerdictBadge = (verdict) => {
-    if (verdict === "Approved" || verdict === "Approve") {
-      return <Badge color="success"><i className="ri-check-line me-1"></i>Approved</Badge>;
-    }
-    return <Badge color="danger"><i className="ri-close-line me-1"></i>Rejected</Badge>;
   };
 
   const getEscalationBadge = (type) => {
@@ -190,12 +167,6 @@ const DisputeTab = ({ projectId }) => {
         {t("analytics.rejectCases")}
       </Badge>
     );
-  };
-
-  const analyzeReviewerFeedback = (feedbacks) => {
-    const approved = feedbacks?.find(f => f.verdict === "Approved" || f.verdict === "Approve");
-    const rejected = feedbacks?.find(f => f.verdict === "Rejected" || f.verdict === "Reject");
-    return { approved, rejected };
   };
 
   const countVotes = (feedbacks) => {
@@ -454,540 +425,15 @@ const DisputeTab = ({ projectId }) => {
         </Col>
       </Row>
 
-      { }
-      <Modal isOpen={modalOpen} toggle={() => setModalOpen(false)} size="lg" centered>
-        <ModalHeader toggle={() => setModalOpen(false)}>
-          <i className="ri-scales-3-line me-2 text-primary"></i>
-          {selectedDispute?.status === "Pending"
-            ? t("dispute.modalTitle")
-            : t("dispute.viewModalTitle")}{" "}
-          #{selectedDispute?.id}
-        </ModalHeader>
-        <ModalBody>
-          {selectedDispute && (
-            <>
-              {isEscalated(selectedDispute) && (
-                <Alert color="danger" className="d-flex align-items-start gap-2 mb-3">
-                  <i className="ri-alarm-warning-line fs-5 mt-1"></i>
-                  <div>
-                    <strong>{t("dispute.escalationWarning")}</strong>
-                    <p className="mb-0 small">
-                      {t("dispute.escalationDesc", {
-                        days: getDaysPending(selectedDispute.createdAt),
-                        defaultValue: `This dispute has been pending for ${getDaysPending(selectedDispute.createdAt)} days. It may be escalated to Admin if not resolved soon.`
-                      })}
-                    </p>
-                  </div>
-                </Alert>
-              )}
-
-
-
-              <div className="mb-3 p-3 rounded" style={{ background: "var(--pd-table-header-bg)" }}>
-                <h6 className="fw-bold mb-2" style={{ color: "var(--pd-text-primary)" }}>
-                  {t("dispute.complaintInfo")}
-                </h6>
-                <p className="mb-1">
-                  <strong>Assignment ID:</strong>{" "}
-                  <Badge color="primary">#{selectedDispute.assignmentId}</Badge>
-                </p>
-                <p className="mb-1" style={{ color: "var(--pd-text-primary)" }}>
-                  <strong>{t("dispute.reason")}</strong> {selectedDispute.reason}
-                </p>
-                <p className="mb-1">
-                  <strong>{t("dispute.colCreatedAt")}:</strong>{" "}
-                  {selectedDispute.createdAt
-                    ? new Date(selectedDispute.createdAt).toLocaleString("vi-VN")
-                    : "—"}
-                  {selectedDispute.status === "Pending" && (
-                    <span className={`ms-2 small fw-semibold ${isEscalated(selectedDispute) ? "text-danger" : "text-muted"}`}>
-                      ({getDaysPending(selectedDispute.createdAt)}d {t("dispute.pending")})
-                    </span>
-                  )}
-                </p>
-                <p className="mb-0">
-                  <strong>{t("dispute.colStatus")}:</strong>{" "}
-                  {getStatusBadge(selectedDispute.status)}
-                  {isEscalated(selectedDispute) && (
-                    <Badge color="danger" className="ms-2">
-                      <i className="ri-alarm-warning-line me-1"></i>
-                      {t("dispute.escalated")}
-                    </Badge>
-                  )}
-                </p>
-              </div>
-
-              {selectedDispute.reviewerFeedbacks && selectedDispute.reviewerFeedbacks.length > 0 && (() => {
-                const voteInfo = countVotes(selectedDispute.reviewerFeedbacks);
-                const approvedFeedbacks = selectedDispute.reviewerFeedbacks.filter(f => f.verdict === "Approved" || f.verdict === "Approve");
-                const rejectedFeedbacks = selectedDispute.reviewerFeedbacks.filter(f => f.verdict === "Rejected" || f.verdict === "Reject");
-                const majorityDecision = voteInfo.approvedCount > voteInfo.rejectedCount ? "APPROVED" : "REJECTED";
-                const majorityClass = voteInfo.approvedCount > voteInfo.rejectedCount ? "success" : "danger";
-
-                return (
-                  <div className="mb-3 p-3 border rounded" style={{ borderColor: "var(--pd-table-border)" }}>
-                    <div className="d-flex justify-content-between align-items-start mb-3">
-                      <h6 className="fw-bold mb-0" style={{ color: "var(--pd-tab-active-text)" }}>
-                        <i className="ri-user-follow-line me-1"></i>
-                        Reviewer Votes ({voteInfo.total} reviewers)
-                      </h6>
-                      <div className="d-flex gap-2">
-                        <Badge color="success" style={{ fontSize: "12px" }}>
-                          <i className="ri-check-line me-1"></i>{voteInfo.approvedCount}
-                        </Badge>
-                        <Badge color="danger" style={{ fontSize: "12px" }}>
-                          <i className="ri-close-line me-1"></i>{voteInfo.rejectedCount}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="mb-3 p-2 rounded" style={{ background: "var(--pd-table-header-bg)" }}>
-                      <div className="d-flex align-items-center gap-2 mb-2">
-                        <span className="small fw-bold">Majority Decision:</span>
-                        {voteInfo.isConflict ? (
-                          <Badge color="warning" className="px-2 py-1">
-                            <i className="ri-alert-line me-1"></i>CONFLICT (50-50)
-                          </Badge>
-                        ) : (
-                          <Badge color={majorityClass} className="px-2 py-1">
-                            <i className={`ri-${majorityClass === "success" ? "check-line" : "close-line"} me-1`}></i>
-                            {majorityDecision} (Majority)
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="progress" style={{ height: "8px" }}>
-                        <div
-                          className="progress-bar bg-success"
-                          style={{ width: `${(voteInfo.approvedCount / voteInfo.total) * 100}%` }}
-                        ></div>
-                        <div
-                          className="progress-bar bg-danger"
-                          style={{ width: `${(voteInfo.rejectedCount / voteInfo.total) * 100}%` }}
-                        ></div>
-                      </div>
-                      <small className="text-muted mt-1 d-block">
-                        {voteInfo.isConflict
-                          ? "Equal votes detected - Manager decision required"
-                          : voteInfo.approvedCount > voteInfo.rejectedCount
-                            ? `${voteInfo.approvedCount} approved, ${voteInfo.rejectedCount} rejected - APPROVED by majority`
-                            : `${voteInfo.approvedCount} approved, ${voteInfo.rejectedCount} rejected - REJECTED by majority`
-                        }
-                      </small>
-                    </div>
-
-                    <div className="mb-3">
-                      {voteInfo.approvedCount > 0 && (
-                        <>
-                          <small className="text-success fw-bold d-block mb-2">
-                            <i className="ri-check-line me-1"></i>Approved ({voteInfo.approvedCount})
-                          </small>
-                          <div className="d-flex flex-column gap-2 mb-3">
-                            {approvedFeedbacks.map((feedback, idx) => (
-                              <div key={`approved-${idx}`} className="p-3 rounded border border-success bg-success-subtle">
-                                <div className="d-flex justify-content-between align-items-start">
-                                  <div>
-                                    <strong className="text-success">
-                                      <i className="ri-user-line me-1"></i>
-                                      {feedback.reviewerName || "Unknown Reviewer"}
-                                    </strong>
-                                    <Badge color="success" className="ms-2" pill style={{ fontSize: "10px" }}>
-                                      APPROVED
-                                    </Badge>
-                                  </div>
-                                  <small className="text-muted">
-                                    {feedback.reviewedAt ? new Date(feedback.reviewedAt).toLocaleString("vi-VN") : ""}
-                                  </small>
-                                </div>
-                                {feedback.comment && (
-                                  <p className="mb-0 mt-2 small" style={{ color: "var(--pd-text-primary)" }}>
-                                    "{feedback.comment}"
-                                  </p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </>
-                      )}
-
-                      {voteInfo.rejectedCount > 0 && (
-                        <>
-                          <small className="text-danger fw-bold d-block mb-2">
-                            <i className="ri-close-line me-1"></i>Rejected ({voteInfo.rejectedCount})
-                          </small>
-                          <div className="d-flex flex-column gap-2">
-                            {rejectedFeedbacks.map((feedback, idx) => (
-                              <div key={`rejected-${idx}`} className="p-3 rounded border border-danger bg-danger-subtle">
-                                <div className="d-flex justify-content-between align-items-start">
-                                  <div>
-                                    <strong className="text-danger">
-                                      <i className="ri-user-line me-1"></i>
-                                      {feedback.reviewerName || "Unknown Reviewer"}
-                                    </strong>
-                                    <Badge color="danger" className="ms-2" pill style={{ fontSize: "10px" }}>
-                                      REJECTED
-                                    </Badge>
-                                  </div>
-                                  <small className="text-muted">
-                                    {feedback.reviewedAt ? new Date(feedback.reviewedAt).toLocaleString("vi-VN") : ""}
-                                  </small>
-                                </div>
-                                {feedback.comment && (
-                                  <p className="mb-0 mt-2 small" style={{ color: "var(--pd-text-primary)" }}>
-                                    "{feedback.comment}"
-                                  </p>
-                                )}
-                                {feedback.errorCategories && (
-                                  <div className="mt-2 d-flex flex-wrap gap-1">
-                                    {(() => {
-                                      try {
-                                        const errors = JSON.parse(feedback.errorCategories);
-                                        return errors.map((err, i) => (
-                                          <Badge key={i} color="warning" pill style={{ fontSize: "10px" }}>
-                                            {err}
-                                          </Badge>
-                                        ));
-                                      } catch { return null; }
-                                    })()}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {selectedDispute.status === "Pending" && (
-                      <div className="mt-3 p-2 rounded" style={{ background: "#fff3cd", border: "1px solid #ffc107" }}>
-                        <small className="text-warning-emphasis">
-                          <i className="ri-information-line me-1"></i>
-                          <strong>Note:</strong> Annotator disputes when rejected. Manager's decision will determine the final outcome.
-                          <br />
-                          <span className="text-muted">
-                            Accept = Annotator correct, Rejectors must re-review | Reject = Annotator wrong, all must redo
-                          </span>
-                        </small>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {projectDetail?.labels?.length > 0 && (
-                <div className="mb-3 p-3 border rounded" style={{ borderColor: "var(--pd-table-border)" }}>
-                  <h6 className="fw-bold mb-2" style={{ color: "var(--pd-tab-active-text)" }}>
-                    <i className="ri-book-read-line me-1"></i>
-                    {t("dispute.guidelineRef")}
-                  </h6>
-                  <div className="table-responsive">
-                    <Table size="sm" className="mb-0" bordered>
-                      <thead>
-                        <tr>
-                          <th>{t("dispute.labelCol")}</th>
-                          <th>{t("dispute.colorCol")}</th>
-                          <th>{t("dispute.guideCol")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {projectDetail.labels.map((label) => (
-                          <tr key={label.id}>
-                            <td className="fw-semibold">{label.name}</td>
-                            <td>
-                              <span className="badge px-2 py-1" style={{ backgroundColor: label.color }}>
-                                {label.color}
-                              </span>
-                            </td>
-                            <td className="small" style={{ color: "var(--pd-text-muted)" }}>
-                              {label.guideLine || "—"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
-                </div>
-              )}
-
-              {selectedDispute.status === "Pending" ? (() => {
-                const voteInfo = selectedDispute.reviewerFeedbacks
-                  ? countVotes(selectedDispute.reviewerFeedbacks)
-                  : { approvedCount: 0, rejectedCount: 0, total: 0, isConflict: false };
-                return (
-                <div className="mb-3 p-3 border rounded" style={{ borderColor: "#e9ecef" }}>
-                  <h6 className="fw-bold mb-3" style={{ color: "var(--pd-text-primary)" }}>
-                    <i className="ri-decision-tree me-1"></i>
-                    Manager Decision
-                  </h6>
-
-                  <Alert color={voteInfo.isConflict ? "warning" : "info"} className="mb-3">
-                    <div className="d-flex align-items-center gap-2">
-                      <i className={`ri-${voteInfo.isConflict ? "alert" : "information"}-line`}></i>
-                      <div>
-                        <strong>Current Vote: {voteInfo.approvedCount} Approve / {voteInfo.rejectedCount} Reject</strong>
-                        <br />
-                        <small>
-                          {voteInfo.isConflict
-                            ? "CONFLICT detected (50-50). You are the deciding vote."
-                            : voteInfo.approvedCount > voteInfo.rejectedCount
-                              ? "Majority voted APPROVE. This dispute contests the rejection."
-                              : "Majority voted REJECT. Annotator is disputing the decision."
-                          }
-                        </small>
-                      </div>
-                    </div>
-                  </Alert>
-
-                  <FormGroup>
-                    <Label className="fw-semibold">{t("dispute.decision")}</Label>
-                    <div className="d-flex flex-column gap-2">
-                      <FormGroup check className="p-3 border border-success rounded">
-                        <Input type="radio" name="decision" checked={isAccepted} onChange={() => setIsAccepted(true)} />
-                        <Label check className="text-success fw-semibold w-100">
-                          <div className="d-flex align-items-start">
-                            <i className="ri-check-line me-2 mt-1 fs-5"></i>
-                            <div>
-                              <strong>Accept Dispute</strong>
-                              <span className="badge bg-success ms-2" style={{ fontSize: "10px" }}>Annotator Correct</span>
-                              <p className="mb-0 small text-muted fw-normal mt-1">
-                                <strong>Decision:</strong> Annotator's labeling was correct.
-                                <br />
-                                <strong>Action:</strong> Task remains APPROVED.
-                                {voteInfo.rejectedCount > 0 && (
-                                  <>
-                                    <br />
-                                    <span className="text-danger">
-                                      <i className="ri-user-follow-line me-1"></i>
-                                      {voteInfo.rejectedCount} Rejector(s) must re-review their decision.
-                                    </span>
-                                  </>
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        </Label>
-                      </FormGroup>
-                      <FormGroup check className="p-3 border border-danger rounded">
-                        <Input type="radio" name="decision" checked={!isAccepted} onChange={() => setIsAccepted(false)} />
-                        <Label check className="text-danger fw-semibold w-100">
-                          <div className="d-flex align-items-start">
-                            <i className="ri-close-line me-2 mt-1 fs-5"></i>
-                            <div>
-                              <strong>Reject Dispute</strong>
-                              <span className="badge bg-danger ms-2" style={{ fontSize: "10px" }}>Annotator Wrong</span>
-                              <p className="mb-0 small text-muted fw-normal mt-1">
-                                <strong>Decision:</strong> Annotator's labeling was incorrect.
-                                <br />
-                                <strong>Action:</strong>
-                                <br />
-                                <span className="text-danger">
-                                  <i className="ri-edit-line me-1"></i>
-                                  Annotator must redo the labeling.
-                                </span>
-                                <br />
-                                <span className="text-warning">
-                                  <i className="ri-refresh-line me-1"></i>
-                                  ALL {voteInfo.total} reviewer(s) must re-review when resubmitted.
-                                </span>
-                              </p>
-                            </div>
-                          </div>
-                        </Label>
-                      </FormGroup>
-                    </div>
-                  </FormGroup>
-
-                  <FormGroup>
-                    <Label className="fw-semibold">
-                      {t("dispute.managerComment")}
-                      <small className="text-danger ms-1">{t("dispute.required")}</small>
-                    </Label>
-                    <Input
-                      type="textarea"
-                      rows="3"
-                      value={managerComment}
-                      onChange={(e) => setManagerComment(e.target.value)}
-                      placeholder={t("dispute.commentPlaceholder")}
-                      className={!managerComment.trim() ? "border-danger" : ""}
-                    />
-                    {!managerComment.trim() && (
-                      <small className="text-danger">
-                        <i className="ri-error-warning-line me-1"></i>{t("dispute.commentRequired")}
-                      </small>
-                    )}
-                  </FormGroup>
-                </div>
-                );
-              })() : (
-                <div className="mb-3 p-3 rounded" style={{ background: "var(--pd-table-header-bg)" }}>
-                  <h6 className="fw-bold mb-3" style={{ color: "var(--pd-text-primary)" }}>
-                    <i className="ri-checkbox-circle-line me-1"></i>
-                    Resolution Result
-                  </h6>
-                  <div className="mb-3">
-                    <strong>Decision:</strong>{" "}
-                    <Badge color={selectedDispute.status === "Resolved" ? "success" : "danger"} className="ms-1">
-                      {selectedDispute.status === "Resolved" ? "ACCEPTED" : "REJECTED"}
-                    </Badge>
-                    <Badge color="info" className="ms-2">
-                      {selectedDispute.resolutionType === "annotator_correct" ? "Annotator Correct" : "Annotator Wrong"}
-                    </Badge>
-                  </div>
-
-                  {selectedDispute.resolutionType === "annotator_correct" && (
-                    <Alert color="success" className="mb-2">
-                      <div className="d-flex align-items-start gap-2">
-                        <i className="ri-check-line fs-5"></i>
-                        <div>
-                          <strong>Decision:</strong> Annotator was correct.
-                          <div className="mt-1">
-                            <i className="ri-user-follow-line me-1"></i>
-                            <strong>Actions Taken:</strong>
-                            <ul className="mb-0 mt-1 small">
-                              <li>Task status: <strong>APPROVED</strong></li>
-                              {selectedDispute.reviewerFeedbacks?.filter(f => f.verdict === "Rejected" || f.verdict === "Reject").map((f, i) => (
-                                <li key={i}>Reviewer <strong>{f.reviewerName}</strong> has been notified to re-review</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </Alert>
-                  )}
-
-                  {selectedDispute.resolutionType === "annotator_wrong" && (
-                    <Alert color="danger" className="mb-2">
-                      <div className="d-flex align-items-start gap-2">
-                        <i className="ri-close-line fs-5"></i>
-                        <div>
-                          <strong>Decision:</strong> Annotator was incorrect.
-                          <div className="mt-1">
-                            <i className="ri-refresh-line me-1"></i>
-                            <strong>Actions Taken:</strong>
-                            <ul className="mb-0 mt-1 small">
-                              <li><strong>Annotator</strong> must redo the labeling</li>
-                              <li>ALL reviewers have been notified to re-review when resubmitted</li>
-                              <li className="text-muted">Even reviewers who previously approved must review again</li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </Alert>
-                  )}
-
-                  {selectedDispute.managerComment && (
-                    <div className="mt-3 p-2 rounded" style={{ background: "white", border: "1px solid #dee2e6" }}>
-                      <small className="text-muted">Manager's Comment:</small>
-                      <p className="mb-0 fw-normal" style={{ color: "var(--pd-text-primary)" }}>
-                        "{selectedDispute.managerComment}"
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button color="light" onClick={() => setModalOpen(false)}>
-            {selectedDispute?.status === "Pending" ? t("dispute.cancel") : t("dispute.close")}
-          </Button>
-          {selectedDispute?.status === "Pending" && (
-            <Button color="primary" onClick={handleResolve} disabled={submitting || !managerComment.trim()}>
-              {submitting ? <Spinner size="sm" className="me-1" /> : <i className="ri-check-double-line me-1"></i>}
-              {t("dispute.confirmArbitrate")}
-            </Button>
-          )}
-        </ModalFooter>
-      </Modal>
-
-      <Modal isOpen={escalationModalOpen} toggle={() => setEscalationModalOpen(false)} centered>
-        <ModalHeader toggle={() => setEscalationModalOpen(false)}>
-          <i className="ri-scales-3-line me-2 text-danger"></i>
-          {t("analytics.openDisputeDesk")} #{selectedEscalation?.assignmentId}
-        </ModalHeader>
-        <ModalBody>
-          {selectedEscalation && (
-            <>
-              <Alert color={selectedEscalation.escalationType === "PenaltyReview" ? "warning" : "danger"}>
-                <strong>{selectedEscalation.projectName}</strong>
-                <div className="mt-2">
-                  {selectedEscalation.escalationType === "PenaltyReview"
-                    ? t("analytics.penaltyCases")
-                    : t("analytics.rejectCases")}
-                </div>
-                <small className="d-block mt-2 text-muted">
-                  {selectedEscalation.escalationType === "PenaltyReview"
-                    ? "Case 2-2. Approve means annotator and approvers are correct. Reject means annotator must redo and all reviewers review again."
-                    : "This task has crossed the repeated reject threshold and now requires manager direction."}
-                </small>
-              </Alert>
-
-              <div className="mb-3 d-flex flex-column gap-2">
-                <Label className="fw-semibold">{t("dispute.decision")}</Label>
-                <FormGroup check className="p-3 border rounded">
-                  <Input
-                    type="radio"
-                    name="escalationDecision"
-                    checked={escalationAction === "approve"}
-                    onChange={() => setEscalationAction("approve")}
-                  />
-                  <Label check className="w-100">
-                    <strong>Approve</strong>
-                    <small className="d-block text-muted">
-                      {selectedEscalation.escalationType === "PenaltyReview"
-                        ? "Finalize this image as approved."
-                        : "Approve the current annotation and close the escalation."}
-                    </small>
-                  </Label>
-                </FormGroup>
-                <FormGroup check className="p-3 border rounded">
-                  <Input
-                    type="radio"
-                    name="escalationDecision"
-                    checked={escalationAction === "reject"}
-                    onChange={() => setEscalationAction("reject")}
-                  />
-                  <Label check className="w-100">
-                    <strong>Reject</strong>
-                    <small className="d-block text-muted">
-                      {selectedEscalation.escalationType === "PenaltyReview"
-                        ? "Annotator must revise and the image will return to review in the next cycle."
-                        : "Keep this image rejected and send it back for another annotator pass."}
-                    </small>
-                  </Label>
-                </FormGroup>
-              </div>
-
-              <FormGroup>
-                <Label className="fw-semibold">
-                  {t("dispute.managerComment")}
-                  <small className="text-danger ms-1">{t("dispute.required")}</small>
-                </Label>
-                <Input
-                  type="textarea"
-                  rows="3"
-                  value={escalationComment}
-                  onChange={(event) => setEscalationComment(event.target.value)}
-                  placeholder={t("dispute.commentPlaceholder")}
-                />
-              </FormGroup>
-            </>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button color="light" onClick={() => setEscalationModalOpen(false)}>
-            {t("dispute.cancel")}
-          </Button>
-          <Button
-            color="primary"
-            onClick={handleResolveEscalation}
-            disabled={escalationSubmitting || !escalationComment.trim()}
-          >
-            {escalationSubmitting ? <Spinner size="sm" className="me-1" /> : <i className="ri-check-double-line me-1"></i>}
-            {t("dispute.confirmArbitrate")}
-          </Button>
-        </ModalFooter>
-      </Modal>
+      <ManagerDecisionEvidenceModal
+        isOpen={decisionModal.isOpen}
+        toggle={closeDecisionModal}
+        caseItem={decisionModal.item}
+        projectDetail={projectDetail}
+        mode={decisionModal.mode}
+        submitting={decisionSubmitting}
+        onConfirm={handleDecisionConfirm}
+      />
     </>
   );
 };

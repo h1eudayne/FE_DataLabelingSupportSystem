@@ -4,6 +4,29 @@
     --primary-color: #41518b;
     --slate-900: #0f172a;
     --slate-600: #475569;
+    --bs-body-font-size: 0.9375rem;
+    --bs-body-line-height: 1.45;
+    --bs-gutter-x: 1.15rem;
+    --bs-gutter-y: 0.95rem;
+    --bs-border-radius: 0.625rem;
+    --bs-border-radius-sm: 0.5rem;
+    --bs-border-radius-lg: 0.85rem;
+    --bs-border-radius-xl: 1rem;
+    --bs-card-spacer-y: 0.9rem;
+    --bs-card-spacer-x: 1rem;
+    --bs-card-cap-padding-y: 0.78rem;
+    --bs-card-cap-padding-x: 1rem;
+    --bs-modal-padding: 0.9rem;
+    --bs-modal-header-padding-y: 0.9rem;
+    --bs-modal-header-padding-x: 1rem;
+    --bs-modal-footer-gap: 0.5rem;
+    --bs-offcanvas-padding-y: 0.9rem;
+    --bs-offcanvas-padding-x: 1rem;
+    --bs-dropdown-padding-y: 0.35rem;
+    --bs-dropdown-item-padding-y: 0.45rem;
+    --bs-dropdown-item-padding-x: 0.8rem;
+    --bs-list-group-item-padding-y: 0.65rem;
+    --bs-list-group-item-padding-x: 0.9rem;
 }
 
 * {
@@ -16,9 +39,15 @@ body {
     margin: 0;
     background-color: #ffffff;
     color: var(--slate-900);
+    font-size: var(--bs-body-font-size);
+    line-height: var(--bs-body-line-height);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+}
+
+html {
+    font-size: 15px;
 }
 
 html,
@@ -64,4 +93,211 @@ textarea {
 
 .bg-primary-custom {
     background-color: var(--primary-color) !important;
+}
+
+/* ================================================================
+   COMPACT GLOBAL BASELINE
+   Keeps the whole app slightly denser for faster daily operation.
+   ================================================================ */
+.container,
+.container-fluid,
+.container-sm,
+.container-md,
+.container-lg,
+.container-xl,
+.container-xxl,
+.row {
+    --bs-gutter-x: 1.15rem;
+    --bs-gutter-y: 0.95rem;
+}
+
+.card {
+    --bs-card-spacer-y: 0.9rem;
+    --bs-card-spacer-x: 1rem;
+    --bs-card-cap-padding-y: 0.78rem;
+    --bs-card-cap-padding-x: 1rem;
+}
+
+.card-header {
+    padding: 0.78rem 1rem;
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+.card-footer {
+    padding: 0.78rem 1rem;
+}
+
+.modal-header,
+.modal-body,
+.modal-footer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.modal-header,
+.modal-footer {
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+}
+
+.modal-body {
+    padding-top: 0.95rem;
+    padding-bottom: 0.95rem;
+}
+
+.offcanvas-header,
+.offcanvas-body {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.offcanvas-header {
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+}
+
+.offcanvas-body {
+    padding-top: 0.9rem;
+    padding-bottom: 0.9rem;
+}
+
+.btn,
+.form-control,
+.form-select,
+.input-group-text,
+.dropdown-item,
+.nav-link,
+.badge {
+    font-size: 0.92rem;
+}
+
+.btn {
+    padding: 0.44rem 0.85rem;
+}
+
+.btn-sm {
+    padding: 0.28rem 0.65rem;
+    font-size: 0.78rem;
+}
+
+.btn-lg {
+    padding: 0.56rem 1rem;
+    font-size: 0.98rem;
+}
+
+.form-control,
+.form-select {
+    padding: 0.45rem 0.75rem;
+    min-height: calc(1.5em + 0.9rem + 2px);
+}
+
+.input-group-text {
+    padding: 0.45rem 0.75rem;
+}
+
+.badge {
+    padding: 0.32rem 0.55rem;
+}
+
+.dropdown-menu {
+    padding: 0.35rem;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.72rem 0.78rem;
+}
+
+.nav-tabs .nav-link,
+.nav-pills .nav-link {
+    padding: 0.5rem 0.8rem;
+}
+
+.gap-4 {
+    gap: 1rem !important;
+}
+
+.gap-3 {
+    gap: 0.72rem !important;
+}
+
+.p-5 {
+    padding: 1.75rem !important;
+}
+
+.p-4 {
+    padding: 1.1rem !important;
+}
+
+.p-3 {
+    padding: 0.85rem !important;
+}
+
+.px-5 {
+    padding-left: 1.75rem !important;
+    padding-right: 1.75rem !important;
+}
+
+.px-4 {
+    padding-left: 1.1rem !important;
+    padding-right: 1.1rem !important;
+}
+
+.py-5 {
+    padding-top: 1.75rem !important;
+    padding-bottom: 1.75rem !important;
+}
+
+.py-4 {
+    padding-top: 1.1rem !important;
+    padding-bottom: 1.1rem !important;
+}
+
+.m-4 {
+    margin: 1.1rem !important;
+}
+
+.mb-4 {
+    margin-bottom: 1.1rem !important;
+}
+
+.mt-4 {
+    margin-top: 1.1rem !important;
+}
+
+.my-4 {
+    margin-top: 1.1rem !important;
+    margin-bottom: 1.1rem !important;
+}
+
+@media (max-width: 768px) {
+    html {
+        font-size: 14.5px;
+    }
+
+    .container,
+    .container-fluid,
+    .container-sm,
+    .container-md,
+    .container-lg,
+    .container-xl,
+    .container-xxl,
+    .row {
+        --bs-gutter-x: 0.9rem;
+        --bs-gutter-y: 0.8rem;
+    }
+
+    .card-header,
+    .card-body,
+    .card-footer,
+    .modal-header,
+    .modal-body,
+    .modal-footer,
+    .offcanvas-header,
+    .offcanvas-body {
+        padding-left: 0.85rem;
+        padding-right: 0.85rem;
+    }
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -480,24 +481,24 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
             ) : selectedProject ? (
               <div className="row g-3">
                 <div className="col-lg-8">
-                  <div className="card shadow-none border mb-3">
+                  <div className="card shadow-none border mb-3 dataset-section-card">
                     <div
-                      className="card-header bg-light-subtle d-flex align-items-center justify-content-between"
+                      className="card-header bg-light-subtle d-flex align-items-center justify-content-between dataset-section-header"
                       style={{ cursor: "pointer" }}
                       onClick={() => toggleSection("labelConfig")}
                     >
-                      <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted d-flex align-items-center">
+                      <h6 className="card-title mb-0 dataset-section-title d-flex align-items-center">
                         <i
-                          className={`ri-arrow-${collapsedSections.labelConfig ? "right" : "down"}-s-line me-1 fs-16`}
+                          className={`ri-arrow-${collapsedSections.labelConfig ? "right" : "down"}-s-line me-1 dataset-section-chevron`}
                         />
                         {t("datasets.labelConfig")}
-                        <span className="badge bg-primary-subtle text-primary ms-2">
+                        <span className="badge bg-primary-subtle text-primary ms-2 dataset-section-count">
                           {selectedProject.labels?.length || 0}
                         </span>
                       </h6>
                       {!readOnly && (
                         <button
-                          className="btn btn-sm btn-soft-primary"
+                          className="btn btn-sm btn-soft-primary dataset-section-action"
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditingLabel(null);
@@ -520,7 +521,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                       <div className="card-body p-0">
                         <div className="table-responsive">
                           <table
-                            className="table table-hover align-middle mb-0 responsive-dataset-label-table"
+                            className="table table-hover align-middle mb-0 responsive-dataset-label-table dataset-label-table"
                             style={{ tableLayout: "fixed" }}
                           >
                             <thead className="table-light">
@@ -567,7 +568,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                               {selectedProject.labels?.map((label) => (
                                 <tr key={label.id}>
                                   <td
-                                    className="fw-semibold text-truncate"
+                                    className="dataset-label-name text-truncate"
                                     style={{ maxWidth: 0 }}
                                     title={label.name}
                                   >
@@ -576,22 +577,14 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                   <td style={{ whiteSpace: "nowrap" }}>
                                     {label.isDefault ? (
                                       <span
-                                        className="badge bg-warning-subtle text-warning px-2 py-1"
-                                        style={{
-                                          fontSize: "0.7rem",
-                                          whiteSpace: "nowrap",
-                                        }}
+                                        className="badge bg-warning-subtle text-warning px-2 py-1 dataset-label-chip is-default"
                                       >
                                         <i className="ri-error-warning-line me-1" />
                                         {t("datasets.labelDefault")}
                                       </span>
                                     ) : (
                                       <span
-                                        className="badge bg-info-subtle text-info px-2 py-1"
-                                        style={{
-                                          fontSize: "0.7rem",
-                                          whiteSpace: "nowrap",
-                                        }}
+                                        className="badge bg-info-subtle text-info px-2 py-1 dataset-label-chip is-project"
                                       >
                                         <i className="ri-folder-line me-1" />
                                         {t("datasets.labelProject")}
@@ -600,14 +593,14 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                   </td>
                                   <td>
                                     <span
-                                      className="badge px-2 py-1"
+                                      className="badge px-2 py-1 dataset-color-chip"
                                       style={{ backgroundColor: label.color }}
                                     >
                                       {label.color}
                                     </span>
                                   </td>
                                   <td
-                                    className="text-muted small text-truncate"
+                                    className="text-muted text-truncate dataset-label-guideline"
                                     style={{ maxWidth: 0 }}
                                     title={label.guideLine}
                                   >
@@ -615,11 +608,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                   </td>
                                   <td>
                                     {label.checklist?.length > 0 ? (
-                                      <ul className="list-unstyled mb-0">
+                                      <ul className="list-unstyled mb-0 dataset-checklist-list">
                                         {label.checklist.map((item, idx) => (
                                           <li
                                             key={idx}
-                                            className="small text-truncate"
+                                            className="text-truncate dataset-checklist-item"
                                             title={item}
                                           >
                                             <i className="ri-checkbox-circle-line text-success me-1"></i>
@@ -633,16 +626,16 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                   </td>
                                   {!readOnly && (
                                     <td>
-                                      <div className="d-flex gap-1 justify-content-center">
+                                      <div className="d-flex gap-1 justify-content-center dataset-label-actions">
                                         <button
-                                          className="btn btn-sm btn-soft-primary p-1"
+                                          className="btn btn-sm btn-soft-primary p-1 dataset-label-action is-edit"
                                           title={t("common.edit")}
                                           onClick={() => startEditLabel(label)}
                                         >
                                           <i className="ri-pencil-line" />
                                         </button>
                                         <button
-                                          className="btn btn-sm btn-soft-danger p-1"
+                                          className="btn btn-sm btn-soft-danger p-1 dataset-label-action is-delete"
                                           title={t("common.delete")}
                                           onClick={async () => {
                                             if (
@@ -930,19 +923,19 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                     )}
                   </div>
 
-                  <div className="card shadow-none border">
+                  <div className="card shadow-none border dataset-section-card">
                     <div
-                      className="card-header bg-light-subtle"
+                      className="card-header bg-light-subtle dataset-section-header"
                       style={{ cursor: "pointer" }}
                       onClick={() => toggleSection("annotators")}
                     >
-                      <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted d-flex align-items-center">
+                      <h6 className="card-title mb-0 dataset-section-title d-flex align-items-center">
                         <i
-                          className={`ri-arrow-${collapsedSections.annotators ? "right" : "down"}-s-line me-1 fs-16`}
+                          className={`ri-arrow-${collapsedSections.annotators ? "right" : "down"}-s-line me-1 dataset-section-chevron`}
                         />
                         <i className="ri-user-star-line me-1 text-success"></i>
                         {t("datasets.annotatorsSectionTitle")}
-                        <span className="badge bg-success-subtle text-success ms-2">
+                        <span className="badge bg-success-subtle text-success ms-2 dataset-section-count">
                           {selectedProject.members?.filter(
                             (m) => m.role === "Annotator",
                           ).length || 0}
@@ -954,21 +947,21 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                         {selectedProject.members?.filter(
                           (m) => m.role === "Annotator",
                         ).length > 0 ? (
-                          <div className="d-flex flex-wrap gap-4">
+                          <div className="d-flex flex-wrap gap-3 dataset-member-grid">
                             {selectedProject.members
                               ?.filter((m) => m.role === "Annotator")
                               .map((m) => (
                                 <div
                                   key={m.id}
-                                  className="text-center"
+                                  className="text-center dataset-member-item"
                                   style={{ width: "80px" }}
                                 >
                                   <div className="avatar-sm mx-auto mb-2">
-                                    <div className="avatar-title bg-soft-success text-success rounded-circle fw-bold">
+                                    <div className="avatar-title bg-soft-success text-success rounded-circle fw-bold dataset-member-avatar">
                                       {m.fullName?.charAt(0)}
                                     </div>
                                   </div>
-                                  <p className="mb-0 fs-12 fw-bold text-truncate">
+                                  <p className="mb-0 text-truncate dataset-member-name">
                                     {m.fullName}
                                   </p>
                                 </div>
@@ -983,19 +976,19 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                     )}
                   </div>
 
-                  <div className="card shadow-none border">
+                  <div className="card shadow-none border dataset-section-card">
                     <div
-                      className="card-header bg-light-subtle"
+                      className="card-header bg-light-subtle dataset-section-header"
                       style={{ cursor: "pointer" }}
                       onClick={() => toggleSection("reviewers")}
                     >
-                      <h6 className="card-title mb-0 fs-13 text-uppercase fw-bold text-muted d-flex align-items-center">
+                      <h6 className="card-title mb-0 dataset-section-title d-flex align-items-center">
                         <i
-                          className={`ri-arrow-${collapsedSections.reviewers ? "right" : "down"}-s-line me-1 fs-16`}
+                          className={`ri-arrow-${collapsedSections.reviewers ? "right" : "down"}-s-line me-1 dataset-section-chevron`}
                         />
                         <i className="ri-shield-star-line me-1 text-info"></i>
                         {t("datasets.reviewersSectionTitle")}
-                        <span className="badge bg-info-subtle text-info ms-2">
+                        <span className="badge bg-info-subtle text-info ms-2 dataset-section-count">
                           {selectedProject.members?.filter(
                             (m) => m.role === "Reviewer",
                           ).length || 0}
@@ -1007,21 +1000,21 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                         {selectedProject.members?.filter(
                           (m) => m.role === "Reviewer",
                         ).length > 0 ? (
-                          <div className="d-flex flex-wrap gap-4">
+                          <div className="d-flex flex-wrap gap-3 dataset-member-grid">
                             {selectedProject.members
                               ?.filter((m) => m.role === "Reviewer")
                               .map((m) => (
                                 <div
                                   key={m.id}
-                                  className="text-center"
+                                  className="text-center dataset-member-item"
                                   style={{ width: "80px" }}
                                 >
                                   <div className="avatar-sm mx-auto mb-2">
-                                    <div className="avatar-title bg-soft-info text-info rounded-circle fw-bold">
+                                    <div className="avatar-title bg-soft-info text-info rounded-circle fw-bold dataset-member-avatar">
                                       {m.fullName?.charAt(0)}
                                     </div>
                                   </div>
-                                  <p className="mb-0 fs-12 fw-bold text-truncate">
+                                  <p className="mb-0 text-truncate dataset-member-name">
                                     {m.fullName}
                                   </p>
                                 </div>
@@ -1243,206 +1236,237 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
         </div>
       </div>
 
-      {showExportModal && (
+      {showExportModal &&
+        typeof document !== "undefined" &&
+        createPortal(
         <div
-          className="modal fade show d-block"
-          tabIndex="-1"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          className="export-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="project-export-modal-title"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowExportModal(false);
           }}
         >
-          <div
-            className="modal-dialog modal-dialog-centered"
-            style={{ maxWidth: "520px" }}
-          >
-            <div
-              className="modal-content border-0 shadow-lg"
-              style={{ borderRadius: "16px", overflow: "hidden" }}
-            >
-              <div
-                className="modal-header border-0 text-white"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #405189 0%, #3577f1 100%)",
-                  padding: "20px 24px",
-                }}
-              >
-                <div className="d-flex align-items-center gap-3">
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 12,
-                      background: "rgba(255,255,255,0.15)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <i className="ri-file-download-line fs-20"></i>
+          <div className="export-modal-shell">
+            <div className="export-modal-card">
+              <div className="export-modal-header">
+                <div className="export-modal-header-main">
+                  <div className="export-modal-badge">
+                    <i className="ri-file-download-line"></i>
                   </div>
-                  <div>
-                    <h5 className="modal-title mb-0 fw-bold">
+                  <div className="export-modal-heading">
+                    <h4
+                      id="project-export-modal-title"
+                      className="export-modal-title"
+                    >
                       {t("datasets.exportModalTitle")}
-                    </h5>
-                    <small style={{ opacity: 0.85 }}>
-                      {selectedProject?.name}
+                    </h4>
+                    <p className="export-modal-subtitle">
+                      {selectedProject?.name || t("datasets.projectPrefix")}
+                    </p>
+                    <small className="export-modal-caption">
+                      {t("datasets.exportModalHint")}
                     </small>
                   </div>
                 </div>
                 <button
                   type="button"
-                  className="btn-close btn-close-white"
+                  className="export-modal-close"
                   onClick={() => setShowExportModal(false)}
-                ></button>
+                  aria-label={t("common.cancel")}
+                >
+                  <i className="ri-close-line"></i>
+                </button>
               </div>
 
-              <div className="modal-body p-4">
-                <div className="mb-4">
-                  <h6 className="fw-bold text-uppercase fs-12 text-muted mb-3">
-                    <i className="ri-shield-check-line me-1"></i>
-                    {t("datasets.exportEligibility")}
-                  </h6>
+              <div className="export-modal-body">
+                <section className="export-modal-section">
+                  <div className="export-modal-section-head">
+                    <h6>
+                      <i className="ri-shield-check-line"></i>
+                      {t("datasets.exportEligibility")}
+                    </h6>
+                  </div>
+
                   {exportCheck.checking ? (
-                    <div className="text-center py-3">
+                    <div className="text-center py-4">
                       <span className="spinner-border spinner-border-sm text-primary me-2"></span>
-                      <span className="text-muted">
-                        {t("datasets.checking")}
-                      </span>
+                      <span className="text-muted">{t("datasets.checking")}</span>
                     </div>
                   ) : (
-                    <div className="d-flex flex-column gap-2">
-                      <div
-                        className={`d-flex align-items-center gap-2 p-2 rounded ${exportCheck.allApproved ? "bg-success-subtle" : "bg-danger-subtle"}`}
-                      >
-                        <i
-                          className={`fs-18 ${exportCheck.allApproved ? "ri-checkbox-circle-fill text-success" : "ri-close-circle-fill text-danger"}`}
-                        ></i>
-                        <span
-                          className={`small fw-medium ${exportCheck.allApproved ? "text-success" : "text-danger"}`}
+                    <>
+                      <div className="export-modal-checks">
+                        <div
+                          className={`export-modal-check ${exportCheck.allApproved ? "is-success" : "is-danger"}`}
                         >
-                          {exportCheck.allApproved
-                            ? t("datasets.allTasksApproved")
-                            : t("datasets.tasksNotApproved", {
-                              count:
-                                (exportCheck.totalTasks || 0) -
-                                (exportCheck.approved || 0),
-                            })}
-                        </span>
-                      </div>
-                      <div
-                        className={`d-flex align-items-center gap-2 p-2 rounded ${exportCheck.noPendingDisputes ? "bg-success-subtle" : "bg-danger-subtle"}`}
-                      >
-                        <i
-                          className={`fs-18 ${exportCheck.noPendingDisputes ? "ri-checkbox-circle-fill text-success" : "ri-close-circle-fill text-danger"}`}
-                        ></i>
-                        <span
-                          className={`small fw-medium ${exportCheck.noPendingDisputes ? "text-success" : "text-danger"}`}
-                        >
-                          {exportCheck.noPendingDisputes
-                            ? t("datasets.noDisputePending")
-                            : t("datasets.disputesPending", {
-                              count: exportCheck.pendingDisputeCount,
-                            })}
-                        </span>
-                      </div>
-                      {exportCheck.ready && (
-                        <div className="alert alert-success py-2 px-3 mb-0 mt-1 small d-flex align-items-center gap-2">
-                          <i className="ri-check-double-line fs-16"></i>
-                          <strong>{t("datasets.readyToExport")}</strong>
+                          <div className="export-modal-check-icon">
+                            <i
+                              className={
+                                exportCheck.allApproved
+                                  ? "ri-checkbox-circle-fill"
+                                  : "ri-close-circle-fill"
+                              }
+                            ></i>
+                          </div>
+                          <div className="export-modal-check-copy">
+                            <strong>
+                              {exportCheck.allApproved
+                                ? t("datasets.allTasksApproved")
+                                : t("datasets.tasksNotApproved", {
+                                    count:
+                                      (exportCheck.totalTasks || 0) -
+                                      (exportCheck.approved || 0),
+                                  })}
+                            </strong>
+                            <span>
+                              {t("datasets.tasksNotApprovedDetail", {
+                                remaining:
+                                  (exportCheck.totalTasks || 0) -
+                                  (exportCheck.approved || 0),
+                                approved: exportCheck.approved || 0,
+                                total: exportCheck.totalTasks || 0,
+                              })}
+                            </span>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  )}
-                </div>
 
-                <div className="mb-3">
-                  <h6 className="fw-bold text-uppercase fs-12 text-muted mb-3">
-                    <i className="ri-settings-3-line me-1"></i>
-                    {t("datasets.exportFormat")}
-                  </h6>
-                  <div className="d-flex gap-2">
+                        <div
+                          className={`export-modal-check ${exportCheck.noPendingDisputes ? "is-success" : "is-danger"}`}
+                        >
+                          <div className="export-modal-check-icon">
+                            <i
+                              className={
+                                exportCheck.noPendingDisputes
+                                  ? "ri-checkbox-circle-fill"
+                                  : "ri-close-circle-fill"
+                              }
+                            ></i>
+                          </div>
+                          <div className="export-modal-check-copy">
+                            <strong>
+                              {exportCheck.noPendingDisputes
+                                ? t("datasets.noDisputePending")
+                                : t("datasets.disputesPending", {
+                                    count: exportCheck.pendingDisputeCount,
+                                  })}
+                            </strong>
+                            <span>
+                              {exportCheck.noPendingDisputes
+                                ? t("datasets.exportReadySupport")
+                                : t("datasets.disputesPendingDetail", {
+                                    count: exportCheck.pendingDisputeCount || 0,
+                                  })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`export-modal-banner ${exportCheck.ready ? "is-ready" : "is-blocked"}`}
+                      >
+                        <i
+                          className={
+                            exportCheck.ready
+                              ? "ri-check-double-line"
+                              : "ri-lock-line"
+                          }
+                        ></i>
+                        <span>
+                          {exportCheck.ready
+                            ? t("datasets.readyToExport")
+                            : t("datasets.exportNotEligible")}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </section>
+
+                <section className="export-modal-section">
+                  <div className="export-modal-section-head">
+                    <h6>
+                      <i className="ri-settings-3-line"></i>
+                      {t("datasets.exportFormat")}
+                    </h6>
+                    <p className="export-modal-section-note">
+                      {t("datasets.exportFormatHint")}
+                    </p>
+                  </div>
+
+                  <div className="export-modal-format-grid">
                     {EXPORT_FORMATS.map((f) => (
                       <button
                         key={f.value}
-                        className={`btn flex-fill ${selectedFormat === f.value
-                            ? "btn-primary"
-                            : "btn-outline-secondary"
-                          }`}
+                        type="button"
+                        className={`export-modal-format-card ${selectedFormat === f.value ? "is-active" : ""}`}
                         onClick={() => setSelectedFormat(f.value)}
-                        style={{
-                          borderRadius: 10,
-                          padding: "10px 16px",
-                          transition: "all 0.2s ease",
-                        }}
                       >
-                        <div className="d-flex flex-column align-items-center">
+                        <span className="export-modal-format-icon">
                           <i
-                            className={`fs-20 mb-1 ${f.value === "json"
+                            className={
+                              f.value === "json"
                                 ? "ri-braces-line"
                                 : f.value === "csv"
                                   ? "ri-file-excel-line"
                                   : "ri-code-s-slash-line"
-                              }`}
+                            }
                           ></i>
-                          <span className="fw-semibold">{f.label}</span>
-                          <small style={{ opacity: 0.7, fontSize: "0.7rem" }}>
-                            {f.desc}
-                          </small>
-                        </div>
+                        </span>
+                        <strong>{f.label}</strong>
+                        <small>{f.desc}</small>
                       </button>
                     ))}
                   </div>
-                </div>
+                </section>
 
                 {selectedProject && (
-                  <div className="bg-light rounded p-3">
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span className="text-muted">
-                        {t("datasets.totalData")}:
-                      </span>
-                      <span className="fw-bold">
-                        {selectedProject.totalDataItems ?? 0}
-                      </span>
+                  <section className="export-modal-section">
+                    <div className="export-modal-section-head">
+                      <h6>
+                        <i className="ri-bar-chart-box-line"></i>
+                        {t("datasets.exportSummary")}
+                      </h6>
                     </div>
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span className="text-muted">
-                        {t("datasets.approved")}:
-                      </span>
-                      <span className="fw-bold text-success">
-                        {exportCheck.approved ?? 0}
-                      </span>
+
+                    <div className="export-modal-summary-grid">
+                      <div className="export-modal-summary-card">
+                        <span>{t("datasets.totalData")}</span>
+                        <strong>{selectedProject.totalDataItems ?? 0}</strong>
+                      </div>
+                      <div className="export-modal-summary-card">
+                        <span>{t("datasets.approved")}</span>
+                        <strong className="text-success">
+                          {exportCheck.approved ?? 0}
+                        </strong>
+                      </div>
+                      <div className="export-modal-summary-card">
+                        <span>{t("datasets.deadline")}</span>
+                        <strong>
+                          {selectedProject.deadline
+                            ? new Date(selectedProject.deadline).toLocaleDateString(
+                                localeTag,
+                              )
+                            : "—"}
+                        </strong>
+                      </div>
                     </div>
-                    <div className="d-flex justify-content-between small">
-                      <span className="text-muted">
-                        {t("datasets.deadline")}:
-                      </span>
-                      <span className="fw-bold">
-                        {selectedProject.deadline
-                          ? new Date(
-                            selectedProject.deadline,
-                          ).toLocaleDateString(localeTag)
-                          : "—"}
-                      </span>
-                    </div>
-                  </div>
+                  </section>
                 )}
               </div>
 
-              <div className="modal-footer border-0 px-4 pb-4 pt-0">
+              <div className="export-modal-footer">
                 <button
-                  className="btn btn-light px-4"
+                  type="button"
+                  className="export-modal-secondary-btn"
                   onClick={() => setShowExportModal(false)}
-                  style={{ borderRadius: 10 }}
                 >
                   {t("common.cancel")}
                 </button>
                 <button
-                  className={`btn px-4 ${exportCheck.ready ? "btn-success" : "btn-secondary"}`}
+                  type="button"
+                  className="export-modal-primary-btn"
                   onClick={handleExport}
                   disabled={!exportCheck.ready || exporting}
-                  style={{ borderRadius: 10, minWidth: 160 }}
                 >
                   {exporting ? (
                     <>
@@ -1469,7 +1493,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
             </div>
           </div>
         </div>
-      )}
+        , document.body)}
     </>
   );
 };

@@ -4,6 +4,9 @@ import taskService from "../../../services/annotator/labeling/taskService";
 import { toast } from "react-toastify";
 import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
 import { useTranslation } from "react-i18next";
+import { resolveBackendAssetUrl } from "../../../config/runtime";
+
+const TASK_REFRESH_INTERVAL_MS = 30000;
 
 const AnnotatorTaskList = () => {
   const { t } = useTranslation();
@@ -12,7 +15,7 @@ const AnnotatorTaskList = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const fetchTasks = useCallback(async () => {
+  const fetchTasks = useCallback(async ({ showError = true } = {}) => {
     try {
       const res = await taskService.getMyProjects();
 
@@ -42,18 +45,38 @@ const AnnotatorTaskList = () => {
       setTasks(mappedProjects);
     } catch (err) {
       console.error(err);
-      toast.error(t("annotatorTasks.loadError"));
+      if (showError) {
+        toast.error(t("annotatorTasks.loadError"));
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchTasks();
   }, [location.key, fetchTasks]);
 
-  
-  useSignalRRefresh(fetchTasks);
+  useEffect(() => {
+    const refreshSilently = () => {
+      if (document.visibilityState === "visible") {
+        fetchTasks({ showError: false });
+      }
+    };
+
+    const intervalId = window.setInterval(refreshSilently, TASK_REFRESH_INTERVAL_MS);
+
+    window.addEventListener("focus", refreshSilently);
+    document.addEventListener("visibilitychange", refreshSilently);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshSilently);
+      document.removeEventListener("visibilitychange", refreshSilently);
+    };
+  }, [fetchTasks]);
+
+  useSignalRRefresh(() => fetchTasks({ showError: false }));
 
   const getRemainingTime = (deadline) => {
     if (!deadline) return { text: "N/A", color: "text-muted", icon: "ri-time-line" };
@@ -167,9 +190,9 @@ const AnnotatorTaskList = () => {
               <div className="card h-100 shadow-sm border-0">
                 {task.thumbnailUrl && (
                   <img
-                    src={task.thumbnailUrl}
+                    src={resolveBackendAssetUrl(task.thumbnailUrl)}
                     className="card-img-top"
-                    alt="thumbnail"
+                    alt={task.projectName || "thumbnail"}
                     style={{ height: 160, objectFit: "cover" }}
                   />
                 )}

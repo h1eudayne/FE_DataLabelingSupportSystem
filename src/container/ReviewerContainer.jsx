@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Container, Row, Col, Spinner, Card } from "react-bootstrap";
 import {
   CheckCircle,
@@ -15,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 import useSignalRRefresh from "../hooks/useSignalRRefresh";
 import { useTranslation } from "react-i18next";
 import ProjectCardItem from "../components/reviewer/home/ProjectCardItem";
+
+const REVIEWER_REFRESH_INTERVAL_MS = 30000;
 
 const ReviewerContainer = () => {
   const { t } = useTranslation();
@@ -46,43 +48,58 @@ const ReviewerContainer = () => {
     return p.progressPercent < 100 && diffInHours > 0 && diffInHours <= 48;
   });
 
-  const fetchProjects = async () => {
-    setLoading(true);
+  const fetchProjects = useCallback(async ({ showLoading = true } = {}) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+
     try {
-      const res = await projectService.getReviewProjects();
-      const projectsData = res.data || [];
+      const [projectsRes, reviewerStatsRes] = await Promise.all([
+        projectService.getReviewProjects(),
+        projectService.getReviewerStats(),
+      ]);
+
+      const projectsData = projectsRes.data || [];
       setProjects(projectsData);
-
-      if (projectsData.length > 0) {
-        const statsPromises = projectsData.map((p) =>
-          projectService.getProjectStatistics(p.projectId),
-        );
-
-        const statsResponses = await Promise.all(statsPromises);
-
-        const accuracyList = statsResponses
-          .map((response) => {
-            return response.data?.reviewerPerformances?.[0]?.reviewerAccuracy;
-          })
-          .filter((acc) => acc !== undefined && acc !== null);
-
-        if (accuracyList.length > 0) {
-          const totalAccuracy = accuracyList.reduce((sum, acc) => sum + acc, 0);
-          setGlobalAccuracy((totalAccuracy / accuracyList.length).toFixed(1));
-        }
-      }
+      setGlobalAccuracy(
+        Number(reviewerStatsRes.data?.KQSScore ?? reviewerStatsRes.data?.AuditAccuracy ?? 100).toFixed(1),
+      );
     } catch (err) {
       console.error("Error loading projects:", err);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchProjects();
-  }, []);
+  }, [fetchProjects]);
 
-  useSignalRRefresh(fetchProjects);
+  useEffect(() => {
+    const refreshSilently = () => {
+      if (document.visibilityState === "visible") {
+        fetchProjects({ showLoading: false });
+      }
+    };
+
+    const intervalId = window.setInterval(
+      refreshSilently,
+      REVIEWER_REFRESH_INTERVAL_MS,
+    );
+
+    window.addEventListener("focus", refreshSilently);
+    document.addEventListener("visibilitychange", refreshSilently);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshSilently);
+      document.removeEventListener("visibilitychange", refreshSilently);
+    };
+  }, [fetchProjects]);
+
+  useSignalRRefresh(() => fetchProjects({ showLoading: false }));
 
   const filteredProjects = projects.filter(
     (p) =>

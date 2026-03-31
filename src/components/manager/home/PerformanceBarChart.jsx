@@ -7,10 +7,10 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   Cell,
 } from "recharts";
 import { useTranslation } from "react-i18next";
+import SafeResponsiveChart from "../../charts/SafeResponsiveChart";
 
 const PerformanceBarChart = ({ weeklyData }) => {
   const { t } = useTranslation();
@@ -38,47 +38,45 @@ const PerformanceBarChart = ({ weeklyData }) => {
         </Badge>
       </Card.Header>
       <Card.Body className="pt-0">
-        <div style={{ width: "100%", height: 250 }}>
-          <ResponsiveContainer>
-            <BarChart
-              data={chartData}
-              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="#f1f1f1"
-              />
-              <XAxis
-                dataKey="name"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "#abb9e8", fontSize: 12 }}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "#abb9e8", fontSize: 12 }}
-              />
-              <Tooltip
-                cursor={{ fill: "#f3f6f9" }}
-                contentStyle={{
-                  borderRadius: "8px",
-                  border: "none",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                }}
-              />
-              <Bar dataKey="total" radius={[4, 4, 0, 0]} barSize={30}>
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={index === 4 ? "#405189" : "#40518980"}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <SafeResponsiveChart height={250}>
+          <BarChart
+            data={chartData}
+            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
+              stroke="#f1f1f1"
+            />
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "#abb9e8", fontSize: 12 }}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "#abb9e8", fontSize: 12 }}
+            />
+            <Tooltip
+              cursor={{ fill: "#f3f6f9" }}
+              contentStyle={{
+                borderRadius: "8px",
+                border: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              }}
+            />
+            <Bar dataKey="total" radius={[4, 4, 0, 0]} barSize={30}>
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={index === 4 ? "#405189" : "#40518980"}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </SafeResponsiveChart>
       </Card.Body>
     </Card>
   );

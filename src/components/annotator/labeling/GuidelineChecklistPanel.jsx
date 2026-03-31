@@ -3,12 +3,14 @@ import { useSelector, useDispatch } from "react-redux";
 import { toggleChecklistItem } from "../../../store/annotator/labelling/labelingSlice";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_OBJECT = Object.freeze({});
+
 const GuidelineChecklistPanel = ({ labels, assignmentId }) => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
 
   const checklistState = useSelector(
-    (state) => state.labeling.checklistByAssignment[assignmentId] || {},
+    (state) => state.labeling.checklistByAssignment[assignmentId] ?? EMPTY_OBJECT,
   );
 
   const unlockedLabelIds = useMemo(() => {

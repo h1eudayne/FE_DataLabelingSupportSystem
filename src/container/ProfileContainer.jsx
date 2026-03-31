@@ -5,11 +5,11 @@ import {
   getUserProfile,
   updateUserProfile,
   changePassword,
-  uploadAvatar,
 } from "../services/admin/managementUsers/user.api";
 import ProfileModal from "../components/home/ProfileModal";
 import { useDispatch } from "react-redux";
 import { updateUser } from "@/store/auth/auth.slice";
+import { uploadToCloudinary } from "../services/cloudinary/cloudinaryService";
 
 const ProfileContainer = () => {
   const { t } = useTranslation();
@@ -42,8 +42,7 @@ const ProfileContainer = () => {
       let finalAvatarUrl = userSelf.avatarUrl;
 
       if (avatarData instanceof File) {
-        const uploadRes = await uploadAvatar(avatarData);
-        finalAvatarUrl = uploadRes.data?.avatarUrl || uploadRes.avatarUrl;
+        finalAvatarUrl = await uploadToCloudinary(avatarData);
       } else {
         finalAvatarUrl = avatarData;
       }

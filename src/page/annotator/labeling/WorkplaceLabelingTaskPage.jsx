@@ -23,6 +23,9 @@ import { setCurrentTask } from "../../../store/annotator/labelling/taskSlice";
 
 import taskService from "../../../services/annotator/labeling/taskService";
 import projectService from "../../../services/annotator/labeling/projectService";
+import aiService from "../../../services/annotator/labeling/aiService";
+import extractDetectionsFromPreviewImage from "../../../services/annotator/labeling/aiPreviewParser";
+import { resolveBackendAssetUrl } from "../../../config/runtime";
 
 const STATUS_CLASSES = {
   New: "stitch-ws-badge stitch-ws-badge-new",
@@ -65,6 +68,184 @@ const STATUS_CONFIG = {
 
 const EMPTY_ARRAY = [];
 const EMPTY_OBJECT = {};
+const MAX_AI_EXEMPLARS = 3;
+const DEFAULT_AI_THRESHOLD = 0.33;
+const MIN_AI_THRESHOLD = 0.05;
+const MAX_AI_THRESHOLD = 0.95;
+const AI_THRESHOLD_STEP = 0.01;
+
+const clampAiThreshold = (value) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return DEFAULT_AI_THRESHOLD;
+  }
+
+  return Math.min(MAX_AI_THRESHOLD, Math.max(MIN_AI_THRESHOLD, parsed));
+};
+
+const normalizeAiThresholdAttempts = (thresholdAttempts, fallbackThreshold) => {
+  const normalized = Array.isArray(thresholdAttempts)
+    ? thresholdAttempts
+        .map((value) => Number(clampAiThreshold(value).toFixed(2)))
+        .filter(Number.isFinite)
+    : [];
+
+  if (normalized.length === 0) {
+    return [Number(clampAiThreshold(fallbackThreshold).toFixed(2))];
+  }
+
+  return normalized.filter((value, index) => normalized.indexOf(value) === index);
+};
+
+const normalizeAiDiagnostics = (diagnostics) => {
+  if (!diagnostics || typeof diagnostics !== "object") {
+    return null;
+  }
+
+  return {
+    providerRequestSubmitted: Boolean(diagnostics.providerRequestSubmitted),
+    providerResultReceived: Boolean(diagnostics.providerResultReceived),
+    completeEventReceived: Boolean(diagnostics.completeEventReceived),
+    previewImageReturned: Boolean(diagnostics.previewImageReturned),
+    rawDetectionStateReturned: Boolean(diagnostics.rawDetectionStateReturned),
+    rawDetectionsReturned: Boolean(diagnostics.rawDetectionsReturned),
+    providerUrl:
+      typeof diagnostics.providerUrl === "string" ? diagnostics.providerUrl : "",
+    predictEndpoint:
+      typeof diagnostics.predictEndpoint === "string"
+        ? diagnostics.predictEndpoint
+        : "",
+    eventId: typeof diagnostics.eventId === "string" ? diagnostics.eventId : "",
+    outputItemsCount: Number.isFinite(Number(diagnostics.outputItemsCount))
+      ? Number(diagnostics.outputItemsCount)
+      : 0,
+    resultSource:
+      typeof diagnostics.resultSource === "string"
+        ? diagnostics.resultSource
+        : "",
+  };
+};
+
+const buildAiDiagnosticsNote = (diagnostics, t) => {
+  if (!diagnostics?.providerResultReceived) {
+    return "";
+  }
+
+  if (diagnostics.rawDetectionsReturned) {
+    return t("workspace.aiDiagnosticsRawReturned");
+  }
+
+  if (diagnostics.previewImageReturned) {
+    return t("workspace.aiDiagnosticsPreviewOnly");
+  }
+
+  return t("workspace.aiDiagnosticsNoUsableOutput");
+};
+
+const normalizeBackendDetections = (detections) => {
+  if (!Array.isArray(detections)) {
+    return [];
+  }
+
+  return detections
+    .map((detection) => {
+      const xmin = Number(detection?.xmin);
+      const ymin = Number(detection?.ymin);
+      const xmax = Number(detection?.xmax);
+      const ymax = Number(detection?.ymax);
+
+      if (
+        !Number.isFinite(xmin) ||
+        !Number.isFinite(ymin) ||
+        !Number.isFinite(xmax) ||
+        !Number.isFinite(ymax) ||
+        xmax <= xmin ||
+        ymax <= ymin
+      ) {
+        return null;
+      }
+
+      return {
+        xmin: Math.round(xmin),
+        ymin: Math.round(ymin),
+        xmax: Math.round(xmax),
+        ymax: Math.round(ymax),
+        confidence: Number.isFinite(Number(detection?.confidence))
+          ? Number(detection.confidence)
+          : null,
+      };
+    })
+    .filter(Boolean);
+};
+
+const toAiExemplar = (annotation) => {
+  if (!annotation) return null;
+
+  if (Array.isArray(annotation.points) && annotation.points.length > 0) {
+    const xs = annotation.points
+      .map((point) => Number(point?.x))
+      .filter(Number.isFinite);
+    const ys = annotation.points
+      .map((point) => Number(point?.y))
+      .filter(Number.isFinite);
+
+    if (xs.length === 0 || ys.length === 0) {
+      return null;
+    }
+
+    const xmin = Math.round(Math.min(...xs));
+    const ymin = Math.round(Math.min(...ys));
+    const xmax = Math.round(Math.max(...xs));
+    const ymax = Math.round(Math.max(...ys));
+
+    if (xmax <= xmin || ymax <= ymin) {
+      return null;
+    }
+
+    return {
+      xmin,
+      ymin,
+      xmax,
+      ymax,
+      label: annotation.labelName || null,
+      labelId: annotation.labelId || null,
+      color: annotation.color || null,
+    };
+  }
+
+  const x = Number(annotation.x);
+  const y = Number(annotation.y);
+  const width = Number(annotation.width);
+  const height = Number(annotation.height);
+
+  if (
+    !Number.isFinite(x) ||
+    !Number.isFinite(y) ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height)
+  ) {
+    return null;
+  }
+
+  const xmin = Math.round(Math.min(x, x + width));
+  const ymin = Math.round(Math.min(y, y + height));
+  const xmax = Math.round(Math.max(x, x + width));
+  const ymax = Math.round(Math.max(y, y + height));
+
+  if (xmax <= xmin || ymax <= ymin) {
+    return null;
+  }
+
+  return {
+    xmin,
+    ymin,
+    xmax,
+    ymax,
+    label: annotation.labelName || null,
+    labelId: annotation.labelId || null,
+    color: annotation.color || null,
+  };
+};
 
 const normalizeBatchErrors = (value) => {
   if (Array.isArray(value)) {
@@ -118,6 +299,15 @@ const WorkplaceLabelingTaskPage = () => {
 
   const [highlightedAnnotationId, setHighlightedAnnotationId] = useState(null);
   const [collapsedPanels, setCollapsedPanels] = useState(new Set());
+  const [aiDetecting, setAiDetecting] = useState(false);
+  const [aiPreview, setAiPreview] = useState(null);
+  const [aiThreshold, setAiThreshold] = useState(DEFAULT_AI_THRESHOLD);
+  const [aiStatus, setAiStatus] = useState({
+    loading: true,
+    available: null,
+    message: "",
+    note: "",
+  });
 
   const togglePanel = (panelName) => {
     setCollapsedPanels((prev) => {
@@ -130,6 +320,7 @@ const WorkplaceLabelingTaskPage = () => {
   const [saveStatus, setSaveStatus] = useState("saved");
   const [lastSavedTime, setLastSavedTime] = useState(null);
   const isDirtyRef = React.useRef(false);
+  const aiPanelRef = React.useRef(null);
 
   const currentImage = images[currentImgIndex];
 
@@ -159,6 +350,29 @@ const WorkplaceLabelingTaskPage = () => {
     (state) =>
       state.labeling.defaultFlagsByAssignment[currentImage?.id] || EMPTY_ARRAY,
   );
+
+  const aiExemplars = useMemo(() => {
+    const prioritizedAnnotations = [...annotations].sort((left, right) => {
+      if (left.id === highlightedAnnotationId) return -1;
+      if (right.id === highlightedAnnotationId) return 1;
+      return 0;
+    });
+
+    const normalized = prioritizedAnnotations
+      .map((annotation) => toAiExemplar(annotation))
+      .filter(Boolean);
+
+    if (normalized.length === 0) {
+      return [];
+    }
+
+    const primaryExemplar = normalized[0];
+    const primaryLabelKey = primaryExemplar.labelId ?? primaryExemplar.label ?? "";
+
+    return normalized
+      .filter((exemplar) => (exemplar.labelId ?? exemplar.label ?? "") === primaryLabelKey)
+      .slice(0, MAX_AI_EXEMPLARS);
+  }, [annotations, highlightedAnnotationId]);
 
   const unlockedLabelIds = useMemo(() => {
     const ids = new Set();
@@ -194,6 +408,85 @@ const WorkplaceLabelingTaskPage = () => {
 
     return fallbackMessage;
   }, []);
+
+  const buildAiAnnotations = useCallback(
+    (detectedBoxes) => {
+      if (!currentImage || !aiExemplars.length) {
+        return [];
+      }
+
+      const primaryExemplar = aiExemplars[0];
+      const batchId = `ai-${currentImage.id}-${Date.now()}`;
+
+      return detectedBoxes.map((box, index) => ({
+        id: `${batchId}-${index}`,
+        assignmentId: currentImage.id,
+        labelId: primaryExemplar.labelId,
+        labelName: primaryExemplar.label || t("workspace.aiGeneratedLabel"),
+        color: primaryExemplar.color || "#F59E0B",
+        type: "BBOX",
+        x: box.xmin,
+        y: box.ymin,
+        width: Math.max(1, box.xmax - box.xmin),
+        height: Math.max(1, box.ymax - box.ymin),
+        aiGenerated: true,
+        aiBatchId: batchId,
+      }));
+    },
+    [aiExemplars, currentImage, t],
+  );
+
+  const replaceAiAnnotationsInCanvas = useCallback(
+    (detectedBoxes) => {
+      if (!currentImage) {
+        return 0;
+      }
+
+      const manualAnnotations = annotations.filter((annotation) => !annotation.aiGenerated);
+      const generatedAnnotations = buildAiAnnotations(detectedBoxes);
+
+      dispatch(
+        setAnnotations({
+          assignmentId: currentImage.id,
+          annotations: [...manualAnnotations, ...generatedAnnotations],
+        }),
+      );
+
+      return generatedAnnotations.length;
+    },
+    [annotations, buildAiAnnotations, currentImage, dispatch],
+  );
+
+  const handleClearAiInsertedBoxes = useCallback(() => {
+    if (!currentImage) {
+      return;
+    }
+
+    const remainingAnnotations = annotations.filter((annotation) => !annotation.aiGenerated);
+    const removedCount = annotations.length - remainingAnnotations.length;
+
+    dispatch(
+      setAnnotations({
+        assignmentId: currentImage.id,
+        annotations: remainingAnnotations,
+      }),
+    );
+
+    setAiPreview((prev) =>
+      prev
+        ? {
+            ...prev,
+            appliedCount: 0,
+            detections: [],
+            extractionNote: "",
+          }
+        : prev,
+    );
+
+    if (removedCount > 0) {
+      toast.info(t("workspace.aiInsertedBoxesCleared", { count: removedCount }));
+    }
+  }, [annotations, currentImage, dispatch, t]);
 
   const hasValidAnnotations = useCallback((annotationData) => {
     if (!annotationData) return false;
@@ -237,22 +530,126 @@ const WorkplaceLabelingTaskPage = () => {
     [allAnnotations, allChecklistStates, allDefaultFlags],
   );
 
-  const eligibleForSubmit = useMemo(() => {
-    return images.filter((img) => {
-      if (img.status === "Submitted" || img.status === "Approved") return false;
-      if (hasValidAnnotations(img.annotationData)) return true;
-      const reduxAnns = allAnnotations[img.id];
-      if (reduxAnns && reduxAnns.length > 0) return true;
-      const reduxFlags = allDefaultFlags[img.id];
-      if (reduxFlags && reduxFlags.length > 0) return true;
-      return false;
-    });
-  }, [images, hasValidAnnotations, allAnnotations, allDefaultFlags]);
+  const batchImageEntries = useMemo(
+    () =>
+      images.map((img, idx) => {
+        const reduxAnns = allAnnotations[img.id];
+        const reduxFlags = allDefaultFlags[img.id];
+        const isEligible =
+          img.status !== "Submitted" && img.status !== "Approved";
+        const hasData =
+          hasValidAnnotations(img.annotationData) ||
+          Boolean(reduxAnns?.length) ||
+          Boolean(reduxFlags?.length);
+
+        return {
+          img,
+          idx,
+          config: STATUS_CONFIG[img.status] || STATUS_CONFIG.New,
+          hasData,
+          isEligible,
+          isSelectable: isEligible && hasData,
+        };
+      }),
+    [images, allAnnotations, allDefaultFlags, hasValidAnnotations],
+  );
+
+  const selectableBatchIds = useMemo(
+    () =>
+      batchImageEntries
+        .filter((entry) => entry.isSelectable)
+        .map((entry) => entry.img.id),
+    [batchImageEntries],
+  );
+
+  const selectableBatchIdSet = useMemo(
+    () => new Set(selectableBatchIds),
+    [selectableBatchIds],
+  );
+
+  const selectedBatchIds = useMemo(
+    () => selectableBatchIds.filter((id) => selectedIds.has(id)),
+    [selectableBatchIds, selectedIds],
+  );
+
+  const selectedBatchIdSet = useMemo(
+    () => new Set(selectedBatchIds),
+    [selectedBatchIds],
+  );
+
+  const allSelectableSelected =
+    selectableBatchIds.length > 0 &&
+    selectedBatchIds.length === selectableBatchIds.length;
+
+  const aiStatusBadge = aiStatus.loading
+    ? {
+        className: "stitch-ws-badge stitch-ws-badge-inprogress",
+        label: t("workspace.aiStatusChecking"),
+      }
+    : aiStatus.available
+      ? {
+          className: "stitch-ws-badge stitch-ws-badge-approved",
+          label: t("workspace.aiStatusReady"),
+        }
+      : {
+          className: "stitch-ws-badge stitch-ws-badge-rejected",
+          label: t("workspace.aiStatusCold"),
+        };
+
+  const refreshAiStatus = useCallback(async () => {
+    setAiStatus((prev) => ({ ...prev, loading: true }));
+
+    try {
+      const response = await aiService.getStatus();
+      const statusData = response?.data || response || {};
+
+      setAiStatus({
+        loading: false,
+        available:
+          typeof statusData.available === "boolean"
+            ? statusData.available
+            : null,
+        message:
+          statusData.message ||
+          t("workspace.aiStatusUnavailable"),
+        note: statusData.note || "",
+      });
+    } catch (err) {
+      console.error("AI status check failed:", err);
+      setAiStatus({
+        loading: false,
+        available: null,
+        message: t("workspace.aiStatusUnavailable"),
+        note: "",
+      });
+    }
+  }, [t]);
 
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [assignmentId]);
+
+  useEffect(() => {
+    void refreshAiStatus();
+  }, [refreshAiStatus]);
+
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      let changed = false;
+      const next = new Set();
+
+      prev.forEach((id) => {
+        if (selectableBatchIdSet.has(id)) {
+          next.add(id);
+        } else {
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [selectableBatchIdSet]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -322,6 +719,7 @@ const WorkplaceLabelingTaskPage = () => {
   useEffect(() => {
     if (!currentImage) return;
 
+    setAiPreview(null);
 
     dispatch(setSelectedLabel(null));
     dispatch(setCurrentTask(currentImage));
@@ -467,6 +865,210 @@ const WorkplaceLabelingTaskPage = () => {
     [currentImage, buildDataJSON],
   );
 
+  const handleClearAiPreview = useCallback(() => {
+    setAiPreview(null);
+  }, []);
+
+  const handleRunAiPreview = useCallback(async () => {
+    if (!currentImage) return;
+
+    if (aiExemplars.length === 0) {
+      toast.warning(t("workspace.aiNeedExemplars"));
+      return;
+    }
+
+    setCollapsedPanels((prev) => {
+      if (!prev.has("ai")) return prev;
+      const next = new Set(prev);
+      next.delete("ai");
+      return next;
+    });
+    requestAnimationFrame(() => {
+      if (typeof aiPanelRef.current?.scrollIntoView === "function") {
+        aiPanelRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    });
+    setAiDetecting(true);
+
+    try {
+      const exemplarPayload = aiExemplars.map((exemplar) => ({
+        xmin: exemplar.xmin,
+        ymin: exemplar.ymin,
+        xmax: exemplar.xmax,
+        ymax: exemplar.ymax,
+        label: exemplar.label,
+      }));
+      const requestedThreshold = Number(
+        clampAiThreshold(aiThreshold).toFixed(2),
+      );
+      const response = await aiService.detectObjects({
+        assignmentId: currentImage.id,
+        imageUrl: currentImage.dataItemUrl,
+        exemplars: exemplarPayload,
+        threshold: requestedThreshold,
+        enableMask: false,
+      });
+
+      const detectionResult = response?.data || response || {};
+      let extractedBoxes = normalizeBackendDetections(detectionResult.detections);
+      let finalPreviewParseError = null;
+      let previewImageSize = null;
+      let targetImageSize = null;
+      let boxesWereRescaled = false;
+      let usedBackendDetections = extractedBoxes.length > 0;
+
+      if (!usedBackendDetections && detectionResult.resultImageUrl) {
+        try {
+          const previewParseResult = await extractDetectionsFromPreviewImage(
+            detectionResult.resultImageUrl,
+            {
+              targetImageUrl: resolveBackendAssetUrl(currentImage.dataItemUrl),
+            },
+          );
+
+          if (Array.isArray(previewParseResult)) {
+            extractedBoxes = previewParseResult;
+          } else {
+            extractedBoxes = previewParseResult?.boxes || [];
+            previewImageSize = previewParseResult?.previewImageSize || null;
+            targetImageSize = previewParseResult?.targetImageSize || null;
+            boxesWereRescaled = Boolean(previewParseResult?.boxesWereRescaled);
+          }
+        } catch (previewParseError) {
+          finalPreviewParseError = previewParseError;
+          console.error("AI preview parsing failed:", previewParseError);
+        }
+      }
+
+      const finalThresholdUsed = Number(
+        clampAiThreshold(
+          detectionResult.thresholdUsed ??
+            requestedThreshold,
+        ).toFixed(2),
+      );
+      const attemptedThresholds = normalizeAiThresholdAttempts(
+        detectionResult.thresholdAttempts,
+        finalThresholdUsed,
+      );
+      const normalizedDiagnostics = normalizeAiDiagnostics(
+        detectionResult.diagnostics,
+      );
+      const nextPreview = {
+        ...detectionResult,
+        thresholdUsed: finalThresholdUsed,
+        assignmentId: currentImage.id,
+        exemplarCount: aiExemplars.length,
+        detections: extractedBoxes,
+        appliedCount: 0,
+        previewExtractedCount: extractedBoxes.length,
+        previewImageSize,
+        targetImageSize,
+        boxesWereRescaled,
+        detectionSource: usedBackendDetections ? "huggingface_raw" : "preview_inference",
+        extractionNote: "",
+        coordinateNote: "",
+        diagnostics: normalizedDiagnostics,
+        diagnosticsNote: buildAiDiagnosticsNote(normalizedDiagnostics, t),
+        retryNote: "",
+        thresholdAttempts: attemptedThresholds,
+      };
+
+      let successMessage = detectionResult.message || t("workspace.aiPreviewLoaded");
+      const reportedCount =
+        typeof detectionResult.count === "number" ? detectionResult.count : null;
+
+      if (attemptedThresholds.length > 1) {
+        const retryParams = {
+          from: requestedThreshold.toFixed(2),
+          to: finalThresholdUsed.toFixed(2),
+        };
+        nextPreview.retryNote =
+          (reportedCount ?? 0) > 0 || extractedBoxes.length > 0
+            ? t("workspace.aiThresholdAutoAdjusted", retryParams)
+            : t("workspace.aiThresholdRetryExhausted", retryParams);
+      }
+
+      if (extractedBoxes.length > 0) {
+        if (reportedCount === 0 && !usedBackendDetections) {
+          replaceAiAnnotationsInCanvas([]);
+          nextPreview.extractionNote = t("workspace.aiPreviewNoRawCoordinates", {
+            count: extractedBoxes.length,
+          });
+          successMessage = t("workspace.aiPreviewLoaded");
+        } else {
+          const appliedCount = replaceAiAnnotationsInCanvas(extractedBoxes);
+          nextPreview.appliedCount = appliedCount;
+
+          if (appliedCount > 0) {
+            successMessage = t("workspace.aiBoxesInserted", {
+              count: appliedCount,
+            });
+
+            if (usedBackendDetections) {
+              nextPreview.coordinateNote = t("workspace.aiRawCoordinatesUsed", {
+                count: appliedCount,
+              });
+            } else if (previewImageSize && targetImageSize) {
+              nextPreview.coordinateNote = t(
+                boxesWereRescaled
+                  ? "workspace.aiPreviewCoordinatesRescaled"
+                  : "workspace.aiPreviewCoordinatesDerived",
+                {
+                  previewWidth: previewImageSize.width,
+                  previewHeight: previewImageSize.height,
+                  originalWidth: targetImageSize.width,
+                  originalHeight: targetImageSize.height,
+                },
+              );
+            }
+
+            if (!usedBackendDetections && reportedCount !== null && reportedCount !== appliedCount) {
+              nextPreview.extractionNote = t("workspace.aiBoxesInsertedPartial", {
+                detected: reportedCount,
+                inserted: appliedCount,
+              });
+            }
+          } else if ((reportedCount ?? 0) > 0) {
+            nextPreview.extractionNote = t("workspace.aiBoxesNotExtracted");
+            successMessage = t("workspace.aiPreviewLoaded");
+          }
+        }
+      } else if ((reportedCount ?? 0) > 0 || finalPreviewParseError) {
+        nextPreview.extractionNote = t("workspace.aiBoxesNotExtracted");
+        replaceAiAnnotationsInCanvas([]);
+        successMessage = t("workspace.aiPreviewLoaded");
+      } else {
+        replaceAiAnnotationsInCanvas([]);
+      }
+
+      setAiPreview(nextPreview);
+      toast.success(successMessage);
+    } catch (err) {
+      const errorMessage = getErrorMessage(err, t("workspace.aiDetectFailed"));
+      console.error("AI preview failed:", {
+        status: err?.response?.status ?? null,
+        message: errorMessage,
+        response: err?.response?.data ?? null,
+        assignmentId: currentImage?.id ?? null,
+      });
+      toast.error(errorMessage);
+    } finally {
+      setAiDetecting(false);
+      void refreshAiStatus();
+    }
+  }, [
+    aiExemplars,
+    aiThreshold,
+    currentImage,
+    replaceAiAnnotationsInCanvas,
+    getErrorMessage,
+    refreshAiStatus,
+    t,
+  ]);
+
   const handlePrev = () => {
     if (currentImgIndex > 0) {
       setCurrentImgIndex((prev) => prev - 1);
@@ -540,13 +1142,10 @@ const WorkplaceLabelingTaskPage = () => {
   };
 
   const handleSelectAllEligible = () => {
-    const allEligibleIds = eligibleForSubmit.map((img) => img.id);
-    const allSelected = allEligibleIds.every((id) => selectedIds.has(id));
-
-    if (allSelected) {
+    if (allSelectableSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(allEligibleIds));
+      setSelectedIds(new Set(selectableBatchIds));
     }
   };
 
@@ -674,19 +1273,20 @@ const WorkplaceLabelingTaskPage = () => {
   );
 
   const handleBatchSubmit = async () => {
-    if (selectedIds.size === 0) {
+    const assignmentIds = [...selectedBatchIds];
+
+    if (assignmentIds.length === 0) {
       toast.warning(t("workspace.batchNoSelection"));
       return;
     }
 
     const confirmed = window.confirm(
-      t("workspace.batchConfirm", { count: selectedIds.size }),
+      t("workspace.batchConfirm", { count: assignmentIds.length }),
     );
     if (!confirmed) return;
 
     setBatchSubmitting(true);
     try {
-      const assignmentIds = [...selectedIds];
       const preferredImage = currentImage
         ? { id: currentImage.id, dataItemId: currentImage.dataItemId }
         : null;
@@ -967,9 +1567,41 @@ const WorkplaceLabelingTaskPage = () => {
     (currentImage.status === "Rejected" && disputeStatus === "Pending") ||
     (currentImage.status === "Rejected" && disputeResult?.status === "Resolved" && disputeResult?.resolutionType === "annotator_correct");
 
+  const aiCanRun = !isReadOnly && aiExemplars.length > 0;
+  const aiReportedCount = aiPreview?.count ?? 0;
+  const aiPrimaryBadgeLabel = t("workspace.aiDetectedObjects", {
+    count: aiReportedCount,
+  });
+  const aiStatusGuidance = aiDetecting
+    ? t("workspace.aiDetectingHelp")
+    : aiPreview
+      ? aiPreview.appliedCount > 0
+        ? t("workspace.aiPreviewAppliedHelp", {
+            count: aiPreview.appliedCount,
+          })
+        : (aiPreview.previewExtractedCount ?? 0) > 0 && aiReportedCount === 0
+          ? t("workspace.aiPreviewCoordinateUnavailableHelp", {
+              count: aiPreview.previewExtractedCount,
+            })
+        : aiReportedCount === 0
+          ? t("workspace.aiPreviewNoObjectsHelp")
+          : t("workspace.aiPreviewLoadedHelp")
+      : aiCanRun
+        ? t("workspace.aiStatusReadyHelp")
+        : t("workspace.aiNeedExemplarsHelp", {
+            max: MAX_AI_EXEMPLARS,
+          });
+
   const isRejected = currentImage.status === "Rejected";
 
   const needsResubmit = isRejected && disputeResult?.status === "Rejected" && disputeResult?.resolutionType === "annotator_wrong";
+  const latestApprovedVotes = disputeResult?.reviewerFeedbacks?.filter(
+    (feedback) => feedback.verdict === "Approved" || feedback.verdict === "Approve",
+  ).length ?? 0;
+  const latestRejectedVotes = disputeResult?.reviewerFeedbacks?.filter(
+    (feedback) => feedback.verdict === "Rejected" || feedback.verdict === "Reject",
+  ).length ?? 0;
+  const rejectRounds = disputeResult?.rejectCount ?? currentImage.rejectCount ?? 0;
 
   const doneCount = images.filter(
     (img) => img.status === "Submitted" || img.status === "Approved",
@@ -1173,16 +1805,26 @@ const WorkplaceLabelingTaskPage = () => {
                       : "Dispute Rejected - Manager upheld the rejection"}
                   </strong>
 
+                  {rejectRounds > 0 && (
+                    <div className="mb-2 d-flex gap-2 align-items-center">
+                      <small className="text-muted">Reject rounds:</small>
+                      <span className="badge bg-warning text-dark">
+                        <i className="ri-arrow-go-back-line me-1"></i>
+                        {rejectRounds}
+                      </span>
+                    </div>
+                  )}
+
                   {disputeResult.reviewerFeedbacks && disputeResult.reviewerFeedbacks.length > 0 && (
                     <div className="mb-2 d-flex gap-2 align-items-center">
-                      <small className="text-muted">Reviewer votes:</small>
+                      <small className="text-muted">Latest reviewer votes:</small>
                       <span className="badge bg-success">
                         <i className="ri-check-line me-1"></i>
-                        {disputeResult.reviewerFeedbacks.filter(f => f.verdict === "Approved" || f.verdict === "Approve").length}
+                        {latestApprovedVotes}
                       </span>
                       <span className="badge bg-danger">
                         <i className="ri-close-line me-1"></i>
-                        {disputeResult.reviewerFeedbacks.filter(f => f.verdict === "Rejected" || f.verdict === "Reject").length}
+                        {latestRejectedVotes}
                       </span>
                     </div>
                   )}
@@ -1482,9 +2124,17 @@ const WorkplaceLabelingTaskPage = () => {
             <button
               className={`stitch-ws-nav-btn w-100 ${showBatchPanel ? "" : "primary"}`}
               style={{ justifyContent: "center" }}
-              onClick={async () => {
-                if (!showBatchPanel && isDirtyRef.current) await saveDraft(true);
-                setShowBatchPanel(!showBatchPanel);
+              onClick={() => {
+                if (
+                  !showBatchPanel &&
+                  isDirtyRef.current &&
+                  currentImage &&
+                  currentImage.status !== "Submitted" &&
+                  currentImage.status !== "Approved"
+                ) {
+                  void saveDraft(true);
+                }
+                setShowBatchPanel((prev) => !prev);
               }}
             >
               <i
@@ -1505,7 +2155,7 @@ const WorkplaceLabelingTaskPage = () => {
                   {t("workspace.selectImages")}
                 </span>
                 <span className="stitch-ws-badge stitch-ws-badge-inprogress">
-                  {selectedIds.size}
+                  {selectedBatchIds.length}
                 </span>
               </div>
               <div
@@ -1521,34 +2171,21 @@ const WorkplaceLabelingTaskPage = () => {
                       className="form-check-input"
                       type="checkbox"
                       id="selectAllEligible"
-                      checked={
-                        eligibleForSubmit.length > 0 &&
-                        eligibleForSubmit.every((img) =>
-                          selectedIds.has(img.id),
-                        )
-                      }
+                      checked={allSelectableSelected}
                       onChange={handleSelectAllEligible}
-                      disabled={eligibleForSubmit.length === 0}
+                      disabled={selectableBatchIds.length === 0}
                     />
                     <label
                       className="form-check-label stitch-ws-text-muted"
                       htmlFor="selectAllEligible"
                       style={{ fontWeight: 600, fontSize: "0.78rem" }}
                     >
-                      {t("workspace.selectAll")} ({eligibleForSubmit.length})
+                      {t("workspace.selectAll")} ({selectableBatchIds.length})
                     </label>
                   </div>
                 </div>
-                {images.map((img, idx) => {
-                  const config = STATUS_CONFIG[img.status] || STATUS_CONFIG.New;
-                  const isEligible =
-                    img.status !== "Submitted" && img.status !== "Approved";
-                  const reduxAnns = allAnnotations[img.id];
-                  const reduxFlags = allDefaultFlags[img.id];
-                  const hasData =
-                    hasValidAnnotations(img.annotationData) ||
-                    (reduxAnns && reduxAnns.length > 0) ||
-                    (reduxFlags && reduxFlags.length > 0);
+                {batchImageEntries.map(
+                  ({ img, idx, config, isEligible, hasData }) => {
                   return (
                     <div
                       key={img.id}
@@ -1559,7 +2196,7 @@ const WorkplaceLabelingTaskPage = () => {
                         <input
                           className="form-check-input me-2 flex-shrink-0"
                           type="checkbox"
-                          checked={selectedIds.has(img.id)}
+                          checked={selectedBatchIdSet.has(img.id)}
                           onChange={(e) => {
                             e.stopPropagation();
                             handleToggleSelect(img.id);
@@ -1579,13 +2216,14 @@ const WorkplaceLabelingTaskPage = () => {
                       </span>
                     </div>
                   );
-                })}
+                  },
+                )}
               </div>
               <div className="stitch-ws-card-body py-2 text-center">
                 <button
                   className="stitch-ws-nav-btn success w-100"
                   style={{ justifyContent: "center" }}
-                  disabled={selectedIds.size === 0 || batchSubmitting}
+                  disabled={selectedBatchIds.length === 0 || batchSubmitting}
                   onClick={handleBatchSubmit}
                 >
                   {batchSubmitting ? (
@@ -1596,7 +2234,7 @@ const WorkplaceLabelingTaskPage = () => {
                   ) : (
                     <>
                       <i className="ri-send-plane-fill"></i>{" "}
-                      {t("workspace.submitCount", { count: selectedIds.size })}
+                      {t("workspace.submitCount", { count: selectedBatchIds.length })}
                     </>
                   )}
                 </button>
@@ -1614,6 +2252,10 @@ const WorkplaceLabelingTaskPage = () => {
             highlightedAnnotationId={highlightedAnnotationId}
             onAnnotationClick={(id) => setHighlightedAnnotationId(id)}
             projectType={projectInfo?.allowGeometryTypes}
+            onRunAiPreview={handleRunAiPreview}
+            aiDetecting={aiDetecting}
+            aiExemplarCount={aiExemplars.length}
+            aiPreviewEnabled={aiCanRun}
           />
 
           { }
@@ -1727,6 +2369,361 @@ const WorkplaceLabelingTaskPage = () => {
             rejectionReason={currentImage.rejectionReason}
             status={currentImage.status}
           />
+
+          {!isReadOnly && (
+            <div
+              ref={aiPanelRef}
+              className={`stitch-ws-card ${collapsedPanels.has("ai") ? "collapsed" : ""}`}
+            >
+              <div
+                className="stitch-ws-card-header"
+                style={{ cursor: "pointer" }}
+                onClick={() => togglePanel("ai")}
+              >
+                <span>
+                  <i className="ri-sparkling-line me-1"></i>
+                  {t("workspace.aiPanelTitle")}
+                </span>
+                <span className="d-flex align-items-center gap-2">
+                  <span className={aiStatusBadge.className}>
+                    {aiStatusBadge.label}
+                  </span>
+                  {aiPreview && (
+                    <span className="stitch-ws-badge stitch-ws-badge-inprogress">
+                      {aiReportedCount}
+                    </span>
+                  )}
+                  <i
+                    className={`ri-arrow-${collapsedPanels.has("ai") ? "down" : "up"}-s-line`}
+                    style={{ fontSize: 14, opacity: 0.5 }}
+                  ></i>
+                </span>
+              </div>
+              <div
+                className="stitch-ws-card-body"
+                style={{ display: collapsedPanels.has("ai") ? "none" : "block" }}
+              >
+                <p
+                  className="stitch-ws-text-muted mb-2"
+                  style={{ fontSize: "0.78rem" }}
+                >
+                  {t("workspace.aiPanelHint")}
+                </p>
+
+                <div
+                  className="mb-2 px-3 py-2"
+                  style={{
+                    borderRadius: 10,
+                    background: "rgba(15, 23, 42, 0.18)",
+                    border: "1px solid rgba(148, 163, 184, 0.18)",
+                  }}
+                >
+                  <div
+                    className="d-flex align-items-center justify-content-between gap-2"
+                    style={{ marginBottom: aiStatus.note ? 6 : 0 }}
+                  >
+                    <strong style={{ fontSize: "0.76rem" }}>
+                      {t("workspace.aiStatusLabel")}
+                    </strong>
+                    <button
+                      type="button"
+                      className="btn btn-link btn-sm p-0"
+                      style={{ fontSize: "0.72rem", textDecoration: "none" }}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void refreshAiStatus();
+                      }}
+                    >
+                      {t("workspace.aiRefreshStatus")}
+                    </button>
+                  </div>
+                  <div style={{ fontSize: "0.76rem" }}>{aiStatus.message}</div>
+                  {aiStatus.note && (
+                    <div
+                      className="stitch-ws-text-muted mt-1"
+                      style={{ fontSize: "0.72rem" }}
+                    >
+                      {aiStatus.note}
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  className="mb-2 px-3 py-2"
+                  style={{
+                    borderRadius: 10,
+                    background: "rgba(34, 211, 238, 0.08)",
+                    border: "1px solid rgba(34, 211, 238, 0.16)",
+                    fontSize: "0.75rem",
+                  }}
+                >
+                  {aiStatusGuidance}
+                </div>
+
+                <div className="d-flex flex-wrap gap-2 mb-2">
+                  <span className="stitch-ws-badge stitch-ws-badge-inprogress">
+                    {t("workspace.aiExemplarCount", {
+                      count: aiExemplars.length,
+                      max: MAX_AI_EXEMPLARS,
+                    })}
+                  </span>
+                  <span className="stitch-ws-badge stitch-ws-badge-new">
+                    {t("workspace.aiThresholdChip", {
+                      threshold: aiThreshold.toFixed(2),
+                    })}
+                  </span>
+                </div>
+
+                <div className="mb-3">
+                  <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
+                    <label
+                      htmlFor="ai-threshold-range"
+                      style={{ fontSize: "0.76rem", fontWeight: 600 }}
+                    >
+                      {t("workspace.aiThresholdLabel")}
+                    </label>
+                    <input
+                      id="ai-threshold-number"
+                      type="number"
+                      min={MIN_AI_THRESHOLD}
+                      max={MAX_AI_THRESHOLD}
+                      step={AI_THRESHOLD_STEP}
+                      value={aiThreshold.toFixed(2)}
+                      disabled={aiDetecting}
+                      onChange={(event) => {
+                        setAiThreshold(clampAiThreshold(event.target.value));
+                      }}
+                      style={{
+                        width: 78,
+                        borderRadius: 8,
+                        border: "1px solid rgba(148, 163, 184, 0.24)",
+                        background: "rgba(15, 23, 42, 0.28)",
+                        color: "inherit",
+                        padding: "4px 8px",
+                        fontSize: "0.76rem",
+                      }}
+                    />
+                  </div>
+                  <input
+                    id="ai-threshold-range"
+                    type="range"
+                    min={MIN_AI_THRESHOLD}
+                    max={MAX_AI_THRESHOLD}
+                    step={AI_THRESHOLD_STEP}
+                    value={aiThreshold}
+                    disabled={aiDetecting}
+                    onChange={(event) => {
+                      setAiThreshold(clampAiThreshold(event.target.value));
+                    }}
+                    style={{ width: "100%" }}
+                  />
+                  <div
+                    className="d-flex justify-content-between stitch-ws-text-muted mt-1"
+                    style={{ fontSize: "0.72rem" }}
+                  >
+                    <span>{MIN_AI_THRESHOLD.toFixed(2)}</span>
+                    <span>{t("workspace.aiThresholdHint")}</span>
+                    <span>{MAX_AI_THRESHOLD.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <button
+                  className="stitch-ws-nav-btn w-100"
+                  style={{ justifyContent: "center" }}
+                  disabled={!aiCanRun || aiDetecting}
+                  onClick={handleRunAiPreview}
+                >
+                  {aiDetecting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm"></span>{" "}
+                      {t("workspace.aiDetecting")}
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-sparkling-line"></i>{" "}
+                      {t(
+                        aiPreview
+                          ? "workspace.aiRefreshPreview"
+                          : "workspace.aiRunPreview",
+                      )}
+                    </>
+                  )}
+                </button>
+
+                {aiPreview && (
+                  <div className="mt-3" data-testid="ai-preview-card">
+                    <h6 className="mb-2" style={{ fontSize: "0.82rem" }}>
+                      {t("workspace.aiResultsTitle")}
+                    </h6>
+
+                    <div className="d-flex flex-wrap gap-2 mb-2">
+                      <span
+                        className="stitch-ws-badge stitch-ws-badge-approved"
+                      >
+                        {aiPrimaryBadgeLabel}
+                      </span>
+                      <span className="stitch-ws-badge stitch-ws-badge-inprogress">
+                        {t("workspace.aiProcessingTime", {
+                          ms: aiPreview.processingTimeMs ?? 0,
+                        })}
+                      </span>
+                      <span className="stitch-ws-badge stitch-ws-badge-new">
+                        {t("workspace.aiThresholdChip", {
+                          threshold: (
+                            aiPreview.thresholdUsed ?? aiThreshold
+                          ).toFixed(2),
+                        })}
+                      </span>
+                      {aiPreview.appliedCount > 0 && (
+                        <span className="stitch-ws-badge stitch-ws-badge-approved">
+                          {t("workspace.aiAppliedBoxes", {
+                            count: aiPreview.appliedCount,
+                          })}
+                        </span>
+                      )}
+                    </div>
+
+                    {aiPreview.diagnostics && (
+                      <div
+                        className="mb-2 px-3 py-2"
+                        style={{
+                          borderRadius: 10,
+                          background: "rgba(15, 23, 42, 0.18)",
+                          border: "1px solid rgba(148, 163, 184, 0.18)",
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        <div className="fw-semibold mb-1">
+                          {t("workspace.aiDiagnosticsTitle")}
+                        </div>
+                        <div>
+                          {t("workspace.aiDiagnosticsProviderComplete", {
+                            endpoint:
+                              aiPreview.diagnostics.predictEndpoint ||
+                              "/gradio_api/call/initial_process",
+                            count: aiPreview.diagnostics.outputItemsCount ?? 0,
+                          })}
+                        </div>
+                        {aiPreview.diagnosticsNote && (
+                          <div className="stitch-ws-text-muted mt-1">
+                            {aiPreview.diagnosticsNote}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {aiPreview.message && (
+                      <div
+                        className="mb-2 px-3 py-2"
+                        style={{
+                          borderRadius: 10,
+                          background: "rgba(34, 211, 238, 0.08)",
+                          border: "1px solid rgba(34, 211, 238, 0.18)",
+                          fontSize: "0.76rem",
+                        }}
+                      >
+                        {aiPreview.message}
+                      </div>
+                    )}
+
+                    {aiPreview.retryNote && (
+                      <div
+                        className="mb-2 px-3 py-2"
+                        style={{
+                          borderRadius: 10,
+                          background: "rgba(59, 130, 246, 0.08)",
+                          border: "1px solid rgba(59, 130, 246, 0.18)",
+                          fontSize: "0.76rem",
+                        }}
+                      >
+                        {aiPreview.retryNote}
+                      </div>
+                    )}
+
+                    {aiPreview.extractionNote && (
+                      <div
+                        className="mb-2 px-3 py-2"
+                        style={{
+                          borderRadius: 10,
+                          background: "rgba(245, 158, 11, 0.08)",
+                          border: "1px solid rgba(245, 158, 11, 0.18)",
+                          fontSize: "0.76rem",
+                        }}
+                      >
+                        {aiPreview.extractionNote}
+                      </div>
+                    )}
+
+                    {aiPreview.coordinateNote && (
+                      <div
+                        className="mb-2 px-3 py-2"
+                        style={{
+                          borderRadius: 10,
+                          background: "rgba(16, 185, 129, 0.08)",
+                          border: "1px solid rgba(16, 185, 129, 0.18)",
+                          fontSize: "0.76rem",
+                        }}
+                      >
+                        {aiPreview.coordinateNote}
+                      </div>
+                    )}
+
+                    {aiPreview.resultImageUrl ? (
+                      <img
+                        data-testid="ai-preview-image"
+                        src={aiPreview.resultImageUrl}
+                        alt={t("workspace.aiPreviewAlt")}
+                        style={{
+                          width: "100%",
+                          borderRadius: 12,
+                          border: "1px solid rgba(148, 163, 184, 0.18)",
+                          objectFit: "cover",
+                        }}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div
+                        className="stitch-ws-text-muted"
+                        style={{ fontSize: "0.75rem" }}
+                      >
+                        {t("workspace.aiNoPreviewImage")}
+                      </div>
+                    )}
+
+                    <div className="d-flex justify-content-end gap-2 mt-2">
+                      {aiPreview.appliedCount > 0 && (
+                        <button
+                          type="button"
+                          className="stitch-back-btn"
+                          style={{ padding: "4px 10px", fontSize: "0.72rem" }}
+                          onClick={handleClearAiInsertedBoxes}
+                        >
+                          <i className="ri-delete-bin-line me-1"></i>
+                          {t("workspace.aiClearInsertedBoxes")}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="stitch-back-btn"
+                        style={{ padding: "4px 10px", fontSize: "0.72rem" }}
+                        onClick={handleClearAiPreview}
+                      >
+                        <i className="ri-close-line me-1"></i>
+                        {t("workspace.aiClearPreview")}
+                      </button>
+                    </div>
+
+                    <p
+                      className="stitch-ws-text-muted mb-0 mt-2"
+                      style={{ fontSize: "0.72rem" }}
+                    >
+                      {t("workspace.aiPreviewDisclaimer")}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           { }
           {showDisputeForm && isRejected && (

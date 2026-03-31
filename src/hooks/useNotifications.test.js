@@ -1,4 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import React from "react";
+import useNotifications from "./useNotifications";
+import notificationService from "../services/notificationService";
+import { subscribe } from "../services/signalrManager";
+
+vi.mock("../services/notificationService", () => ({
+  default: {
+    getMyNotifications: vi.fn(),
+    markAsRead: vi.fn(),
+    markAllAsRead: vi.fn(),
+  },
+}));
+
+vi.mock("../services/signalrManager", () => ({
+  subscribe: vi.fn(() => () => {}),
+}));
 
 const parseTimestamp = (timestamp) => {
   const value = Date.parse(timestamp || "");
@@ -30,16 +47,19 @@ const mergeNotifications = (notifications) => {
 };
 
 const normalizeServerNotification = (n) => ({
-  id: n.id,
-  title: n.title || "Notification",
-  message: n.message || "New notification",
-  type: n.type || "info",
-  timestamp: n.createdAt || new Date().toISOString(),
-  read: !!n.isRead,
-  referenceType: n.referenceType || null,
-  referenceId: n.referenceId || null,
-  actionKey: n.actionKey || null,
-  metadata: n.metadata || null,
+  id: n.id ?? n.Id,
+  title: n.title || n.Title || "Notification",
+  message: n.message || n.Message || "New notification",
+  type: n.type || n.Type || "info",
+  timestamp: n.createdAt || n.CreatedAt || n.timestamp || n.Timestamp || new Date().toISOString(),
+  read: !!(n.isRead ?? n.IsRead),
+  referenceType: n.referenceType || n.ReferenceType || null,
+  referenceId: n.referenceId || n.ReferenceId || null,
+  actionKey: n.actionKey || n.ActionKey || null,
+  metadata:
+    typeof (n.metadata ?? n.Metadata ?? n.metadataJson ?? n.MetadataJson) === "string"
+      ? JSON.parse(n.metadata ?? n.Metadata ?? n.metadataJson ?? n.MetadataJson)
+      : (n.metadata ?? n.Metadata ?? n.metadataJson ?? n.MetadataJson ?? null),
 });
 
 const buildInitialUnreadCount = (initialUnreadCount) => {
@@ -66,6 +86,11 @@ const markAllAsReadUpdate = (notifications) => ({
 });
 
 const signalRNotificationUpdate = (notifications, unreadCount, notification) => {
+  const rawMetadata =
+    notification?.Metadata ??
+    notification?.metadata ??
+    notification?.MetadataJson ??
+    notification?.metadataJson;
   const newNotification = {
     id: notification?.Id || notification?.id || Date.now() + Math.random(),
     title: notification?.Title || notification?.title || "Notification",
@@ -80,7 +105,7 @@ const signalRNotificationUpdate = (notifications, unreadCount, notification) => 
     referenceType: notification?.ReferenceType || notification?.referenceType || null,
     referenceId: notification?.ReferenceId || notification?.referenceId || null,
     actionKey: notification?.ActionKey || notification?.actionKey || null,
-    metadata: notification?.Metadata || notification?.metadata || null,
+    metadata: typeof rawMetadata === "string" ? JSON.parse(rawMetadata) : (rawMetadata || null),
   };
   const updatedNotifications = mergeNotifications([newNotification, ...notifications]);
   return {
@@ -90,6 +115,12 @@ const signalRNotificationUpdate = (notifications, unreadCount, notification) => 
 };
 
 describe("BUG-FIX: Notification badge hiện sau login", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem("access_token", "test-token");
+    vi.clearAllMocks();
+  });
+
   describe("normalizeServerNotification", () => {
     it("nên normalize notification với isRead: false thành read: false", () => {
       const server = { id: 1, message: "Hello", isRead: false };
@@ -121,6 +152,16 @@ describe("BUG-FIX: Notification badge hiện sau login", () => {
       const result = normalizeServerNotification(server);
       expect(result.actionKey).toBe("ResolveGlobalUserBanRequest");
       expect(result.metadata.requestStatus).toBe("Pending");
+    });
+
+    it("nên parse metadataJson dạng string từ backend", () => {
+      const server = {
+        id: 5,
+        metadataJson: "{\"requestStatus\":\"Pending\",\"banRequestId\":42}",
+      };
+      const result = normalizeServerNotification(server);
+      expect(result.metadata.requestStatus).toBe("Pending");
+      expect(result.metadata.banRequestId).toBe(42);
     });
   });
 
@@ -248,6 +289,63 @@ describe("BUG-FIX: Notification badge hiện sau login", () => {
       });
       expect(result.notifications).toHaveLength(1);
       expect(result.unreadCount).toBe(1);
+    });
+
+    it("nên parse metadataJson dạng string từ SignalR payload", () => {
+      const result = signalRNotificationUpdate([], 0, {
+        Id: 77,
+        MetadataJson: "{\"requestStatus\":\"Pending\",\"banRequestId\":99}",
+      });
+      expect(result.notifications[0].metadata.requestStatus).toBe("Pending");
+      expect(result.notifications[0].metadata.banRequestId).toBe(99);
+    });
+  });
+
+  describe("useNotifications", () => {
+    const HookProbe = ({ userId, initialUnreadCount = 0 }) => {
+      const { unreadCount } = useNotifications(userId, initialUnreadCount);
+      return React.createElement("div", { "data-testid": "unread-count" }, unreadCount);
+    };
+
+    it("nên fetch lại notification khi userId có sau lần mount đầu", async () => {
+      notificationService.getMyNotifications.mockResolvedValue({
+        data: [
+          {
+            id: 101,
+            title: "Success Notification",
+            message: "Bạn vừa được giao dự án",
+            type: "Success",
+            isRead: false,
+            createdAt: "2026-03-31T10:57:06.000Z",
+          },
+        ],
+      });
+
+      const { rerender } = render(React.createElement(HookProbe, { userId: null }));
+
+      expect(notificationService.getMyNotifications).not.toHaveBeenCalled();
+      expect(screen.getByTestId("unread-count")).toHaveTextContent("0");
+
+      rerender(React.createElement(HookProbe, { userId: "annotator-1" }));
+
+      await waitFor(() => {
+        expect(notificationService.getMyNotifications).toHaveBeenCalledTimes(1);
+      });
+
+      await waitFor(() => {
+        expect(subscribe).toHaveBeenCalledWith(
+          "ReceiveNotification",
+          expect.any(Function),
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("unread-count")).toHaveTextContent("1");
+      });
+
+      expect(
+        JSON.parse(localStorage.getItem("notifications_annotator-1") || "[]"),
+      ).toHaveLength(1);
     });
   });
 });

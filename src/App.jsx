@@ -1,15 +1,12 @@
-import "./assets/css/bootstrap.min.css";
-import "./assets/css/app.min.css";
-import "./assets/css/custom.min.css";
-import "./assets/css/icons.min.css";
 import "./assets/css/usertable.min.css";
 import "./App.css";
 import "./assets/css/admin-ui.css";
 
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import AppToastHost from "./components/ui/AppToastHost";
 import MainLayouts from "./components/layouts/MainLayouts";
 import HomePage from "./page/HomePage";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import RegisterPage from "./page/auth/RegisterPage";
 import WorkplaceLabelingTaskPage from "./page/annotator/labeling/WorkplaceLabelingTaskPage";
@@ -42,6 +39,7 @@ import DetailProject from "./components/admin/home/DetailProject";
 function App() {
   const { isAuthenticated } = useSelector((state) => state.auth);
   const isLoggedIn = isAuthenticated;
+  const shouldRenderSpeedInsights = import.meta.env.PROD;
 
   return (
     <>
@@ -167,7 +165,8 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      <SpeedInsights />
+      <AppToastHost />
+      {shouldRenderSpeedInsights ? <SpeedInsights /> : null}
     </>
   );
 }

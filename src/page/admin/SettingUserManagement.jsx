@@ -29,6 +29,24 @@ import UserModal from "../../components/admin/managementUser/UserModal";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 
+const getProjectStatusBadgeClass = (status) => {
+  const normalizedStatus = String(status || "").toLowerCase();
+
+  if (normalizedStatus === "active" || normalizedStatus === "inprogress") {
+    return "bg-primary-subtle text-primary";
+  }
+
+  if (normalizedStatus === "submitted" || normalizedStatus === "assigned") {
+    return "bg-warning-subtle text-warning";
+  }
+
+  if (normalizedStatus === "completed" || normalizedStatus === "approved") {
+    return "bg-success-subtle text-success";
+  }
+
+  return "bg-light text-muted";
+};
+
 const SettingUserManagement = () => {
   const [users, setUsers] = useState([]);
   const [managers, setManagers] = useState([]);
@@ -258,6 +276,11 @@ const SettingUserManagement = () => {
     lockTargetUser?.managerId &&
     (lockTargetUser?.unfinishedProjectCount || 0) > 0;
   const hasPendingGlobalBanRequest = Boolean(lockTargetUser?.hasPendingGlobalBanRequest);
+  const impactedProjects = Array.isArray(lockTargetUser?.unfinishedProjects)
+    ? lockTargetUser.unfinishedProjects
+    : [];
+  const responsibleManagerName = lockTargetUser?.managerName || t("userMgmt.noManager");
+  const responsibleManagerEmail = lockTargetUser?.managerEmail;
 
   if (loading) {
     return (
@@ -370,6 +393,66 @@ const SettingUserManagement = () => {
               </span>
             </div>
 
+            {(requiresManagerApproval || hasPendingGlobalBanRequest) && (
+              <div className="border rounded-3 p-3 mt-3 text-start bg-light-subtle">
+                <div className="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+                  <div>
+                    <div className="text-muted text-uppercase fw-semibold small">
+                      {t("userMgmt.responsibleManager")}
+                    </div>
+                    <div className="fw-semibold">
+                      {responsibleManagerName}
+                    </div>
+                    {responsibleManagerEmail && (
+                      <div className="small text-muted">{responsibleManagerEmail}</div>
+                    )}
+                  </div>
+                  <Badge color="light" className="text-dark border">
+                    {t("userMgmt.projectsAwaitingDecision", {
+                      count: impactedProjects.length,
+                    })}
+                  </Badge>
+                </div>
+
+                <div className="mt-3">
+                  <div className="text-muted text-uppercase fw-semibold small mb-2">
+                    {t("userMgmt.affectedProjects")}
+                  </div>
+                  {impactedProjects.length > 0 ? (
+                    <div className="d-flex flex-column gap-2">
+                      {impactedProjects.map((project) => (
+                        <div
+                          key={`${lockTargetUser?.id || "user"}-${project.id}`}
+                          className="d-flex justify-content-between align-items-center gap-2 rounded-3 border bg-white px-3 py-2"
+                        >
+                          <div>
+                            <div className="fw-semibold">
+                              {project.name}
+                            </div>
+                            <div className="small text-muted">
+                              #{project.id}
+                            </div>
+                          </div>
+                          <span className={`badge ${getProjectStatusBadgeClass(project.status)}`}>
+                            {project.status || t("userMgmt.unknownProjectStatus")}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="small text-muted">
+                      {t("userMgmt.noAffectedProjects")}
+                    </div>
+                  )}
+                </div>
+
+                <div className="alert alert-info mt-3 mb-0 small text-start">
+                  <i className="ri-route-line me-1"></i>
+                  {t("userMgmt.managerDecisionFlow")}
+                </div>
+              </div>
+            )}
+
             {hasPendingGlobalBanRequest && !lockTargetActive && (
               <div className="alert alert-warning mt-3 mb-0 text-start">
                 <div className="d-flex align-items-start gap-2">
@@ -397,7 +480,9 @@ const SettingUserManagement = () => {
                       })}
                     </strong>
                     <span className="small">
-                      {t("userMgmt.managerApprovalNote")}
+                      {t("userMgmt.managerApprovalNote", {
+                        managerName: responsibleManagerName,
+                      })}
                     </span>
                   </div>
                 </div>

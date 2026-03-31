@@ -6,6 +6,7 @@ import projectService from "../../../services/manager/project/projectService";
 import { userService } from "../../../services/manager/project/userService";
 import taskService from "../../../services/manager/project/taskService";
 import Swal from "sweetalert2";
+import { buildAssignmentRequest } from "./projectAssignTask.helpers";
 
 const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
   const { t } = useTranslation();
@@ -130,7 +131,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
     const safeAvailable = Math.max(availableItems, 0);
     let qtyPerAnnotator;
     if (quantityMode === "all") {
-      qtyPerAnnotator = Math.floor(safeAvailable / targetAnnotators.length);
+      qtyPerAnnotator = safeAvailable;
       if (qtyPerAnnotator <= 0) {
         return Swal.fire(t("projectAssign.warning"), t("projectAssign.noImagesAvailable"), "warning");
       }
@@ -141,16 +142,21 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
       qtyPerAnnotator = Number(quantity);
     }
 
-    
-    const totalAssignments = targetAnnotators.length;
-    const totalImages = quantityMode === "all" ? safeAvailable : qtyPerAnnotator * targetAnnotators.length;
+    const assignmentRequest = buildAssignmentRequest({
+      projectId: Number(id),
+      targetAnnotators,
+      targetReviewers,
+      qtyPerAnnotator,
+    });
+
+    const totalAssignments = assignmentRequest.totalRecords;
     const confirmResult = await Swal.fire({
       title: t("projectAssign.confirmTitle"),
       html: `
         <div style="text-align:left; font-size:14px;">
           <p><strong>${t("projectAssign.annotatorCount")}:</strong> ${targetAnnotators.length}</p>
           <p><strong>${t("projectAssign.reviewerCount")}:</strong> ${targetReviewers.length}</p>
-          <p><strong>${t("projectAssign.imagesPerAnnotator")}:</strong> ~${qtyPerAnnotator}</p>
+          <p><strong>${t("projectAssign.imagesPerAnnotator")}:</strong> ${qtyPerAnnotator}</p>
           <p><strong>${t("projectAssign.totalAssignments")}:</strong> ${totalAssignments}</p>
         </div>
       `,
@@ -166,44 +172,16 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
     const log = [];
     let successCount = 0;
     let errorCount = 0;
-    let remaining = safeAvailable;
 
     try {
-      for (let i = 0; i < targetAnnotators.length; i++) {
-        const ann = targetAnnotators[i];
-        
-        const rev = targetReviewers[i % targetReviewers.length];
-
-        let qty = qtyPerAnnotator;
-        
-        if (quantityMode === "all" && i === targetAnnotators.length - 1) {
-          qty = remaining;
-        }
-
-        if (qty <= 0) continue;
-
-        try {
-          await taskService.assignTask({
-            projectId: Number(id),
-            annotatorIds: [String(ann.id)],
-            totalQuantity: Number(qty),
-            reviewerIds: rev.id ? [String(rev.id)] : [],
-          });
-          log.push({ annotator: ann.name, reviewer: rev.name, qty, status: "success" });
-          successCount++;
-          remaining -= qty;
-        } catch (err) {
-          console.error("Task assignment error:", err);
-          log.push({
-            annotator: ann.name,
-            reviewer: rev.name,
-            qty,
-            status: "error",
-            message: err.response?.data?.message || err.message,
-          });
-          errorCount++;
-        }
-      }
+      await taskService.assignTask(assignmentRequest.payload);
+      log.push({
+        annotator: assignmentRequest.annotatorSummary,
+        reviewer: assignmentRequest.reviewerSummary,
+        qty: assignmentRequest.qtyPerAnnotator,
+        status: "success",
+      });
+      successCount = 1;
 
       setAssignLog(log);
 
@@ -224,6 +202,15 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
       setQuantityMode("custom");
       fetchProject();
     } catch (error) {
+      console.error("Task assignment error:", error);
+      log.push({
+        annotator: assignmentRequest.annotatorSummary,
+        reviewer: assignmentRequest.reviewerSummary,
+        qty: assignmentRequest.qtyPerAnnotator,
+        status: "error",
+        message: error.response?.data?.message || error.message,
+      });
+      setAssignLog(log);
       console.error("API error details:", error.response?.data);
       Swal.fire(
         t("projectAssign.assignError"),
@@ -460,7 +447,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                               </td>
                               <td className="text-center">
                                 <button
-                                  className={`btn btn-sm ${m.isLocked ? 'btn-soft-success' : 'btn-soft-warning'} border-0`}
+                                  className={`btn btn-sm project-assign-lock-btn ${m.isLocked ? 'is-locked' : 'is-active'}`}
                                   disabled={lockingUserId === (m.id || m.userId)}
                                   title={m.isLocked
                                     ? t("projectAssign.unlockUser", { defaultValue: "Unlock user" })
@@ -478,6 +465,16 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                                         : t("projectAssign.unlockDesc", { defaultValue: "This user will be able to work on tasks again." }),
                                       icon: "question",
                                       showCancelButton: true,
+                                      buttonsStyling: false,
+                                      cancelButtonText: t("common.cancel"),
+                                      customClass: {
+                                        popup: "project-assign-swal-popup",
+                                        title: "project-assign-swal-title",
+                                        htmlContainer: "project-assign-swal-html",
+                                        actions: "project-assign-swal-actions",
+                                        confirmButton: `project-assign-swal-confirm ${newLock ? "is-lock" : "is-unlock"}`,
+                                        cancelButton: "project-assign-swal-cancel",
+                                      },
                                       confirmButtonText: newLock
                                         ? t("projectAssign.lockBtn", { defaultValue: "Lock" })
                                         : t("projectAssign.unlockBtn", { defaultValue: "Unlock" }),
