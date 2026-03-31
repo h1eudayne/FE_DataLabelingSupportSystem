@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Container,
   Row,
@@ -24,6 +24,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import projectService from "../../../services/reviewer/project.service";
 import { useTranslation } from "react-i18next";
+import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
+
+const REVIEWER_REFRESH_INTERVAL_MS = 30000;
 
 const WorkplaceReviewTask = () => {
   const [projects, setProjects] = useState([]);
@@ -32,20 +35,50 @@ const WorkplaceReviewTask = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
-  useEffect(() => {
-    const fetchProjects = async () => {
+  const fetchProjects = useCallback(async ({ showLoading = true } = {}) => {
+    if (showLoading) {
       setLoading(true);
-      try {
-        const res = await projectService.getReviewProjects();
-        setProjects(res.data || []);
-      } catch (err) {
-        console.error("Error loading projects:", err);
-      } finally {
+    }
+
+    try {
+      const res = await projectService.getReviewProjects();
+      setProjects(res.data || []);
+    } catch (err) {
+      console.error("Error loading projects:", err);
+    } finally {
+      if (showLoading) {
         setLoading(false);
       }
-    };
-    fetchProjects();
+    }
   }, []);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+
+  useEffect(() => {
+    const refreshSilently = () => {
+      if (document.visibilityState === "visible") {
+        fetchProjects({ showLoading: false });
+      }
+    };
+
+    const intervalId = window.setInterval(
+      refreshSilently,
+      REVIEWER_REFRESH_INTERVAL_MS,
+    );
+
+    window.addEventListener("focus", refreshSilently);
+    document.addEventListener("visibilitychange", refreshSilently);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshSilently);
+      document.removeEventListener("visibilitychange", refreshSilently);
+    };
+  }, [fetchProjects]);
+
+  useSignalRRefresh(() => fetchProjects({ showLoading: false }));
 
   const filteredProjects = projects.filter((p) =>
     p.projectName?.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -65,7 +98,7 @@ const WorkplaceReviewTask = () => {
           },
         );
       } else {
-        alert(alert(t("workplace.noTaskAlert")));
+        alert(t("workplace.noTaskAlert"));
       }
     } catch (error) {
       console.error(error);

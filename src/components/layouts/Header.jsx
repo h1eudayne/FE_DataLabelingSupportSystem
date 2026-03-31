@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Container, Dropdown, Form, InputGroup, Button, Badge, Modal, Spinner } from "react-bootstrap";
+import { Container, Dropdown, Form, InputGroup, Button, Badge } from "react-bootstrap";
 import {
   LogOut,
   User,
@@ -27,6 +27,7 @@ import { resolveBackendAssetUrl } from "../../config/runtime";
 import useNotifications from "../../hooks/useNotifications";
 import { disconnect as disconnectSignalR } from "../../services/signalrManager";
 import { toast } from "react-toastify";
+import GlobalBanDecisionModal from "./GlobalBanDecisionModal";
 
 const getLanguageCode = (language) =>
   language?.toLowerCase().startsWith("en") ? "en" : "vi";
@@ -60,7 +61,8 @@ const Header = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [banDecisionModal, setBanDecisionModal] = useState({
     show: false,
-    approve: true,
+    decision: "approve",
+    decisionNote: "",
     notification: null,
   });
   const [banDecisionLoading, setBanDecisionLoading] = useState(false);
@@ -135,10 +137,11 @@ const Header = ({
     navigate("/login", { replace: true });
   };
 
-  const openBanDecisionModal = (notification, approve) => {
+  const openBanDecisionModal = (notification, decision = "approve") => {
     setBanDecisionModal({
       show: true,
-      approve,
+      decision,
+      decisionNote: notification?.metadata?.decisionNote || "",
       notification,
     });
   };
@@ -150,7 +153,8 @@ const Header = ({
 
     setBanDecisionModal({
       show: false,
-      approve: true,
+      decision: "approve",
+      decisionNote: "",
       notification: null,
     });
   };
@@ -163,14 +167,22 @@ const Header = ({
       return;
     }
 
+    const normalizedDecisionNote = banDecisionModal.decisionNote.trim();
+    const approve = banDecisionModal.decision === "approve";
+
+    if (!approve && !normalizedDecisionNote) {
+      toast.error(t("header.globalBanRejectNoteRequired"));
+      return;
+    }
+
     setBanDecisionLoading(true);
 
     try {
-      await resolveGlobalBanRequest(requestId, banDecisionModal.approve);
+      await resolveGlobalBanRequest(requestId, approve, normalizedDecisionNote);
       markAsRead(banDecisionModal.notification?.id);
       await refreshNotifications();
       toast.success(
-        banDecisionModal.approve
+        approve
           ? t("header.globalBanApproveSuccess")
           : t("header.globalBanRejectSuccess"),
       );
@@ -603,11 +615,19 @@ const Header = ({
                         const pendingGlobalBan = isPendingGlobalBanNotification(n);
                         const globalBanProjects = getGlobalBanProjects(n);
                         const requestStatus = n?.metadata?.requestStatus;
+                        const decisionNote = n?.metadata?.decisionNote?.trim();
 
                         return (
                           <Dropdown.Item
                             key={n.id}
-                            onClick={() => markAsRead(n.id)}
+                            onClick={() => {
+                              if (pendingGlobalBan) {
+                                openBanDecisionModal(n);
+                                return;
+                              }
+
+                              markAsRead(n.id);
+                            }}
                             className={`py-2 px-3 border-bottom ${
                               !n.read ? "bg-light" : ""
                             }`}
@@ -622,24 +642,43 @@ const Header = ({
                               />
                               <div className="flex-grow-1">
                                 <div className="d-flex align-items-start justify-content-between gap-2">
-                                  <div className="small fw-semibold text-wrap">
-                                    {n.message}
+                                  <div className="d-flex flex-column gap-1">
+                                    <div className="small fw-semibold text-wrap">
+                                      {n.message}
+                                    </div>
+                                    {n?.metadata?.targetUserName && (
+                                      <div className="small text-muted">
+                                        {t("header.globalBanSubjectSummary", {
+                                          userName: n.metadata.targetUserName,
+                                          role: n.metadata.targetUserRole || t("header.defaultRole"),
+                                        })}
+                                      </div>
+                                    )}
+                                    {n?.metadata?.requestedByAdminName && (
+                                      <div className="small text-muted">
+                                        {t("header.globalBanRequesterSummary", {
+                                          adminName: n.metadata.requestedByAdminName,
+                                        })}
+                                      </div>
+                                    )}
                                   </div>
-                                  {pendingGlobalBan && (
-                                    <Badge bg="warning" text="dark" pill>
-                                      {t("header.approvalRequired")}
-                                    </Badge>
-                                  )}
-                                  {!pendingGlobalBan && requestStatus === "Approved" && (
-                                    <Badge bg="success" pill>
-                                      {t("header.approved")}
-                                    </Badge>
-                                  )}
-                                  {!pendingGlobalBan && requestStatus === "Rejected" && (
-                                    <Badge bg="secondary" pill>
-                                      {t("header.rejected")}
-                                    </Badge>
-                                  )}
+                                  <div className="d-flex flex-column align-items-end gap-1">
+                                    {pendingGlobalBan && (
+                                      <Badge bg="warning" text="dark" pill>
+                                        {t("header.approvalRequired")}
+                                      </Badge>
+                                    )}
+                                    {!pendingGlobalBan && requestStatus === "Approved" && (
+                                      <Badge bg="success" pill>
+                                        {t("header.approved")}
+                                      </Badge>
+                                    )}
+                                    {!pendingGlobalBan && requestStatus === "Rejected" && (
+                                      <Badge bg="secondary" pill>
+                                        {t("header.rejected")}
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
 
                                 {globalBanProjects.length > 0 && (
@@ -661,6 +700,12 @@ const Header = ({
                                   </div>
                                 )}
 
+                                {pendingGlobalBan && (
+                                  <div className="mt-2 small text-muted">
+                                    {t("header.globalBanDecisionRequiredNote")}
+                                  </div>
+                                )}
+
                                 {requestStatus && !pendingGlobalBan && (
                                   <div className="mt-2 text-muted" style={{ fontSize: "10px" }}>
                                     {requestStatus === "Approved"
@@ -669,31 +714,26 @@ const Header = ({
                                   </div>
                                 )}
 
+                                {decisionNote && !pendingGlobalBan && (
+                                  <div className="mt-2 small text-muted">
+                                    <span className="fw-semibold">{t("header.globalBanDecisionNote")}:</span>{" "}
+                                    {decisionNote}
+                                  </div>
+                                )}
+
                                 {pendingGlobalBan && (
                                   <div className="mt-2 d-flex gap-2">
                                     <Button
                                       size="sm"
-                                      variant="outline-secondary"
+                                      variant="outline-primary"
                                       className="py-1 px-2"
                                       onClick={(event) => {
                                         event.preventDefault();
                                         event.stopPropagation();
-                                        openBanDecisionModal(n, false);
+                                        openBanDecisionModal(n);
                                       }}
                                     >
-                                      {t("header.reject")}
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="danger"
-                                      className="py-1 px-2"
-                                      onClick={(event) => {
-                                        event.preventDefault();
-                                        event.stopPropagation();
-                                        openBanDecisionModal(n, true);
-                                      }}
-                                    >
-                                      {t("header.approveBan")}
+                                      {t("header.globalBanReviewRequestCta")}
                                     </Button>
                                   </div>
                                 )}
@@ -806,56 +846,27 @@ const Header = ({
           </div>
         </Container>
       </header>
-
-      <Modal show={banDecisionModal.show} onHide={() => closeBanDecisionModal()} centered>
-        <Modal.Header closeButton={!banDecisionLoading}>
-          <Modal.Title>
-            {banDecisionModal.approve
-              ? t("header.globalBanApproveTitle")
-              : t("header.globalBanRejectTitle")}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p className="mb-2">
-            {banDecisionModal.approve
-              ? t("header.globalBanApproveDescription", {
-                userName: banDecisionModal.notification?.metadata?.targetUserName || t("header.defaultUser"),
-              })
-              : t("header.globalBanRejectDescription", {
-                userName: banDecisionModal.notification?.metadata?.targetUserName || t("header.defaultUser"),
-              })}
-          </p>
-          {banDecisionModal.approve && (
-            <div className="alert alert-danger mb-0">
-              {t("header.globalBanApproveImpact")}
-            </div>
-          )}
-          {!banDecisionModal.approve && (
-            <div className="alert alert-secondary mb-0">
-              {t("header.globalBanRejectImpact")}
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="light"
-            onClick={() => closeBanDecisionModal()}
-            disabled={banDecisionLoading}
-          >
-            {t("common.cancel")}
-          </Button>
-          <Button
-            variant={banDecisionModal.approve ? "danger" : "secondary"}
-            onClick={handleResolveBanRequest}
-            disabled={banDecisionLoading}
-          >
-            {banDecisionLoading && <Spinner size="sm" className="me-2" />}
-            {banDecisionModal.approve
-              ? t("header.globalBanApproveConfirm")
-              : t("header.globalBanRejectConfirm")}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <GlobalBanDecisionModal
+        show={banDecisionModal.show}
+        onHide={() => closeBanDecisionModal()}
+        onSubmit={handleResolveBanRequest}
+        loading={banDecisionLoading}
+        notification={banDecisionModal.notification}
+        decision={banDecisionModal.decision}
+        decisionNote={banDecisionModal.decisionNote}
+        onDecisionChange={(nextDecision) =>
+          setBanDecisionModal((prev) => ({
+            ...prev,
+            decision: nextDecision,
+          }))
+        }
+        onDecisionNoteChange={(nextNote) =>
+          setBanDecisionModal((prev) => ({
+            ...prev,
+            decisionNote: nextNote,
+          }))
+        }
+      />
     </>
   );
 };

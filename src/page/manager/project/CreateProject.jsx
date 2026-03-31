@@ -16,6 +16,10 @@ import Select from "react-select";
 import { useTranslation } from "react-i18next";
 
 import { uploadToCloudinary } from "../../../services/cloudinary/cloudinaryService";
+import {
+  CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_UPLOAD_PRESET,
+} from "../../../config/runtime";
 
 import projectService from "../../../services/manager/project/projectService";
 import { userService } from "../../../services/manager/project/userService";
@@ -42,6 +46,20 @@ const createInitialDefaultLabels = (t) =>
   DEFAULT_LABEL_PRESETS.map((label) =>
     createTranslatedDefaultLabel(t, label.translationKey, label.color),
   );
+
+const getCreatedProjectId = (response) => {
+  const payload = response?.data ?? response ?? {};
+  return (
+    payload.id ??
+    payload.projectId ??
+    payload.Id ??
+    payload.ProjectId ??
+    null
+  );
+};
+
+const shouldUseCloudinaryForDataset =
+  Boolean(CLOUDINARY_CLOUD_NAME) && Boolean(CLOUDINARY_UPLOAD_PRESET);
 
 const CreateProject = () => {
   const { t, i18n } = useTranslation();
@@ -326,11 +344,23 @@ const CreateProject = () => {
     isSubmittingRef.current = true;
     setLoading(true);
 
-    try {
-      const deadlineISO = new Date(projectInfo.deadline).toISOString();
-      const translatedDefaultChecklistPlaceholder = t(
-        "createProject.defaultChecklistPlaceholder",
-      );
+      try {
+        const hasLocalImageUpload =
+          selectedFiles.length > 0 ||
+          defaultLabels.some((label) => label.exampleImage instanceof File) ||
+          labels.some((label) => label.exampleImage instanceof File);
+
+        if (hasLocalImageUpload && !shouldUseCloudinaryForDataset) {
+          throw new Error(
+            "Cloudinary configuration is missing. Set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET.",
+          );
+        }
+
+        let projectId = null;
+        const deadlineISO = new Date(projectInfo.deadline).toISOString();
+        const translatedDefaultChecklistPlaceholder = t(
+          "createProject.defaultChecklistPlaceholder",
+        );
 
       const validDefaultLabels = defaultLabels.filter((l) => l.name.trim());
       const defaultLabelClassesPayload = [];
@@ -397,65 +427,79 @@ const CreateProject = () => {
         annotationGuide: projectInfo.annotationGuide?.trim() || "",
         labelClasses: labelClassesPayload,
       };
-      console.log("=== CREATE PROJECT PAYLOAD ===", JSON.stringify(createPayload, null, 2));
       const resProj = await projectService.createProject(createPayload);
 
-      const projectId = resProj.data?.id || resProj.data?.projectId;
+      projectId = getCreatedProjectId(resProj);
       if (!projectId) throw new Error(t("createProject.noProjectId"));
 
-      toast.info(t("createProject.uploadingImages"));
-      const uploadedUrls = [];
+      const postCreateWarnings = [];
+      let importedFileCount = 0;
 
-      for (const file of selectedFiles) {
-        const url = await uploadToCloudinary(file);
-        uploadedUrls.push(url);
+      if (selectedFiles.length > 0) {
+        toast.info(t("createProject.uploadingImages"));
+
+        try {
+          const storageUrls = await Promise.all(
+            selectedFiles.map((file) => uploadToCloudinary(file)),
+          );
+
+          await projectService.importData(projectId, storageUrls);
+          importedFileCount = storageUrls.length;
+        } catch (uploadErr) {
+          console.error("=== PROJECT DATA UPLOAD ERROR ===", uploadErr);
+          postCreateWarnings.push(
+            uploadErr.response?.data?.message ||
+              t("createProject.uploadFailedAfterCreate"),
+          );
+        }
       }
 
-      await projectService.importData(projectId, uploadedUrls);
-
-      if (selectedAnnotators.length > 0 && selectedReviewers.length > 0) {
+      if (selectedAnnotators.length > 0 && importedFileCount > 0) {
         try {
           const assignPayload = {
             projectId: Number(projectId),
-            annotatorIds: selectedAnnotators.map(ann => String(ann.value || ann.id || ann)),
-            totalQuantity: uploadedUrls.length,
-            reviewerIds: selectedReviewers.map(rev => String(rev.value || rev.id || rev)),
+            annotatorIds: selectedAnnotators.map((ann) =>
+              String(ann.value || ann.id || ann),
+            ),
+            totalQuantity: importedFileCount,
+            reviewerIds: selectedReviewers.map((rev) =>
+              String(rev.value || rev.id || rev),
+            ),
           };
-          
+
           if (!Array.isArray(assignPayload.annotatorIds)) {
             throw new Error("annotatorIds must be an array");
           }
           if (!Array.isArray(assignPayload.reviewerIds)) {
             throw new Error("reviewerIds must be an array");
           }
-          if (typeof assignPayload.totalQuantity !== 'number') {
+          if (typeof assignPayload.totalQuantity !== "number") {
             throw new Error("totalQuantity must be a number");
           }
-          
-          console.log("=== TASK ASSIGNMENT PAYLOAD ===", new Date().toISOString());
-          console.log("Payload:", JSON.stringify(assignPayload, null, 2));
-          console.log("Selected Annotators:", selectedAnnotators);
-          console.log("Selected Reviewers:", selectedReviewers);
-          
+
           await taskService.assignTask(assignPayload);
-          console.log("=== TASK ASSIGNMENT SUCCESS ===");
         } catch (assignErr) {
           console.error("=== TASK ASSIGNMENT ERROR ===", assignErr);
-          console.error("Assignment error data:", assignErr.response?.data);
-          toast.warning(
-            `Project created but task assignment failed: ${assignErr.response?.data?.message || assignErr.message}. You can assign tasks manually from project settings.`
+          postCreateWarnings.push(
+            assignErr.response?.data?.message ||
+              t("createProject.assignFailedAfterCreate"),
           );
         }
+      } else if (selectedAnnotators.length > 0 && importedFileCount === 0) {
+        postCreateWarnings.push(t("createProject.assignSkippedNoData"));
       }
 
       toast.success(t("createProject.createSuccess"));
-      navigate("/projects-all-projects");
+      if (postCreateWarnings.length > 0) {
+        postCreateWarnings.forEach((message) => toast.warning(message));
+        navigate(`/project-detail/${projectId}`);
+      } else {
+        navigate("/projects-all-projects");
+      }
     } catch (err) {
       console.error("=== CREATE PROJECT ERROR ===", err);
-      console.error("Error response data:", JSON.stringify(err.response?.data, null, 2));
-      console.error("Error response status:", err.response?.status);
       toast.error(
-        err.response?.data?.message || t("createProject.createError"),
+        err.response?.data?.message || err.message || t("createProject.createError"),
       );
     } finally {
       isSubmittingRef.current = false;

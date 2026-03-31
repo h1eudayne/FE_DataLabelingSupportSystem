@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
@@ -22,7 +22,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
@@ -42,11 +41,14 @@ import {
   CheckCircle2,
   AlertOctagon,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import StatCard from "../../../components/manager/analytics/StatCard";
+import SafeResponsiveChart from "../../../components/charts/SafeResponsiveChart";
 import { useSelector } from "react-redux";
 import analyticsService from "../../../services/manager/analytics/analyticsService";
 import reviewAuditService from "../../../services/manager/review/reviewAuditService";
 import disputeService from "../../../services/manager/dispute/disputeService";
+import { debugWarn } from "../../../utils/devLogger";
 
 const COLORS = ["#0ab39c", "#f7b84b", "#405189", "#f06548", "#299cdb"];
 
@@ -105,25 +107,35 @@ const DashboardAnalytics = () => {
   const [projectTotalReworks, setProjectTotalReworks] = useState(0);
   const [projectTotalSubmitted, setProjectTotalSubmitted] = useState(0);
   const [projectTotalItems, setProjectTotalItems] = useState(0);
+  const [loadError, setLoadError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.id;
 
-  useEffect(() => {
-    const fetchAllData = async () => {
+  const fetchAllData = useCallback(
+    async ({ showSuccessToast = false } = {}) => {
+      if (!managerId) {
+        setLoading(false);
+        return;
+      }
+
       try {
+        setLoadError("");
         setLoading(true);
+        if (showSuccessToast) {
+          setRefreshing(true);
+        }
 
         const [resProjects, resManagerStats] = await Promise.all([
           analyticsService.getMyProjects(managerId),
           analyticsService.getManagerStats(managerId).catch((err) => {
-            console.warn("getManagerStats failed:", err?.message || err);
+            debugWarn("getManagerStats failed:", err?.message || err);
             return { data: null };
           }),
         ]);
         const projects = sortProjectsByAttention(resProjects.data || []);
         const managerStats = resManagerStats.data;
-        console.log("Manager stats API response:", managerStats);
 
         let completed = 0;
         let inProgress = 0;
@@ -663,16 +675,31 @@ const DashboardAnalytics = () => {
             .sort((a, b) => b.taskCount - a.taskCount)
             .slice(0, 5),
         );
+
+        if (showSuccessToast) {
+          toast.success(t("analytics.refreshSuccess"));
+        }
       } catch (err) {
-        console.error("Analytics error:", err);
+        const message =
+          err?.response?.data?.message ||
+          err?.message ||
+          t("analytics.loadError");
         setStats(EMPTY_STATS);
+        setLoadError(message);
+        if (showSuccessToast) {
+          toast.error(message);
+        }
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
-    };
+    },
+    [managerId, t],
+  );
 
+  useEffect(() => {
     fetchAllData();
-  }, [managerId]);
+  }, [fetchAllData]);
 
   if (loading) {
     return (
@@ -689,6 +716,88 @@ const DashboardAnalytics = () => {
 
   return (
     <>
+      <Row className="align-items-center g-3 mb-3">
+        <Col xl={7}>
+          <div>
+            <h5 className="mb-1 fw-semibold">{t("analytics.dashboardTitle")}</h5>
+            <p className="text-muted mb-0 small">{t("analytics.dashboardSubtitle")}</p>
+          </div>
+        </Col>
+        <Col xl={5}>
+          <div className="d-flex flex-wrap gap-2 justify-content-xl-end">
+            {priorityProjects.length > 0 && (
+              <Button
+                color="danger"
+                outline
+                size="sm"
+                className="d-inline-flex align-items-center"
+                onClick={() =>
+                  navigate(`/project-detail/${priorityProjects[0].projectId}?tab=disputes`)
+                }
+              >
+                <AlertOctagon size={16} className="me-1" />
+                {t("analytics.openTopIssue")}
+              </Button>
+            )}
+            <Button
+              color="secondary"
+              outline
+              size="sm"
+              className="d-inline-flex align-items-center"
+              onClick={() => navigate("/projects-all-projects")}
+            >
+              <i className="ri-folders-line me-1"></i>
+              {t("analytics.allProjects")}
+            </Button>
+            <Button
+              color="primary"
+              size="sm"
+              className="d-inline-flex align-items-center"
+              onClick={() => navigate("/projects-create")}
+            >
+              <i className="ri-add-line me-1"></i>
+              {t("analytics.createProject")}
+            </Button>
+            <Button
+              color="light"
+              size="sm"
+              className="d-inline-flex align-items-center"
+              onClick={() => fetchAllData({ showSuccessToast: true })}
+              disabled={loading || refreshing}
+            >
+              {refreshing ? (
+                <Spinner size="sm" className="me-1" />
+              ) : (
+                <RefreshCw size={16} className="me-1" />
+              )}
+              {refreshing ? t("analytics.refreshing") : t("analytics.refresh")}
+            </Button>
+          </div>
+        </Col>
+      </Row>
+
+      {loadError && (
+        <Row className="mb-3">
+          <Col xl={12}>
+            <Alert color="warning" className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-0">
+              <div>
+                <strong className="d-block">{t("analytics.loadErrorTitle")}</strong>
+                <span>{loadError}</span>
+              </div>
+              <Button
+                color="warning"
+                outline
+                className="align-self-start align-self-md-center"
+                onClick={() => fetchAllData({ showSuccessToast: true })}
+              >
+                <RefreshCw size={16} className="me-1" />
+                {t("analytics.retry")}
+              </Button>
+            </Alert>
+          </Col>
+        </Row>
+      )}
+
       <Row>
         <Col md={2}>
           <StatCard
@@ -956,29 +1065,27 @@ const DashboardAnalytics = () => {
               <h5 className="mb-0">{t('analytics.compareDataSize')}</h5>
             </CardHeader>
             <CardBody>
-              <div style={{ width: "100%", height: 280 }}>
-                <ResponsiveContainer>
-                  <BarChart data={projectChartData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" fontSize={12} />
-                    <YAxis allowDecimals={false} fontSize={12} />
-                    <Tooltip />
-                    <Legend />
-                    <Bar
-                      dataKey="total"
-                      fill="#405189"
-                      name={t('analytics.totalDataChart')}
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="completed"
-                      fill="#0ab39c"
-                      name={t('analytics.completedChart')}
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <SafeResponsiveChart height={280}>
+                <BarChart data={projectChartData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" fontSize={12} />
+                  <YAxis allowDecimals={false} fontSize={12} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar
+                    dataKey="total"
+                    fill="#405189"
+                    name={t('analytics.totalDataChart')}
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="completed"
+                    fill="#0ab39c"
+                    name={t('analytics.completedChart')}
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </SafeResponsiveChart>
             </CardBody>
           </Card>
         </Col>
@@ -989,28 +1096,26 @@ const DashboardAnalytics = () => {
               <h5 className="mb-0">{t('analytics.projectStatusStructure')}</h5>
             </CardHeader>
             <CardBody>
-              <div style={{ width: "100%", height: 280 }}>
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: t('analytics.statusCompleted'), value: stats.completed },
-                        { name: t('analytics.statusInProgress'), value: stats.inProgress },
-                        { name: t('analytics.statusRejected'), value: stats.rejected },
-                      ].filter((d) => d.value > 0)}
-                      innerRadius={70}
-                      outerRadius={100}
-                      dataKey="value"
-                    >
-                      {COLORS.map((color, index) => (
-                        <Cell key={index} fill={color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              <SafeResponsiveChart height={280}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: t('analytics.statusCompleted'), value: stats.completed },
+                      { name: t('analytics.statusInProgress'), value: stats.inProgress },
+                      { name: t('analytics.statusRejected'), value: stats.rejected },
+                    ].filter((d) => d.value > 0)}
+                    innerRadius={70}
+                    outerRadius={100}
+                    dataKey="value"
+                  >
+                    {COLORS.map((color, index) => (
+                      <Cell key={index} fill={color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </SafeResponsiveChart>
             </CardBody>
           </Card>
         </Col>
@@ -1576,22 +1681,20 @@ const DashboardAnalytics = () => {
                 </h5>
               </CardHeader>
               <CardBody>
-                <div style={{ width: "100%", height: 250 }}>
-                  <ResponsiveContainer>
-                    <BarChart data={errorBreakdown}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" fontSize={12} />
-                      <YAxis allowDecimals={false} fontSize={12} />
-                      <Tooltip />
-                      <Bar
-                        dataKey="value"
-                        fill="#f06548"
-                        name={t('analytics.errorCount')}
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                <SafeResponsiveChart height={250}>
+                  <BarChart data={errorBreakdown}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" fontSize={12} />
+                    <YAxis allowDecimals={false} fontSize={12} />
+                    <Tooltip />
+                    <Bar
+                      dataKey="value"
+                      fill="#f06548"
+                      name={t('analytics.errorCount')}
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </SafeResponsiveChart>
               </CardBody>
             </Card>
           </Col>
@@ -1612,30 +1715,28 @@ const DashboardAnalytics = () => {
                 );
                 if (nonZeroLabels.length > 0) {
                   return (
-                    <div style={{ width: "100%", height: 250 }}>
-                      <ResponsiveContainer>
-                        <PieChart>
-                          <Pie
-                            data={nonZeroLabels}
-                            innerRadius={60}
-                            outerRadius={90}
-                            dataKey="value"
-                            label={({ name, percent }) =>
-                              `${name} ${(percent * 100).toFixed(0)}%`
-                            }
-                          >
-                            {nonZeroLabels.map((_, index) => (
-                              <Cell
-                                key={index}
-                                fill={COLORS[index % COLORS.length]}
-                              />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
+                    <SafeResponsiveChart height={250}>
+                      <PieChart>
+                        <Pie
+                          data={nonZeroLabels}
+                          innerRadius={60}
+                          outerRadius={90}
+                          dataKey="value"
+                          label={({ name, percent }) =>
+                            `${name} ${(percent * 100).toFixed(0)}%`
+                          }
+                        >
+                          {nonZeroLabels.map((_, index) => (
+                            <Cell
+                              key={index}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </SafeResponsiveChart>
                   );
                 }
                 return (
@@ -1661,31 +1762,29 @@ const DashboardAnalytics = () => {
               <h5 className="mb-0">{t('analytics.top5Annotators')}</h5>
             </CardHeader>
             <CardBody>
-              <div style={{ width: "100%", height: 250 }}>
-                <ResponsiveContainer>
-                  <BarChart
-                    data={annotatorData}
-                    layout="vertical"
-                    margin={{ left: 60, right: 30 }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      horizontal
-                      vertical={false}
-                    />
-                    <XAxis type="number" hide />
-                    <YAxis dataKey="name" type="category" width={120} />
-                    <Tooltip />
-                    <Bar
-                      dataKey="taskCount"
-                      fill="#4b38b3"
-                      name={t('analytics.imagesCompleted')}
-                      barSize={24}
-                      radius={[0, 4, 4, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <SafeResponsiveChart height={250}>
+                <BarChart
+                  data={annotatorData}
+                  layout="vertical"
+                  margin={{ left: 60, right: 30 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal
+                    vertical={false}
+                  />
+                  <XAxis type="number" hide />
+                  <YAxis dataKey="name" type="category" width={120} />
+                  <Tooltip />
+                  <Bar
+                    dataKey="taskCount"
+                    fill="#4b38b3"
+                    name={t('analytics.imagesCompleted')}
+                    barSize={24}
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
+              </SafeResponsiveChart>
             </CardBody>
           </Card>
         </Col>

@@ -8,8 +8,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
 } from "recharts";
+import SafeResponsiveChart from "../../charts/SafeResponsiveChart";
 
 const ProjectOverviewChart = ({ projects }) => {
   const { t } = useTranslation();
@@ -29,18 +29,16 @@ const ProjectOverviewChart = ({ projects }) => {
         <h5 className="mb-0">{t('managerStatus.chartTitle')}</h5>
       </CardHeader>
       <CardBody>
-        <div style={{ width: "100%", height: 320 }}>
-          <ResponsiveContainer>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" fontSize={12} />
-              <YAxis fontSize={12} />
-              <Tooltip />
-              <Bar dataKey={completedKey} stackId="a" fill="#0ab39c" />
-              <Bar dataKey={remainingKey} stackId="a" fill="#eff2f7" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <SafeResponsiveChart height={320}>
+          <BarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="name" fontSize={12} />
+            <YAxis fontSize={12} />
+            <Tooltip />
+            <Bar dataKey={completedKey} stackId="a" fill="#0ab39c" />
+            <Bar dataKey={remainingKey} stackId="a" fill="#eff2f7" />
+          </BarChart>
+        </SafeResponsiveChart>
       </CardBody>
     </Card>
   );

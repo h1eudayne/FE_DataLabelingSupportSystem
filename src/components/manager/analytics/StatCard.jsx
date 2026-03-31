@@ -33,9 +33,18 @@ const StatCard = ({ title, value = 0, icon: Icon, color = "primary" }) => {
 
   const renderIcon = () => {
     if (!Icon) return null;
-    if (typeof Icon === "function")
-      return <Icon className={`text-${color}`} size={24} />;
-    if (React.isValidElement(Icon)) return Icon;
+    if (React.isValidElement(Icon)) {
+      return React.cloneElement(Icon, {
+        className: `text-${color}`,
+        size: Icon.props.size ?? 24,
+      });
+    }
+
+    const IconComponent = Icon;
+    if (IconComponent) {
+      return <IconComponent className={`text-${color}`} size={24} strokeWidth={2.2} />;
+    }
+
     return null;
   };
 
@@ -44,20 +53,21 @@ const StatCard = ({ title, value = 0, icon: Icon, color = "primary" }) => {
       <div className="card-body">
         <div className="d-flex align-items-center">
           <div className="flex-grow-1 overflow-hidden">
-            <p className="text-uppercase fw-medium text-muted text-truncate mb-0">
+            <p className="text-uppercase fw-medium text-muted text-truncate mb-0 small">
               {title}
             </p>
           </div>
         </div>
         <div className="d-flex align-items-end justify-content-between mt-2">
           <div>
-            <h4 className="fs-22 fw-semibold ff-secondary mb-0">
+            <h4 className="fs-20 fw-semibold ff-secondary mb-0">
               {isNumeric ? `${displayValue.toLocaleString()}${suffix}` : strVal}
             </h4>
           </div>
-          <div className="avatar-sm flex-shrink-0">
+          <div className="flex-shrink-0">
             <span
-              className={`avatar-title bg-${color}-subtle rounded fs-3 p-2`}
+              className={`avatar-title d-inline-flex align-items-center justify-content-center bg-${color}-subtle text-${color} rounded-3 shadow-sm`}
+              style={{ width: "3rem", height: "3rem" }}
             >
               {renderIcon()}
             </span>

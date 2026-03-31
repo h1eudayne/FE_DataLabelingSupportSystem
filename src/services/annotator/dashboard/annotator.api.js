@@ -1,8 +1,25 @@
 import axios from "/src/services/axios.customize.js";
+import { getCachedCurrentUser } from "/src/services/auth/currentUser.js";
 
 export const getProfile = async () => {
-  const res = await axios.get("/api/users/me");
-  return res.data;
+  const cachedUser = getCachedCurrentUser();
+  if (cachedUser) {
+    return cachedUser;
+  }
+
+  try {
+    const res = await axios.get("/api/users/me");
+    return res.data;
+  } catch (error) {
+    if (error?.response?.status === 404) {
+      const fallbackUser = getCachedCurrentUser();
+      if (fallbackUser) {
+        return fallbackUser;
+      }
+    }
+
+    throw error;
+  }
 };
 
 export const getAssignedProjects = async () => {

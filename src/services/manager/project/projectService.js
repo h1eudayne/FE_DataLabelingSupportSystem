@@ -20,11 +20,6 @@ const projectService = {
       storageUrls: urls,
     }),
 
-  uploadDirect: (projectId, formData) =>
-    axios.post(`/api/projects/${projectId}/uploads/direct`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
-
   getBuckets: (projectId) => axios.get(`/api/projects/${projectId}/buckets`),
 
   exportData: (projectId) =>

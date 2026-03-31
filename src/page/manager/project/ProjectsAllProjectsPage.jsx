@@ -2,10 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import {
+  FolderKanban,
+  FolderCheck,
+  FolderClock,
+  ScanSearch,
+  Plus,
+  Search,
+} from "lucide-react";
 import { fetchProjects } from "../../../store/manager/project/projectSlice";
 import projectService from "../../../services/manager/project/projectService";
 import Swal from "sweetalert2";
 import ProjectCard from "../../../components/manager/project/ProjectCard";
+import StatCard from "../../../components/manager/analytics/StatCard";
 
 const ProjectsAllProjectsPage = () => {
   const { t } = useTranslation();
@@ -29,6 +38,12 @@ const ProjectsAllProjectsPage = () => {
       (filterStatus === "Expired" && project.status === "Expired");
     return matchesSearch && matchesStatus;
   });
+  const totalProjects = items?.length || 0;
+  const activeProjects =
+    items?.filter((project) => project.status === "Active").length || 0;
+  const expiredProjects =
+    items?.filter((project) => project.status === "Expired").length || 0;
+  const visibleProjects = filteredProjects?.length || 0;
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
@@ -71,29 +86,69 @@ const ProjectsAllProjectsPage = () => {
       </div>
 
       <div className="row mb-4">
-        <div className="col-xl-3 col-md-6">
-          <div className="card card-animate border-0 shadow-sm">
+        <div className="col-12">
+          <div className="card border-0 shadow-sm overflow-hidden">
             <div className="card-body">
-              <div className="d-flex align-items-center">
-                <div className="flex-grow-1 overflow-hidden">
-                  <p className="text-uppercase fw-medium text-muted text-truncate mb-0">
-                    {t("allProjects.totalProjects")}
-                  </p>
+              <div className="row g-4 align-items-center">
+                <div className="col-xl-4">
+                  <div className="d-flex align-items-start gap-3">
+                    <div
+                      className="d-inline-flex align-items-center justify-content-center rounded-4 shadow-sm flex-shrink-0"
+                      style={{
+                        width: "4rem",
+                        height: "4rem",
+                        background:
+                          "linear-gradient(135deg, rgba(64,81,137,0.14), rgba(41,156,219,0.2))",
+                      }}
+                    >
+                      <FolderKanban size={24} className="text-primary" strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <span className="badge bg-soft-primary text-primary mb-2 small">
+                        {t("allProjects.managerView")}
+                      </span>
+                      <h5 className="mb-2 fw-semibold">{t("allProjects.totalProjects")}</h5>
+                      <p className="text-muted mb-0 small">
+                        {t("allProjects.pageDescription")}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="d-flex align-items-end justify-content-between mt-4">
-                <div>
-                  <h4 className="fs-22 fw-semibold ff-secondary mb-4">
-                    {items?.length || 0}
-                  </h4>
-                  <span className="badge bg-soft-info text-info">
-                    Manager View
-                  </span>
-                </div>
-                <div className="avatar-sm flex-shrink-0">
-                  <span className="avatar-title bg-soft-primary rounded fs-3">
-                    <i className="ri-folder-2-line text-primary"></i>
-                  </span>
+                <div className="col-xl-8">
+                  <div className="row g-3">
+                    <div className="col-sm-6 col-xl-3">
+                      <StatCard
+                        title={t("allProjects.totalProjects")}
+                        value={totalProjects}
+                        icon={FolderKanban}
+                        color="primary"
+                      />
+                    </div>
+                    <div className="col-sm-6 col-xl-3">
+                      <StatCard
+                        title={t("allProjects.active")}
+                        value={activeProjects}
+                        icon={FolderCheck}
+                        color="success"
+                      />
+                    </div>
+                    <div className="col-sm-6 col-xl-3">
+                      <StatCard
+                        title={t("allProjects.expired")}
+                        value={expiredProjects}
+                        icon={FolderClock}
+                        color="warning"
+                      />
+                    </div>
+                    <div className="col-sm-6 col-xl-3">
+                      <StatCard
+                        title={t("allProjects.visibleResults")}
+                        value={visibleProjects}
+                        icon={ScanSearch}
+                        color="info"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -101,33 +156,50 @@ const ProjectsAllProjectsPage = () => {
         </div>
       </div>
 
-      <div className="row g-3 mb-4">
-        <div className="col-sm-auto">
-          <Link to="/projects-create" className="btn btn-success">
-            <i className="ri-add-line align-bottom me-1"></i> {t("allProjects.createNew")}
-          </Link>
-        </div>
-        <div className="col-sm">
-          <div className="d-flex justify-content-sm-end gap-2">
-            <div className="search-box">
-              <input
-                type="text"
-                className="form-control"
-                placeholder={t("allProjects.searchPlaceholder")}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <i className="ri-search-line search-icon"></i>
+      <div className="card border-0 shadow-sm mb-4">
+        <div className="card-body">
+          <div className="row g-3 align-items-center">
+            <div className="col-lg-5">
+              <label className="form-label text-muted small fw-semibold mb-2">
+                {t("allProjects.searchPlaceholder")}
+              </label>
+              <div className="position-relative">
+                <Search
+                  size={18}
+                  className="text-muted position-absolute top-50 start-0 translate-middle-y ms-3"
+                />
+                <input
+                  type="text"
+                  className="form-control ps-5"
+                  placeholder={t("allProjects.searchPlaceholder")}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
-            <select
-              className="form-select w-md"
-              style={{ width: "180px" }}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="All">{t("allProjects.allStatus")}</option>
-              <option value="Active">{t("allProjects.active")}</option>
-              <option value="Expired">{t("allProjects.expired")}</option>
-            </select>
+            <div className="col-sm-6 col-lg-3">
+              <label className="form-label text-muted small fw-semibold mb-2">
+                {t("allProjects.allStatus")}
+              </label>
+              <select
+                className="form-select"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="All">{t("allProjects.allStatus")}</option>
+                <option value="Active">{t("allProjects.active")}</option>
+                <option value="Expired">{t("allProjects.expired")}</option>
+              </select>
+            </div>
+            <div className="col-sm-6 col-lg-4 d-flex justify-content-lg-end">
+              <Link
+                to="/projects-create"
+                className="btn btn-primary d-inline-flex align-items-center gap-2 px-3"
+              >
+                <Plus size={16} />
+                {t("allProjects.createNew")}
+              </Link>
+            </div>
           </div>
         </div>
       </div>

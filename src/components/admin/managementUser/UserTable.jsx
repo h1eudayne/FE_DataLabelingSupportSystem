@@ -98,11 +98,20 @@ const UserTable = ({
                           {user.totalProjects || 0}
                         </span>
                         {user.unfinishedProjectCount > 0 && (
-                          <small className="text-muted">
-                            {t("userTableComp.unfinishedProjects", {
-                              count: user.unfinishedProjectCount,
-                            })}
-                          </small>
+                          <>
+                            <small className="text-muted">
+                              {t("userTableComp.unfinishedProjects", {
+                                count: user.unfinishedProjectCount,
+                              })}
+                            </small>
+                            {user.managerName && (
+                              <small className="text-muted">
+                                {t("userTableComp.managedBy", {
+                                  managerName: user.managerName,
+                                })}
+                              </small>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -190,11 +199,20 @@ const UserTable = ({
                     {user.totalProjects || 0}
                   </div>
                   {user.unfinishedProjectCount > 0 && (
-                    <small className="text-muted">
-                      {t("userTableComp.unfinishedProjects", {
-                        count: user.unfinishedProjectCount,
-                      })}
-                    </small>
+                    <>
+                      <small className="text-muted">
+                        {t("userTableComp.unfinishedProjects", {
+                          count: user.unfinishedProjectCount,
+                        })}
+                      </small>
+                      {user.managerName && (
+                        <small className="text-muted d-block">
+                          {t("userTableComp.managedBy", {
+                            managerName: user.managerName,
+                          })}
+                        </small>
+                      )}
+                    </>
                   )}
                 </div>
                 <div>

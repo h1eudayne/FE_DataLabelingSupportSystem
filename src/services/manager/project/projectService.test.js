@@ -60,19 +60,6 @@ describe("projectService", () => {
     });
   });
 
-  it("uploadDirect: should POST with FormData and correct header", async () => {
-    const formData = new FormData();
-    axios.post.mockResolvedValueOnce({ data: {} });
-    await projectService.uploadDirect("P1", formData);
-    expect(axios.post).toHaveBeenCalledWith(
-      "/api/projects/P1/uploads/direct",
-      formData,
-      expect.objectContaining({
-        headers: { "Content-Type": "multipart/form-data" },
-      }),
-    );
-  });
-
   it("getProjectStats: should GET /api/projects/{id}/statistics", async () => {
     axios.get.mockResolvedValueOnce({ data: {} });
     await projectService.getProjectStats(7);

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { subscribe } from "../services/signalrManager";
 import notificationService from "../services/notificationService";
 
+const NOTIFICATION_REFRESH_INTERVAL_MS = 30000;
 
 const getStorageKey = (userId) =>
   userId ? `notifications_${userId}` : null;
@@ -67,18 +68,40 @@ const clearStorage = (userId) => {
   if (key) localStorage.removeItem(key);
 };
 
+const parseNotificationMetadata = (metadata) => {
+  if (!metadata) {
+    return null;
+  }
+
+  if (typeof metadata === "string") {
+    try {
+      return JSON.parse(metadata);
+    } catch {
+      return null;
+    }
+  }
+
+  if (typeof metadata === "object") {
+    return metadata;
+  }
+
+  return null;
+};
+
 
 const normalizeServerNotification = (n) => ({
-  id: n.id,
-  title: n.title || "Notification",
-  message: n.message || "New notification",
-  type: n.type || "info",
-  timestamp: n.createdAt || new Date().toISOString(),
-  read: !!n.isRead,
-  referenceType: n.referenceType || null,
-  referenceId: n.referenceId || null,
-  actionKey: n.actionKey || null,
-  metadata: n.metadata || null,
+  id: n.id ?? n.Id,
+  title: n.title || n.Title || "Notification",
+  message: n.message || n.Message || "New notification",
+  type: n.type || n.Type || "info",
+  timestamp: n.createdAt || n.CreatedAt || n.timestamp || n.Timestamp || new Date().toISOString(),
+  read: !!(n.isRead ?? n.IsRead),
+  referenceType: n.referenceType || n.ReferenceType || null,
+  referenceId: n.referenceId || n.ReferenceId || null,
+  actionKey: n.actionKey || n.ActionKey || null,
+  metadata: parseNotificationMetadata(
+    n.metadata ?? n.Metadata ?? n.metadataJson ?? n.MetadataJson,
+  ),
 });
 
 
@@ -94,7 +117,6 @@ const useNotifications = (userId, initialUnreadCount) => {
     return stored.filter((n) => !n.read).length;
   });
 
-  const hasFetchedRef = useRef(false);
   const userIdRef = useRef(userId);
 
   useEffect(() => {
@@ -117,15 +139,29 @@ const useNotifications = (userId, initialUnreadCount) => {
         setUnreadCount(serverUnreadCount);
       })
       .catch((err) => {
-        console.warn("[Notifications] Failed to fetch from server:", err?.message);
+        if (err?.response?.status !== 401) {
+          console.warn("[Notifications] Failed to fetch from server:", err?.message);
+        }
       });
   }, []);
 
   useEffect(() => {
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
+    if (!userId) {
+      setNotifications([]);
+      setUnreadCount(typeof initialUnreadCount === "number" ? initialUnreadCount : 0);
+      return;
+    }
+
+    const storedNotifications = loadFromStorage(userId);
+    setNotifications(storedNotifications);
+    setUnreadCount(
+      storedNotifications.length > 0
+        ? storedNotifications.filter((notification) => !notification.read).length
+        : (typeof initialUnreadCount === "number" ? initialUnreadCount : 0),
+    );
+
     fetchNotifications();
-  }, [fetchNotifications]);
+  }, [fetchNotifications, initialUnreadCount, userId]);
 
   useEffect(() => {
     const handleReconnect = () => fetchNotifications();
@@ -134,13 +170,38 @@ const useNotifications = (userId, initialUnreadCount) => {
   }, [fetchNotifications]);
 
   useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token || !userId) return;
+
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") {
+        fetchNotifications();
+      }
+    };
+
+    const intervalId = window.setInterval(
+      refreshIfVisible,
+      NOTIFICATION_REFRESH_INTERVAL_MS,
+    );
+
+    window.addEventListener("focus", refreshIfVisible);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshIfVisible);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
+  }, [fetchNotifications, userId]);
+
+  useEffect(() => {
     saveToStorage(userIdRef.current, notifications);
   }, [notifications]);
 
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    if (!token) return;
+    if (!token || !userId) return;
 
     const unsubscribe = subscribe("ReceiveNotification", (notification) => {
       const newNotification = {
@@ -160,7 +221,12 @@ const useNotifications = (userId, initialUnreadCount) => {
         referenceId:
           notification?.ReferenceId || notification?.referenceId || null,
         actionKey: notification?.ActionKey || notification?.actionKey || null,
-        metadata: notification?.Metadata || notification?.metadata || null,
+        metadata: parseNotificationMetadata(
+          notification?.Metadata ??
+            notification?.metadata ??
+            notification?.MetadataJson ??
+            notification?.metadataJson,
+        ),
       };
 
       setNotifications((prev) => {
@@ -171,7 +237,7 @@ const useNotifications = (userId, initialUnreadCount) => {
     });
 
     return unsubscribe;
-  }, []);
+  }, [userId]);
 
   const markAsRead = useCallback((id) => {
     setNotifications((prev) => {
@@ -185,7 +251,9 @@ const useNotifications = (userId, initialUnreadCount) => {
 
 
     notificationService.markAsRead(id).catch((err) => {
-      console.warn("[Notifications] Failed to sync markAsRead:", err?.message);
+      if (err?.response?.status !== 401) {
+        console.warn("[Notifications] Failed to sync markAsRead:", err?.message);
+      }
     });
   }, []);
 
@@ -195,7 +263,9 @@ const useNotifications = (userId, initialUnreadCount) => {
 
 
     notificationService.markAllAsRead().catch((err) => {
-      console.warn("[Notifications] Failed to sync markAllAsRead:", err?.message);
+      if (err?.response?.status !== 401) {
+        console.warn("[Notifications] Failed to sync markAllAsRead:", err?.message);
+      }
     });
   }, []);
 

@@ -3,20 +3,18 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   setSelectedLabel,
   toggleChecklistItem,
-  toggleDefaultFlag,
 } from "../../../store/annotator/labelling/labelingSlice";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_OBJECT = Object.freeze({});
+
 const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
-  const { selectedLabel } = useSelector((state) => state.labeling);
+  const selectedLabel = useSelector((state) => state.labeling.selectedLabel);
   const checklistState = useSelector(
-    (state) => state.labeling.checklistByAssignment[assignmentId] || {},
-  );
-  const defaultFlags = useSelector(
-    (state) => state.labeling.defaultFlagsByAssignment[assignmentId] || [],
+    (state) => state.labeling.checklistByAssignment[assignmentId] ?? EMPTY_OBJECT,
   );
 
   const [expandedLabelId, setExpandedLabelId] = useState(null);

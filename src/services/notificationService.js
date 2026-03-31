@@ -7,7 +7,9 @@ const NotificationService = {
       const response = await axios.get('/api/notifications');
       return response.data;
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      if (error?.response?.status !== 401) {
+        console.error('Error fetching notifications:', error);
+      }
       throw error;
     }
   },
@@ -18,7 +20,9 @@ const NotificationService = {
       const response = await axios.put(`/api/notifications/${id}/read`);
       return response.data;
     } catch (error) {
-      console.error(`Error marking notification ${id} as read:`, error);
+      if (error?.response?.status !== 401) {
+        console.error(`Error marking notification ${id} as read:`, error);
+      }
       throw error;
     }
   },
@@ -29,11 +33,12 @@ const NotificationService = {
       const response = await axios.put('/api/notifications/read-all');
       return response.data;
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      if (error?.response?.status !== 401) {
+        console.error('Error marking all notifications as read:', error);
+      }
       throw error;
     }
   }
 };
 
 export default NotificationService;
-

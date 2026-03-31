@@ -47,9 +47,9 @@
     --dark-purple: #8B5CF6;
     --dark-hover: #263548;
     --dark-input: #1F2937;
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
+    --radius-sm: 7px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
     --transition-fast: 0.2s ease;
     --transition-normal: 0.3s ease;
     --glass-bg: rgba(30, 41, 59, 0.85);
@@ -3444,7 +3444,120 @@ footer,
         font-size: 0.78rem;
     }
 
-    .responsive-dataset-label-table {
+.responsive-dataset-label-table {
         min-width: 680px;
     }
+}
+
+.project-assign-lock-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    border-radius: 10px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(148, 163, 184, 0.4) !important;
+    background: #ffffff !important;
+    color: #475569 !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.project-assign-lock-btn.is-active {
+    border-color: rgba(245, 158, 11, 0.35) !important;
+    background: rgba(245, 158, 11, 0.08) !important;
+    color: #b45309 !important;
+}
+
+.project-assign-lock-btn.is-locked {
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+    color: #047857 !important;
+}
+
+.project-assign-lock-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+}
+
+.project-assign-lock-btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.project-assign-swal-popup {
+    border-radius: 18px !important;
+    padding: 1.35rem 1.25rem 1.15rem !important;
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18) !important;
+}
+
+.project-assign-swal-title {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+}
+
+.project-assign-swal-html {
+    font-size: 0.92rem !important;
+    line-height: 1.55 !important;
+    color: #475569 !important;
+}
+
+.project-assign-swal-actions {
+    gap: 0.65rem !important;
+}
+
+.project-assign-swal-confirm,
+.project-assign-swal-cancel {
+    min-width: 108px;
+    min-height: 40px;
+    border-radius: 12px !important;
+    padding: 0 1rem !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    border: 1px solid transparent !important;
+}
+
+.project-assign-swal-confirm.is-lock {
+    background: #f59e0b !important;
+    color: #ffffff !important;
+    border-color: #f59e0b !important;
+}
+
+.project-assign-swal-confirm.is-unlock {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    border-color: #10b981 !important;
+}
+
+.project-assign-swal-cancel {
+    background: #ffffff !important;
+    color: #475569 !important;
+    border-color: rgba(148, 163, 184, 0.45) !important;
+}
+
+[data-bs-theme="dark"] .project-assign-lock-btn {
+    background: rgba(15, 23, 42, 0.88) !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(71, 85, 105, 0.55) !important;
+}
+
+[data-bs-theme="dark"] .project-assign-swal-popup {
+    background: #0f172a !important;
+    border-color: rgba(71, 85, 105, 0.55) !important;
+}
+
+[data-bs-theme="dark"] .project-assign-swal-title {
+    color: #e2e8f0 !important;
+}
+
+[data-bs-theme="dark"] .project-assign-swal-html {
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .project-assign-swal-cancel {
+    background: rgba(15, 23, 42, 0.98) !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(71, 85, 105, 0.6) !important;
 }

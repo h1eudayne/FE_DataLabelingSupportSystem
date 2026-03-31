@@ -18,6 +18,7 @@ vi.mock("/src/services/axios.customize.js", () => ({
 describe("Annotator API Suite - Full Coverage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   describe("getDashboardStats() - Các trường hợp biên", () => {
@@ -108,6 +109,28 @@ describe("Annotator API Suite - Full Coverage", () => {
       const user = { email: "test@ai.com" };
       axios.get.mockResolvedValueOnce({ data: user });
       expect(await getProfile()).toEqual(user);
+    });
+
+    it("getProfile nên ưu tiên cached user và không gọi /api/users/me", async () => {
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          id: "annotator-1",
+          role: "Annotator",
+          fullName: "Cached Annotator",
+          email: "annotator@example.com",
+          avatarUrl: "/avatars/annotator.png",
+        }),
+      );
+
+      await expect(getProfile()).resolves.toEqual({
+        id: "annotator-1",
+        role: "Annotator",
+        fullName: "Cached Annotator",
+        email: "annotator@example.com",
+        avatarUrl: "/avatars/annotator.png",
+      });
+      expect(axios.get).not.toHaveBeenCalled();
     });
   });
 });

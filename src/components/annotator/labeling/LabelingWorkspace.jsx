@@ -18,6 +18,7 @@ import {
   removeLastAnnotation,
   undoLastAction,
 } from "../../../store/annotator/labelling/labelingSlice";
+import { resolveBackendAssetUrl } from "../../../config/runtime";
 
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 10;
@@ -32,6 +33,10 @@ const LabelingWorkspace = ({
   highlightedAnnotationId = null,
   onAnnotationClick,
   projectType = "BBOX",
+  onRunAiPreview,
+  aiDetecting = false,
+  aiExemplarCount = 0,
+  aiPreviewEnabled = false,
 }) => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
@@ -44,8 +49,9 @@ const LabelingWorkspace = ({
   );
 
   const annotations = annotationsByAssignment[assignmentId] || [];
+  const resolvedImageUrl = resolveBackendAssetUrl(imageUrl);
 
-  const [image] = useImage(imageUrl, "anonymous");
+  const [image] = useImage(resolvedImageUrl, "anonymous");
   const [stageScale, setStageScale] = useState(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [newRect, setNewRect] = useState(null);
@@ -436,6 +442,36 @@ const LabelingWorkspace = ({
             <i className="ri-arrow-go-back-line me-1"></i>
             {t("workspace.undo")}
           </button>
+        )}
+        {typeof onRunAiPreview === "function" && !readOnly && (
+          <>
+            <div className="stitch-ws-toolbar-divider"></div>
+            <button
+              className="stitch-ws-toolbar-btn"
+              onClick={onRunAiPreview}
+              disabled={!aiPreviewEnabled || aiDetecting}
+              title={
+                aiPreviewEnabled
+                  ? t("workspace.aiToolbarButton")
+                  : t("workspace.aiNeedExemplars")
+              }
+            >
+              {aiDetecting ? (
+                <span
+                  className="spinner-border spinner-border-sm me-1"
+                  aria-hidden="true"
+                ></span>
+              ) : (
+                <i className="ri-sparkling-line me-1"></i>
+              )}
+              {t("workspace.aiToolbarButton")}
+            </button>
+            <span
+              className={`stitch-ws-badge ${aiExemplarCount > 0 ? "stitch-ws-badge-inprogress" : "stitch-ws-badge-rejected"}`}
+            >
+              {aiExemplarCount}/3
+            </span>
+          </>
         )}
         {annotations.length > 0 && (
           <span className="stitch-ws-badge stitch-ws-badge-inprogress ms-1">

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  Container,
   Row,
   Col,
   Card,
@@ -9,13 +8,8 @@ import {
   Table,
   Badge,
   Button,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Input,
   Label,
-  FormGroup,
   Spinner,
   Alert,
 } from "reactstrap";
@@ -25,6 +19,7 @@ import projectService from "../../../services/manager/project/projectService";
 import disputeService from "../../../services/manager/dispute/disputeService";
 import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
 import { useTranslation } from "react-i18next";
+import ManagerDecisionEvidenceModal from "../../../components/manager/dispute/ManagerDecisionEvidenceModal";
 
 const DisputeManagementPage = () => {
   const { t } = useTranslation();
@@ -33,12 +28,11 @@ const DisputeManagementPage = () => {
   const [disputes, setDisputes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [projectDetail, setProjectDetail] = useState(null);
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedDispute, setSelectedDispute] = useState(null);
-  const [isAccepted, setIsAccepted] = useState(true);
-  const [managerComment, setManagerComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [decisionModal, setDecisionModal] = useState({
+    isOpen: false,
+    item: null,
+  });
+  const [decisionSubmitting, setDecisionSubmitting] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.id;
 
@@ -84,34 +78,41 @@ const DisputeManagementPage = () => {
   );
 
   const openResolveModal = (dispute) => {
-    setSelectedDispute(dispute);
-    setIsAccepted(true);
-    setManagerComment("");
-    setModalOpen(true);
+    setDecisionModal({
+      isOpen: true,
+      item: dispute,
+    });
   };
 
-  const handleResolve = async () => {
-    if (!selectedDispute) return;
-    if (!managerComment.trim()) {
+  const closeDecisionModal = () => {
+    setDecisionModal({
+      isOpen: false,
+      item: null,
+    });
+  };
+
+  const handleResolve = async ({ decision, comment }) => {
+    if (!decisionModal.item) return;
+    if (!comment?.trim()) {
       toast.warning(
         t("dispute.commentWarning"),
       );
       return;
     }
-    setSubmitting(true);
+    setDecisionSubmitting(true);
     try {
       await disputeService.resolveDispute({
-        disputeId: selectedDispute.id,
-        isAccepted,
-        managerComment,
+        disputeId: decisionModal.item.id,
+        isAccepted: decision === "accept",
+        managerComment: comment,
       });
       toast.success(t("dispute.resolveSuccess"));
-      setModalOpen(false);
-      handleProjectChange(selectedProjectId);
+      closeDecisionModal();
+      await handleProjectChange(selectedProjectId);
     } catch (err) {
       toast.error(err.response?.data?.message || t("dispute.resolveError"));
     } finally {
-      setSubmitting(false);
+      setDecisionSubmitting(false);
     }
   };
 
@@ -209,20 +210,17 @@ const DisputeManagementPage = () => {
                                 : "—"}
                             </td>
                             <td>
-                              {d.status === "Pending" ? (
-                                <Button
-                                  color="primary"
-                                  size="sm"
-                                  onClick={() => openResolveModal(d)}
-                                >
-                                  <i className="ri-scales-3-line me-1"></i>
-                                  {t("dispute.arbitrate")}
-                                </Button>
-                              ) : (
-                                <span className="text-muted fs-12">
-                                  {t("dispute.resolved")}
-                                </span>
-                              )}
+                              <Button
+                                color={d.status === "Pending" ? "primary" : "light"}
+                                size="sm"
+                                className={d.status === "Pending" ? "" : "border"}
+                                onClick={() => openResolveModal(d)}
+                              >
+                                <i className={`me-1 ${d.status === "Pending" ? "ri-scales-3-line" : "ri-eye-line"}`}></i>
+                                {d.status === "Pending"
+                                  ? t("dispute.arbitrate")
+                                  : t("dispute.view")}
+                              </Button>
                             </td>
                           </tr>
                         ))}
@@ -242,141 +240,15 @@ const DisputeManagementPage = () => {
         </div>
       )}
 
-      <Modal
-        isOpen={modalOpen}
-        toggle={() => setModalOpen(false)}
-        size="lg"
-        centered
-      >
-        <ModalHeader toggle={() => setModalOpen(false)}>
-          <i className="ri-scales-3-line me-2 text-primary"></i>
-          {t("dispute.modalTitle")} #{selectedDispute?.id}
-        </ModalHeader>
-        <ModalBody>
-          {selectedDispute && (
-            <>
-              <div className="mb-3 p-3 bg-light rounded">
-                <h6 className="fw-bold mb-2">{t("dispute.complaintInfo")}</h6>
-                <p className="mb-1">
-                  <strong>Assignment ID:</strong>{" "}
-                  <Badge color="primary">#{selectedDispute.assignmentId}</Badge>
-                </p>
-                <p className="mb-0">
-                  <strong>{t("dispute.reason")}</strong> {selectedDispute.reason}
-                </p>
-              </div>
-
-              {projectDetail?.labels?.length > 0 && (
-                <div className="mb-3 p-3 border rounded">
-                  <h6 className="fw-bold mb-2 text-info">
-                    <i className="ri-book-read-line me-1"></i>
-                    {t("dispute.guidelineRef")}
-                  </h6>
-                  <div className="table-responsive">
-                    <Table size="sm" className="mb-0" bordered>
-                      <thead className="table-light">
-                        <tr>
-                          <th>{t("dispute.labelCol")}</th>
-                          <th>{t("dispute.colorCol")}</th>
-                          <th>{t("dispute.guideCol")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {projectDetail.labels.map((label) => (
-                          <tr key={label.id}>
-                            <td className="fw-semibold">{label.name}</td>
-                            <td>
-                              <span
-                                className="badge px-2 py-1"
-                                style={{ backgroundColor: label.color }}
-                              >
-                                {label.color}
-                              </span>
-                            </td>
-                            <td className="text-muted small">
-                              {label.guideLine || "—"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
-                </div>
-              )}
-
-              <FormGroup>
-                <Label className="fw-semibold">{t("dispute.decision")}</Label>
-                <div className="d-flex gap-3">
-                  <FormGroup check>
-                    <Input
-                      type="radio"
-                      name="decision"
-                      checked={isAccepted}
-                      onChange={() => setIsAccepted(true)}
-                    />
-                    <Label check className="text-success fw-semibold">
-                      <i className="ri-check-line me-1"></i>
-                      {t("dispute.acceptComplaint")}
-                    </Label>
-                  </FormGroup>
-                  <FormGroup check>
-                    <Input
-                      type="radio"
-                      name="decision"
-                      checked={!isAccepted}
-                      onChange={() => setIsAccepted(false)}
-                    />
-                    <Label check className="text-danger fw-semibold">
-                      <i className="ri-close-line me-1"></i>
-                      {t("dispute.rejectComplaint")}
-                    </Label>
-                  </FormGroup>
-                </div>
-              </FormGroup>
-
-              <FormGroup>
-                <Label className="fw-semibold">
-                  {t("dispute.managerComment")}
-                  <small className="text-danger ms-1">
-                    {t("dispute.required")}
-                  </small>
-                </Label>
-                <Input
-                  type="textarea"
-                  rows="3"
-                  value={managerComment}
-                  onChange={(e) => setManagerComment(e.target.value)}
-                  placeholder={t("dispute.commentPlaceholder")}
-                  className={!managerComment.trim() ? "border-danger" : ""}
-                />
-                {!managerComment.trim() && (
-                  <small className="text-danger">
-                    <i className="ri-error-warning-line me-1"></i>
-                    {t("dispute.commentRequired")}
-                  </small>
-                )}
-              </FormGroup>
-            </>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button color="light" onClick={() => setModalOpen(false)}>
-            {t("dispute.cancel")}
-          </Button>
-          <Button
-            color="primary"
-            onClick={handleResolve}
-            disabled={submitting || !managerComment.trim()}
-          >
-            {submitting ? (
-              <Spinner size="sm" className="me-1" />
-            ) : (
-              <i className="ri-check-double-line me-1"></i>
-            )}
-            {t("dispute.confirmArbitrate")}
-          </Button>
-        </ModalFooter>
-      </Modal>
+      <ManagerDecisionEvidenceModal
+        isOpen={decisionModal.isOpen}
+        toggle={closeDecisionModal}
+        caseItem={decisionModal.item}
+        projectDetail={projectDetail}
+        mode="dispute"
+        submitting={decisionSubmitting}
+        onConfirm={handleResolve}
+      />
     </>
   );
 };
