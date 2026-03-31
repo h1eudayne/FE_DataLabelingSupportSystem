@@ -157,12 +157,12 @@
       "pending": "Đang chờ",
       "completed": "Hoàn thành",
       "overdue": "Quá hạn",
-      "accuracy":"Độ chính xác"
+      "accuracy": "Độ chính xác"
     },
     "status": {
       "overdue": "QUÁ HẠN"
     },
-    "completed":"Hoàn thành",
+    "completed": "Hoàn thành",
     "alerts": {
       "overdue": "QUÁ HẠN",
       "nearDeadline": "SẮP HẾT HẠN",
@@ -203,16 +203,40 @@
       "deselectAll": "Bỏ chọn tất cả tiêu chí",
       "footer": "Đã hoàn thành: {{count}} / {{total}} tiêu chí",
       "items": {
-        "CL-01": { "title": "Xác định đúng đối tượng", "desc": "Đối tượng gán đúng với thực tế" },
+        "CL-01": {
+          "title": "Xác định đúng đối tượng",
+          "desc": "Đối tượng gán đúng với thực tế"
+        },
         "CL-02": { "title": "Đúng loại nhãn", "desc": "Chọn đúng category" },
-        "CL-03": { "title": "Bounding Box chính xác", "desc": "Khung bao ôm sát đối tượng" },
-        "CL-04": { "title": "Không bỏ sót", "desc": "Gán hết đối tượng trong ảnh" },
-        "CL-05": { "title": "Không gán nhãn sai", "desc": "Không gán vào vật thể lạ" },
-        "CL-06": { "title": "Tuân thủ guideline", "desc": "Theo đúng quy định dự án" },
-        "CL-07": { "title": "Tính nhất quán", "desc": "Giống các ảnh đã gán trước đó" },
+        "CL-03": {
+          "title": "Bounding Box chính xác",
+          "desc": "Khung bao ôm sát đối tượng"
+        },
+        "CL-04": {
+          "title": "Không bỏ sót",
+          "desc": "Gán hết đối tượng trong ảnh"
+        },
+        "CL-05": {
+          "title": "Không gán nhãn sai",
+          "desc": "Không gán vào vật thể lạ"
+        },
+        "CL-06": {
+          "title": "Tuân thủ guideline",
+          "desc": "Theo đúng quy định dự án"
+        },
+        "CL-07": {
+          "title": "Tính nhất quán",
+          "desc": "Giống các ảnh đã gán trước đó"
+        },
         "CL-08": { "title": "Đúng công cụ", "desc": "Dùng đúng Box/Polygon" },
-        "CL-09": { "title": "Bao phủ đầy đủ", "desc": "Không bị cắt mất phần hiển thị" },
-        "CL-10": { "title": "Dữ liệu đạt chuẩn", "desc": "Ảnh đủ rõ để định danh" }
+        "CL-09": {
+          "title": "Bao phủ đầy đủ",
+          "desc": "Không bị cắt mất phần hiển thị"
+        },
+        "CL-10": {
+          "title": "Dữ liệu đạt chuẩn",
+          "desc": "Ảnh đủ rõ để định danh"
+        }
       },
       "saveAndClose": "Lưu & Đóng"
     },
@@ -668,7 +692,7 @@
       "pending": "Đang chờ",
       "completed": "Hoàn thành",
       "overdue": "Quá hạn",
-      "new":"Dự án mới"
+      "new": "Dự án mới"
     },
     "projectDetail": {
       "loading": "Đang tải chi tiết dự án...",
@@ -750,7 +774,7 @@
     "download": "Tải xuống",
     "upload": "Tải lên",
     "refresh": "Làm mới",
-    "welcomeBack":"Chào mừng trở lại!",
+    "welcomeBack": "Chào mừng trở lại!",
     "menu": "Menu",
     "logo": "Logo ứng dụng",
     "loadingData": "Đang tải dữ liệu..."
@@ -1295,9 +1319,9 @@
     "inactive": "Khóa",
     "noStaffFound": "Không tìm thấy nhân sự nào.",
     "showingRange": "Hiển thị {{from}} đến {{to}} trên {{total}} người dùng",
-    "totalProjects":"Tổng dự án",
-    "assignManager":"Phân công quản lý",
-    "noManager":"-- Chưa có quản lý --",
+    "totalProjects": "Tổng dự án",
+    "assignManager": "Phân công quản lý",
+    "noManager": "-- Chưa có quản lý --",
     "resetPassword": "Đặt lại mật khẩu",
     "resetPasswordFor": "Đặt lại mật khẩu cho",
     "newPassword": "Mật khẩu mới",
@@ -1349,7 +1373,7 @@
     "errorType": "Định dạng file không hỗ trợ. Chỉ chấp nhận .xlsx hoặc .xls",
     "maxSizeLabel": "Dung lượng tối đa:",
     "maxRowLabel": "Giới hạn dòng:",
-    "rows":"dòng"
+    "rows": "dòng"
   },
   "annotatorContainerComp": {
     "workboard": "Bảng công việc",
@@ -1440,7 +1464,7 @@
     "require2FA": "Bắt buộc xác thực 2 lớp khi Login",
     "require2FADesc": "Áp dụng cho luồng /api/Auth/login",
     "saveConfig": "Lưu cấu hình",
-    "loading":"Đang tải..."
+    "loading": "Đang tải..."
   },
   "adminNavTabs": {
     "userManagement": "Quản lý người dùng",
@@ -1492,10 +1516,10 @@
     "edit": "Chỉnh sửa thông tin",
     "resetPassword": "Đặt lại mật khẩu",
     "showingRange": "Hiển thị từ {{from}} đến {{to}} trên tổng số {{total}} nhân sự",
-    "totalProjects":"Tổng dự án",
+    "totalProjects": "Tổng dự án",
     "unfinishedProjects": "{{count}} chưa hoàn thành"
   },
-  "userFilter":{
+  "userFilter": {
     "searchPlaceholder": "Tìm kiếm theo tên, email hoặc vai trò..."
   },
   "projectCard": {

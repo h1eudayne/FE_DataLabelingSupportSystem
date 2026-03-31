@@ -1,12 +1,10 @@
 import * as signalR from "@microsoft/signalr";
-import { BACKEND_URL } from "./axios.customize";
+import { NOTIFICATION_HUB_URL } from "../config/runtime";
 
 
 export const createConnection = () => {
-  const hubUrl = `${BACKEND_URL}/hubs/notifications`;
-
   const connection = new signalR.HubConnectionBuilder()
-    .withUrl(hubUrl, {
+    .withUrl(NOTIFICATION_HUB_URL, {
       accessTokenFactory: () => localStorage.getItem("access_token") || "",
     })
     .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])

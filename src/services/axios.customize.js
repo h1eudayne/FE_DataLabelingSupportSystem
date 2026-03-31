@@ -1,7 +1,7 @@
 import axios from "axios";
 import refreshTokenAPI from "./auth/refreshToken.api";
+import { BACKEND_URL } from "../config/runtime";
 
-export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const instance = axios.create({
   baseURL: BACKEND_URL,
   timeout: 20000,
@@ -94,4 +94,5 @@ instance.interceptors.response.use(
   }
 );
 
+export { BACKEND_URL };
 export default instance;

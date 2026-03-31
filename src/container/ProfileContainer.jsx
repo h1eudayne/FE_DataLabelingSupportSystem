@@ -10,7 +10,6 @@ import {
 import ProfileModal from "../components/home/ProfileModal";
 import { useDispatch } from "react-redux";
 import { updateUser } from "@/store/auth/auth.slice";
-import { BACKEND_URL } from "../services/axios.customize";
 
 const ProfileContainer = () => {
   const { t } = useTranslation();
@@ -44,16 +43,7 @@ const ProfileContainer = () => {
 
       if (avatarData instanceof File) {
         const uploadRes = await uploadAvatar(avatarData);
-        const relativePath = uploadRes.data?.avatarUrl || uploadRes.avatarUrl;
-
-        const cleanPath = relativePath.startsWith("/")
-          ? relativePath
-          : `/${relativePath}`;
-        const cleanBase = BACKEND_URL.endsWith("/")
-          ? BACKEND_URL.slice(0, -1)
-          : BACKEND_URL;
-
-        finalAvatarUrl = `${cleanBase}${cleanPath}`;
+        finalAvatarUrl = uploadRes.data?.avatarUrl || uploadRes.avatarUrl;
       } else {
         finalAvatarUrl = avatarData;
       }
