@@ -1,9 +1,16 @@
-import { Modal, Button } from "react-bootstrap";
+import { Modal, Button, Spinner } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 import { UploadCloud, FileSpreadsheet, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
-const AddUser = ({ isOpen, onClose, uploadUser, file, setFile }) => {
+const AddUser = ({
+  isOpen,
+  onClose,
+  uploadUser,
+  file,
+  setFile,
+  isImporting,
+}) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
 
@@ -33,8 +40,14 @@ const AddUser = ({ isOpen, onClose, uploadUser, file, setFile }) => {
   };
 
   return (
-    <Modal show={isOpen} onHide={onClose} centered>
-      <Modal.Header closeButton>
+    <Modal
+      show={isOpen}
+      onHide={isImporting ? null : onClose}
+      backdrop={isImporting ? "static" : true}
+      keyboard={!isImporting}
+      centered
+    >
+      <Modal.Header closeButton={!isImporting}>
         <Modal.Title className="fs-16 fw-bold">
           {t("addUser.title")}
         </Modal.Title>
@@ -43,9 +56,11 @@ const AddUser = ({ isOpen, onClose, uploadUser, file, setFile }) => {
         <div
           className={`border border-2 border-dashed rounded-3 p-4 text-center ${
             error ? "border-danger bg-danger-subtle" : "bg-light"
-          }`}
-          style={{ cursor: "pointer" }}
-          onClick={() => document.getElementById("excelInput").click()}
+          } ${isImporting ? "opacity-50" : ""}`}
+          style={{ cursor: isImporting ? "not-allowed" : "pointer" }}
+          onClick={() =>
+            !isImporting && document.getElementById("excelInput").click()
+          }
         >
           <UploadCloud
             size={40}
@@ -95,16 +110,32 @@ const AddUser = ({ isOpen, onClose, uploadUser, file, setFile }) => {
         </div>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="light" onClick={onClose}>
+        <Button variant="light" onClick={onClose} disabled={isImporting}>
           {t("addUser.cancelBtn")}
         </Button>
         <Button
           variant="primary"
-          disabled={!file || !!error}
+          disabled={!file || !!error || isImporting}
           onClick={() => uploadUser(file)}
         >
-          <FileSpreadsheet size={16} className="me-2" />
-          {t("addUser.confirmImport")}
+          {isImporting ? (
+            <>
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                role="status"
+                aria-hidden="true"
+                className="me-2"
+              />
+              {t("common.loading")}
+            </>
+          ) : (
+            <>
+              <FileSpreadsheet size={16} className="me-2" />
+              {t("addUser.confirmImport")}
+            </>
+          )}
         </Button>
       </Modal.Footer>
     </Modal>

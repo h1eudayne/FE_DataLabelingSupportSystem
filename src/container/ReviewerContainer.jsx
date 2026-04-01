@@ -35,6 +35,7 @@ const getApiErrorMessage = (error) => {
 };
 
 const ReviewerContainer = () => {
+  const { user } = useSelector((state) => state.auth);
   const { t } = useTranslation();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);

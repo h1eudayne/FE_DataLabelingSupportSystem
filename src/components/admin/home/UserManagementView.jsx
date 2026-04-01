@@ -109,17 +109,17 @@ const UserManagementView = ({
           <div className="admin-admins-grid">
             {admins.map((admin) => (
               <article className="admin-admin-card" key={admin.id}>
-                  <div className="admin-admin-card__content">
-                    <div className="admin-admin-card__avatar">
-                      {admin.email.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
+                <div className="admin-admin-card__content">
+                  <div className="admin-admin-card__avatar">
+                    {admin.email.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
                     <div className="admin-admin-card__name admin-table-user__subtitle--email">
                       {admin.email}
                     </div>
-                      <div className="admin-admin-card__role">
-                        {t("userMgmt.systemAdmin")}
-                      </div>
+                    <div className="admin-admin-card__role">
+                      {t("userMgmt.systemAdmin")}
+                    </div>
                   </div>
                 </div>
               </article>
@@ -192,7 +192,9 @@ const UserManagementView = ({
                   <tr>
                     <th>{t("userMgmt.user")}</th>
                     <th>{t("userMgmt.role")}</th>
-                    <th className="text-center">{t("userMgmt.totalProjects")}</th>
+                    <th className="text-center">
+                      {t("userMgmt.totalProjects")}
+                    </th>
                     <th className="text-end">{t("userMgmt.actions")}</th>
                   </tr>
                 </thead>
@@ -385,7 +387,7 @@ const UserManagementView = ({
                 {t("userMgmt.showingRange", {
                   from: fromEntry,
                   to: toEntry,
-                  total: totalCount,
+                  total: stats.workers,
                 })}
               </div>
               <Pagination className="admin-pagination mb-0">
