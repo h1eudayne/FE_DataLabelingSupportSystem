@@ -144,7 +144,7 @@ function App() {
               />
               <Route
                 path="annotator-projects"
-                element={<AnnotatorTaskList />}
+                element={<Navigate to="/annotator-my-tasks" replace />}
               />
               <Route
                 path="annotator-project-packs/:assignmentId"
@@ -156,7 +156,7 @@ function App() {
               />
               <Route
                 path="annotator-team"
-                element={<Navigate to="/dashboard" replace />}
+                element={<Navigate to="/annotator-my-tasks" replace />}
               />
             </Route>
           </Route>

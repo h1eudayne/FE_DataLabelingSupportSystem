@@ -51,11 +51,17 @@ describe("Auth Services Index", () => {
   });
 
   it("logoutAPI nên hoạt động đúng", async () => {
+    const mockResponse = {
+      Message: "Logout successful. All tokens have been invalidated.",
+    };
+    mock.onPost("/api/auth/logout").reply(200, mockResponse);
+
     const { logoutAPI } = await import("../auth/index");
     const result = await logoutAPI();
 
-    expect(result).toBeDefined();
-    expect(result.success).toBe(true);
+    expect(result.data).toEqual(mockResponse);
+    expect(mock.history.post.length).toBe(1);
+    expect(mock.history.post[0].url).toBe("/api/auth/logout");
   });
 
   it("refreshTokenAPI nên có thể call endpoint refresh token", async () => {

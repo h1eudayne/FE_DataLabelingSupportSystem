@@ -10,6 +10,7 @@ import {
   Form,
 } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import { resolveBackendAssetUrl } from "../../config/runtime";
 
 const ProfileTable = ({ userSelf, onEditProfile, onChangePass }) => {
@@ -33,12 +34,12 @@ const ProfileTable = ({ userSelf, onEditProfile, onChangePass }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.oldPassword || !formData.newPassword) {
-      alert(t('profileComp.fillPasswordAlert'));
+      toast.warning(t("profileComp.fillPasswordAlert"));
       return;
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      alert(t('profileComp.passwordMismatch'));
+      toast.warning(t("profileComp.passwordMismatch"));
       return;
     }
     onChangePass(formData.oldPassword, formData.newPassword);

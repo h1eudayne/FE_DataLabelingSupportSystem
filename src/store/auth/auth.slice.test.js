@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { loginThunk } from "./auth.thunk";
+import { loginThunk, logoutThunk } from "./auth.thunk";
 import { jwtDecode } from "jwt-decode";
 
 vi.mock("jwt-decode", () => ({
@@ -126,5 +126,55 @@ describe("authSlice - Synced with Backend JWT Contract", () => {
 
     expect(state.unreadNotifications).toBe(15);
     expect(localStorage.getItem("unreadNotifications")).toBe("15");
+  });
+
+  it("should clear auth state when logoutThunk is fulfilled", () => {
+    const loggedState = {
+      user: { id: 1 },
+      token: "tk",
+      loading: true,
+      error: "Something",
+      isAuthenticated: true,
+      unreadNotifications: 10,
+    };
+    localStorage.setItem("access_token", "tk");
+    localStorage.setItem("refresh_token", "rtk");
+    localStorage.setItem("unreadNotifications", "10");
+
+    const state = authReducer(loggedState, {
+      type: logoutThunk.fulfilled.type,
+    });
+
+    expect(state.isAuthenticated).toBe(false);
+    expect(state.token).toBeNull();
+    expect(state.loading).toBe(false);
+    expect(state.error).toBeNull();
+    expect(localStorage.getItem("access_token")).toBeNull();
+    expect(localStorage.getItem("refresh_token")).toBeNull();
+  });
+
+  it("should still clear auth state when logoutThunk is rejected", () => {
+    const loggedState = {
+      user: { id: 1 },
+      token: "tk",
+      loading: true,
+      error: "Something",
+      isAuthenticated: true,
+      unreadNotifications: 10,
+    };
+    localStorage.setItem("access_token", "tk");
+    localStorage.setItem("refresh_token", "rtk");
+    localStorage.setItem("unreadNotifications", "10");
+
+    const state = authReducer(loggedState, {
+      type: logoutThunk.rejected.type,
+    });
+
+    expect(state.isAuthenticated).toBe(false);
+    expect(state.token).toBeNull();
+    expect(state.loading).toBe(false);
+    expect(state.error).toBeNull();
+    expect(localStorage.getItem("access_token")).toBeNull();
+    expect(localStorage.getItem("refresh_token")).toBeNull();
   });
 });

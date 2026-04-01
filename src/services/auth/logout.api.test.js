@@ -1,17 +1,28 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import axios from "../axios.customize";
 import logoutApi from "./logout.api";
 
-describe("logout.api", () => {
-  it("should resolve with { success: true } (client-side only)", async () => {
-    const result = await logoutApi();
+vi.mock("../axios.customize", () => ({
+  default: {
+    post: vi.fn(),
+  },
+}));
 
-    expect(result).toEqual({ success: true });
+describe("logout.api", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it("should not make any HTTP request", async () => {
-    
+  it("should call the backend logout endpoint", async () => {
+    vi.mocked(axios.post).mockResolvedValue({
+      data: { message: "Logout successful. All tokens have been invalidated." },
+    });
+
     const result = await logoutApi();
 
-    expect(result.success).toBe(true);
+    expect(axios.post).toHaveBeenCalledWith("/api/auth/logout");
+    expect(result.data.message).toBe(
+      "Logout successful. All tokens have been invalidated.",
+    );
   });
 });

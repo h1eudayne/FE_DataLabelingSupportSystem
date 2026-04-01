@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { buildAnnotatorWorkspaceUrl } from "../../../utils/annotatorWorkspaceNavigation";
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -19,9 +20,29 @@ const getStatusBadge = (status) => {
   }
 };
 
-export default function TaskTable({ data, loading }) {
+export default function TaskTable({ data, loading, projectId }) {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const localeTag = i18n.language?.startsWith("vi") ? "vi-VN" : "en-US";
+
+  const getTaskStatusLabel = (status) => {
+    switch (status) {
+      case "Assigned":
+        return t("annotatorDashboardComp.assigned");
+      case "InProgress":
+        return t("annotatorTasks.inProgress");
+      case "Submitted":
+        return t("annotatorDashboardComp.submitted");
+      case "Approved":
+        return t("workspace.statusApproved");
+      case "Rejected":
+        return t("workspace.statusRejected");
+      case "Completed":
+        return t("annotatorTasks.completed");
+      default:
+        return status;
+    }
+  };
 
   if (loading) {
     return (
@@ -44,9 +65,13 @@ export default function TaskTable({ data, loading }) {
     );
   }
 
-  const handleOpenTask = (assignmentId) => {
-    if (!assignmentId) return;
-    navigate(`/workplace-labeling-task/${assignmentId}`);
+  const handleOpenTask = (task) => {
+    const workspaceUrl = buildAnnotatorWorkspaceUrl(
+      projectId ?? task?.projectId,
+      task,
+    );
+    if (!workspaceUrl) return;
+    navigate(workspaceUrl);
   };
 
   return (
@@ -76,27 +101,27 @@ export default function TaskTable({ data, loading }) {
                     <i className="ri-file-image-line text-info"></i>
                     {task.dataItemUrl
                       ? task.dataItemUrl.split("/").pop()
-                      : `Item #${task.dataItemId}`}
+                      : `${t("annotatorDashboardComp.itemPrefix")} #${task.dataItemId}`}
                   </span>
                 </td>
 
                 <td>
                   <span className={`badge stitch-badge ${badge.bg}`}>
                     <i className={`${badge.icon} me-1`}></i>
-                    {task.status}
+                    {getTaskStatusLabel(task.status)}
                   </span>
                 </td>
 
                 <td>
                   {task.deadline
-                    ? new Date(task.deadline).toLocaleDateString("vi-VN")
-                    : "N/A"}
+                    ? new Date(task.deadline).toLocaleDateString(localeTag)
+                    : t("annotatorDashboardComp.notAvailable")}
                 </td>
 
                 <td>
                   <button
                     className="btn stitch-btn-open"
-                    onClick={() => handleOpenTask(task.id)}
+                    onClick={() => handleOpenTask(task)}
                   >
                     <i className="ri-external-link-line me-1"></i>
                     {t('annotatorDashboardComp.open')}

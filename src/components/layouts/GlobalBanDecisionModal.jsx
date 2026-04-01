@@ -8,6 +8,10 @@ import {
   Modal,
   Spinner,
 } from "react-bootstrap";
+import {
+  getGlobalBanProjectKey,
+  getGlobalBanProjects,
+} from "../../utils/globalBanNotifications";
 
 const getProjectStatusVariant = (status) => {
   const normalizedStatus = String(status || "").toLowerCase();
@@ -58,9 +62,7 @@ const GlobalBanDecisionModal = ({
   const { t, i18n } = useTranslation();
   const metadata = notification?.metadata || {};
   const locale = i18n.language === "vi" ? "vi-VN" : "en-US";
-  const unfinishedProjects = Array.isArray(metadata.unfinishedProjects)
-    ? metadata.unfinishedProjects
-    : [];
+  const unfinishedProjects = getGlobalBanProjects(notification);
   const requestedAt = formatDecisionDate(metadata.requestedAt, locale);
   const resolvedAt = formatDecisionDate(metadata.resolvedAt, locale);
   const isApproveDecision = decision === "approve";
@@ -176,15 +178,26 @@ const GlobalBanDecisionModal = ({
 
             {unfinishedProjects.length > 0 ? (
               <div className="d-flex flex-column gap-2">
-                {unfinishedProjects.map((project) => (
+                {unfinishedProjects.map((project, index) => (
                   <div
-                    key={`${metadata.banRequestId || "ban"}-${project.id}-${project.name}`}
+                    key={getGlobalBanProjectKey(
+                      project,
+                      index,
+                      metadata.banRequestId || "ban",
+                    )}
                     className="d-flex flex-wrap justify-content-between align-items-center gap-2 rounded-3 border p-2"
-                  >
+                    >
                     <div>
-                      <div className="fw-semibold">{project.name}</div>
+                      <div className="fw-semibold">
+                        {project.name ||
+                          (project.id
+                            ? `${t("header.globalBanUnknownProject")} #${project.id}`
+                            : t("header.globalBanUnknownProject"))}
+                      </div>
                       <div className="small text-muted">
-                        #{project.id}
+                        {project.id
+                          ? `#${project.id}`
+                          : t("header.globalBanUnknownProject")}
                       </div>
                     </div>
                     <Badge bg={getProjectStatusVariant(project.status)}>

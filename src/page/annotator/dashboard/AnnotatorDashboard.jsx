@@ -1,14 +1,24 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import "../../../assets/css/AnnotatorDashboard.css";
 import useAnnotatorDashboard from "../../../hooks/annotator/dashboard/useAnnotatorDashboard";
 import DashboardLayout from "../../../components/layouts/DashboardLayout";
-import TaskTable from "../../../components/annotator/dashboard/TaskTable";
 import ReviewerFeedbackTable from "../../../components/annotator/dashboard/ReviewerFeedbackTable";
 import StatCard from "../../../components/annotator/dashboard/StatCard";
+import { buildAnnotatorWorkspaceUrl } from "../../../utils/annotatorWorkspaceNavigation";
+import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
+import {
+  getProjectStatusLabel,
+  getProjectStatusTone,
+  isAwaitingManagerConfirmation,
+} from "../../../utils/projectWorkflowStatus";
+import { sortProjectsByNewestId } from "../../../utils/projectSort";
 
 const AnnotatorDashboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const localeTag = i18n.language?.startsWith("vi") ? "vi-VN" : "en-US";
   const [projectId, setProjectId] = useState(null);
   const [collapsedProjects, setCollapsedProjects] = useState({});
   const [progressCollapsed, setProgressCollapsed] = useState(false);
@@ -27,13 +37,27 @@ const AnnotatorDashboard = () => {
   } = useAnnotatorDashboard(projectId);
   const activeProjectId = projectId ?? defaultProjectId;
 
+  useSignalRRefresh(
+    () => {
+      projects.refetch();
+      tasksByProject.refetch();
+      reviewerFeedback.refetch();
+      projectProgress.refetch();
+      myAccuracy.refetch();
+    },
+    { showToast: false },
+  );
+
   const stats = useMemo(() => {
     const projectList = projects.data || [];
     return {
       assigned: projectList.length,
       completed: projectList.filter((p) => p.status === "Completed").length,
       inProgress: projectList.filter(
-        (p) => p.status === "Active" || p.status === "InProgress",
+        (p) =>
+          p.status === "Active" ||
+          p.status === "InProgress" ||
+          isAwaitingManagerConfirmation(p.status),
       ).length,
       expired: projectList.filter((p) => p.status === "Expired").length,
       totalImages: projectList.reduce((s, p) => s + (p.totalImages || 0), 0),
@@ -51,11 +75,14 @@ const AnnotatorDashboard = () => {
   }, [myAccuracy.data]);
 
   const perProjectAccuracy = useMemo(() => {
-    return myAccuracy.data?.perProject || [];
+    return sortProjectsByNewestId(myAccuracy.data?.perProject || []);
   }, [myAccuracy.data]);
 
   const isLoadingStats = projects.isLoading;
-  const progressData = projectProgress.data || [];
+  const progressData = useMemo(
+    () => sortProjectsByNewestId(projectProgress.data || []),
+    [projectProgress.data],
+  );
 
   const getProgressColor = (value) => {
     if (value >= 80) return "#0ab39c";
@@ -67,6 +94,40 @@ const AnnotatorDashboard = () => {
     if (value >= 80) return "success";
     if (value >= 50) return "warning";
     return "danger";
+  };
+
+  const getTaskStatusLabel = (status) => {
+    switch (status) {
+      case "Assigned":
+        return t("annotatorDashboardComp.assigned");
+      case "InProgress":
+        return t("annotatorTasks.inProgress");
+      case "Submitted":
+        return t("annotatorDashboardComp.submitted");
+      case "Approved":
+        return t("workspace.statusApproved");
+      case "Rejected":
+        return t("workspace.statusRejected");
+      case "Completed":
+      case "AwaitingManagerConfirmation":
+        return getProjectStatusLabel(status, t);
+      default:
+        return status;
+    }
+  };
+
+  const handleOpenFeedbackTask = (feedbackItem) => {
+    const workspaceUrl = buildAnnotatorWorkspaceUrl(
+      feedbackItem?.projectId,
+      {
+        id: feedbackItem?.assignmentId,
+        dataItemId: feedbackItem?.dataItemId,
+      },
+    );
+
+    if (workspaceUrl) {
+      navigate(workspaceUrl);
+    }
   };
 
   return (
@@ -111,7 +172,11 @@ const AnnotatorDashboard = () => {
         />
         <StatCard
           title={t("annotatorDash.accuracy")}
-          value={accuracy !== null ? `${accuracy}%` : "N/A"}
+          value={
+            accuracy !== null
+              ? `${accuracy}%`
+              : t("annotatorDash.notAvailable")
+          }
           icon="ri-focus-2-line"
           color={
             accuracy === null
@@ -193,18 +258,12 @@ const AnnotatorDashboard = () => {
                               <td className="text-center">
                                 <span
                                   className={`badge bg-${
-                                    pa.accuracy > 0
+                                    pa.accuracy !== null
                                       ? getBadgeColor(pa.accuracy)
-                                      : pa.tasksCompleted > 0
-                                        ? "danger"
-                                        : "secondary"
+                                      : "secondary"
                                   }`}
                                 >
-                                  {pa.accuracy > 0
-                                    ? `${pa.accuracy}%`
-                                    : pa.tasksCompleted > 0
-                                      ? "0%"
-                                      : "—"}
+                                  {pa.accuracy !== null ? `${pa.accuracy}%` : "—"}
                                 </span>
                               </td>
                               <td>
@@ -320,13 +379,7 @@ const AnnotatorDashboard = () => {
                                 {pp.projectName}
                               </h6>
                               <span
-                                className={`badge stitch-badge bg-${
-                                  pp.status === "Completed"
-                                    ? "success"
-                                    : pp.status === "Expired"
-                                      ? "danger"
-                                      : "warning"
-                                }`}
+                                className={`badge stitch-badge bg-${getProjectStatusTone(pp.status)}`}
                               >
                                 {pp.status === "Completed" && (
                                   <i className="ri-checkbox-circle-line me-1"></i>
@@ -334,11 +387,15 @@ const AnnotatorDashboard = () => {
                                 {pp.status === "Expired" && (
                                   <i className="ri-time-line me-1"></i>
                                 )}
+                                {pp.status === "AwaitingManagerConfirmation" && (
+                                  <i className="ri-time-line me-1"></i>
+                                )}
                                 {pp.status !== "Completed" &&
+                                  pp.status !== "AwaitingManagerConfirmation" &&
                                   pp.status !== "Expired" && (
                                     <i className="ri-loader-4-line me-1"></i>
                                   )}
-                                {pp.status}
+                                {getTaskStatusLabel(pp.status)}
                               </span>
                             </div>
 
@@ -530,11 +587,19 @@ const AnnotatorDashboard = () => {
                     <table className="table table-bordered align-middle mb-0">
                       <thead className="table-light">
                         <tr>
-                          <th style={{ width: 80 }}>ID</th>
-                          <th>Data</th>
-                          <th style={{ width: 130 }}>Status</th>
-                          <th style={{ width: 120 }}>Deadline</th>
-                          <th style={{ width: 100 }}>Tool</th>
+                          <th style={{ width: 80 }}>
+                            {t("annotatorDashboardComp.colId")}
+                          </th>
+                          <th>{t("annotatorDashboardComp.colData")}</th>
+                          <th style={{ width: 130 }}>
+                            {t("annotatorDashboardComp.colStatus")}
+                          </th>
+                          <th style={{ width: 120 }}>
+                            {t("annotatorDashboardComp.colDeadline")}
+                          </th>
+                          <th style={{ width: 100 }}>
+                            {t("annotatorDashboardComp.colAction")}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -548,7 +613,7 @@ const AnnotatorDashboard = () => {
                               <td>
                                 {task.dataItemUrl
                                   ? task.dataItemUrl.split("/").pop()
-                                  : `Item #${task.dataItemId}`}
+                                  : `${t("annotatorDashboardComp.itemPrefix")} #${task.dataItemId}`}
                               </td>
                               <td>
                                 <span
@@ -566,15 +631,15 @@ const AnnotatorDashboard = () => {
                                               : "bg-dark"
                                   }`}
                                 >
-                                  {task.status}
+                                  {getTaskStatusLabel(task.status)}
                                 </span>
                               </td>
                               <td>
                                 {task.deadline
                                   ? new Date(task.deadline).toLocaleDateString(
-                                      "vi-VN",
+                                      localeTag,
                                     )
-                                  : "N/A"}
+                                  : t("annotatorDash.notAvailable")}
                               </td>
                               <td>
                                 {isLocked ? (
@@ -584,19 +649,23 @@ const AnnotatorDashboard = () => {
                                     title={t("annotatorDash.taskLockedTitle")}
                                   >
                                     <i className="ri-lock-line me-1"></i>
-                                    Locked
+                                    {t("annotatorDash.lockedAction")}
                                   </button>
                                 ) : (
                                   <button
                                     className="btn btn-primary btn-sm"
                                     onClick={() => {
-                                      if (task.id) {
-                                        window.location.href = `/workplace-labeling-task/${task.id}`;
+                                      const workspaceUrl = buildAnnotatorWorkspaceUrl(
+                                        activeProjectId,
+                                        task,
+                                      );
+                                      if (workspaceUrl) {
+                                        navigate(workspaceUrl);
                                       }
                                     }}
                                   >
                                     <i className="ri-external-link-line me-1"></i>
-                                    Open
+                                    {t("annotatorDash.openAction")}
                                   </button>
                                 )}
                               </td>
@@ -643,7 +712,11 @@ const AnnotatorDashboard = () => {
                 className="card-body annotator-dash-scroll"
                 style={{ maxHeight: 400 }}
               >
-                <ReviewerFeedbackTable data={reviewerFeedback.data || []} />
+                <ReviewerFeedbackTable
+                  data={reviewerFeedback.data || []}
+                  loading={reviewerFeedback.isLoading}
+                  onOpenTask={handleOpenFeedbackTask}
+                />
               </div>
             )}
           </div>

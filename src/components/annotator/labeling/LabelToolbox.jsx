@@ -9,26 +9,38 @@ import { useTranslation } from "react-i18next";
 
 const EMPTY_OBJECT = Object.freeze({});
 
-const LabelToolbox = ({ labels, assignmentId, annotations = [] }) => {
+const LabelToolbox = ({
+  labels,
+  assignmentId,
+  annotations = [],
+  allowedLabelIds = null,
+}) => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const selectedLabel = useSelector((state) => state.labeling.selectedLabel);
   const checklistState = useSelector(
     (state) => state.labeling.checklistByAssignment[assignmentId] ?? EMPTY_OBJECT,
   );
+  const allowedLabelIdSet = useMemo(
+    () =>
+      Array.isArray(allowedLabelIds)
+        ? new Set(allowedLabelIds.map((id) => String(id)))
+        : null,
+    [allowedLabelIds],
+  );
 
   const [expandedLabelId, setExpandedLabelId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
 
-  
-  const defaultLabels = useMemo(
-    () => labels.filter((l) => l.isDefault),
-    [labels],
-  );
   const customLabels = useMemo(
-    () => labels.filter((l) => !l.isDefault),
-    [labels],
+    () =>
+      labels.filter(
+        (label) =>
+          !label.isDefault &&
+          (!allowedLabelIdSet || allowedLabelIdSet.has(String(label.id))),
+      ),
+    [allowedLabelIdSet, labels],
   );
 
   const unlockedLabelIds = useMemo(() => {

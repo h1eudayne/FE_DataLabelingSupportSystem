@@ -5,6 +5,10 @@ import projectService from "../../../services/manager/project/projectService";
 import taskService from "../../../services/manager/project/taskService";
 import { userService } from "../../../services/manager/project/userService";
 import Swal from "sweetalert2";
+import { sortByNaturalName } from "../../../utils/naturalSort";
+
+const getManagedUserName = (user) =>
+  user?.fullName || user?.userName || user?.email || String(user?.id || "");
 
 const CreateProject = () => {
   const { t } = useTranslation();
@@ -32,8 +36,18 @@ const CreateProject = () => {
         const res = await userService.getUsers();
         const rawData = res.data?.items || res.data || [];
         if (Array.isArray(rawData)) {
-          setAnnotators(rawData.filter((u) => u.role === "Annotator"));
-          setReviewers(rawData.filter((u) => u.role === "Reviewer"));
+          setAnnotators(
+            sortByNaturalName(
+              rawData.filter((u) => u.role === "Annotator"),
+              getManagedUserName,
+            ),
+          );
+          setReviewers(
+            sortByNaturalName(
+              rawData.filter((u) => u.role === "Reviewer"),
+              getManagedUserName,
+            ),
+          );
         }
       } catch (err) {
         console.error("Error fetching users:", err);

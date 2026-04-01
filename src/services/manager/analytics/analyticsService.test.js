@@ -33,7 +33,10 @@ describe("analyticsService - Full Coverage", () => {
     it("Success: aggregate data from multiple projects", async () => {
       
       axios.get.mockResolvedValueOnce({
-        data: [{ id: "P1" }, { id: "P2" }],
+        data: [
+          { id: "P1", status: "InProgress" },
+          { id: "P2", status: "Completed" },
+        ],
       });
       
       axios.get.mockResolvedValueOnce({ data: null });
@@ -59,6 +62,7 @@ describe("analyticsService - Full Coverage", () => {
           pendingAssignments: 0,
           totalItems: 20,
           completedItems: 20,
+          projectStatus: "Completed",
         },
       });
 
@@ -67,8 +71,37 @@ describe("analyticsService - Full Coverage", () => {
       );
 
       expect(stats.totalProjects).toBe(2);
-      
       expect(stats.completed).toBe(1);
+      expect(stats.inProgress).toBe(1);
+      expect(stats.submitted).toBe(0);
+    });
+
+    it("AwaitingManagerConfirmation is not counted as completed", async () => {
+      axios.get.mockResolvedValueOnce({
+        data: [{ id: "P1", status: "AwaitingManagerConfirmation" }],
+      });
+      axios.get.mockResolvedValueOnce({ data: null });
+      axios.get.mockResolvedValueOnce({
+        data: {
+          totalAssignments: 10,
+          approvedAssignments: 10,
+          rejectedAssignments: 0,
+          submittedAssignments: 0,
+          pendingAssignments: 0,
+          totalItems: 10,
+          completedItems: 10,
+          projectStatus: "AwaitingManagerConfirmation",
+        },
+      });
+
+      const stats = await analyticsService.getDashboardStats(
+        "test-manager-id",
+      );
+
+      expect(stats.completed).toBe(0);
+      expect(stats.inProgress).toBe(1);
+      expect(stats.submitted).toBe(1);
+      expect(stats.activeProjects[0].status).toBe("AwaitingManagerConfirmation");
     });
 
     it("Error 400: skip errored projects and continue", async () => {

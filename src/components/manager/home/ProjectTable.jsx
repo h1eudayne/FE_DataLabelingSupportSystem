@@ -28,7 +28,7 @@ const ProjectTable = ({ projects }) => {
             </td>
             <td className="text-muted small">{proj.reviewerName}</td>
             <td className="pe-4 text-end">
-              <StatusBadge progress={proj.progress} />
+              <StatusBadge status={proj.status} />
             </td>
           </tr>
         ))}

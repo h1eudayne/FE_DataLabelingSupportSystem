@@ -1,4 +1,8 @@
 import axios from "../../axios.customize";
+import {
+  PROJECT_WORKFLOW_STATUS,
+  isAwaitingManagerConfirmation,
+} from "../../../utils/projectWorkflowStatus";
 
 const analyticsService = {
   getMyProjects: (managerId) =>
@@ -38,19 +42,21 @@ const analyticsService = {
         const sub = s.submittedAssignments ?? 0;
         const pend = s.pendingAssignments ?? 0;
 
-        let projectStatus = "New";
+        let projectStatus =
+          s.projectStatus || project.status || PROJECT_WORKFLOW_STATUS.NEW;
+
         if (total === 0) {
           newProjects++;
-          projectStatus = "New";
-        } else if (approved === total) {
+          projectStatus = PROJECT_WORKFLOW_STATUS.NEW;
+        } else if (projectStatus === PROJECT_WORKFLOW_STATUS.COMPLETED) {
           completed++;
-          projectStatus = "Completed";
+        } else if (isAwaitingManagerConfirmation(projectStatus)) {
+          submitted++;
+          inProgress++;
         } else if (approved === 0 && sub === 0 && rej > 0) {
           rejected++;
-          projectStatus = "Rejected";
         } else {
           inProgress++;
-          projectStatus = "InProgress";
         }
 
         activeProjects.push({
@@ -76,7 +82,7 @@ const analyticsService = {
           activeProjects.push({
             id: project.id,
             name: project.name,
-            status: "New",
+            status: project.status || PROJECT_WORKFLOW_STATUS.NEW,
             progress: Number(project.progress || 0),
             totalImages: Number(project.totalDataItems || 0),
             completedImages: 0,

@@ -113,4 +113,34 @@ describe("Axios Customize Instance", () => {
     expect(localStorage.getItem("access_token")).toBe(refreshedToken);
     expect(localStorage.getItem("refresh_token")).toBe("refresh-token-999");
   });
+
+  it("nên refresh token một lần và retry lại request khi gặp 403 do quyền stale", async () => {
+    const staleToken = buildJwt(Math.floor(Date.now() / 1000) + 1800);
+    const refreshedToken = buildJwt(Math.floor(Date.now() / 1000) + 3600);
+
+    localStorage.setItem("access_token", staleToken);
+    localStorage.setItem("refresh_token", "refresh-token-403");
+
+    rawAxiosMock
+      .onPost("http://localhost:7025/api/auth/refresh-token")
+      .reply(200, {
+        accessToken: refreshedToken,
+        refreshToken: "refresh-token-403-next",
+      });
+
+    mock
+      .onGet("/reviews/projects")
+      .replyOnce(403, { message: "Forbidden" })
+      .onGet("/reviews/projects")
+      .reply(200, { success: true });
+
+    await instance.get("/reviews/projects");
+
+    expect(mock.history.get).toHaveLength(2);
+    expect(mock.history.get[1].headers.Authorization).toBe(
+      `Bearer ${refreshedToken}`,
+    );
+    expect(localStorage.getItem("access_token")).toBe(refreshedToken);
+    expect(localStorage.getItem("refresh_token")).toBe("refresh-token-403-next");
+  });
 });

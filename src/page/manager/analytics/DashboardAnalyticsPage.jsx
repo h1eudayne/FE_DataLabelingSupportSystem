@@ -38,6 +38,7 @@ import {
   Award,
   Zap,
   RefreshCw,
+  Scale,
   CheckCircle2,
   AlertOctagon,
 } from "lucide-react";
@@ -48,9 +49,26 @@ import { useSelector } from "react-redux";
 import analyticsService from "../../../services/manager/analytics/analyticsService";
 import reviewAuditService from "../../../services/manager/review/reviewAuditService";
 import disputeService from "../../../services/manager/dispute/disputeService";
+import { resolveGlobalBanRequest } from "../../../services/admin/managementUsers/user.api";
+import GlobalBanDecisionModal from "../../../components/layouts/GlobalBanDecisionModal";
+import useNotifications from "../../../hooks/useNotifications";
+import {
+  buildResolvedGlobalBanNotificationPatch,
+  getSafeGlobalBanErrorMessage,
+  getGlobalBanProjectKey,
+  getGlobalBanProjects,
+  getPendingGlobalBanNotifications,
+} from "../../../utils/globalBanNotifications";
+import {
+  PROJECT_WORKFLOW_STATUS,
+  isAwaitingManagerConfirmation,
+} from "../../../utils/projectWorkflowStatus";
 import { debugWarn } from "../../../utils/devLogger";
+import { formatLocalDateTime } from "../../../utils/dateTime";
 
 const COLORS = ["#0ab39c", "#f7b84b", "#405189", "#f06548", "#299cdb"];
+const GLOBAL_BAN_REVIEW_BUTTON_CLASS =
+  "d-inline-flex align-items-center justify-content-center gap-1 fw-semibold text-nowrap px-3 py-2";
 
 const getProjectIssueScore = (project) =>
   (project.pendingDisputeCount || 0) * 3 +
@@ -69,6 +87,61 @@ const sortProjectsByAttention = (projects) =>
     return (right.id || right.projectId || 0) - (left.id || left.projectId || 0);
   });
 
+const getReviewerIdentityKey = (reviewer) =>
+  String(
+    reviewer?.reviewerId ??
+      reviewer?.ReviewerId ??
+      reviewer?.id ??
+      reviewer?.reviewerName ??
+      reviewer?.ReviewerName ??
+      reviewer?.name ??
+      "Unknown",
+  );
+
+const getReviewerDisplayName = (reviewer) =>
+  reviewer?.reviewerName ??
+  reviewer?.ReviewerName ??
+  reviewer?.name ??
+  reviewer?.reviewerId ??
+  reviewer?.ReviewerId ??
+  reviewer?.id ??
+  "Unknown";
+
+const ensureReviewerAggregate = (reviewerMap, reviewer, project) => {
+  const reviewerKey = getReviewerIdentityKey(reviewer);
+  const reviewerName = getReviewerDisplayName(reviewer);
+
+  if (!reviewerMap[reviewerKey]) {
+    reviewerMap[reviewerKey] = {
+      reviewerKey,
+      id: reviewer?.reviewerId ?? reviewer?.ReviewerId ?? reviewerKey,
+      name: reviewerName,
+      totalReviews: 0,
+      totalAssigned: 0,
+      overridden: 0,
+      disputeCount: 0,
+      projectDetails: {},
+    };
+  }
+
+  if (project && !reviewerMap[reviewerKey].projectDetails[project.id]) {
+    reviewerMap[reviewerKey].projectDetails[project.id] = {
+      projectId: project.id,
+      projectName: project.name,
+      reviews: 0,
+      assigned: 0,
+      overridden: 0,
+      disputes: 0,
+    };
+  }
+
+  return reviewerMap[reviewerKey];
+};
+
+const formatNotificationDate = (value, locale) => {
+  return formatLocalDateTime(value, locale);
+};
+
 const EMPTY_STATS = {
   totalProjects: 0,
   completed: 0,
@@ -78,7 +151,7 @@ const EMPTY_STATS = {
 };
 
 const DashboardAnalytics = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [stats, setStats] = useState(EMPTY_STATS);
   const [projectChartData, setProjectChartData] = useState([]);
@@ -109,9 +182,94 @@ const DashboardAnalytics = () => {
   const [projectTotalItems, setProjectTotalItems] = useState(0);
   const [loadError, setLoadError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [banDecisionModal, setBanDecisionModal] = useState({
+    show: false,
+    decision: "approve",
+    decisionNote: "",
+    notification: null,
+  });
+  const [banDecisionLoading, setBanDecisionLoading] = useState(false);
 
-  const { user } = useSelector((state) => state.auth);
+  const { user, unreadNotifications } = useSelector((state) => state.auth);
   const managerId = user?.id;
+  const notificationLocale = i18n.language === "vi" ? "vi-VN" : "en-US";
+  const { notifications, markAsRead, updateNotification, refreshNotifications } = useNotifications(
+    managerId,
+    unreadNotifications,
+  );
+  const pendingGlobalBanNotifications = getPendingGlobalBanNotifications(notifications);
+
+  const openBanDecisionModal = (notification, decision = "approve") => {
+    setBanDecisionModal({
+      show: true,
+      decision,
+      decisionNote: notification?.metadata?.decisionNote || "",
+      notification,
+    });
+  };
+
+  const closeBanDecisionModal = (force = false) => {
+    if (banDecisionLoading && !force) {
+      return;
+    }
+
+    setBanDecisionModal({
+      show: false,
+      decision: "approve",
+      decisionNote: "",
+      notification: null,
+    });
+  };
+
+  const handleResolveBanRequest = async () => {
+    const requestId = banDecisionModal.notification?.metadata?.banRequestId;
+
+    if (!requestId) {
+      toast.error(t("header.globalBanInvalidRequest"));
+      return;
+    }
+
+    const normalizedDecisionNote = banDecisionModal.decisionNote.trim();
+    const approve = banDecisionModal.decision === "approve";
+
+    if (!approve && !normalizedDecisionNote) {
+      toast.error(t("header.globalBanRejectNoteRequired"));
+      return;
+    }
+
+    setBanDecisionLoading(true);
+
+    try {
+      await resolveGlobalBanRequest(requestId, approve, normalizedDecisionNote);
+      updateNotification(
+        banDecisionModal.notification?.id,
+        buildResolvedGlobalBanNotificationPatch(
+          banDecisionModal.notification,
+          approve,
+          normalizedDecisionNote,
+        ),
+      );
+      markAsRead(banDecisionModal.notification?.id);
+      await refreshNotifications();
+      window.dispatchEvent(new Event("notifications:refresh"));
+      toast.success(
+        approve
+          ? t("header.globalBanApproveSuccess")
+          : t("header.globalBanRejectSuccess"),
+      );
+      closeBanDecisionModal(true);
+    } catch (error) {
+      if (/already been resolved/i.test(error?.response?.data?.message || "")) {
+        await refreshNotifications();
+        window.dispatchEvent(new Event("notifications:refresh"));
+        closeBanDecisionModal(true);
+      }
+
+      toast.error(getSafeGlobalBanErrorMessage(error, t("header.globalBanActionFailed")));
+    } finally {
+      setBanDecisionLoading(false);
+    }
+  };
 
   const fetchAllData = useCallback(
     async ({ showSuccessToast = false } = {}) => {
@@ -172,10 +330,14 @@ const DashboardAnalytics = () => {
             const approvedAsgn = s.approvedAssignments ?? 0;
             const rejAsgn = s.rejectedAssignments ?? 0;
             const subAsgn = s.submittedAssignments ?? 0;
+            const projectWorkflowStatus =
+              s.projectStatus || project.status || PROJECT_WORKFLOW_STATUS.NEW;
 
             if (totalAsgn === 0) {
-            } else if (approvedAsgn === totalAsgn) {
+            } else if (projectWorkflowStatus === PROJECT_WORKFLOW_STATUS.COMPLETED) {
               completed++;
+            } else if (isAwaitingManagerConfirmation(projectWorkflowStatus)) {
+              inProgress++;
             } else if (approvedAsgn === 0 && subAsgn === 0 && rejAsgn > 0) {
               rejected++;
             } else {
@@ -210,6 +372,16 @@ const DashboardAnalytics = () => {
                   _projectName: project.name,
                   _projectId: project.id,
                 });
+
+                const reviewerAggregate = ensureReviewerAggregate(
+                  reviewerMap,
+                  rp,
+                  project,
+                );
+                reviewerAggregate.projectDetails[project.id].reviews = Math.max(
+                  reviewerAggregate.projectDetails[project.id].reviews,
+                  rp.totalReviews || 0,
+                );
               });
             }
 
@@ -261,10 +433,11 @@ const DashboardAnalytics = () => {
             const pendingAsgn = s.pendingAssignments ?? 0;
             const projAnnotators = (s.annotatorPerformances || []).map((ap) => {
               const annTotal = ap.tasksAssigned || 0;
-              const annCompleted = ap.tasksCompleted || 0;
+              const annApproved = ap.tasksCompleted || 0;
               const annRejected = ap.tasksRejected || 0;
-              const annApproved = Math.max(0, annCompleted - annRejected);
-              const annRemaining = Math.max(0, annTotal - annCompleted);
+              const annResolved =
+                ap.resolvedTasks ?? (annApproved + annRejected);
+              const annRemaining = Math.max(0, annTotal - annResolved);
               const annPendingEst =
                 totalAsgn > 0
                   ? Math.round((pendingAsgn * annTotal) / totalAsgn)
@@ -297,6 +470,7 @@ const DashboardAnalytics = () => {
               priorityIssueCount: project.priorityIssueCount || 0,
               hasPriorityIssue: Boolean(project.hasPriorityIssue),
               defaultActionTab: project.defaultActionTab || "datasets",
+              status: projectWorkflowStatus,
               overallProgress:
                 totalAsgn > 0
                   ? Math.round((approvedAsgn / totalAsgn) * 100)
@@ -341,66 +515,37 @@ const DashboardAnalytics = () => {
             const disputes = resDisputes.data || [];
 
             reviews.forEach((r) => {
-              const reviewerKey = r.reviewerName || r.reviewerId || "Unknown";
-              if (!reviewerMap[reviewerKey]) {
-                reviewerMap[reviewerKey] = {
-                  name: reviewerKey,
-                  totalReviews: 0,
-                  totalAssigned: 0,
-                  overridden: 0,
-                  disputeCount: 0,
-                  projectDetails: {},
-                };
-              }
-              if (!reviewerMap[reviewerKey].projectDetails[project.id]) {
-                reviewerMap[reviewerKey].projectDetails[project.id] = {
-                  projectName: project.name,
-                  reviews: 0,
-                  assigned: 0,
-                  overridden: 0,
-                  disputes: 0,
-                };
-              }
-              reviewerMap[reviewerKey].totalAssigned++;
-              reviewerMap[reviewerKey].projectDetails[project.id].assigned++;
+              const reviewerAggregate = ensureReviewerAggregate(
+                reviewerMap,
+                r,
+                project,
+              );
+              reviewerAggregate.totalAssigned++;
+              reviewerAggregate.projectDetails[project.id].assigned++;
 
               const reviewStatus = r.status || "";
               if (reviewStatus === "Approved" || reviewStatus === "Rejected") {
-                reviewerMap[reviewerKey].totalReviews++;
-                reviewerMap[reviewerKey].projectDetails[project.id].reviews++;
+                reviewerAggregate.totalReviews++;
+                reviewerAggregate.projectDetails[project.id].reviews++;
                 if (
                   r.managerAuditDecision !== undefined &&
                   r.managerAuditDecision !== null &&
                   r.managerAuditDecision === false
                 ) {
-                  reviewerMap[reviewerKey].overridden++;
-                  reviewerMap[reviewerKey].projectDetails[project.id]
-                    .overridden++;
+                  reviewerAggregate.overridden++;
+                  reviewerAggregate.projectDetails[project.id].overridden++;
                 }
               }
             });
 
             disputes.forEach((d) => {
-              const reviewerKey = d.reviewerName || d.reviewerId || "Unknown";
-              if (!reviewerMap[reviewerKey]) {
-                reviewerMap[reviewerKey] = {
-                  name: reviewerKey,
-                  totalReviews: 0,
-                  overridden: 0,
-                  disputeCount: 0,
-                  projectDetails: {},
-                };
-              }
-              reviewerMap[reviewerKey].disputeCount++;
-              if (!reviewerMap[reviewerKey].projectDetails[project.id]) {
-                reviewerMap[reviewerKey].projectDetails[project.id] = {
-                  projectName: project.name,
-                  reviews: 0,
-                  overridden: 0,
-                  disputes: 0,
-                };
-              }
-              reviewerMap[reviewerKey].projectDetails[project.id].disputes++;
+              const reviewerAggregate = ensureReviewerAggregate(
+                reviewerMap,
+                d,
+                project,
+              );
+              reviewerAggregate.disputeCount++;
+              reviewerAggregate.projectDetails[project.id].disputes++;
             });
           } catch { }
         }
@@ -414,17 +559,16 @@ const DashboardAnalytics = () => {
           const seenReviewers = new Set();
 
           apiReviewersForProject.forEach((rp) => {
+            const reviewerKey = getReviewerIdentityKey(rp);
             const revTotal = rp.totalReviews || 0;
-            const mapData = Object.values(reviewerMap).find(
-              (rm) => rm.name === rp.reviewerName,
-            );
+            const mapData = reviewerMap[reviewerKey];
             const mapPd = mapData?.projectDetails[pp.projectId];
             const assignedTotal = mapPd?.assigned || 0;
             const effectiveTotal = Math.max(revTotal, assignedTotal);
 
             projectReviewers.push({
-              id: rp.reviewerId,
-              name: rp.reviewerName,
+              id: rp.reviewerId || reviewerKey,
+              name: getReviewerDisplayName(rp),
               role: "Reviewer",
               done: revTotal,
               total: effectiveTotal,
@@ -433,17 +577,17 @@ const DashboardAnalytics = () => {
                   ? Math.round((revTotal / effectiveTotal) * 100)
                   : 0,
             });
-            seenReviewers.add(rp.reviewerName);
+            seenReviewers.add(reviewerKey);
           });
 
-          Object.values(reviewerMap).forEach((rev) => {
-            if (seenReviewers.has(rev.name)) return;
+          Object.entries(reviewerMap).forEach(([reviewerKey, rev]) => {
+            if (seenReviewers.has(reviewerKey)) return;
             const pd = rev.projectDetails[pp.projectId];
             if (pd) {
               const revTotal = pd.assigned || 0;
               const revDone = pd.reviews || 0;
               projectReviewers.push({
-                id: rev.name,
+                id: rev.id || reviewerKey,
                 name: rev.name,
                 role: "Reviewer",
                 done: revDone,
@@ -484,17 +628,56 @@ const DashboardAnalytics = () => {
 
         const uniqueAnnotators = {};
         allAnnotators.forEach((a) => {
+          const tasksAssigned = a.tasksAssigned || 0;
+          const tasksCompleted = a.tasksCompleted || 0;
+          const tasksRejected = a.tasksRejected || 0;
+          const resolvedTasks =
+            a.resolvedTasks ?? (tasksCompleted + tasksRejected);
+          const firstPassCorrect = a.firstPassCorrect || 0;
+          const reworkCount = a.reworkCount || 0;
+          const totalSubmittedTasks = a.totalSubmittedTasks || 0;
+          const hasManagerDecision = resolvedTasks > 0;
+          const finalAccuracy =
+            hasManagerDecision
+              ? Number(a.finalAccuracy ?? a.annotatorAccuracy ?? 0)
+              : null;
+          const firstPassAccuracy =
+            hasManagerDecision
+              ? Number(
+                a.firstPassAccuracy ??
+                  (tasksAssigned > 0
+                    ? (firstPassCorrect / tasksAssigned) * 100
+                    : 0),
+              )
+              : null;
+          const reworkRate = Number(
+            a.reworkRate ??
+              (totalSubmittedTasks > 0
+                ? (reworkCount / totalSubmittedTasks) * 100
+                : 0),
+          );
+          const qualityScore =
+            hasManagerDecision && a.averageQualityScore != null
+              ? Number(a.averageQualityScore)
+              : null;
+          const qualityWeight = qualityScore !== null ? Math.max(resolvedTasks, 1) : 0;
           const isTaskCompleted =
-            (a.tasksAssigned || 0) > 0 &&
-            (a.tasksCompleted || 0) === (a.tasksAssigned || 0);
+            tasksAssigned > 0 && resolvedTasks === tasksAssigned;
 
           const projectDetail = {
             projectId: a._projectId,
             projectName: a._projectName,
-            totalImages: a.tasksAssigned || 0,
-            completedImages: a.tasksCompleted || 0,
-            rejectedImages: a.tasksRejected || 0,
+            totalImages: tasksAssigned,
+            completedImages: tasksCompleted,
+            rejectedImages: tasksRejected,
             isCompleted: isTaskCompleted,
+            qualityScore,
+            finalAccuracy,
+            firstPassAccuracy,
+            reworkRate,
+            resolvedTasks,
+            totalSubmittedTasks,
+            reworkCount,
           };
 
           if (!uniqueAnnotators[a.annotatorId]) {
@@ -503,49 +686,58 @@ const DashboardAnalytics = () => {
               annotatorName: a.annotatorName,
               totalTasks: 1,
               completedTasks: isTaskCompleted ? 1 : 0,
-              totalImages: a.tasksAssigned || 0,
-              completedImages: a.tasksCompleted || 0,
-              rejectedImages: a.tasksRejected || 0,
-              averageQualityScore: a.averageQualityScore ?? 100,
-              annotatorAccuracy: (a.annotatorAccuracy === 0 && (a.tasksCompleted || 0) === 0) ? 100 : (a.annotatorAccuracy ?? 100),
-              _hasManagerDecision: (a.annotatorAccuracy > 0 || (a.tasksCompleted || 0) > 0),
+              totalImages: tasksAssigned,
+              completedImages: tasksCompleted,
+              rejectedImages: tasksRejected,
+              resolvedTasks,
+              firstPassCorrect,
+              reworkCount,
+              totalSubmittedTasks,
+              averageQualityScore: qualityScore,
+              annotatorAccuracy: finalAccuracy,
+              finalAccuracy,
+              firstPassAccuracy,
+              reworkRate,
+              _hasManagerDecision: hasManagerDecision,
               totalCriticalErrors: a.totalCriticalErrors || 0,
-              _qualityScores: [a.averageQualityScore ?? 100],
-              _accuracyScores: [
-                {
-                  score: (a.annotatorAccuracy === 0 && (a.tasksCompleted || 0) === 0) ? 100 : (a.annotatorAccuracy ?? 100),
-                  weight: a.tasksAssigned || 1,
-                },
-              ],
+              _qualityWeightedSum:
+                qualityScore !== null ? qualityScore * qualityWeight : 0,
+              _qualityWeight: qualityWeight,
               projectDetails: [projectDetail],
             };
           } else {
             const existing = uniqueAnnotators[a.annotatorId];
             existing.totalTasks += 1;
             existing.completedTasks += isTaskCompleted ? 1 : 0;
-            existing.totalImages += a.tasksAssigned || 0;
-            existing.completedImages += a.tasksCompleted || 0;
-            existing.rejectedImages += a.tasksRejected || 0;
+            existing.totalImages += tasksAssigned;
+            existing.completedImages += tasksCompleted;
+            existing.rejectedImages += tasksRejected;
+            existing.resolvedTasks += resolvedTasks;
+            existing.firstPassCorrect += firstPassCorrect;
+            existing.reworkCount += reworkCount;
+            existing.totalSubmittedTasks += totalSubmittedTasks;
             existing.totalCriticalErrors += a.totalCriticalErrors || 0;
-            existing._qualityScores.push(a.averageQualityScore ?? 100);
+            existing._qualityWeightedSum +=
+              qualityScore !== null ? qualityScore * qualityWeight : 0;
+            existing._qualityWeight += qualityWeight;
             existing.averageQualityScore =
-              existing._qualityScores.reduce((s, v) => s + v, 0) /
-              existing._qualityScores.length;
-            existing._hasManagerDecision = existing._hasManagerDecision || (a.annotatorAccuracy > 0 || (a.tasksCompleted || 0) > 0);
-            existing._accuracyScores.push({
-              score: (a.annotatorAccuracy === 0 && (a.tasksCompleted || 0) === 0) ? 100 : (a.annotatorAccuracy ?? 100),
-              weight: a.tasksAssigned || 1,
-            });
-            const totalWeight = existing._accuracyScores.reduce(
-              (s, v) => s + v.weight,
-              0,
-            );
-            existing.annotatorAccuracy =
-              totalWeight > 0
-                ? existing._accuracyScores.reduce(
-                  (s, v) => s + v.score * v.weight,
-                  0,
-                ) / totalWeight
+              existing._qualityWeight > 0
+                ? existing._qualityWeightedSum / existing._qualityWeight
+                : null;
+            existing._hasManagerDecision =
+              existing._hasManagerDecision || hasManagerDecision;
+            existing.finalAccuracy =
+              existing.resolvedTasks > 0
+                ? (existing.completedImages / existing.resolvedTasks) * 100
+                : null;
+            existing.annotatorAccuracy = existing.finalAccuracy;
+            existing.firstPassAccuracy =
+              existing.totalImages > 0
+                ? (existing.firstPassCorrect / existing.totalImages) * 100
+                : null;
+            existing.reworkRate =
+              existing.totalSubmittedTasks > 0
+                ? (existing.reworkCount / existing.totalSubmittedTasks) * 100
                 : 0;
             existing.projectDetails.push(projectDetail);
           }
@@ -567,20 +759,27 @@ const DashboardAnalytics = () => {
 
         const reviewerAccuracyMap = {};
         allReviewerPerformances.forEach((rp) => {
-          if (!reviewerAccuracyMap[rp.reviewerName]) {
-            reviewerAccuracyMap[rp.reviewerName] = {
+          const reviewerKey = getReviewerIdentityKey(rp);
+          if (!reviewerAccuracyMap[reviewerKey]) {
+            reviewerAccuracyMap[reviewerKey] = {
+              reviewerId: rp.reviewerId || reviewerKey,
+              reviewerName: getReviewerDisplayName(rp),
               totalCorrect: 0,
               totalMgrDecisions: 0,
               projectAccuracies: [],
             };
           }
-          reviewerAccuracyMap[rp.reviewerName].totalCorrect +=
+          reviewerAccuracyMap[reviewerKey].totalCorrect +=
             rp.correctDecisions || 0;
-          reviewerAccuracyMap[rp.reviewerName].totalMgrDecisions +=
+          reviewerAccuracyMap[reviewerKey].totalMgrDecisions +=
             rp.totalManagerDecisions || 0;
-          reviewerAccuracyMap[rp.reviewerName].projectAccuracies.push({
+          reviewerAccuracyMap[reviewerKey].projectAccuracies.push({
+            projectId: rp._projectId,
             projectName: rp._projectName,
-            reviewerAccuracy: rp.reviewerAccuracy ?? 0,
+            reviewerAccuracy:
+              (rp.totalManagerDecisions || 0) > 0
+                ? rp.reviewerAccuracy
+                : null,
             totalReviews: rp.totalReviews || 0,
             correctDecisions: rp.correctDecisions || 0,
             totalManagerDecisions: rp.totalManagerDecisions || 0,
@@ -588,7 +787,7 @@ const DashboardAnalytics = () => {
         });
 
         const reviewerEvals = Object.values(reviewerMap).map((r) => {
-          const accData = reviewerAccuracyMap[r.name];
+          const accData = reviewerAccuracyMap[r.reviewerKey];
           const apiTotalReviews =
             accData?.projectAccuracies?.reduce(
               (sum, pa) => sum + (pa.totalReviews || 0),
@@ -605,7 +804,24 @@ const DashboardAnalytics = () => {
                 (accData.totalCorrect / accData.totalMgrDecisions) *
                 100
               ).toFixed(1)
-              : "100.0";
+              : null;
+          const mergedProjectDetails = Object.values(r.projectDetails || {}).map(
+            (projectDetail) => {
+              const accuracyDetail = (accData?.projectAccuracies || []).find(
+                (projectAccuracy) =>
+                  String(projectAccuracy.projectId) === String(projectDetail.projectId) ||
+                  projectAccuracy.projectName === projectDetail.projectName,
+              );
+
+              return {
+                ...projectDetail,
+                reviewerAccuracy: accuracyDetail?.reviewerAccuracy ?? null,
+                totalManagerDecisions:
+                  accuracyDetail?.totalManagerDecisions ?? 0,
+                correctDecisions: accuracyDetail?.correctDecisions ?? 0,
+              };
+            },
+          );
           return {
             ...r,
             totalReviews: effectiveTotalReviews,
@@ -618,8 +834,10 @@ const DashboardAnalytics = () => {
                 ? ((r.disputeCount / effectiveTotalReviews) * 100).toFixed(1)
                 : "0.0",
             totalProjects: Object.keys(r.projectDetails || {}).length,
-            projectDetailsList: Object.values(r.projectDetails || {}),
+            projectDetailsList: mergedProjectDetails,
             reviewerAccuracy,
+            totalManagerDecisions: accData?.totalMgrDecisions || 0,
+            correctDecisions: accData?.totalCorrect || 0,
             projectAccuracies: accData?.projectAccuracies || [],
           };
         });
@@ -630,7 +848,9 @@ const DashboardAnalytics = () => {
 
         const allStaffIds = new Set([
           ...annotatorsArr.map((a) => a.annotatorId),
-          ...Object.keys(reviewerMap),
+          ...Object.values(reviewerMap).map(
+            (reviewer) => reviewer.id || reviewer.reviewerKey || reviewer.name,
+          ),
         ]);
         const frontendStaffCount = allStaffIds.size;
         const apiMembers = managerStats?.totalMembers || 0;
@@ -701,6 +921,11 @@ const DashboardAnalytics = () => {
     fetchAllData();
   }, [fetchAllData]);
 
+  const handleDashboardRefresh = () => {
+    refreshNotifications().catch(() => {});
+    fetchAllData({ showSuccessToast: true });
+  };
+
   if (loading) {
     return (
       <div className="p-5 text-center">
@@ -762,7 +987,7 @@ const DashboardAnalytics = () => {
               color="light"
               size="sm"
               className="d-inline-flex align-items-center"
-              onClick={() => fetchAllData({ showSuccessToast: true })}
+              onClick={handleDashboardRefresh}
               disabled={loading || refreshing}
             >
               {refreshing ? (
@@ -794,6 +1019,167 @@ const DashboardAnalytics = () => {
                 {t("analytics.retry")}
               </Button>
             </Alert>
+          </Col>
+        </Row>
+      )}
+
+      {pendingGlobalBanNotifications.length > 0 && (
+        <Row className="mb-3">
+          <Col xl={12}>
+            <Card className="shadow-sm border-0 overflow-hidden">
+              <CardHeader className="bg-danger-subtle border-0 py-3">
+                <div className="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                  <div className="d-flex align-items-start gap-3">
+                    <div className="rounded-4 bg-white text-danger d-inline-flex align-items-center justify-content-center shadow-sm" style={{ width: "52px", height: "52px" }}>
+                      <AlertOctagon size={22} />
+                    </div>
+                    <div>
+                      <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
+                        <h5 className="mb-0 fw-semibold">
+                          {t("analytics.globalBanPriorityTitle")}
+                        </h5>
+                        <Badge color="warning" pill className="text-dark">
+                          {t("analytics.globalBanPriorityCount", {
+                            count: pendingGlobalBanNotifications.length,
+                          })}
+                        </Badge>
+                      </div>
+                      <p className="mb-0 text-muted small">
+                        {t("analytics.globalBanPrioritySubtitle")}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    color="danger"
+                    className={GLOBAL_BAN_REVIEW_BUTTON_CLASS}
+                    onClick={() => openBanDecisionModal(pendingGlobalBanNotifications[0])}
+                  >
+                    <i className="ri-shield-user-line me-1"></i>
+                    {t("header.globalBanReviewRequestCta")}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardBody className="d-flex flex-column gap-3">
+                <Alert color="danger" className="mb-0">
+                  <div className="fw-semibold mb-1">
+                    {t("header.globalBanDecisionRequired")}
+                  </div>
+                  <div className="small mb-0">
+                    {t("analytics.globalBanPriorityNote")}
+                  </div>
+                </Alert>
+
+                {pendingGlobalBanNotifications.map((notification) => {
+                  const metadata = notification?.metadata || {};
+                  const impactedProjects = getGlobalBanProjects(notification);
+                  const requestedAt = formatNotificationDate(
+                    metadata.requestedAt || notification?.timestamp,
+                    notificationLocale,
+                  );
+                  const primaryProjectId = impactedProjects[0]?.id;
+
+                  return (
+                    <div
+                      key={notification.id}
+                      className="rounded-4 border border-danger-subtle p-3 bg-light bg-opacity-50"
+                    >
+                      <div className="d-flex flex-column flex-xl-row justify-content-between gap-3">
+                        <div className="flex-grow-1">
+                          <div className="d-flex flex-wrap align-items-center gap-2">
+                            <div className="fw-semibold fs-6">
+                              {metadata.targetUserName || t("header.defaultUser")}
+                            </div>
+                            {metadata.targetUserRole && (
+                              <Badge color="info" pill>
+                                {metadata.targetUserRole}
+                              </Badge>
+                            )}
+                            <Badge color="warning" pill className="text-dark">
+                              {t("header.approvalRequired")}
+                            </Badge>
+                          </div>
+
+                          {metadata.targetUserEmail && (
+                            <div className="text-muted small mt-1">
+                              {metadata.targetUserEmail}
+                            </div>
+                          )}
+
+                          <div className="small text-muted mt-2">
+                            <span className="fw-semibold">
+                              {t("header.globalBanRequestedBy")}:
+                            </span>{" "}
+                            {metadata.requestedByAdminName || t("header.defaultUser")}
+                          </div>
+
+                          {requestedAt && (
+                            <div className="small text-muted mt-1">
+                              <span className="fw-semibold">
+                                {t("header.globalBanRequestedAt")}:
+                              </span>{" "}
+                              {requestedAt}
+                            </div>
+                          )}
+
+                          <div className="small mt-3 text-muted">
+                            {notification.message}
+                          </div>
+                        </div>
+
+                        <div className="d-flex flex-row flex-nowrap gap-2 align-items-center justify-content-start justify-content-xl-end">
+                          <Button
+                            color="danger"
+                            className={GLOBAL_BAN_REVIEW_BUTTON_CLASS}
+                            onClick={() => openBanDecisionModal(notification)}
+                          >
+                            <i className="ri-shield-user-line me-1"></i>
+                            {t("header.globalBanReviewRequestCta")}
+                          </Button>
+                          {primaryProjectId && (
+                            <Button
+                              color="danger"
+                              className={GLOBAL_BAN_REVIEW_BUTTON_CLASS}
+                              onClick={() =>
+                                navigate(`/project-detail/${primaryProjectId}`)
+                              }
+                            >
+                              <i className="ri-folder-open-line me-1"></i>
+                              {t("analytics.globalBanOpenProject")}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="small fw-semibold text-muted mb-2">
+                          {t("header.globalBanProjects")}
+                        </div>
+                        {impactedProjects.length > 0 ? (
+                          <div className="d-flex flex-wrap gap-2">
+                            {impactedProjects.map((project, index) => (
+                              <span
+                                key={getGlobalBanProjectKey(project, index, notification.id)}
+                                className="badge rounded-pill text-bg-light border"
+                              >
+                                {project.name ||
+                                  (project.id
+                                    ? `${t("header.globalBanUnknownProject")} #${project.id}`
+                                    : t("header.globalBanUnknownProject"))}
+                                {project.status ? ` · ${project.status}` : ""}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="small text-muted">
+                            {t("header.globalBanNoProjects")}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardBody>
+            </Card>
           </Col>
         </Row>
       )}
@@ -1196,7 +1582,7 @@ const DashboardAnalytics = () => {
                                     : "danger"
                               }
                             >
-                              {pa.finalAccuracy > 0 ? `${pa.finalAccuracy}%` : "—"}
+                              {pa.totalItems > 0 ? `${pa.finalAccuracy}%` : "—"}
                             </Badge>
                           </td>
                           <td className="text-center">
@@ -1209,7 +1595,7 @@ const DashboardAnalytics = () => {
                                     : "danger"
                               }
                             >
-                              {pa.firstPassAccuracy > 0 ? `${pa.firstPassAccuracy}%` : "—"}
+                              {pa.totalItems > 0 ? `${pa.firstPassAccuracy}%` : "—"}
                             </Badge>
                           </td>
                           <td className="text-center">
@@ -1301,6 +1687,7 @@ const DashboardAnalytics = () => {
                               (a.completedImages / a.totalImages) * 100,
                             )
                             : 0;
+                        const hasQualityScore = a.averageQualityScore != null;
                         const isExpanded = expandedAnnotators[a.annotatorId];
                         return (
                           <React.Fragment key={a.annotatorId}>
@@ -1330,19 +1717,21 @@ const DashboardAnalytics = () => {
                                 {a.completedImages}
                               </td>
                               <td className="text-center">
-                                <Badge
-                                  color={
-                                    a.averageQualityScore >= 80
-                                      ? "success"
-                                      : a.averageQualityScore >= 50
-                                        ? "warning"
-                                        : "danger"
-                                  }
-                                >
-                                  {a.averageQualityScore > 0
-                                    ? a.averageQualityScore.toFixed(1)
-                                    : "—"}
-                                </Badge>
+                                {hasQualityScore ? (
+                                  <Badge
+                                    color={
+                                      a.averageQualityScore >= 80
+                                        ? "success"
+                                        : a.averageQualityScore >= 50
+                                          ? "warning"
+                                          : "danger"
+                                    }
+                                  >
+                                    {a.averageQualityScore.toFixed(1)}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted">—</span>
+                                )}
                               </td>
                               <td className="text-center">
                                 {a.totalCriticalErrors > 0 ? (
@@ -1356,14 +1745,16 @@ const DashboardAnalytics = () => {
                               <td className="text-center">
                                 <Badge
                                   color={
-                                    (a.finalAccuracy ?? a.annotatorAccuracy ?? 0) >= 80
+                                    !a._hasManagerDecision
+                                      ? "secondary"
+                                      : (a.finalAccuracy ?? a.annotatorAccuracy ?? 0) >= 80
                                       ? "success"
                                       : (a.finalAccuracy ?? a.annotatorAccuracy ?? 0) >= 50
                                         ? "warning"
                                         : "danger"
                                   }
                                 >
-                                  {(a.finalAccuracy ?? a.annotatorAccuracy ?? 0) > 0
+                                  {a._hasManagerDecision
                                     ? `${(a.finalAccuracy ?? a.annotatorAccuracy ?? 0).toFixed(1)}%`
                                     : "—"}
                                 </Badge>
@@ -1441,19 +1832,70 @@ const DashboardAnalytics = () => {
                                       {pd.completedImages} {t('analytics.doneUnit')}
                                     </td>
                                     <td className="text-center text-muted">
-                                      —
+                                      {pd.qualityScore != null ? (
+                                        <Badge
+                                          color={
+                                            pd.qualityScore >= 80
+                                              ? "success"
+                                              : pd.qualityScore >= 50
+                                                ? "warning"
+                                                : "danger"
+                                          }
+                                        >
+                                          {pd.qualityScore.toFixed(1)}
+                                        </Badge>
+                                      ) : (
+                                        "—"
+                                      )}
                                     </td>
                                     <td className="text-center text-muted">
                                       —
                                     </td>
                                     <td className="text-center text-muted">
-                                      —
+                                      {pd.finalAccuracy != null ? (
+                                        <Badge
+                                          color={
+                                            pd.finalAccuracy >= 80
+                                              ? "success"
+                                              : pd.finalAccuracy >= 50
+                                                ? "warning"
+                                                : "danger"
+                                          }
+                                        >
+                                          {pd.finalAccuracy.toFixed(1)}%
+                                        </Badge>
+                                      ) : (
+                                        "—"
+                                      )}
                                     </td>
                                     <td className="text-center text-muted">
-                                      —
+                                      {pd.firstPassAccuracy != null ? (
+                                        <Badge
+                                          color={
+                                            pd.firstPassAccuracy >= 80
+                                              ? "success"
+                                              : pd.firstPassAccuracy >= 50
+                                                ? "warning"
+                                                : "danger"
+                                          }
+                                        >
+                                          {pd.firstPassAccuracy.toFixed(1)}%
+                                        </Badge>
+                                      ) : (
+                                        "—"
+                                      )}
                                     </td>
                                     <td className="text-center text-muted">
-                                      —
+                                      <Badge
+                                        color={pd.reworkRate > 15 ? "danger" : "success"}
+                                      >
+                                        {pd.reworkRate > 0
+                                          ? `${pd.reworkRate.toFixed(1)}%`
+                                          : "0%"}
+                                        {pd.reworkCount > 0 && (
+                                          <span className="ms-1">({pd.reworkCount})</span>
+                                        )}
+                                      </Badge>
                                     </td>
                                   </tr>
                                 );
@@ -1504,15 +1946,15 @@ const DashboardAnalytics = () => {
                         <th className="text-center">{t('statusCommon.disputeRate')}</th>
                         <th className="text-center">
                           <RefreshCw size={12} className="me-1 text-success" />
-                          Final Accuracy
+                          {t('analytics.finalAccuracy')}
                         </th>
                         <th className="text-center">
-                          <Zap size={12} className="me-1 text-warning" />
-                          1st Pass
+                          <Scale size={12} className="me-1 text-primary" />
+                          {t('analytics.managerDecisions')}
                         </th>
                         <th className="text-center">
-                          <AlertTriangle size={12} className="me-1 text-info" />
-                          Dispute Rate
+                          <CheckCircle2 size={12} className="me-1 text-success" />
+                          {t('analytics.correctDecisions')}
                         </th>
                       </tr>
                     </thead>
@@ -1522,6 +1964,8 @@ const DashboardAnalytics = () => {
                         const disputeHigh = parseFloat(r.disputeRate) > 15;
                         const accValue = r.reviewerAccuracy;
                         const accNum = parseFloat(accValue);
+                        const hasReviewerAccuracy =
+                          accValue !== null && !Number.isNaN(accNum);
                         const isExpanded = expandedReviewers[r.name];
                         return (
                           <React.Fragment key={idx}>
@@ -1579,7 +2023,9 @@ const DashboardAnalytics = () => {
                               <td className="text-center">
                                 <Badge
                                   color={
-                                    accNum >= 80
+                                    !hasReviewerAccuracy
+                                      ? "secondary"
+                                      : accNum >= 80
                                       ? "success"
                                       : accNum >= 50
                                         ? "warning"
@@ -1587,29 +2033,30 @@ const DashboardAnalytics = () => {
                                   }
                                   className="fs-12"
                                 >
-                                  {`${accValue}%`}
+                                  {hasReviewerAccuracy ? `${accValue}%` : "—"}
                                 </Badge>
                               </td>
                               <td className="text-center">
-                                <Badge
-                                  color={
-                                    (100 - parseFloat(r.disputeRate)) >= 80
-                                      ? "success"
-                                      : (100 - parseFloat(r.disputeRate)) >= 50
-                                        ? "warning"
-                                        : "danger"
-                                  }
-                                  className="fs-12"
-                                >
-                                  {isNaN(accNum) ? "—" : `${Math.max(0, 100 - parseFloat(r.disputeRate)).toFixed(1)}%`}
-                                </Badge>
+                                {r.totalManagerDecisions > 0 ? (
+                                  <Badge color="info" className="fs-12">
+                                    {r.totalManagerDecisions}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted">—</span>
+                                )}
                               </td>
                               <td className="text-center">
-                                <Badge
-                                  color={disputeHigh ? "danger" : "success"}
-                                >
-                                  {r.disputeRate}%
-                                </Badge>
+                                {r.correctDecisions > 0 ? (
+                                  <Badge color="success" className="fs-12">
+                                    {r.correctDecisions}
+                                  </Badge>
+                                ) : r.totalManagerDecisions > 0 ? (
+                                  <Badge color="secondary" className="fs-12">
+                                    0
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted">—</span>
+                                )}
                               </td>
                             </tr>
                             { }
@@ -1647,9 +2094,46 @@ const DashboardAnalytics = () => {
                                       ).toFixed(1) + "%"
                                       : "—"}
                                   </td>
-                                  <td className="text-center text-muted">—</td>
-                                  <td className="text-center text-muted">—</td>
-                                  <td className="text-center text-muted">—</td>
+                                  <td className="text-center text-muted">
+                                    {pd.reviewerAccuracy != null ? (
+                                      <Badge
+                                        color={
+                                          pd.reviewerAccuracy >= 80
+                                            ? "success"
+                                            : pd.reviewerAccuracy >= 50
+                                              ? "warning"
+                                              : "danger"
+                                        }
+                                        className="fs-12"
+                                      >
+                                        {pd.reviewerAccuracy.toFixed(1)}%
+                                      </Badge>
+                                    ) : (
+                                      "—"
+                                    )}
+                                  </td>
+                                  <td className="text-center text-muted">
+                                    {pd.totalManagerDecisions > 0 ? (
+                                      <Badge color="info" className="fs-12">
+                                        {pd.totalManagerDecisions}
+                                      </Badge>
+                                    ) : (
+                                      "—"
+                                    )}
+                                  </td>
+                                  <td className="text-center text-muted">
+                                    {pd.correctDecisions > 0 ? (
+                                      <Badge color="success" className="fs-12">
+                                        {pd.correctDecisions}
+                                      </Badge>
+                                    ) : pd.totalManagerDecisions > 0 ? (
+                                      <Badge color="secondary" className="fs-12">
+                                        0
+                                      </Badge>
+                                    ) : (
+                                      "—"
+                                    )}
+                                  </td>
                                 </tr>
                               ))}
                           </React.Fragment>
@@ -2070,6 +2554,28 @@ const DashboardAnalytics = () => {
           </Card>
         </Col>
       </Row>
+
+      <GlobalBanDecisionModal
+        show={banDecisionModal.show}
+        onHide={() => closeBanDecisionModal()}
+        onSubmit={handleResolveBanRequest}
+        loading={banDecisionLoading}
+        notification={banDecisionModal.notification}
+        decision={banDecisionModal.decision}
+        decisionNote={banDecisionModal.decisionNote}
+        onDecisionChange={(nextDecision) =>
+          setBanDecisionModal((prev) => ({
+            ...prev,
+            decision: nextDecision,
+          }))
+        }
+        onDecisionNoteChange={(nextNote) =>
+          setBanDecisionModal((prev) => ({
+            ...prev,
+            decisionNote: nextNote,
+          }))
+        }
+      />
     </>
   );
 };

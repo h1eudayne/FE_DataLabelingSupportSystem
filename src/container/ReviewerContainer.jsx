@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Container, Row, Col, Spinner, Card } from "react-bootstrap";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { Container, Row, Col, Spinner, Card, Alert } from "react-bootstrap";
 import {
   CheckCircle,
   Clock,
@@ -15,9 +15,24 @@ import { useNavigate } from "react-router-dom";
 import useSignalRRefresh from "../hooks/useSignalRRefresh";
 import { useTranslation } from "react-i18next";
 import ProjectCardItem from "../components/reviewer/home/ProjectCardItem";
-import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import {
+  isAwaitingManagerConfirmation,
+  isCompletedProjectStatus,
+} from "../utils/projectWorkflowStatus";
 
 const REVIEWER_REFRESH_INTERVAL_MS = 30000;
+
+const isForbiddenError = (error) => Number(error?.response?.status) === 403;
+
+const getApiErrorMessage = (error) => {
+  const rawMessage =
+    error?.response?.data?.message ??
+    error?.response?.data?.Message ??
+    error?.message;
+
+  return typeof rawMessage === "string" ? rawMessage.trim() : "";
+};
 
 const ReviewerContainer = () => {
   const { user } = useSelector((state) => state.auth);
@@ -25,29 +40,53 @@ const ReviewerContainer = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [globalAccuracy, setGlobalAccuracy] = useState(100);
+  const [globalAccuracy, setGlobalAccuracy] = useState(null);
+  const [accessForbiddenMessage, setAccessForbiddenMessage] = useState("");
 
   const navigate = useNavigate();
+  const hasReviewerAccess = accessForbiddenMessage.length === 0;
+  const reviewerAccessRef = useRef(true);
+
+  const handleForbiddenAccess = useCallback(
+    (error) => {
+      const serverMessage = getApiErrorMessage(error);
+      reviewerAccessRef.current = false;
+      setProjects([]);
+      setGlobalAccuracy(null);
+      setAccessForbiddenMessage(
+        serverMessage || t("reviewer.accessForbiddenMessage"),
+      );
+    },
+    [t],
+  );
 
   const today = new Date();
   const pendingProjectsCount = projects.filter(
-    (p) => p.progressPercent < 100 && new Date(p.deadline) >= today,
+    (p) =>
+      !isCompletedProjectStatus(p.status) &&
+      !isAwaitingManagerConfirmation(p.status) &&
+      new Date(p.deadline) >= today,
   ).length;
   const completedProjectsCount = projects.filter(
-    (p) => p.progressPercent >= 100,
+    (p) => isCompletedProjectStatus(p.status),
   ).length;
   const overdueProjectsCount = projects.filter(
-    (p) => p.progressPercent < 100 && new Date(p.deadline) < today,
+    (p) => !isCompletedProjectStatus(p.status) && new Date(p.deadline) < today,
   ).length;
 
   const overdueProjects = projects.filter(
-    (p) => p.progressPercent < 100 && new Date(p.deadline) < today,
+    (p) => !isCompletedProjectStatus(p.status) && new Date(p.deadline) < today,
   );
 
   const nearDeadlineProjects = projects.filter((p) => {
     const deadlineDate = new Date(p.deadline);
     const diffInHours = (deadlineDate - today) / (1000 * 60 * 60);
-    return p.progressPercent < 100 && diffInHours > 0 && diffInHours <= 48;
+    return (
+      !isCompletedProjectStatus(p.status) &&
+      !isAwaitingManagerConfirmation(p.status) &&
+      diffInHours > 0 &&
+      diffInHours <= 48
+    );
   });
 
   const fetchProjects = useCallback(async ({ showLoading = true } = {}) => {
@@ -62,27 +101,47 @@ const ReviewerContainer = () => {
       ]);
 
       const projectsData = projectsRes.data || [];
+      const reviewerStats = reviewerStatsRes.data || {};
+      const reviewerAccuracyValue =
+        reviewerStats.KQSScore ?? reviewerStats.kqsScore ??
+        reviewerStats.AuditAccuracy ?? reviewerStats.auditAccuracy ??
+        null;
+      reviewerAccessRef.current = true;
+      setAccessForbiddenMessage("");
       setProjects(projectsData);
       setGlobalAccuracy(
-        Number(reviewerStatsRes.data?.KQSScore ?? reviewerStatsRes.data?.AuditAccuracy ?? 100).toFixed(1),
+        reviewerAccuracyValue != null
+          ? Number(reviewerAccuracyValue).toFixed(1)
+          : null,
       );
     } catch (err) {
-      console.error("Error loading projects:", err);
-      setGlobalAccuracy(100);
+      if (isForbiddenError(err)) {
+        handleForbiddenAccess(err);
+        return;
+      }
+
+      setAccessForbiddenMessage("");
     } finally {
       if (showLoading) {
         setLoading(false);
       }
     }
-  }, []);
+  }, [handleForbiddenAccess]);
 
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
 
   useEffect(() => {
+    if (!hasReviewerAccess) {
+      return undefined;
+    }
+
     const refreshSilently = () => {
-      if (document.visibilityState === "visible") {
+      if (
+        reviewerAccessRef.current &&
+        document.visibilityState === "visible"
+      ) {
         fetchProjects({ showLoading: false });
       }
     };
@@ -100,9 +159,11 @@ const ReviewerContainer = () => {
       window.removeEventListener("focus", refreshSilently);
       document.removeEventListener("visibilitychange", refreshSilently);
     };
-  }, [fetchProjects]);
+  }, [fetchProjects, hasReviewerAccess]);
 
-  useSignalRRefresh(() => fetchProjects({ showLoading: false }));
+  useSignalRRefresh(() => fetchProjects({ showLoading: false }), {
+    enabled: hasReviewerAccess,
+  });
 
   const filteredProjects = projects.filter(
     (p) =>
@@ -123,10 +184,14 @@ const ReviewerContainer = () => {
           },
         );
       } else {
-        alert(t("reviewer.noReviewData"));
+        toast.info(t("reviewer.noReviewData"));
       }
     } catch (error) {
-      console.error(error);
+      if (isForbiddenError(error)) {
+        toast.warn(t("reviewer.projectAccessRevoked"));
+        fetchProjects({ showLoading: false });
+        return;
+      }
     }
   };
 
@@ -157,10 +222,12 @@ const ReviewerContainer = () => {
     },
     {
       label: t("reviewer.stats.accuracy"),
-      value: `${globalAccuracy}%`,
+      value: globalAccuracy === null ? "—" : `${globalAccuracy}%`,
       icon: <Target size={22} />,
       color:
-        globalAccuracy < 80
+        globalAccuracy === null
+          ? "secondary"
+          : globalAccuracy < 80
           ? "danger"
           : globalAccuracy < 90
             ? "warning"
@@ -176,6 +243,24 @@ const ReviewerContainer = () => {
           title={t("reviewer.title")}
           subtitle={t("reviewer.subtitle")}
         />
+
+        {!hasReviewerAccess && (
+          <Alert
+            variant="warning"
+            className="border-0 shadow-sm rounded-4 d-flex align-items-start gap-3 mb-4"
+          >
+            <AlertCircle size={20} className="mt-1 flex-shrink-0" />
+            <div>
+              <div className="fw-semibold mb-1">
+                {t("reviewer.accessForbiddenTitle")}
+              </div>
+              <div className="mb-1">{accessForbiddenMessage}</div>
+              <small className="text-muted">
+                {t("reviewer.accessForbiddenHint")}
+              </small>
+            </div>
+          </Alert>
+        )}
 
         <div
           className="mb-4 d-grid gap-3"
@@ -297,7 +382,11 @@ const ReviewerContainer = () => {
             ) : (
               <div className="text-center py-5 bg-card rounded-4 shadow-sm border">
                 <AlertCircle className="text-muted mb-2" size={40} />
-                <p className="text-muted">{t("reviewer.noTasks")}</p>
+                <p className="text-muted mb-0">
+                  {hasReviewerAccess
+                    ? t("reviewer.noTasks")
+                    : t("reviewer.accessForbiddenEmptyState")}
+                </p>
               </div>
             )}
           </Col>

@@ -65,4 +65,33 @@ describe("projectService", () => {
     await projectService.getProjectStats(7);
     expect(axios.get).toHaveBeenCalledWith("/api/projects/7/statistics");
   });
+
+  it("completeProject: should POST to /api/projects/{id}/complete", async () => {
+    axios.post.mockResolvedValueOnce({ data: {} });
+    await projectService.completeProject(9);
+    expect(axios.post).toHaveBeenCalledWith("/api/projects/9/complete");
+  });
+
+  it("getCompletionReview: should GET /api/projects/{id}/completion-review", async () => {
+    axios.get.mockResolvedValueOnce({ data: {} });
+    await projectService.getCompletionReview(11);
+    expect(axios.get).toHaveBeenCalledWith(
+      "/api/projects/11/completion-review",
+    );
+  });
+
+  it("returnCompletionReviewItemForRework: should POST return comment payload", async () => {
+    axios.post.mockResolvedValueOnce({ data: {} });
+    await projectService.returnCompletionReviewItemForRework(
+      11,
+      77,
+      "Need another pass",
+    );
+    expect(axios.post).toHaveBeenCalledWith(
+      "/api/projects/11/completion-review/items/77/return",
+      {
+        comment: "Need another pass",
+      },
+    );
+  });
 });

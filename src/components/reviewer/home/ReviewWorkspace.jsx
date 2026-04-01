@@ -26,6 +26,8 @@ import {
   Lock,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
+import { showStatusDialog } from "../../../utils/appDialog";
 
 const ReviewWorkspace = () => {
   const { assignmentId, projectId } = useParams();
@@ -163,10 +165,14 @@ const ReviewWorkspace = () => {
 
   const submitReview = async (isApproved) => {
     if (!isApproved) {
-      if (errorCategories.length === 0)
-        return alert(t("review.messages.rejectRuleCategory"));
-      if (!rejectComment.trim())
-        return alert(t("review.messages.rejectRuleComment"));
+      if (errorCategories.length === 0) {
+        toast.warning(t("review.messages.rejectRuleCategory"));
+        return;
+      }
+      if (!rejectComment.trim()) {
+        toast.warning(t("review.messages.rejectRuleComment"));
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -186,7 +192,12 @@ const ReviewWorkspace = () => {
       const isLastTask = currentIndex === taskList.length - 1;
 
       if (isLastTask) {
-        alert(t("review.messages.congrats"));
+        await showStatusDialog({
+          title: t("common.success"),
+          text: t("review.messages.congrats"),
+          icon: "success",
+          confirmText: t("common.close"),
+        });
         navigate("/");
       } else {
         const nextTask = taskList[currentIndex + 1];
@@ -209,7 +220,7 @@ const ReviewWorkspace = () => {
         error?.response?.data?.message ||
         (typeof error?.response?.data === "string" ? error.response.data : "") ||
         t("review.messages.systemError");
-      alert(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

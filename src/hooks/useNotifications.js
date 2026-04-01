@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { subscribe } from "../services/signalrManager";
 import notificationService from "../services/notificationService";
+import {
+  normalizeServerDateTime,
+  parseDateTimeToMillis,
+} from "../utils/dateTime";
 
 const NOTIFICATION_REFRESH_INTERVAL_MS = 30000;
 
 const getStorageKey = (userId) =>
   userId ? `notifications_${userId}` : null;
 
-const parseTimestamp = (timestamp) => {
-  const value = Date.parse(timestamp || "");
-  return Number.isNaN(value) ? 0 : value;
-};
+const parseTimestamp = (timestamp) => parseDateTimeToMillis(timestamp);
 
 const isPendingActionNotification = (notification) =>
   Boolean(
@@ -94,7 +95,10 @@ const normalizeServerNotification = (n) => ({
   title: n.title || n.Title || "Notification",
   message: n.message || n.Message || "New notification",
   type: n.type || n.Type || "info",
-  timestamp: n.createdAt || n.CreatedAt || n.timestamp || n.Timestamp || new Date().toISOString(),
+  timestamp:
+    normalizeServerDateTime(
+      n.createdAt || n.CreatedAt || n.timestamp || n.Timestamp,
+    ) || new Date().toISOString(),
   read: !!(n.isRead ?? n.IsRead),
   referenceType: n.referenceType || n.ReferenceType || null,
   referenceId: n.referenceId || n.ReferenceId || null,
@@ -125,9 +129,11 @@ const useNotifications = (userId, initialUnreadCount) => {
 
   const fetchNotifications = useCallback(() => {
     const token = localStorage.getItem("access_token");
-    if (!token || !userIdRef.current) return;
+    if (!token || !userIdRef.current) {
+      return Promise.resolve([]);
+    }
 
-    notificationService
+    return notificationService
       .getMyNotifications()
       .then((res) => {
         const rawData = Array.isArray(res) ? res : (res?.data || []);
@@ -137,11 +143,15 @@ const useNotifications = (userId, initialUnreadCount) => {
 
         const serverUnreadCount = serverNotifs.filter((n) => !n.read).length;
         setUnreadCount(serverUnreadCount);
+
+        return serverNotifs;
       })
       .catch((err) => {
         if (err?.response?.status !== 401) {
           console.warn("[Notifications] Failed to fetch from server:", err?.message);
         }
+
+        return [];
       });
   }, []);
 
@@ -160,13 +170,23 @@ const useNotifications = (userId, initialUnreadCount) => {
         : (typeof initialUnreadCount === "number" ? initialUnreadCount : 0),
     );
 
-    fetchNotifications();
+    fetchNotifications().catch(() => []);
   }, [fetchNotifications, initialUnreadCount, userId]);
 
   useEffect(() => {
-    const handleReconnect = () => fetchNotifications();
+    const handleReconnect = () => {
+      fetchNotifications().catch(() => []);
+    };
     window.addEventListener("signalr-reconnected", handleReconnect);
     return () => window.removeEventListener("signalr-reconnected", handleReconnect);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    const handleExternalRefresh = () => {
+      fetchNotifications().catch(() => []);
+    };
+    window.addEventListener("notifications:refresh", handleExternalRefresh);
+    return () => window.removeEventListener("notifications:refresh", handleExternalRefresh);
   }, [fetchNotifications]);
 
   useEffect(() => {
@@ -175,7 +195,7 @@ const useNotifications = (userId, initialUnreadCount) => {
 
     const refreshIfVisible = () => {
       if (document.visibilityState === "visible") {
-        fetchNotifications();
+        fetchNotifications().catch(() => []);
       }
     };
 
@@ -211,9 +231,11 @@ const useNotifications = (userId, initialUnreadCount) => {
           notification?.Message || notification?.message || "New notification",
         type: notification?.Type || notification?.type || "info",
         timestamp:
-          notification?.CreatedAt ||
-          notification?.Timestamp ||
-          notification?.timestamp ||
+          normalizeServerDateTime(
+            notification?.CreatedAt ||
+              notification?.Timestamp ||
+              notification?.timestamp,
+          ) ||
           new Date().toISOString(),
         read: false,
         referenceType:
@@ -278,11 +300,41 @@ const useNotifications = (userId, initialUnreadCount) => {
     });
   }, []);
 
+  const updateNotification = useCallback((id, updater) => {
+    setNotifications((prev) => {
+      const updated = mergeNotifications(
+        prev.map((notification) => {
+          if (notification.id !== id) {
+            return notification;
+          }
+
+          const patch =
+            typeof updater === "function"
+              ? updater(notification)
+              : updater;
+
+          return {
+            ...notification,
+            ...patch,
+            metadata:
+              patch && Object.prototype.hasOwnProperty.call(patch, "metadata")
+                ? patch.metadata
+                : notification.metadata,
+          };
+        }),
+      );
+
+      setUnreadCount(updated.filter((notification) => !notification.read).length);
+      return updated;
+    });
+  }, []);
+
   return {
     notifications,
     unreadCount,
     markAsRead,
     markAllAsRead,
+    updateNotification,
     clearAll,
     refreshNotifications: fetchNotifications,
   };

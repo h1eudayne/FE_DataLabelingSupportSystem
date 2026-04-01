@@ -12,7 +12,7 @@ import {
   Container,
   Form,
 } from "reactstrap";
-import Select from "react-select";
+import Select, { components as selectComponents } from "react-select";
 import { useTranslation } from "react-i18next";
 
 import { uploadToCloudinary } from "../../../services/cloudinary/cloudinaryService";
@@ -24,6 +24,7 @@ import {
 import projectService from "../../../services/manager/project/projectService";
 import { userService } from "../../../services/manager/project/userService";
 import taskService from "../../../services/manager/project/taskService";
+import { sortByNaturalName } from "../../../utils/naturalSort";
 
 const DEFAULT_LABEL_PRESETS = [
   { translationKey: "defaultLabel1", color: "#EF4444" },
@@ -60,6 +61,33 @@ const getCreatedProjectId = (response) => {
 
 const shouldUseCloudinaryForDataset =
   Boolean(CLOUDINARY_CLOUD_NAME) && Boolean(CLOUDINARY_UPLOAD_PRESET);
+
+const getManagedUserName = (user) =>
+  user?.fullName || user?.userName || user?.email || String(user?.id || "");
+
+const buildManagedUserOption = (user, roleLabel) => ({
+  value: user.id,
+  displayName: getManagedUserName(user),
+  label: `${getManagedUserName(user)} (${roleLabel})`,
+});
+
+const MultiSelectOption = (props) => (
+  <selectComponents.Option {...props}>
+    <div className="d-flex align-items-center gap-2">
+      <input
+        type="checkbox"
+        checked={props.isSelected}
+        readOnly
+        aria-hidden="true"
+      />
+      <span>{props.label}</span>
+    </div>
+  </selectComponents.Option>
+);
+
+const multiSelectComponents = {
+  Option: MultiSelectOption,
+};
 
 const CreateProject = () => {
   const { t, i18n } = useTranslation();
@@ -188,19 +216,19 @@ const CreateProject = () => {
     const fetchUsers = async () => {
       try {
         const res = await userService.getUsers();
-        const userList = res.data.items || res.data;
-        const annotators = userList
-          .filter((u) => u.role === "Annotator")
-          .map((u) => ({
-            value: u.id,
-            label: `${u.fullName || u.userName} (Annotator)`,
-          }));
-        const reviewers = userList
-          .filter((u) => u.role === "Reviewer")
-          .map((u) => ({
-            value: u.id,
-            label: `${u.fullName || u.userName} (Reviewer)`,
-          }));
+        const userList = Array.isArray(res.data?.items)
+          ? res.data.items
+          : Array.isArray(res.data)
+            ? res.data
+            : [];
+        const annotators = sortByNaturalName(
+          userList.filter((u) => u.role === "Annotator"),
+          getManagedUserName,
+        ).map((u) => buildManagedUserOption(u, "Annotator"));
+        const reviewers = sortByNaturalName(
+          userList.filter((u) => u.role === "Reviewer"),
+          getManagedUserName,
+        ).map((u) => buildManagedUserOption(u, "Reviewer"));
         setAnnotatorOptions(annotators);
         setReviewerOptions(reviewers);
         if (annotators.length === 0 && reviewers.length === 0) {
@@ -1049,10 +1077,17 @@ const CreateProject = () => {
                   </Label>
                   <Select
                     isMulti
+                    value={selectedAnnotators}
                     options={annotatorOptions}
                     placeholder={t("createProject.annotatorPlaceholder")}
-                    onChange={setSelectedAnnotators}
+                    onChange={(value) => setSelectedAnnotators(value ?? [])}
                     className="basic-multi-select"
+                    classNamePrefix="basic-multi-select"
+                    closeMenuOnSelect={false}
+                    blurInputOnSelect={false}
+                    hideSelectedOptions={false}
+                    isClearable
+                    components={multiSelectComponents}
                   />
                 </div>
                 <div>
@@ -1061,10 +1096,17 @@ const CreateProject = () => {
                   </Label>
                   <Select
                     isMulti
+                    value={selectedReviewers}
                     options={reviewerOptions}
                     placeholder={t("createProject.reviewerPlaceholder")}
-                    onChange={setSelectedReviewers}
+                    onChange={(value) => setSelectedReviewers(value ?? [])}
                     className="basic-multi-select"
+                    classNamePrefix="basic-multi-select"
+                    closeMenuOnSelect={false}
+                    blurInputOnSelect={false}
+                    hideSelectedOptions={false}
+                    isClearable
+                    components={multiSelectComponents}
                   />
                 </div>
               </CardBody>

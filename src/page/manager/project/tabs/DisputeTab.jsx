@@ -18,6 +18,12 @@ import useSignalRRefresh from "../../../../hooks/useSignalRRefresh";
 import { useTranslation } from "react-i18next";
 import ManagerDecisionEvidenceModal from "../../../../components/manager/dispute/ManagerDecisionEvidenceModal";
 
+const isActiveEscalation = (item) =>
+  String(item?.status || "").toLowerCase() === "escalated";
+
+const normalizeEscalations = (items = []) =>
+  (Array.isArray(items) ? items : []).filter(isActiveEscalation);
+
 const DisputeTab = ({ projectId }) => {
   const { t } = useTranslation();
   const [disputes, setDisputes] = useState([]);
@@ -65,7 +71,7 @@ const DisputeTab = ({ projectId }) => {
         projectService.getProjectById(projectId),
       ]);
       setDisputes(resDisputes.data || []);
-      setEscalations(resEscalations.data || []);
+      setEscalations(normalizeEscalations(resEscalations.data));
       setProjectDetail(resDetail.data || null);
     } catch {
       toast.error(t("dispute.loadDisputeError"));
@@ -129,6 +135,12 @@ const DisputeTab = ({ projectId }) => {
           action: decision,
           comment,
         });
+
+        setEscalations((currentEscalations) =>
+          currentEscalations.filter(
+            (item) => item.assignmentId !== decisionModal.item.assignmentId,
+          ),
+        );
       }
 
       toast.success(t("dispute.resolveSuccess"));

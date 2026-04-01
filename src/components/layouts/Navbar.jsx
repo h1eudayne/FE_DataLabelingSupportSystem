@@ -301,32 +301,6 @@ const Navbar = ({ isMobile = false, onCloseMobileMenu = () => {} }) => {
                         <span>{t("navbar.myTask")}</span>
                       </Link>
                     </li>
-                    <li className="nav-item">
-                      <Link
-                        className="nav-link menu-link fs-18"
-                        to="/annotator-projects"
-                        style={menuItemStyle}
-                      >
-                        <i
-                          className="ri-folders-line fs-20 me-2"
-                          style={iconStyle}
-                        ></i>
-                        <span>{t("navbar.projects")}</span>
-                      </Link>
-                    </li>
-                    <li className="nav-item">
-                      <Link
-                        className="nav-link menu-link fs-18"
-                        to="/annotator-team"
-                        style={menuItemStyle}
-                      >
-                        <i
-                          className="ri-group-line fs-20 me-2"
-                          style={iconStyle}
-                        ></i>
-                        <span>{t("navbar.team")}</span>
-                      </Link>
-                    </li>
                   </>
                 )}
                 {role === "Reviewer" && (

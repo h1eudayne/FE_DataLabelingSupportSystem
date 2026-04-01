@@ -1,4 +1,5 @@
 import {
+  Alert,
   Row,
   Card,
   Button,
@@ -16,6 +17,7 @@ import {
   Edit2,
   CheckCircle,
   Power,
+  Clock3,
   UserPlus,
 } from "lucide-react";
 import StatCard from "./StatCard";
@@ -28,15 +30,42 @@ const UserManagementView = ({
   onEdit,
   admins,
   openCreateModal,
+  notice,
+  onDismissNotice,
   pagination = { page: 1, pageSize: 10, onPageChange: () => {} },
   totalCount = 0,
 }) => {
   const { t } = useTranslation();
   const { page, pageSize, onPageChange } = pagination;
 
-  const totalPages = Math.ceil(stats.workers / pageSize);
-  const fromEntry = stats.workers === 0 ? 0 : (page - 1) * pageSize + 1;
-  const toEntry = Math.min(page * pageSize, stats.workers);
+  const getStatusConfig = (user) => {
+    if (user.isActive && user.hasPendingGlobalBanRequest) {
+      return {
+        buttonClass: "admin-row-action-btn--warning",
+        icon: <Clock3 size={14} />,
+        label: t("userTableComp.pendingApproval"),
+        title: t("userTableComp.pendingApproval"),
+      };
+    }
+
+    return user.isActive
+      ? {
+        buttonClass: "admin-row-action-btn--success",
+        icon: <CheckCircle size={14} />,
+        label: t("userMgmt.active"),
+        title: t("userTableComp.deactivate"),
+      }
+      : {
+        buttonClass: "admin-row-action-btn--danger",
+        icon: <Power size={14} />,
+        label: t("userMgmt.inactive"),
+        title: t("userTableComp.activate"),
+      };
+  };
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const fromEntry = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const toEntry = Math.min(page * pageSize, totalCount);
 
   const regularUsers = users.filter((user) => user.role !== "Admin");
 
@@ -133,6 +162,19 @@ const UserManagementView = ({
         </div>
 
         <div className="admin-section-card__body">
+          {notice && (
+            <Alert
+              variant={notice.variant || "info"}
+              dismissible={Boolean(onDismissNotice)}
+              onClose={onDismissNotice}
+              className="mb-4"
+            >
+              {notice.title && <div className="fw-semibold mb-1">{notice.title}</div>}
+              <div>{notice.message}</div>
+              {notice.detail && <div className="small mt-2">{notice.detail}</div>}
+            </Alert>
+          )}
+
           <InputGroup className="admin-search-group admin-search-group--full mb-4">
             <InputGroup.Text>
               <Search size={18} />
@@ -158,12 +200,15 @@ const UserManagementView = ({
                 </thead>
                 <tbody>
                   {regularUsers.length > 0 ? (
-                    regularUsers.map((user) => (
+                    regularUsers.map((user) => {
+                      const statusConfig = getStatusConfig(user);
+
+                      return (
                       <tr key={user.id}>
                         <td>
                           <div className="admin-table-user">
                             <div className="admin-table-user__avatar">
-                              {user.email.charAt(0).toUpperCase()}
+                              {user.email?.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
                               <div className="admin-table-user__title text-break">
@@ -181,32 +226,40 @@ const UserManagementView = ({
                           </span>
                         </td>
                         <td className="text-center">
-                          <span className="admin-badge admin-badge--neutral admin-pill-count">
-                            {user.totalProjects || 0}
-                          </span>
+                          <div className="d-flex flex-column align-items-center gap-1">
+                            <span className="admin-badge admin-badge--neutral admin-pill-count">
+                              {user.totalProjects || 0}
+                            </span>
+                            {user.unfinishedProjectCount > 0 && (
+                              <>
+                                <small className="text-muted">
+                                  {t("userTableComp.unfinishedProjects", {
+                                    count: user.unfinishedProjectCount,
+                                  })}
+                                </small>
+                                {user.managerName && (
+                                  <small className="text-muted">
+                                    {t("userTableComp.managedBy", {
+                                      managerName: user.managerName,
+                                    })}
+                                  </small>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </td>
                         <td className="text-end">
                           <div className="admin-row-actions">
                             <Button
                               variant="light"
-                              className={`admin-row-action-btn admin-row-action-btn--state ${
-                                user.isActive
-                                  ? "admin-row-action-btn--success"
-                                  : "admin-row-action-btn--danger"
-                              }`}
-                              onClick={() => onActive(user.id, !user.isActive)}
+                              className={`admin-row-action-btn admin-row-action-btn--state ${statusConfig.buttonClass}`}
+                              onClick={() => onActive(user, !user.isActive)}
+                              title={statusConfig.title}
                             >
-                              {user.isActive ? (
-                                <>
-                                  <CheckCircle size={14} />
-                                  <span>{t("userMgmt.active")}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Power size={14} />
-                                  <span>{t("userMgmt.inactive")}</span>
-                                </>
-                              )}
+                              <>
+                                {statusConfig.icon}
+                                <span>{statusConfig.label}</span>
+                              </>
                             </Button>
 
                             <Button
@@ -220,7 +273,8 @@ const UserManagementView = ({
                           </div>
                         </td>
                       </tr>
-                    ))
+                      );
+                    })
                   ) : (
                     <tr>
                       <td colSpan="4" className="text-center py-5 text-muted">
@@ -235,12 +289,15 @@ const UserManagementView = ({
 
           <div className="admin-mobile-list d-lg-none">
             {regularUsers.length > 0 ? (
-              regularUsers.map((user) => (
+              regularUsers.map((user) => {
+                const statusConfig = getStatusConfig(user);
+
+                return (
                 <article className="admin-mobile-card" key={user.id}>
                   <div className="admin-mobile-card__top">
                     <div className="admin-table-user">
                       <div className="admin-table-user__avatar">
-                        {user.email.charAt(0).toUpperCase()}
+                        {user.email?.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
                         <div className="admin-table-user__title text-break">
@@ -266,15 +323,29 @@ const UserManagementView = ({
                       <div className="admin-mobile-card__value">
                         {user.totalProjects || 0}
                       </div>
+                      {user.unfinishedProjectCount > 0 && (
+                        <>
+                          <small className="text-muted d-block">
+                            {t("userTableComp.unfinishedProjects", {
+                              count: user.unfinishedProjectCount,
+                            })}
+                          </small>
+                          {user.managerName && (
+                            <small className="text-muted d-block">
+                              {t("userTableComp.managedBy", {
+                                managerName: user.managerName,
+                              })}
+                            </small>
+                          )}
+                        </>
+                      )}
                     </div>
                     <div>
                       <div className="admin-mobile-card__label">
                         {t("userMgmt.actions")}
                       </div>
                       <div className="admin-mobile-card__value">
-                        {user.isActive
-                          ? t("userMgmt.active")
-                          : t("userMgmt.inactive")}
+                        {statusConfig.label}
                       </div>
                     </div>
                   </div>
@@ -282,24 +353,13 @@ const UserManagementView = ({
                   <div className="admin-mobile-card__actions">
                     <Button
                       variant="light"
-                      className={`admin-row-action-btn admin-row-action-btn--state ${
-                        user.isActive
-                          ? "admin-row-action-btn--success"
-                          : "admin-row-action-btn--danger"
-                      }`}
-                      onClick={() => onActive(user.id, !user.isActive)}
+                      className={`admin-row-action-btn admin-row-action-btn--state ${statusConfig.buttonClass}`}
+                      onClick={() => onActive(user, !user.isActive)}
                     >
-                      {user.isActive ? (
-                        <>
-                          <CheckCircle size={14} />
-                          <span>{t("userMgmt.active")}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Power size={14} />
-                          <span>{t("userMgmt.inactive")}</span>
-                        </>
-                      )}
+                      <>
+                        {statusConfig.icon}
+                        <span>{statusConfig.label}</span>
+                      </>
                     </Button>
 
                     <Button
@@ -312,7 +372,8 @@ const UserManagementView = ({
                     </Button>
                   </div>
                 </article>
-              ))
+                );
+              })
             ) : (
               <div className="admin-mobile-card text-center text-muted">
                 {t("userMgmt.noStaffFound")}

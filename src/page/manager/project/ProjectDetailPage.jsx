@@ -17,6 +17,10 @@ import ProjectsDatasetsPage from "../datasets/ProjectsDatasetsPage";
 import ProjectAssignTask from "./ProjectAssignTask";
 import DisputeTab from "./tabs/DisputeTab";
 import ReviewAuditTab from "./tabs/ReviewAuditTab";
+import {
+  getProjectStatusBadgeClass,
+  getProjectStatusLabel,
+} from "../../../utils/projectWorkflowStatus";
 import "../../../assets/css/project-detail.css";
 
 const ProjectDetailPage = () => {
@@ -142,15 +146,14 @@ const ProjectDetailPage = () => {
           </div>
           <div className="project-detail-header-meta d-flex align-items-center gap-2">
             <Badge
-              className={`badge-status ${project.status !== "Expired" ? "badge-status-active" : ""}`}
-              color={project.status === "Expired" ? "danger" : "success"}
+              className={`badge-status project-detail-status-badge ${getProjectStatusBadgeClass(project.status)} ${
+                project.status !== "Expired" ? "badge-status-active" : ""
+              }`}
             >
-              {project.status === "Expired"
-                ? t("statusCommon.expired")
-                : t("statusCommon.active")}
+              {getProjectStatusLabel(project.status, t)}
             </Badge>
             {project.deadline && (
-              <span className="badge-deadline">
+              <span className="badge-deadline project-detail-deadline-badge">
                 <i className="ri-calendar-line me-1"></i>
                 {new Date(project.deadline).toLocaleDateString(localeTag)}
               </span>

@@ -58,20 +58,161 @@ export const getMyTasks = async (projectId) => {
   return res.data;
 };
 
-export const getReviewerFeedbackByProject = async (projectId) => {
-  if (!projectId) return [];
+const getProjectContext = (projectOrId) => {
+  if (projectOrId && typeof projectOrId === "object") {
+    return {
+      projectId: projectOrId.projectId ?? projectOrId.id ?? null,
+      projectName: projectOrId.projectName ?? projectOrId.name ?? "",
+    };
+  }
+
+  return {
+    projectId: projectOrId ?? null,
+    projectName: "",
+  };
+};
+
+const getTaskDisplayName = (task) => {
+  const fileName = task?.dataItemUrl?.split("/").pop();
+  return fileName || `Item #${task?.dataItemId ?? task?.id ?? "?"}`;
+};
+
+const normalizeOptionalText = (value) => {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalizedValue = value.trim();
+  return normalizedValue.length > 0 ? normalizedValue : null;
+};
+
+const buildDisputeLookup = (disputes = []) => {
+  const lookup = new Map();
+
+  disputes.forEach((dispute) => {
+    if (dispute?.assignmentId != null) {
+      lookup.set(`assignment-${dispute.assignmentId}`, dispute);
+    }
+
+    if (dispute?.dataItemId != null) {
+      lookup.set(`data-item-${dispute.dataItemId}`, dispute);
+    }
+  });
+
+  return lookup;
+};
+
+const getMatchingDispute = (disputeLookup, task) =>
+  disputeLookup.get(`assignment-${task.id}`) ??
+  disputeLookup.get(`data-item-${task.dataItemId}`) ??
+  null;
+
+const buildFeedbackEntriesFromTask = (task, projectContext, disputeLookup) => {
+  const dispute = getMatchingDispute(disputeLookup, task);
+  const baseFeedback = {
+    assignmentId: task.id,
+    dataItemId: task.dataItemId,
+    dataItemUrl: task.dataItemUrl,
+    taskName: getTaskDisplayName(task),
+    projectId: projectContext.projectId,
+    projectName: projectContext.projectName,
+    taskStatus: task.status,
+  };
+  const feedbackEntries = [];
+  const normalizedReviewerComment = normalizeOptionalText(task.rejectionReason);
+  const normalizedManagerComment = normalizeOptionalText(task.managerComment);
+  const normalizedReviewerFeedbacks = Array.isArray(task.reviewerFeedbacks)
+    ? task.reviewerFeedbacks
+    : [];
+
+  if (task.status === "Rejected" && normalizedReviewerFeedbacks.length > 0) {
+    normalizedReviewerFeedbacks.forEach((feedback, index) => {
+      const normalizedComment = normalizeOptionalText(feedback?.comment);
+      if (!normalizedComment) {
+        return;
+      }
+
+      feedbackEntries.push({
+        ...baseFeedback,
+        feedbackId:
+          feedback?.reviewLogId ??
+          `reviewer-${task.id ?? "task"}-${feedback?.reviewerId ?? index}`,
+        reviewLogId: feedback?.reviewLogId ?? null,
+        sourceRole: "Reviewer",
+        sourceName:
+          normalizeOptionalText(feedback?.reviewerName) ||
+          normalizeOptionalText(feedback?.reviewerId) ||
+          null,
+        errorType:
+          normalizeOptionalText(
+            feedback?.errorCategories ?? feedback?.errorCategory,
+          ) || null,
+        comment: normalizedComment,
+        returnedDate: feedback?.reviewedAt || task.latestReviewAt || null,
+      });
+    });
+  } else if (task.status === "Rejected" && normalizedReviewerComment) {
+    feedbackEntries.push({
+      ...baseFeedback,
+      feedbackId: `reviewer-${task.id ?? "task"}-legacy`,
+      sourceRole: "Reviewer",
+      sourceName: dispute?.reviewerName || null,
+      errorType: normalizeOptionalText(task.errorCategory) || null,
+      comment: normalizedReviewerComment,
+      returnedDate: task.latestReviewAt || dispute?.createdAt || null,
+    });
+  }
+
+  if (
+    task.status === "Rejected" &&
+    normalizedManagerComment &&
+    String(task.managerDecision || "").toLowerCase() === "reject"
+  ) {
+    feedbackEntries.push({
+      ...baseFeedback,
+      feedbackId: `manager-${task.id ?? "task"}`,
+      sourceRole: "Manager",
+      sourceName: dispute?.managerName || null,
+      errorType: normalizeOptionalText(task.errorCategory) || null,
+      comment: normalizedManagerComment,
+      returnedDate: dispute?.resolvedAt || task.latestReviewAt || null,
+    });
+  }
+
+  return feedbackEntries;
+};
+
+export const getReviewerFeedbackByProject = async (projectOrId) => {
+  const projectContext = getProjectContext(projectOrId);
+  if (!projectContext.projectId) return [];
 
   try {
-    const res = await axios.get(`/api/tasks/projects/${projectId}/images`);
-    const tasks = res.data || [];
+    const [taskResponse, disputeResponse] = await Promise.all([
+      axios.get(`/api/tasks/projects/${projectContext.projectId}/images`),
+      axios
+        .get("/api/disputes", {
+          params: { projectId: projectContext.projectId },
+        })
+        .catch(() => ({ data: [] })),
+    ]);
+    const tasks = Array.isArray(taskResponse?.data) ? taskResponse.data : [];
+    const disputes = Array.isArray(disputeResponse?.data) ? disputeResponse.data : [];
+    const disputeLookup = buildDisputeLookup(disputes);
+
     return tasks
-      .filter((t) => t.rejectionReason && t.rejectionReason.trim())
-      .map((t) => ({
-        assignmentId: t.id,
-        comment: t.rejectionReason,
-        isApproved: false,
-        status: t.status,
-      }));
+      .flatMap((task) =>
+        buildFeedbackEntriesFromTask(task, projectContext, disputeLookup),
+      )
+      .sort((left, right) => {
+        const leftTime = Date.parse(left.returnedDate || "");
+        const rightTime = Date.parse(right.returnedDate || "");
+
+        if (!Number.isNaN(rightTime) || !Number.isNaN(leftTime)) {
+          return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime);
+        }
+
+        return (right.assignmentId || 0) - (left.assignmentId || 0);
+      });
   } catch {
     return [];
   }
@@ -82,16 +223,17 @@ export const getAllReviewerFeedback = async () => {
   if (!projects || projects.length === 0) return [];
 
   const requests = projects.map((p) =>
-    getReviewerFeedbackByProject(p.projectId).then((reviews) =>
-      reviews.map((r) => ({
-        ...r,
-        projectName: p.projectName,
-      })),
-    ),
+    getReviewerFeedbackByProject(p),
   );
 
   const responses = await Promise.all(requests);
-  return responses.flat();
+  return responses
+    .flat()
+    .sort((left, right) => {
+      const leftTime = Date.parse(left.returnedDate || "");
+      const rightTime = Date.parse(right.returnedDate || "");
+      return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime);
+    });
 };
 
 export const getProjectProgressDetails = async () => {
@@ -169,7 +311,6 @@ export const getMyAccuracy = async () => {
 
   let totalWeight = 0;
   let weightedSum = 0;
-  let hasAnyReviewData = false;
   const perProject = [];
 
   for (const p of projects) {
@@ -180,23 +321,22 @@ export const getMyAccuracy = async () => {
       const s = statsRes.data;
       const me = s.annotatorPerformances?.find((a) => a.annotatorId === userId);
       if (me) {
-        const weight = me.tasksAssigned || 1;
-        const hasReviewData = (me.tasksCompleted || 0) > 0 || (me.annotatorAccuracy || 0) > 0;
-        const acc = hasReviewData ? (me.annotatorAccuracy ?? 0) : 100;
+        const resolvedTasks =
+          me.resolvedTasks ?? ((me.tasksCompleted || 0) + (me.tasksRejected || 0));
+        const acc = me.finalAccuracy ?? me.annotatorAccuracy ?? 0;
         perProject.push({
           projectName: p.projectName,
-          accuracy: acc,
+          accuracy: resolvedTasks > 0 ? acc : null,
           tasksAssigned: me.tasksAssigned,
           tasksCompleted: me.tasksCompleted,
+          tasksResolved: resolvedTasks,
         });
-        weightedSum += acc * weight;
-        totalWeight += weight;
-        if (me.tasksCompleted > 0 || acc > 0) {
-          hasAnyReviewData = true;
+        if (resolvedTasks > 0) {
+          weightedSum += acc * resolvedTasks;
+          totalWeight += resolvedTasks;
         }
       }
     } catch {
-      
     }
   }
 
@@ -204,10 +344,7 @@ export const getMyAccuracy = async () => {
     totalWeight > 0 ? Math.round((weightedSum / totalWeight) * 10) / 10 : null;
 
   return {
-    overallAccuracy:
-      overallAccuracy === null && !hasAnyReviewData
-        ? null
-        : (overallAccuracy ?? 0),
+    overallAccuracy,
     perProject,
   };
 };

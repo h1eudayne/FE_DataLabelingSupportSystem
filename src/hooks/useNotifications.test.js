@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
+import userEvent from "@testing-library/user-event";
 import useNotifications from "./useNotifications";
 import notificationService from "../services/notificationService";
 import { subscribe } from "../services/signalrManager";
@@ -302,9 +303,36 @@ describe("BUG-FIX: Notification badge hiện sau login", () => {
   });
 
   describe("useNotifications", () => {
-    const HookProbe = ({ userId, initialUnreadCount = 0 }) => {
-      const { unreadCount } = useNotifications(userId, initialUnreadCount);
-      return React.createElement("div", { "data-testid": "unread-count" }, unreadCount);
+    const HookProbe = ({ userId, initialUnreadCount = 0, onMount }) => {
+      const hookValue = useNotifications(userId, initialUnreadCount);
+
+      React.useEffect(() => {
+        onMount?.(hookValue);
+      }, [hookValue, onMount]);
+
+      const currentStatus = hookValue.notifications[0]?.metadata?.requestStatus || "none";
+
+      return React.createElement(
+        React.Fragment,
+        null,
+        React.createElement("div", { "data-testid": "unread-count" }, hookValue.unreadCount),
+        React.createElement("div", { "data-testid": "notification-status" }, currentStatus),
+        React.createElement(
+          "button",
+          {
+            type: "button",
+            onClick: () =>
+              hookValue.updateNotification(202, {
+                read: true,
+                metadata: {
+                  ...(hookValue.notifications[0]?.metadata || {}),
+                  requestStatus: "Approved",
+                },
+              }),
+          },
+          "resolve-notification",
+        ),
+      );
     };
 
     it("nên fetch lại notification khi userId có sau lần mount đầu", async () => {
@@ -346,6 +374,71 @@ describe("BUG-FIX: Notification badge hiện sau login", () => {
       expect(
         JSON.parse(localStorage.getItem("notifications_annotator-1") || "[]"),
       ).toHaveLength(1);
+    });
+
+    it("nên fetch lại notification khi có sự kiện notifications:refresh", async () => {
+      notificationService.getMyNotifications.mockResolvedValue({
+        data: [
+          {
+            id: 202,
+            title: "Pending manager action",
+            message: "Có yêu cầu cần manager xử lý",
+            type: "Warning",
+            isRead: false,
+            createdAt: "2026-04-01T09:00:00.000Z",
+          },
+        ],
+      });
+
+      render(React.createElement(HookProbe, { userId: "manager-1" }));
+
+      await waitFor(() => {
+        expect(notificationService.getMyNotifications).toHaveBeenCalledTimes(1);
+      });
+
+      window.dispatchEvent(new Event("notifications:refresh"));
+
+      await waitFor(() => {
+        expect(notificationService.getMyNotifications).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    it("nên cập nhật notification cục bộ ngay khi resolve để queue pending biến mất", async () => {
+      const user = userEvent.setup();
+
+      notificationService.getMyNotifications.mockResolvedValue({
+        data: [
+          {
+            id: 202,
+            title: "Pending manager action",
+            message: "Có yêu cầu cần manager xử lý",
+            type: "Warning",
+            isRead: false,
+            createdAt: "2026-04-01T09:00:00.000Z",
+            actionKey: "ResolveGlobalUserBanRequest",
+            metadata: {
+              requestStatus: "Pending",
+              banRequestId: 77,
+            },
+          },
+        ],
+      });
+
+      render(React.createElement(HookProbe, { userId: "manager-1" }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("notification-status")).toHaveTextContent("Pending");
+      });
+      expect(screen.getByTestId("unread-count")).toHaveTextContent("1");
+
+      await user.click(
+        screen.getByRole("button", { name: "resolve-notification" }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("notification-status")).toHaveTextContent("Approved");
+      });
+      expect(screen.getByTestId("unread-count")).toHaveTextContent("0");
     });
   });
 });

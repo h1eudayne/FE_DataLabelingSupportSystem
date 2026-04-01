@@ -9,17 +9,21 @@ import {
   ScanSearch,
   Plus,
   Search,
+  ShieldCheck,
 } from "lucide-react";
 import { fetchProjects } from "../../../store/manager/project/projectSlice";
 import projectService from "../../../services/manager/project/projectService";
 import Swal from "sweetalert2";
 import ProjectCard from "../../../components/manager/project/ProjectCard";
 import StatCard from "../../../components/manager/analytics/StatCard";
+import { isAwaitingManagerConfirmation } from "../../../utils/projectWorkflowStatus";
+import { sortProjectsByNewestId } from "../../../utils/projectSort";
 
 const ProjectsAllProjectsPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const { items, loading } = useSelector((state) => state.projects);
+  const localeTag = i18n.language?.startsWith("vi") ? "vi-VN" : "en-US";
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
@@ -28,21 +32,35 @@ const ProjectsAllProjectsPage = () => {
     dispatch(fetchProjects());
   }, [dispatch]);
 
-  const filteredProjects = items?.filter((project) => {
-    const matchesSearch = project.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      filterStatus === "All" ||
-      (filterStatus === "Active" && project.status === "Active") ||
-      (filterStatus === "Expired" && project.status === "Expired");
-    return matchesSearch && matchesStatus;
-  });
+  const filteredProjects = sortProjectsByNewestId(
+    items?.filter((project) => {
+      const matchesSearch = project.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        filterStatus === "All" ||
+        (filterStatus === "Active" &&
+          (project.status === "Active" ||
+            isAwaitingManagerConfirmation(project.status))) ||
+        (filterStatus === "AwaitingManagerConfirmation" &&
+          isAwaitingManagerConfirmation(project.status)) ||
+        (filterStatus === "Expired" && project.status === "Expired");
+      return matchesSearch && matchesStatus;
+    }) || [],
+  );
   const totalProjects = items?.length || 0;
   const activeProjects =
-    items?.filter((project) => project.status === "Active").length || 0;
+    items?.filter(
+      (project) =>
+        project.status === "Active" ||
+        isAwaitingManagerConfirmation(project.status),
+    ).length || 0;
   const expiredProjects =
     items?.filter((project) => project.status === "Expired").length || 0;
+  const awaitingConfirmationProjects = sortProjectsByNewestId(
+    items?.filter((project) => isAwaitingManagerConfirmation(project.status)) ||
+      [],
+  );
   const visibleProjects = filteredProjects?.length || 0;
 
   const handleDelete = async (id) => {
@@ -158,6 +176,78 @@ const ProjectsAllProjectsPage = () => {
 
       <div className="card border-0 shadow-sm mb-4">
         <div className="card-body">
+          {awaitingConfirmationProjects.length > 0 && (
+            <div className="alert alert-warning border-0 shadow-sm mb-4">
+              <div className="d-flex flex-column gap-3">
+                <div className="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                  <div className="d-flex align-items-start gap-3">
+                    <div
+                      className="d-inline-flex align-items-center justify-content-center rounded-4 flex-shrink-0"
+                      style={{
+                        width: "3rem",
+                        height: "3rem",
+                        background:
+                          "linear-gradient(135deg, rgba(245,158,11,0.18), rgba(251,191,36,0.22))",
+                      }}
+                    >
+                      <ShieldCheck size={20} className="text-warning" />
+                    </div>
+                    <div>
+                      <h6 className="fw-semibold mb-1">
+                        {t("allProjects.awaitingConfirmationTitle", {
+                          count: awaitingConfirmationProjects.length,
+                        })}
+                      </h6>
+                      <p className="mb-0 text-muted small">
+                        {t("allProjects.awaitingConfirmationHint")}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-warning btn-sm"
+                    onClick={() =>
+                      setFilterStatus("AwaitingManagerConfirmation")
+                    }
+                  >
+                    <i className="ri-filter-3-line me-1"></i>
+                    {t("allProjects.awaitingConfirmationFilterAction")}
+                  </button>
+                </div>
+
+                <div className="d-flex flex-column gap-2">
+                  {awaitingConfirmationProjects.slice(0, 3).map((project) => (
+                    <div
+                      key={`awaiting-${project.id}`}
+                      className="d-flex align-items-center justify-content-between gap-3 flex-wrap rounded-3 bg-white border px-3 py-2"
+                    >
+                      <div>
+                        <div className="fw-semibold">{project.name}</div>
+                        <div className="small text-muted">
+                          {t("allProjects.awaitingConfirmationProjectMeta", {
+                            progress: Math.round(Number(project.progress || 0)),
+                            deadline: project.deadline
+                              ? new Date(project.deadline).toLocaleDateString(
+                                  localeTag,
+                                )
+                              : "—",
+                          })}
+                        </div>
+                      </div>
+                      <Link
+                        to={`/project-detail/${project.id}?tab=datasets`}
+                        className="btn btn-outline-warning btn-sm"
+                      >
+                        <i className="ri-search-eye-line me-1"></i>
+                        {t("allProjects.awaitingConfirmationReviewAction")}
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="row g-3 align-items-center">
             <div className="col-lg-5">
               <label className="form-label text-muted small fw-semibold mb-2">
@@ -188,6 +278,9 @@ const ProjectsAllProjectsPage = () => {
               >
                 <option value="All">{t("allProjects.allStatus")}</option>
                 <option value="Active">{t("allProjects.active")}</option>
+                <option value="AwaitingManagerConfirmation">
+                  {t("allProjects.awaitingConfirmationStatus")}
+                </option>
                 <option value="Expired">{t("allProjects.expired")}</option>
               </select>
             </div>
