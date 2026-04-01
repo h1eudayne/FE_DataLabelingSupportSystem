@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   Container,
   Row,
@@ -22,18 +22,43 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import projectService from "../../../services/reviewer/project.service";
 import { useTranslation } from "react-i18next";
 import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
+import { sortProjectsByNewestId } from "../../../utils/projectSort";
 
 const REVIEWER_REFRESH_INTERVAL_MS = 30000;
+const isForbiddenError = (error) => Number(error?.response?.status) === 403;
+const getApiErrorMessage = (error) => {
+  const rawMessage =
+    error?.response?.data?.message ??
+    error?.response?.data?.Message ??
+    error?.message;
+
+  return typeof rawMessage === "string" ? rawMessage.trim() : "";
+};
 
 const WorkplaceReviewTask = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [accessForbiddenMessage, setAccessForbiddenMessage] = useState("");
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const hasReviewerAccess = accessForbiddenMessage.length === 0;
+  const reviewerAccessRef = useRef(true);
+
+  const handleForbiddenAccess = useCallback(
+    (error) => {
+      reviewerAccessRef.current = false;
+      setProjects([]);
+      setAccessForbiddenMessage(
+        getApiErrorMessage(error) || t("reviewer.accessForbiddenMessage"),
+      );
+    },
+    [t],
+  );
 
   const fetchProjects = useCallback(async ({ showLoading = true } = {}) => {
     if (showLoading) {
@@ -42,23 +67,35 @@ const WorkplaceReviewTask = () => {
 
     try {
       const res = await projectService.getReviewProjects();
-      setProjects(res.data || []);
+      reviewerAccessRef.current = true;
+      setAccessForbiddenMessage("");
+      setProjects(sortProjectsByNewestId(res.data || []));
     } catch (err) {
-      console.error("Error loading projects:", err);
+      if (isForbiddenError(err)) {
+        handleForbiddenAccess(err);
+        return;
+      }
     } finally {
       if (showLoading) {
         setLoading(false);
       }
     }
-  }, []);
+  }, [handleForbiddenAccess]);
 
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
 
   useEffect(() => {
+    if (!hasReviewerAccess) {
+      return undefined;
+    }
+
     const refreshSilently = () => {
-      if (document.visibilityState === "visible") {
+      if (
+        reviewerAccessRef.current &&
+        document.visibilityState === "visible"
+      ) {
         fetchProjects({ showLoading: false });
       }
     };
@@ -76,9 +113,11 @@ const WorkplaceReviewTask = () => {
       window.removeEventListener("focus", refreshSilently);
       document.removeEventListener("visibilitychange", refreshSilently);
     };
-  }, [fetchProjects]);
+  }, [fetchProjects, hasReviewerAccess]);
 
-  useSignalRRefresh(() => fetchProjects({ showLoading: false }));
+  useSignalRRefresh(() => fetchProjects({ showLoading: false }), {
+    enabled: hasReviewerAccess,
+  });
 
   const filteredProjects = projects.filter((p) =>
     p.projectName?.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -98,10 +137,13 @@ const WorkplaceReviewTask = () => {
           },
         );
       } else {
-        alert(t("workplace.noTaskAlert"));
+        toast.info(t("workplace.noTaskAlert"));
       }
     } catch (error) {
-      console.error(error);
+      if (isForbiddenError(error)) {
+        toast.warn(t("reviewer.projectAccessRevoked"));
+        fetchProjects({ showLoading: false });
+      }
     }
   };
 
@@ -112,6 +154,21 @@ const WorkplaceReviewTask = () => {
           <h3 className="fw-bold text-dark mb-1">{t("workplace.title")}</h3>
           <p className="text-muted">{t("workplace.subtitle")}</p>
         </div>
+
+        {!hasReviewerAccess && (
+          <div className="alert alert-warning border-0 shadow-sm rounded-4 d-flex align-items-start gap-3 mb-4">
+            <AlertTriangle size={18} className="mt-1 flex-shrink-0" />
+            <div>
+              <div className="fw-semibold mb-1">
+                {t("reviewer.accessForbiddenTitle")}
+              </div>
+              <div className="mb-1">{accessForbiddenMessage}</div>
+              <small className="text-muted">
+                {t("reviewer.accessForbiddenHint")}
+              </small>
+            </div>
+          </div>
+        )}
 
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
           <div className="flex-grow-1" style={{ maxWidth: "400px" }}>
@@ -267,6 +324,17 @@ const WorkplaceReviewTask = () => {
                 </Col>
               );
             })}
+            {!filteredProjects.length && (
+              <Col xs={12}>
+                <Card className="border-0 shadow-sm rounded-4">
+                  <Card.Body className="text-center py-5 text-muted">
+                    {hasReviewerAccess
+                      ? t("reviewer.noTasks")
+                      : t("reviewer.accessForbiddenEmptyState")}
+                  </Card.Body>
+                </Card>
+              </Col>
+            )}
           </Row>
         )}
       </Container>

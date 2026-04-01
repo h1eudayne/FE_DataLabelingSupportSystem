@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Container, Dropdown, Form, InputGroup, Button, Badge } from "react-bootstrap";
+import { Container, Dropdown, Button, Badge } from "react-bootstrap";
 import {
   LogOut,
   User,
@@ -12,7 +12,6 @@ import {
   Menu,
   Maximize,
   Minimize,
-  Search,
   ChevronRight,
   ChevronDown,
   Sun,
@@ -20,7 +19,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { logout } from "@/store/auth/auth.slice";
+import { logoutThunk } from "@/store/auth/auth.thunk";
 import { getUserProfile, resolveGlobalBanRequest } from "../../services/admin/managementUsers/user.api";
 import { updateUser } from "../../store/auth/auth.slice";
 import { resolveBackendAssetUrl } from "../../config/runtime";
@@ -28,6 +27,15 @@ import useNotifications from "../../hooks/useNotifications";
 import { disconnect as disconnectSignalR } from "../../services/signalrManager";
 import { toast } from "react-toastify";
 import GlobalBanDecisionModal from "./GlobalBanDecisionModal";
+import { formatLocalDateTime } from "../../utils/dateTime";
+import {
+  buildResolvedGlobalBanNotificationPatch,
+  getGlobalBanNotificationKey,
+  getGlobalBanProjectKey,
+  getSafeGlobalBanErrorMessage,
+  getGlobalBanProjects,
+  isPendingGlobalBanNotification,
+} from "../../utils/globalBanNotifications";
 
 const getLanguageCode = (language) =>
   language?.toLowerCase().startsWith("en") ? "en" : "vi";
@@ -38,15 +46,6 @@ const HEADER_LOGOS = {
   darkLarge:
     "https://res.cloudinary.com/deu3ur8w9/image/upload/v1773346453/logo-darkmode_txjdzq.png",
 };
-
-const isPendingGlobalBanNotification = (notification) =>
-  notification?.actionKey === "ResolveGlobalUserBanRequest" &&
-  notification?.metadata?.requestStatus === "Pending";
-
-const getGlobalBanProjects = (notification) =>
-  Array.isArray(notification?.metadata?.unfinishedProjects)
-    ? notification.metadata.unfinishedProjects
-    : [];
 
 const Header = ({
   toggleSidebar,
@@ -66,8 +65,37 @@ const Header = ({
     notification: null,
   });
   const [banDecisionLoading, setBanDecisionLoading] = useState(false);
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll, refreshNotifications } =
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    updateNotification,
+    clearAll,
+    refreshNotifications,
+  } =
     useNotifications(user?.id, unreadNotifications);
+  const displayNotifications = useMemo(() => {
+    const seenPendingGlobalBanRequests = new Set();
+
+    return notifications.filter((notification) => {
+      if (!isPendingGlobalBanNotification(notification)) {
+        return true;
+      }
+
+      const requestKey = getGlobalBanNotificationKey(notification);
+      if (!requestKey) {
+        return true;
+      }
+
+      if (seenPendingGlobalBanRequests.has(requestKey)) {
+        return false;
+      }
+
+      seenPendingGlobalBanRequests.add(requestKey);
+      return true;
+    });
+  }, [notifications]);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
@@ -131,10 +159,13 @@ const Header = ({
     }
   };
 
-  const handleLogout = () => {
-    disconnectSignalR();
-    dispatch(logout());
-    navigate("/login", { replace: true });
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutThunk());
+    } finally {
+      disconnectSignalR();
+      navigate("/login", { replace: true });
+    }
   };
 
   const openBanDecisionModal = (notification, decision = "approve") => {
@@ -179,8 +210,17 @@ const Header = ({
 
     try {
       await resolveGlobalBanRequest(requestId, approve, normalizedDecisionNote);
+      updateNotification(
+        banDecisionModal.notification?.id,
+        buildResolvedGlobalBanNotificationPatch(
+          banDecisionModal.notification,
+          approve,
+          normalizedDecisionNote,
+        ),
+      );
       markAsRead(banDecisionModal.notification?.id);
       await refreshNotifications();
+      window.dispatchEvent(new Event("notifications:refresh"));
       toast.success(
         approve
           ? t("header.globalBanApproveSuccess")
@@ -188,11 +228,13 @@ const Header = ({
       );
       closeBanDecisionModal(true);
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message ||
-        error?.message ||
-        t("header.globalBanActionFailed"),
-      );
+      if (/already been resolved/i.test(error?.response?.data?.message || "")) {
+        await refreshNotifications();
+        window.dispatchEvent(new Event("notifications:refresh"));
+        closeBanDecisionModal(true);
+      }
+
+      toast.error(getSafeGlobalBanErrorMessage(error, t("header.globalBanActionFailed")));
     } finally {
       setBanDecisionLoading(false);
     }
@@ -334,29 +376,6 @@ const Header = ({
         [data-bs-theme="dark"] .custom-toggle-btn.is-active .toggle-icon {
           color: #BFDBFE !important;
         }
-
-        [data-bs-theme="dark"] .header-search-input {
-          background-color: #1F2937 !important;
-          border: 1px solid #334155 !important;
-        }
-        [data-bs-theme="dark"] .header-search-input .form-control {
-          color: #E2E8F0 !important;
-        }
-        [data-bs-theme="dark"] .header-search-input .form-control::placeholder {
-          color: #64748B !important;
-        }
-
-        [data-bs-theme="dark"] .header-search-input {
-          background-color: #1F2937 !important;
-          border: 1px solid #334155 !important;
-        }
-        [data-bs-theme="dark"] .header-search-input .form-control {
-          color: #E2E8F0 !important;
-        }
-        [data-bs-theme="dark"] .header-search-input .form-control::placeholder {
-          color: #64748B !important;
-        }
-
         [data-bs-theme="dark"] .theme-toggle-btn:hover {
           background-color: rgba(59, 130, 246, 0.1) !important;
         }
@@ -454,20 +473,6 @@ const Header = ({
                   />
                 </div>
               )}
-
-              <Form className="d-none d-md-block ms-2">
-                <InputGroup
-                  size="sm"
-                  className="rounded-pill px-3 py-1 border-0 header-search-input"
-                >
-                  <Search size={16} className="text-muted me-2" />
-                  <Form.Control
-                    className="bg-transparent border-0 shadow-none p-0"
-                    placeholder={t("header.search")}
-                    style={{ width: "180px" }}
-                  />
-                </InputGroup>
-              </Form>
             </div>
 
             <div className="d-flex align-items-center gap-2">
@@ -591,7 +596,7 @@ const Header = ({
                           <Check size={14} />
                         </Button>
                       )}
-                      {notifications.length > 0 && (
+                      {displayNotifications.length > 0 && (
                         <Button
                           variant="link"
                           size="sm"
@@ -605,13 +610,13 @@ const Header = ({
                     </div>
                   </div>
                   <div style={{ maxHeight: "340px", overflowY: "auto" }}>
-                    {notifications.length === 0 ? (
+                    {displayNotifications.length === 0 ? (
                       <div className="text-center py-4 text-muted">
                         <Bell size={32} className="mb-2 opacity-25" />
                         <p className="small mb-0">{t("header.noNotifications")}</p>
                       </div>
                     ) : (
-                      notifications.map((n) => {
+                      displayNotifications.map((n) => {
                         const pendingGlobalBan = isPendingGlobalBanNotification(n);
                         const globalBanProjects = getGlobalBanProjects(n);
                         const requestStatus = n?.metadata?.requestStatus;
@@ -687,13 +692,16 @@ const Header = ({
                                       {t("header.globalBanProjects")}
                                     </div>
                                     <div className="d-flex flex-wrap gap-1 mt-1">
-                                      {globalBanProjects.map((project) => (
+                                      {globalBanProjects.map((project, index) => (
                                         <span
-                                          key={`${n.id}-${project.id}`}
+                                          key={getGlobalBanProjectKey(project, index, n.id)}
                                           className="badge bg-light text-dark border"
                                           style={{ fontSize: "10px" }}
                                         >
-                                          {project.name}
+                                          {project.name ||
+                                            (project.id
+                                              ? `${t("header.globalBanUnknownProject")} #${project.id}`
+                                              : t("header.globalBanUnknownProject"))}
                                         </span>
                                       ))}
                                     </div>
@@ -743,7 +751,8 @@ const Header = ({
                                   style={{ fontSize: "10px" }}
                                 >
                                   <Clock size={10} />
-                                  {new Date(n.timestamp).toLocaleString(
+                                  {formatLocalDateTime(
+                                    n.timestamp,
                                     i18n.language === "vi" ? "vi-VN" : "en-US",
                                   )}
                                 </div>

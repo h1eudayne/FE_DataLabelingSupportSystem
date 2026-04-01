@@ -1,12 +1,19 @@
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { Badge, Button, Card, Col, ProgressBar, Row } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
+import {
+  getProjectStatusLabel,
+  isAwaitingManagerConfirmation,
+  isCompletedProjectStatus,
+} from "../../../utils/projectWorkflowStatus";
 
 const ProjectCardItem = ({ project, onReview }) => {
   const { t, i18n } = useTranslation();
-  const isCompleted = project.progressPercent >= 100;
+  const isCompleted = isCompletedProjectStatus(project.status);
+  const isAwaitingCompletion = isAwaitingManagerConfirmation(project.status);
   const today = new Date();
-  const isOverdue = !isCompleted && new Date(project.deadline) < today;
+  const isOverdue =
+    !isCompleted && !isAwaitingCompletion && new Date(project.deadline) < today;
 
   const dateFormat = i18n.language === "vi" ? "vi-VN" : "en-US";
 
@@ -66,14 +73,18 @@ const ProjectCardItem = ({ project, onReview }) => {
           </Col>
 
           <Col md={3} className="text-end">
-            {isCompleted ? (
+            {isCompleted || isAwaitingCompletion ? (
               <Button
-                variant="light"
-                className="rounded-pill px-4 d-inline-flex align-items-center gap-2 text-success border-success-subtle"
+                variant={isCompleted ? "light" : "warning"}
+                className={`rounded-pill px-4 d-inline-flex align-items-center gap-2 ${
+                  isCompleted
+                    ? "text-success border-success-subtle"
+                    : "text-dark border-warning-subtle"
+                }`}
                 disabled
                 style={{ cursor: "not-allowed", opacity: 0.8 }}
               >
-                <CheckCircle size={16} /> {t("reviewer.completed")}
+                <CheckCircle size={16} /> {getProjectStatusLabel(project.status, t)}
               </Button>
             ) : (
               <Button

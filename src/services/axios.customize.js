@@ -148,6 +148,10 @@ instance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
     if (isRefreshTokenRequest(originalRequest)) {
       clearAuthAndRedirect();
       return Promise.reject(error);
@@ -155,6 +159,19 @@ instance.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
+      try {
+        const accessToken = await refreshAccessToken();
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return instance(originalRequest);
+      } catch (refreshError) {
+        return Promise.reject(refreshError);
+      }
+    }
+
+    if (error.response?.status === 403 && !originalRequest._forbiddenRetry) {
+      originalRequest._forbiddenRetry = true;
 
       try {
         const accessToken = await refreshAccessToken();

@@ -7,6 +7,7 @@ import {
   getMyTasks,
   getReviewerFeedbackByProject,
   getAllReviewerFeedback,
+  getMyAccuracy,
 } from "./annotator.api";
 
 vi.mock("/src/services/axios.customize.js", () => ({
@@ -76,6 +77,165 @@ describe("Annotator API Suite - Full Coverage", () => {
       expect(await getReviewerFeedbackByProject("")).toEqual([]);
     });
 
+    it("nên gom đủ feedback từ reviewer và manager, kèm role và ngày trả về", async () => {
+      axios.get
+        .mockResolvedValueOnce({
+          data: [
+            {
+              id: 5,
+              dataItemId: 55,
+              dataItemUrl: "https://example.com/car-55.jpg",
+              status: "Rejected",
+              rejectionReason: "Bounding box is too loose",
+              errorCategory: "BBox",
+              managerDecision: "reject",
+              managerComment: "Please relabel based on guideline v2",
+              latestReviewAt: "2026-04-01T09:00:00.000Z",
+              reviewerFeedbacks: [
+                {
+                  reviewLogId: 501,
+                  reviewerId: "reviewer-1",
+                  reviewerName: "Reviewer One",
+                  comment: "Bounding box is too loose",
+                  errorCategories: "BBox",
+                  reviewedAt: "2026-04-01T09:00:00.000Z",
+                },
+              ],
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          data: [
+            {
+              assignmentId: 5,
+              reviewerName: "Reviewer One",
+              managerName: "Manager One",
+              resolvedAt: "2026-04-01T10:00:00.000Z",
+            },
+          ],
+        });
+
+      const result = await getReviewerFeedbackByProject({
+        projectId: 100,
+        projectName: "Project A",
+      });
+
+      expect(result).toEqual([
+        {
+          feedbackId: "manager-5",
+          assignmentId: 5,
+          dataItemId: 55,
+          dataItemUrl: "https://example.com/car-55.jpg",
+          taskName: "car-55.jpg",
+          projectId: 100,
+          projectName: "Project A",
+          taskStatus: "Rejected",
+          sourceRole: "Manager",
+          sourceName: "Manager One",
+          errorType: "BBox",
+          comment: "Please relabel based on guideline v2",
+          returnedDate: "2026-04-01T10:00:00.000Z",
+        },
+        {
+          feedbackId: 501,
+          reviewLogId: 501,
+          assignmentId: 5,
+          dataItemId: 55,
+          dataItemUrl: "https://example.com/car-55.jpg",
+          taskName: "car-55.jpg",
+          projectId: 100,
+          projectName: "Project A",
+          taskStatus: "Rejected",
+          sourceRole: "Reviewer",
+          sourceName: "Reviewer One",
+          errorType: "BBox",
+          comment: "Bounding box is too loose",
+          returnedDate: "2026-04-01T09:00:00.000Z",
+        },
+      ]);
+      expect(axios.get).toHaveBeenNthCalledWith(
+        1,
+        "/api/tasks/projects/100/images",
+      );
+      expect(axios.get).toHaveBeenNthCalledWith(2, "/api/disputes", {
+        params: { projectId: 100 },
+      });
+    });
+
+    it("nên tách riêng từng feedback khi một ảnh bị nhiều reviewer trả về", async () => {
+      axios.get
+        .mockResolvedValueOnce({
+          data: [
+            {
+              id: 9,
+              dataItemId: 99,
+              dataItemUrl: "https://example.com/car-99.jpg",
+              status: "Rejected",
+              latestReviewAt: "2026-04-01T09:05:00.000Z",
+              reviewerFeedbacks: [
+                {
+                  reviewLogId: 901,
+                  reviewerId: "reviewer-1",
+                  reviewerName: "Reviewer One",
+                  comment: "Wrong class",
+                  errorCategories: "classification",
+                  reviewedAt: "2026-04-01T09:00:00.000Z",
+                },
+                {
+                  reviewLogId: 902,
+                  reviewerId: "reviewer-2",
+                  reviewerName: "Reviewer Two",
+                  comment: "Bounding box too loose",
+                  errorCategories: "bbox",
+                  reviewedAt: "2026-04-01T09:05:00.000Z",
+                },
+              ],
+            },
+          ],
+        })
+        .mockResolvedValueOnce({ data: [] });
+
+      const result = await getReviewerFeedbackByProject({
+        projectId: 200,
+        projectName: "Project Multi Reviewer",
+      });
+
+      expect(result).toEqual([
+        {
+          feedbackId: 902,
+          reviewLogId: 902,
+          assignmentId: 9,
+          dataItemId: 99,
+          dataItemUrl: "https://example.com/car-99.jpg",
+          taskName: "car-99.jpg",
+          projectId: 200,
+          projectName: "Project Multi Reviewer",
+          taskStatus: "Rejected",
+          sourceRole: "Reviewer",
+          sourceName: "Reviewer Two",
+          errorType: "bbox",
+          comment: "Bounding box too loose",
+          returnedDate: "2026-04-01T09:05:00.000Z",
+        },
+        {
+          feedbackId: 901,
+          reviewLogId: 901,
+          assignmentId: 9,
+          dataItemId: 99,
+          dataItemUrl: "https://example.com/car-99.jpg",
+          taskName: "car-99.jpg",
+          projectId: 200,
+          projectName: "Project Multi Reviewer",
+          taskStatus: "Rejected",
+          sourceRole: "Reviewer",
+          sourceName: "Reviewer One",
+          errorType: "classification",
+          comment: "Wrong class",
+          returnedDate: "2026-04-01T09:00:00.000Z",
+        },
+      ]);
+    });
+
     it("nên bắt lỗi (catch) và trả về [] khi server lỗi 500", async () => {
       axios.get.mockRejectedValueOnce(new Error("Internal Server Error"));
       const result = await getReviewerFeedbackByProject("P1");
@@ -101,6 +261,47 @@ describe("Annotator API Suite - Full Coverage", () => {
       axios.get.mockResolvedValueOnce({ data: null });
       const result = await getAllReviewerFeedback();
       expect(result).toEqual([]);
+    });
+  });
+
+  describe("getMyAccuracy()", () => {
+    it("nên giữ nguyên 0% khi annotator đã bị manager chốt sai, không fallback thành 100%", async () => {
+      localStorage.setItem("user", JSON.stringify({ id: "annotator-1" }));
+
+      axios.get
+        .mockResolvedValueOnce({
+          data: [{ projectId: 101, projectName: "Rejected Project" }],
+        })
+        .mockResolvedValueOnce({
+          data: {
+            annotatorPerformances: [
+              {
+                annotatorId: "annotator-1",
+                finalAccuracy: 0,
+                annotatorAccuracy: 0,
+                tasksAssigned: 1,
+                tasksCompleted: 0,
+                tasksRejected: 1,
+                resolvedTasks: 1,
+              },
+            ],
+          },
+        });
+
+      const result = await getMyAccuracy();
+
+      expect(result).toEqual({
+        overallAccuracy: 0,
+        perProject: [
+          {
+            projectName: "Rejected Project",
+            accuracy: 0,
+            tasksAssigned: 1,
+            tasksCompleted: 0,
+            tasksResolved: 1,
+          },
+        ],
+      });
     });
   });
 

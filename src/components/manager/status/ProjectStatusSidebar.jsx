@@ -1,6 +1,10 @@
 import React from "react";
 import { Card, CardHeader, CardBody, Badge } from "reactstrap";
 import { useTranslation } from "react-i18next";
+import {
+  getProjectStatusLabel,
+  getProjectStatusTone,
+} from "../../../utils/projectWorkflowStatus";
 
 const ProjectStatusSidebar = ({ projects }) => {
   const { t } = useTranslation();
@@ -21,8 +25,8 @@ const ProjectStatusSidebar = ({ projects }) => {
                   </p>
                 </div>
                 <div className="flex-shrink-0 text-end">
-                  <Badge color={p.status === "Active" ? "success" : "danger"}>
-                    {p.status === "Active" ? t('projectStatusSidebar.statusActive') : t('projectStatusSidebar.statusExpired')}
+                  <Badge color={getProjectStatusTone(p.status)}>
+                    {getProjectStatusLabel(p.status, t)}
                   </Badge>
                   <div className="fw-bold mt-1 text-primary">{p.progress}%</div>
                 </div>

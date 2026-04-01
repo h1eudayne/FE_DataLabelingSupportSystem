@@ -31,6 +31,8 @@ const LabelingWorkspace = ({
   assignmentId,
   readOnly = false,
   highlightedAnnotationId = null,
+  referenceAnnotations = [],
+  restrictedEditableLabelIds = [],
   onAnnotationClick,
   projectType = "BBOX",
   onRunAiPreview,
@@ -43,12 +45,16 @@ const LabelingWorkspace = ({
   const containerRef = useRef(null);
   const stageWrapperRef = useRef(null);
   const lastPolyClickTime = useRef(0);
+  const drawingLabelRef = useRef(null);
 
   const { selectedLabel, annotationsByAssignment } = useSelector(
     (state) => state.labeling,
   );
 
   const annotations = annotationsByAssignment[assignmentId] || [];
+  const lockedReferenceAnnotations = Array.isArray(referenceAnnotations)
+    ? referenceAnnotations
+    : [];
   const resolvedImageUrl = resolveBackendAssetUrl(imageUrl);
 
   const [image] = useImage(resolvedImageUrl, "anonymous");
@@ -79,24 +85,39 @@ const LabelingWorkspace = ({
   }, [projectType, allowPolygon, allowBbox]);
 
   const [currentPolygon, setCurrentPolygon] = useState([]);
+  const activeLabel = selectedLabel && typeof selectedLabel === "object"
+    ? selectedLabel
+    : null;
+  const buildDraftAnnotationMetadata = (label) => {
+    const isRestrictedEditableLabel = Array.isArray(restrictedEditableLabelIds)
+      && restrictedEditableLabelIds.some((id) => String(id) === String(label?.id));
+
+    return isRestrictedEditableLabel
+      ? { __relabelEditable: true }
+      : {};
+  };
 
   const finishPolygon = useCallback(() => {
-    if (currentPolygon.length >= 3) {
+    const polygonLabel = drawingLabelRef.current || activeLabel;
+
+    if (currentPolygon.length >= 3 && polygonLabel) {
       dispatch(
         addAnnotation({
           id: Date.now().toString(),
           assignmentId,
-          labelId: selectedLabel.id,
-          labelName: selectedLabel.name,
-          color: selectedLabel.color,
+          labelId: polygonLabel.id,
+          labelName: polygonLabel.name,
+          color: polygonLabel.color,
           type: "POLYGON",
           points: currentPolygon,
+          ...buildDraftAnnotationMetadata(polygonLabel),
         }),
       );
     }
+    drawingLabelRef.current = null;
     setCurrentPolygon([]);
     setMouseImgPos(null);
-  }, [currentPolygon, dispatch, assignmentId, selectedLabel]);
+  }, [currentPolygon, dispatch, assignmentId, activeLabel, restrictedEditableLabelIds]);
 
   const fitImageToStage = useCallback(() => {
     
@@ -146,6 +167,7 @@ const LabelingWorkspace = ({
       if (e.key === "Escape") {
         e.preventDefault();
         if (drawingMode === "polygon" && currentPolygon.length > 0) {
+          drawingLabelRef.current = null;
           setCurrentPolygon([]);
         }
         
@@ -232,12 +254,14 @@ const LabelingWorkspace = ({
 
     if (e.evt.button === 1) {
       e.evt.preventDefault();
+      drawingLabelRef.current = null;
       setIsPanning(true);
       setPanStart({ x: pos.x - stagePos.x, y: pos.y - stagePos.y });
       return;
     }
 
-    if (readOnly || !selectedLabel) {
+    if (readOnly || !activeLabel) {
+      drawingLabelRef.current = null;
       setIsPanning(true);
       setPanStart({ x: pos.x - stagePos.x, y: pos.y - stagePos.y });
       return;
@@ -253,11 +277,15 @@ const LabelingWorkspace = ({
         finishPolygon();
         return;
       }
+      if (currentPolygon.length === 0) {
+        drawingLabelRef.current = activeLabel;
+      }
       setCurrentPolygon((prev) => [
         ...prev,
         { x: imgCoords.x, y: imgCoords.y },
       ]);
     } else {
+      drawingLabelRef.current = activeLabel;
       setNewRect({ x: imgCoords.x, y: imgCoords.y, width: 0, height: 0 });
     }
   };
@@ -294,8 +322,11 @@ const LabelingWorkspace = ({
     }
 
     if (drawingMode === "bbox") {
+      const rectLabel = drawingLabelRef.current || activeLabel;
+
       if (
         newRect &&
+        rectLabel &&
         Math.abs(newRect.width) > 5 &&
         Math.abs(newRect.height) > 5
       ) {
@@ -303,17 +334,19 @@ const LabelingWorkspace = ({
           addAnnotation({
             id: Date.now().toString(),
             assignmentId,
-            labelId: selectedLabel.id,
-            labelName: selectedLabel.name,
-            color: selectedLabel.color,
+            labelId: rectLabel.id,
+            labelName: rectLabel.name,
+            color: rectLabel.color,
             type: "BBOX",
             x: newRect.width > 0 ? newRect.x : newRect.x + newRect.width,
             y: newRect.height > 0 ? newRect.y : newRect.y + newRect.height,
             width: Math.abs(newRect.width),
             height: Math.abs(newRect.height),
+            ...buildDraftAnnotationMetadata(rectLabel),
           }),
         );
       }
+      drawingLabelRef.current = null;
       setNewRect(null);
     }
   };
@@ -322,7 +355,7 @@ const LabelingWorkspace = ({
     if (!containerRef.current) return;
     containerRef.current.style.cursor = readOnly
       ? "default"
-      : selectedLabel
+      : activeLabel
         ? "crosshair"
         : "grab";
   };
@@ -376,7 +409,7 @@ const LabelingWorkspace = ({
   
   const imgW = image ? image.width : 0;
   const imgH = image ? image.height : 0;
-  const showCrosshair = !readOnly && selectedLabel && mouseImgPos && !isPanning;
+  const showCrosshair = !readOnly && activeLabel && mouseImgPos && !isPanning;
 
   return (
     <div ref={containerRef} className="stitch-ws-canvas-container">
@@ -525,6 +558,93 @@ const LabelingWorkspace = ({
         >
           <Layer>
             {image && <KonvaImage image={image} />}
+
+            {}
+            {lockedReferenceAnnotations.map((a, index) => {
+              const referenceId = a.__uiId || `reference-${index}`;
+              const isHighlighted = highlightedAnnotationId === referenceId;
+              const tagFontSize = 11 / stageScale;
+              const tagPadding = 3 / stageScale;
+              const tagText = a.labelName || "Reference";
+              const tagWidth =
+                tagText.length * tagFontSize * 0.65 + tagPadding * 2;
+              const tagHeight = tagFontSize + tagPadding * 2;
+
+              if (a.type === "POLYGON" || a.points) {
+                const minX = Math.min(...a.points.map((p) => p.x));
+                const minY = Math.min(...a.points.map((p) => p.y));
+
+                return (
+                  <Group key={referenceId}>
+                    <Line
+                      points={a.points.flatMap((p) => [p.x, p.y])}
+                      closed={true}
+                      stroke={isHighlighted ? "#fff" : a.color || "#64748B"}
+                      strokeWidth={(isHighlighted ? 3 : 2) / stageScale}
+                      fill={
+                        (a.color || "#64748B") + (isHighlighted ? "40" : "18")
+                      }
+                      dash={[8 / stageScale, 5 / stageScale]}
+                      onClick={() => {
+                        if (onAnnotationClick) onAnnotationClick(referenceId);
+                      }}
+                    />
+                    <Rect
+                      x={minX}
+                      y={minY - tagHeight}
+                      width={tagWidth}
+                      height={tagHeight}
+                      fill="rgba(15, 23, 42, 0.72)"
+                      cornerRadius={2 / stageScale}
+                    />
+                    <Text
+                      x={minX + tagPadding}
+                      y={minY - tagHeight + tagPadding}
+                      text={tagText}
+                      fill="white"
+                      fontSize={tagFontSize}
+                      fontStyle="bold"
+                    />
+                  </Group>
+                );
+              }
+
+              return (
+                <Group key={referenceId}>
+                  <Rect
+                    x={a.x}
+                    y={a.y}
+                    width={a.width}
+                    height={a.height}
+                    stroke={isHighlighted ? "#fff" : a.color || "#64748B"}
+                    strokeWidth={(isHighlighted ? 3 : 2) / stageScale}
+                    fill={
+                      (a.color || "#64748B") + (isHighlighted ? "40" : "18")
+                    }
+                    dash={[8 / stageScale, 5 / stageScale]}
+                    onClick={() => {
+                      if (onAnnotationClick) onAnnotationClick(referenceId);
+                    }}
+                  />
+                  <Rect
+                    x={a.x}
+                    y={a.y - tagHeight}
+                    width={tagWidth}
+                    height={tagHeight}
+                    fill="rgba(15, 23, 42, 0.72)"
+                    cornerRadius={2 / stageScale}
+                  />
+                  <Text
+                    x={a.x + tagPadding}
+                    y={a.y - tagHeight + tagPadding}
+                    text={tagText}
+                    fill="white"
+                    fontSize={tagFontSize}
+                    fontStyle="bold"
+                  />
+                </Group>
+              );
+            })}
 
             {}
             {annotations.map((a) => {

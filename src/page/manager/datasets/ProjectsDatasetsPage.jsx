@@ -9,84 +9,45 @@ import datasetService from "../../../services/manager/dataset/datasetService";
 import analyticsService from "../../../services/manager/analytics/analyticsService";
 import disputeService from "../../../services/manager/dispute/disputeService";
 import labelService from "../../../services/manager/project/labelService";
+import ProjectCompletionReviewModal from "../../../components/manager/project/ProjectCompletionReviewModal";
+import { showConfirmDialog } from "../../../utils/appDialog";
+import {
+  getProjectStatusBadgeClass,
+  getProjectStatusLabel,
+  isAwaitingManagerConfirmation,
+} from "../../../utils/projectWorkflowStatus";
+import {
+  EXPORT_FORMATS,
+  buildExportFileContent,
+  computeProjectExportEligibility,
+  extractExportErrorMessage,
+} from "../../../utils/projectExport";
 
-const EXPORT_FORMATS = [
-  {
-    value: "json",
-    label: "JSON",
-    desc: ".json",
-    mime: "application/json",
-    ext: ".json",
-  },
-  { value: "csv", label: "CSV", desc: ".csv", mime: "text/csv", ext: ".csv" },
-  {
-    value: "xml",
-    label: "XML",
-    desc: ".xml",
-    mime: "application/xml",
-    ext: ".xml",
-  },
-];
-
-const convertToCSV = (data) => {
-  if (!data || !Array.isArray(data) || data.length === 0) {
-    if (typeof data === "object" && !Array.isArray(data)) data = [data];
-    else return "";
+const extractApiErrorMessage = (error) => {
+  const responseData = error?.response?.data;
+  if (typeof responseData === "string" && responseData.trim()) {
+    return responseData.trim();
   }
-  const flattenObj = (obj, prefix = "") => {
-    const result = {};
-    for (const key of Object.keys(obj)) {
-      const fullKey = prefix ? `${prefix}.${key}` : key;
-      if (
-        obj[key] !== null &&
-        typeof obj[key] === "object" &&
-        !Array.isArray(obj[key])
-      ) {
-        Object.assign(result, flattenObj(obj[key], fullKey));
-      } else {
-        result[fullKey] = Array.isArray(obj[key])
-          ? JSON.stringify(obj[key])
-          : obj[key];
-      }
-    }
-    return result;
-  };
-  const flatData = data.map((item) => flattenObj(item));
-  const headers = [...new Set(flatData.flatMap((d) => Object.keys(d)))];
-  const csvRows = [headers.join(",")];
-  for (const row of flatData) {
-    const values = headers.map((h) => {
-      const val = row[h] ?? "";
-      const str = String(val);
-      return str.includes(",") || str.includes('"') || str.includes("\n")
-        ? `"${str.replace(/"/g, '""')}"`
-        : str;
-    });
-    csvRows.push(values.join(","));
-  }
-  return csvRows.join("\n");
-};
 
-const convertToXML = (data, rootName = "export") => {
-  const escapeXml = (str) =>
-    String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  const toXml = (obj, tag = "item") => {
-    if (Array.isArray(obj))
-      return obj.map((item) => toXml(item, tag)).join("\n");
-    if (typeof obj === "object" && obj !== null) {
-      const inner = Object.entries(obj)
-        .map(([key, val]) => toXml(val, key))
-        .join("\n");
-      return `<${tag}>\n${inner}\n</${tag}>`;
-    }
-    return `<${tag}>${escapeXml(obj)}</${tag}>`;
-  };
-  const items = Array.isArray(data) ? data : [data];
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<${rootName}>\n${items.map((item) => toXml(item, "item")).join("\n")}\n</${rootName}>`;
+  const message =
+    responseData?.message ||
+    responseData?.Message ||
+    error?.message;
+
+  if (typeof message !== "string") {
+    return "";
+  }
+
+  const normalizedMessage = message.trim();
+  if (
+    /saving the entity changes/i.test(normalizedMessage) ||
+    /inner exception/i.test(normalizedMessage) ||
+    /sql/i.test(normalizedMessage)
+  ) {
+    return "";
+  }
+
+  return normalizedMessage;
 };
 
 const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
@@ -100,15 +61,25 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [completingProject, setCompletingProject] = useState(false);
+  const [completionReviewOpen, setCompletionReviewOpen] = useState(false);
+  const [completionReviewLoading, setCompletionReviewLoading] = useState(false);
+  const [completionReviewSubmitting, setCompletionReviewSubmitting] = useState(false);
+  const [completionReviewData, setCompletionReviewData] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState("json");
   const [exportCheck, setExportCheck] = useState({
+    hasDataItems: false,
     ready: false,
     allApproved: false,
     noPendingDisputes: false,
     checking: false,
+    totalItems: 0,
+    approvedItems: 0,
+    pendingDisputeCount: 0,
   });
   const fileInputRef = useRef(null);
+  const labelSubmitLockRef = useRef(false);
   const { user } = useSelector((state) => state.auth);
   const managerId = user?.id;
   const [searchTerm, setSearchTerm] = useState("");
@@ -161,6 +132,16 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
     );
   }, [projects, searchTerm]);
 
+  const canInspectCompletionReview = useMemo(
+    () =>
+      Boolean(
+        selectedProject &&
+          (isAwaitingManagerConfirmation(selectedProject.status) ||
+            String(selectedProject.status || "").toLowerCase() === "completed"),
+      ),
+    [selectedProject],
+  );
+
   const fetchList = useCallback(async () => {
     try {
       const res = await projectService.getManagerProjects(managerId);
@@ -185,30 +166,19 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
         analyticsService.getProjectStats(projectId),
         disputeService.getDisputes(projectId),
       ]);
-      const stats = statsRes.data;
-      const disputes = disputesRes.data || [];
-
-      const totalTasks = stats.totalAssignments ?? 0;
-      const approved = stats.approvedAssignments ?? 0;
-      const allApproved = totalTasks > 0 && approved === totalTasks;
-      const pendingDisputes = disputes.filter((d) => d.status === "Pending");
-      const noPendingDisputes = pendingDisputes.length === 0;
-
-      setExportCheck({
-        ready: allApproved && noPendingDisputes,
-        allApproved,
-        noPendingDisputes,
-        checking: false,
-        totalTasks,
-        approved,
-        pendingDisputeCount: pendingDisputes.length,
-      });
+      setExportCheck(
+        computeProjectExportEligibility(statsRes.data, disputesRes.data || []),
+      );
     } catch {
       setExportCheck({
+        hasDataItems: false,
         ready: false,
         allApproved: false,
         noPendingDisputes: false,
         checking: false,
+        totalItems: 0,
+        approvedItems: 0,
+        pendingDisputeCount: 0,
       });
     }
   }, []);
@@ -216,11 +186,17 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
   const handleProjectClick = useCallback(async (id) => {
     setLoading(true);
     setProjectStats(null);
+    setCompletionReviewData(null);
+    setCompletionReviewOpen(false);
     setExportCheck({
+      hasDataItems: false,
       ready: false,
       allApproved: false,
       noPendingDisputes: false,
       checking: true,
+      totalItems: 0,
+      approvedItems: 0,
+      pendingDisputeCount: 0,
     });
     try {
       const [res] = await Promise.all([
@@ -273,15 +249,18 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
 
     if (!exportCheck.ready) {
       const reasons = [];
-      if (!exportCheck.allApproved)
+      if (!exportCheck.hasDataItems) {
+        reasons.push(t("datasets.noDataReason"));
+      } else if (!exportCheck.allApproved) {
         reasons.push(
           t("datasets.tasksNotApprovedDetail", {
             remaining:
-              (exportCheck.totalTasks || 0) - (exportCheck.approved || 0),
-            approved: exportCheck.approved || 0,
-            total: exportCheck.totalTasks || 0,
+              (exportCheck.totalItems || 0) - (exportCheck.approvedItems || 0),
+            approved: exportCheck.approvedItems || 0,
+            total: exportCheck.totalItems || 0,
           }),
         );
+      }
       if (!exportCheck.noPendingDisputes)
         reasons.push(
           t("datasets.disputesPendingDetail", {
@@ -298,30 +277,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
     try {
       const res = await datasetService.exportData(selectedProject.id);
       const format = EXPORT_FORMATS.find((f) => f.value === selectedFormat);
-      let rawData = res.data;
-
-      if (typeof rawData === "string") {
-        try {
-          rawData = JSON.parse(rawData);
-        } catch {
-          rawData = res.data;
-        }
-      }
-
-      let content;
-      switch (selectedFormat) {
-        case "csv":
-          content = convertToCSV(rawData);
-          break;
-        case "xml":
-          content = convertToXML(rawData, "projectExport");
-          break;
-        default:
-          content =
-            typeof rawData === "string"
-              ? rawData
-              : JSON.stringify(rawData, null, 2);
-      }
+      const { content } = await buildExportFileContent(res.data, selectedFormat);
 
       const blob = new Blob([content], { type: format.mime });
       const url = window.URL.createObjectURL(blob);
@@ -334,12 +290,106 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
       window.URL.revokeObjectURL(url);
       toast.success(t("datasets.exportSuccess"));
       setShowExportModal(false);
-    } catch {
-      toast.error(t("datasets.exportFailed"));
+    } catch (error) {
+      toast.error(await extractExportErrorMessage(error, t("datasets.exportFailed")));
     } finally {
       setExporting(false);
     }
   };
+
+  const handleCompleteProject = useCallback(async () => {
+    if (!selectedProject?.id || !selectedProject?.canManagerConfirmCompletion) {
+      return;
+    }
+
+    const confirmResult = await showConfirmDialog({
+      title: t("datasets.completeProjectConfirmTitle"),
+      text: t("datasets.completeProjectConfirmText", {
+        name: selectedProject.name,
+      }),
+      confirmText: t("datasets.completeProjectAction"),
+      cancelText: t("common.cancel"),
+      icon: "success",
+    });
+
+    if (!confirmResult.isConfirmed) {
+      return;
+    }
+
+    setCompletingProject(true);
+    try {
+      await projectService.completeProject(selectedProject.id);
+      setCompletionReviewOpen(false);
+      setCompletionReviewData(null);
+      toast.success(
+        t("datasets.completeProjectSuccess", {
+          name: selectedProject.name,
+        }),
+      );
+      await Promise.all([
+        handleProjectClick(selectedProject.id),
+        fetchList(),
+      ]);
+    } catch (error) {
+      toast.error(
+        extractApiErrorMessage(error) || t("datasets.completeProjectFailed"),
+      );
+    } finally {
+      setCompletingProject(false);
+    }
+  }, [fetchList, handleProjectClick, selectedProject, t]);
+
+  const handleOpenCompletionReview = useCallback(async () => {
+    if (!selectedProject?.id || !canInspectCompletionReview) {
+      return;
+    }
+
+    setCompletionReviewOpen(true);
+    setCompletionReviewLoading(true);
+    try {
+      const res = await projectService.getCompletionReview(selectedProject.id);
+      setCompletionReviewData(res.data || null);
+    } catch (error) {
+      setCompletionReviewOpen(false);
+      toast.error(
+        extractApiErrorMessage(error) || t("datasets.completionReviewLoadFailed"),
+      );
+    } finally {
+      setCompletionReviewLoading(false);
+    }
+  }, [canInspectCompletionReview, selectedProject, t]);
+
+  const handleReturnCompletionReviewItem = useCallback(
+    async (assignmentId, comment) => {
+      if (!selectedProject?.id) {
+        return;
+      }
+
+      setCompletionReviewSubmitting(true);
+      try {
+        await projectService.returnCompletionReviewItemForRework(
+          selectedProject.id,
+          assignmentId,
+          comment,
+        );
+        toast.success(t("datasets.completionReviewReturnSuccess"));
+        setCompletionReviewOpen(false);
+        setCompletionReviewData(null);
+        await Promise.all([
+          handleProjectClick(selectedProject.id),
+          fetchList(),
+        ]);
+      } catch (error) {
+        toast.error(
+          extractApiErrorMessage(error) ||
+            t("datasets.completionReviewReturnFailed"),
+        );
+      } finally {
+        setCompletionReviewSubmitting(false);
+      }
+    },
+    [fetchList, handleProjectClick, selectedProject, t],
+  );
 
   return (
     <>
@@ -442,7 +492,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                 style={{ minWidth: "160px" }}
                 title={
                   !exportCheck.ready && selectedProject
-                    ? `${t("datasets.exportNotReady")}: ${!exportCheck.allApproved ? t("datasets.notAllApproved") : ""} ${!exportCheck.noPendingDisputes ? t("datasets.disputePendingShort") : ""}`
+                    ? `${t("datasets.exportNotReady")}: ${!exportCheck.hasDataItems ? t("datasets.noDataHint") : !exportCheck.allApproved ? t("datasets.notAllApproved") : ""} ${!exportCheck.noPendingDisputes ? t("datasets.disputePendingShort") : ""}`
                     : t("datasets.exportData")
                 }
               >
@@ -522,43 +572,26 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                         <div className="table-responsive">
                           <table
                             className="table table-hover align-middle mb-0 responsive-dataset-label-table dataset-label-table"
-                            style={{ tableLayout: "fixed" }}
                           >
                             <thead className="table-light">
                               <tr>
-                                <th
-                                  style={{ width: "16%", whiteSpace: "nowrap" }}
-                                >
+                                <th className="dataset-label-col dataset-label-col--name">
                                   {t("datasets.labelName")}
                                 </th>
-                                <th
-                                  style={{ width: "15%", whiteSpace: "nowrap" }}
-                                >
+                                <th className="dataset-label-col dataset-label-col--type">
                                   {t("datasets.labelType")}
                                 </th>
-                                <th
-                                  style={{ width: "12%", whiteSpace: "nowrap" }}
-                                >
+                                <th className="dataset-label-col dataset-label-col--color">
                                   {t("datasets.color")}
                                 </th>
-                                <th
-                                  style={{ width: "20%", whiteSpace: "nowrap" }}
-                                >
+                                <th className="dataset-label-col dataset-label-col--guideline">
                                   {t("datasets.guideline")}
                                 </th>
-                                <th
-                                  style={{ width: "20%", whiteSpace: "nowrap" }}
-                                >
+                                <th className="dataset-label-col dataset-label-col--checklist">
                                   {t("datasets.checklist")}
                                 </th>
                                 {!readOnly && (
-                                  <th
-                                    style={{
-                                      width: "17%",
-                                      whiteSpace: "nowrap",
-                                      textAlign: "center",
-                                    }}
-                                  >
+                                  <th className="dataset-label-col dataset-label-col--actions text-center">
                                     {t("common.actions")}
                                   </th>
                                 )}
@@ -567,14 +600,12 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                             <tbody>
                               {selectedProject.labels?.map((label) => (
                                 <tr key={label.id}>
-                                  <td
-                                    className="dataset-label-name text-truncate"
-                                    style={{ maxWidth: 0 }}
-                                    title={label.name}
-                                  >
-                                    {label.name}
+                                  <td className="dataset-label-name" title={label.name}>
+                                    <div className="dataset-label-name-text">
+                                      {label.name}
+                                    </div>
                                   </td>
-                                  <td style={{ whiteSpace: "nowrap" }}>
+                                  <td className="dataset-label-type-cell">
                                     {label.isDefault ? (
                                       <span
                                         className="badge bg-warning-subtle text-warning px-2 py-1 dataset-label-chip is-default"
@@ -591,7 +622,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                       </span>
                                     )}
                                   </td>
-                                  <td>
+                                  <td className="dataset-label-color-cell">
                                     <span
                                       className="badge px-2 py-1 dataset-color-chip"
                                       style={{ backgroundColor: label.color }}
@@ -600,23 +631,28 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                     </span>
                                   </td>
                                   <td
-                                    className="text-muted text-truncate dataset-label-guideline"
-                                    style={{ maxWidth: 0 }}
+                                    className="text-muted dataset-label-guideline"
                                     title={label.guideLine}
                                   >
-                                    {label.guideLine}
+                                    <div className="dataset-label-guideline-text">
+                                      {label.guideLine || "—"}
+                                    </div>
                                   </td>
-                                  <td>
+                                  <td className="dataset-label-checklist-cell">
                                     {label.checklist?.length > 0 ? (
                                       <ul className="list-unstyled mb-0 dataset-checklist-list">
                                         {label.checklist.map((item, idx) => (
                                           <li
                                             key={idx}
-                                            className="text-truncate dataset-checklist-item"
+                                            className="dataset-checklist-item"
                                             title={item}
                                           >
-                                            <i className="ri-checkbox-circle-line text-success me-1"></i>
-                                            {item}
+                                            <span className="dataset-checklist-item__icon">
+                                              <i className="ri-checkbox-circle-line text-success"></i>
+                                            </span>
+                                            <span className="dataset-checklist-item__text">
+                                              {item}
+                                            </span>
                                           </li>
                                         ))}
                                       </ul>
@@ -625,7 +661,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                     )}
                                   </td>
                                   {!readOnly && (
-                                    <td>
+                                    <td className="dataset-label-actions-cell">
                                       <div className="d-flex gap-1 justify-content-center dataset-label-actions">
                                         <button
                                           className="btn btn-sm btn-soft-primary p-1 dataset-label-action is-edit"
@@ -637,30 +673,69 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                         <button
                                           className="btn btn-sm btn-soft-danger p-1 dataset-label-action is-delete"
                                           title={t("common.delete")}
-                                          onClick={async () => {
-                                            if (
-                                              !window.confirm(
-                                                t("datasets.confirmDeleteLabel"),
-                                              )
-                                            )
-                                              return;
-                                            try {
-                                              await labelService.deleteLabel(
-                                                label.id,
-                                              );
-                                              toast.success(
-                                                t("datasets.deleteLabelSuccess"),
+                                            onClick={async () => {
+                                              try {
+                                                const usageResponse =
+                                                  await labelService.getLabelUsageCount(
+                                                    label.id,
+                                                  );
+                                                const usageCount = Number(
+                                                  usageResponse?.data
+                                                    ?.usageCount || 0,
+                                                );
+
+                                                if (usageCount > 0) {
+                                                  toast.warning(
+                                                    t(
+                                                      "datasets.deleteLabelBlockedInUse",
+                                                      {
+                                                        name: label.name,
+                                                        count: usageCount,
+                                                      },
+                                                    ),
+                                                  );
+                                                  return;
+                                                }
+
+                                                const confirmResult =
+                                                  await showConfirmDialog({
+                                                    title: t("common.delete"),
+                                                    text: t(
+                                                      "datasets.confirmDeleteLabel",
+                                                    ),
+                                                    icon: "warning",
+                                                    confirmText: t(
+                                                      "common.confirm",
+                                                    ),
+                                                    cancelText: t(
+                                                      "common.cancel",
+                                                    ),
+                                                  });
+
+                                                if (!confirmResult.isConfirmed)
+                                                  return;
+
+                                                await labelService.deleteLabel(
+                                                  label.id,
+                                                );
+                                                toast.success(
+                                                  t("datasets.deleteLabelSuccess"),
                                               );
                                               await handleProjectClick(
-                                                selectedProject.id,
-                                              );
-                                            } catch {
-                                              toast.error(
-                                                t("datasets.deleteLabelFailed"),
-                                              );
-                                            }
-                                          }}
-                                        >
+                                                  selectedProject.id,
+                                                );
+                                              } catch (error) {
+                                                const errorMessage =
+                                                  extractApiErrorMessage(error);
+                                                toast.error(
+                                                  errorMessage ||
+                                                    t(
+                                                      "datasets.deleteLabelFailed",
+                                                    ),
+                                                );
+                                              }
+                                            }}
+                                          >
                                           <i className="ri-delete-bin-line" />
                                         </button>
                                       </div>
@@ -685,13 +760,13 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                             ? t("datasets.editLabelTitle")
                             : t("datasets.addLabelTitle")}
                         </h6>
-                        <div className="row g-2">
+                        <div className="row g-3 dataset-label-form-grid">
                           <div className="col-12 mb-1">
                             <label className="form-label small fw-semibold">
                               {t("datasets.labelType")}
                             </label>
-                            <div className="d-flex gap-3">
-                              <div className="form-check">
+                            <div className="d-flex flex-wrap gap-3 dataset-label-type-options">
+                              <div className="form-check dataset-label-type-option">
                                 <input
                                   className="form-check-input"
                                   type="radio"
@@ -714,7 +789,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                   {t("datasets.labelProject")}
                                 </label>
                               </div>
-                              <div className="form-check">
+                              <div className="form-check dataset-label-type-option">
                                 <input
                                   className="form-check-input"
                                   type="radio"
@@ -739,7 +814,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                               </div>
                             </div>
                           </div>
-                          <div className="col-md-5">
+                          <div className="col-xl-4 col-lg-6 col-md-6">
                             <label className="form-label small fw-semibold">
                               {t("datasets.labelName")}
                             </label>
@@ -756,29 +831,37 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                               }
                             />
                           </div>
-                          <div className="col-md-2">
+                          <div className="col-xl-3 col-lg-6 col-md-6">
                             <label className="form-label small fw-semibold">
                               {t("datasets.labelColorLabel")}
                             </label>
-                            <div className="d-flex align-items-center gap-2">
-                              <input
-                                type="color"
-                                className="form-control form-control-color form-control-sm"
-                                value={newLabel.color}
-                                onChange={(e) =>
-                                  setNewLabel({
-                                    ...newLabel,
-                                    color: e.target.value,
-                                  })
-                                }
-                                style={{ width: "40px", height: "32px" }}
-                              />
-                              <span className="small text-muted">
+                            <div className="dataset-label-color-picker">
+                              <label
+                                className="dataset-label-color-swatch"
+                                aria-label={t("datasets.labelColorLabel")}
+                              >
+                                <span
+                                  className="dataset-label-color-fill"
+                                  style={{ backgroundColor: newLabel.color }}
+                                />
+                                <input
+                                  type="color"
+                                  className="dataset-label-color-input"
+                                  value={newLabel.color}
+                                  onChange={(e) =>
+                                    setNewLabel({
+                                      ...newLabel,
+                                      color: e.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+                              <span className="small text-muted dataset-label-color-value">
                                 {newLabel.color}
                               </span>
                             </div>
                           </div>
-                          <div className="col-md-5">
+                          <div className="col-xl-5 col-lg-12 col-md-12">
                             <label className="form-label small fw-semibold">
                               {t("datasets.guideline")}
                             </label>
@@ -819,6 +902,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                 />
                                 {newLabel.checklist.length > 1 && (
                                   <button
+                                    type="button"
                                     className="btn btn-sm btn-soft-danger"
                                     onClick={() => {
                                       const updated = newLabel.checklist.filter(
@@ -836,6 +920,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                               </div>
                             ))}
                             <button
+                              type="button"
                               className="btn btn-sm btn-outline-secondary mt-1"
                               onClick={() =>
                                 setNewLabel({
@@ -851,9 +936,15 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                         </div>
                         <div className="d-flex gap-2 mt-3">
                           <button
+                            type="button"
                             className="btn btn-sm btn-primary px-3"
                             disabled={addingLabel || !newLabel.name.trim()}
                             onClick={async () => {
+                              if (addingLabel || labelSubmitLockRef.current) {
+                                return;
+                              }
+
+                              labelSubmitLockRef.current = true;
                               setAddingLabel(true);
                               try {
                                 const filteredChecklist = newLabel.checklist
@@ -874,7 +965,6 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                       isDefault: newLabel.isDefault,
                                     },
                                   );
-                                  toast.success(t("datasets.editLabelSuccess"));
                                 } else {
                                   await labelService.createLabel(
                                     selectedProject.id,
@@ -890,17 +980,25 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                       isDefault: newLabel.isDefault,
                                     },
                                   );
-                                  toast.success(t("datasets.addLabelSuccess"));
                                 }
-                                resetLabelForm();
                                 await handleProjectClick(selectedProject.id);
-                              } catch {
-                                toast.error(
+                                await fetchList();
+                                resetLabelForm();
+                                toast.success(
                                   editingLabel
-                                    ? t("datasets.editLabelFailed")
-                                    : t("datasets.addLabelFailed"),
+                                    ? t("datasets.editLabelSuccess")
+                                    : t("datasets.addLabelSuccess"),
+                                );
+                              } catch (error) {
+                                const errorMessage = extractApiErrorMessage(error);
+                                toast.error(
+                                  errorMessage ||
+                                    (editingLabel
+                                      ? t("datasets.editLabelFailed")
+                                      : t("datasets.addLabelFailed")),
                                 );
                               } finally {
+                                labelSubmitLockRef.current = false;
                                 setAddingLabel(false);
                               }
                             }}
@@ -913,6 +1011,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                             {t("common.save")}
                           </button>
                           <button
+                            type="button"
                             className="btn btn-sm btn-light px-3"
                             onClick={resetLabelForm}
                           >
@@ -1156,6 +1255,75 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                 }}
                               ></div>
                             </div>
+                            <div className="mt-3 rounded-3 border bg-white p-3">
+                              <div className="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                <div>
+                                  <h6 className="mb-1 fw-bold text-uppercase fs-11 text-muted">
+                                    <i className="ri-flag-line me-1"></i>
+                                    {t("datasets.projectCompletionStatus")}
+                                  </h6>
+                                  <span
+                                    className={`badge ${getProjectStatusBadgeClass(selectedProject.status)}`}
+                                  >
+                                    {getProjectStatusLabel(selectedProject.status, t)}
+                                  </span>
+                                </div>
+                                <div className="d-flex gap-2 flex-wrap">
+                                  {canInspectCompletionReview && (
+                                    <button
+                                      type="button"
+                                      className="btn btn-outline-primary btn-sm"
+                                      onClick={handleOpenCompletionReview}
+                                      disabled={completionReviewLoading}
+                                    >
+                                      {completionReviewLoading ? (
+                                        <>
+                                          <span className="spinner-border spinner-border-sm me-2"></span>
+                                          {t("datasets.checking")}
+                                        </>
+                                      ) : (
+                                        <>
+                                          <i className="ri-search-eye-line me-1"></i>
+                                          {t("datasets.openCompletionReview")}
+                                        </>
+                                      )}
+                                    </button>
+                                  )}
+                                  {selectedProject.canManagerConfirmCompletion && (
+                                    <button
+                                      type="button"
+                                      className="btn btn-success btn-sm"
+                                      onClick={handleCompleteProject}
+                                      disabled={completingProject}
+                                    >
+                                      {completingProject ? (
+                                        <>
+                                          <span className="spinner-border spinner-border-sm me-2"></span>
+                                          {t("datasets.completingProject")}
+                                        </>
+                                      ) : (
+                                        <>
+                                          <i className="ri-checkbox-circle-line me-1"></i>
+                                          {t("datasets.completeProjectAction")}
+                                        </>
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              {isAwaitingManagerConfirmation(selectedProject.status) && (
+                                <div className="alert alert-warning mt-3 mb-0 py-2 px-3 small">
+                                  <i className="ri-time-line me-1"></i>
+                                  {t("datasets.awaitingManagerConfirmationHint")}
+                                </div>
+                              )}
+                              {canInspectCompletionReview && (
+                                <div className="alert alert-info mt-3 mb-0 py-2 px-3 small">
+                                  <i className="ri-survey-line me-1"></i>
+                                  {t("datasets.completionReviewCardHint")}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         );
                       })()}
@@ -1185,12 +1353,14 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                     : "text-danger"
                                 }
                               >
-                                {exportCheck.allApproved
+                                {!exportCheck.hasDataItems
+                                  ? t("datasets.noDataHint")
+                                  : exportCheck.allApproved
                                   ? t("datasets.allTasksApproved")
                                   : t("datasets.tasksNotApproved", {
                                     count:
-                                      (exportCheck.totalTasks || 0) -
-                                      (exportCheck.approved || 0),
+                                      (exportCheck.totalItems || 0) -
+                                      (exportCheck.approvedItems || 0),
                                   })}
                               </small>
                             </div>
@@ -1235,6 +1405,20 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
           </div>
         </div>
       </div>
+
+      <ProjectCompletionReviewModal
+        isOpen={completionReviewOpen}
+        toggle={() => {
+          if (completionReviewSubmitting) return;
+          setCompletionReviewOpen(false);
+        }}
+        project={selectedProject}
+        reviewData={completionReviewData}
+        loading={completionReviewLoading}
+        submitting={completionReviewSubmitting || completingProject}
+        onConfirmCompletion={handleCompleteProject}
+        onReturnItem={handleReturnCompletionReviewItem}
+      />
 
       {showExportModal &&
         typeof document !== "undefined" &&
@@ -1311,22 +1495,26 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                           </div>
                           <div className="export-modal-check-copy">
                             <strong>
-                              {exportCheck.allApproved
+                              {!exportCheck.hasDataItems
+                                ? t("datasets.noDataHint")
+                                : exportCheck.allApproved
                                 ? t("datasets.allTasksApproved")
                                 : t("datasets.tasksNotApproved", {
                                     count:
-                                      (exportCheck.totalTasks || 0) -
-                                      (exportCheck.approved || 0),
+                                      (exportCheck.totalItems || 0) -
+                                      (exportCheck.approvedItems || 0),
                                   })}
                             </strong>
                             <span>
-                              {t("datasets.tasksNotApprovedDetail", {
-                                remaining:
-                                  (exportCheck.totalTasks || 0) -
-                                  (exportCheck.approved || 0),
-                                approved: exportCheck.approved || 0,
-                                total: exportCheck.totalTasks || 0,
-                              })}
+                              {!exportCheck.hasDataItems
+                                ? t("datasets.noDataReason")
+                                : t("datasets.tasksNotApprovedDetail", {
+                                    remaining:
+                                      (exportCheck.totalItems || 0) -
+                                      (exportCheck.approvedItems || 0),
+                                    approved: exportCheck.approvedItems || 0,
+                                    total: exportCheck.totalItems || 0,
+                                  })}
                             </span>
                           </div>
                         </div>
@@ -1436,7 +1624,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                       <div className="export-modal-summary-card">
                         <span>{t("datasets.approved")}</span>
                         <strong className="text-success">
-                          {exportCheck.approved ?? 0}
+                          {exportCheck.approvedItems ?? 0}
                         </strong>
                       </div>
                       <div className="export-modal-summary-card">

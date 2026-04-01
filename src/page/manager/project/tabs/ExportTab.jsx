@@ -1,62 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { Spinner, Alert } from "reactstrap";
+import { Spinner } from "reactstrap";
 import analyticsService from "../../../../services/manager/analytics/analyticsService";
 import datasetService from "../../../../services/manager/dataset/datasetService";
 import disputeService from "../../../../services/manager/dispute/disputeService";
-
-const EXPORT_FORMATS = [
-  { value: "json", label: "JSON", desc: ".json", mime: "application/json", ext: ".json" },
-  { value: "csv", label: "CSV", desc: ".csv", mime: "text/csv", ext: ".csv" },
-  { value: "xml", label: "XML", desc: ".xml", mime: "application/xml", ext: ".xml" },
-];
-
-const convertToCSV = (data) => {
-  if (!data || !Array.isArray(data) || data.length === 0) {
-    if (typeof data === "object" && !Array.isArray(data)) data = [data];
-    else return "";
-  }
-  const flattenObj = (obj, prefix = "") => {
-    const result = {};
-    for (const key of Object.keys(obj)) {
-      const fullKey = prefix ? `${prefix}.${key}` : key;
-      if (obj[key] !== null && typeof obj[key] === "object" && !Array.isArray(obj[key])) {
-        Object.assign(result, flattenObj(obj[key], fullKey));
-      } else {
-        result[fullKey] = Array.isArray(obj[key]) ? JSON.stringify(obj[key]) : obj[key];
-      }
-    }
-    return result;
-  };
-  const flatData = data.map((item) => flattenObj(item));
-  const headers = [...new Set(flatData.flatMap((d) => Object.keys(d)))];
-  const csvRows = [headers.join(",")];
-  for (const row of flatData) {
-    const values = headers.map((h) => {
-      const val = row[h] ?? "";
-      const str = String(val);
-      return str.includes(",") || str.includes('"') || str.includes("\n") ? `"${str.replace(/"/g, '""')}"` : str;
-    });
-    csvRows.push(values.join(","));
-  }
-  return csvRows.join("\n");
-};
-
-const convertToXML = (data, rootName = "export") => {
-  const escapeXml = (str) =>
-    String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  const toXml = (obj, tag = "item") => {
-    if (Array.isArray(obj)) return obj.map((item) => toXml(item, tag)).join("\n");
-    if (typeof obj === "object" && obj !== null) {
-      const inner = Object.entries(obj).map(([key, val]) => toXml(val, key)).join("\n");
-      return `<${tag}>\n${inner}\n</${tag}>`;
-    }
-    return `<${tag}>${escapeXml(obj)}</${tag}>`;
-  };
-  const items = Array.isArray(data) ? data : [data];
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<${rootName}>\n${items.map((item) => toXml(item, "item")).join("\n")}\n</${rootName}>`;
-};
+import {
+  EXPORT_FORMATS,
+  buildExportFileContent,
+  computeProjectExportEligibility,
+  extractExportErrorMessage,
+} from "../../../../utils/projectExport";
 
 const ExportTab = ({ projectId, project }) => {
   const { t } = useTranslation();
@@ -72,25 +26,20 @@ const ExportTab = ({ projectId, project }) => {
           analyticsService.getProjectStats(projectId),
           disputeService.getDisputes(projectId),
         ]);
-        const stats = statsRes.data;
-        const disputes = disputesRes.data || [];
-        const totalTasks = stats.totalAssignments ?? 0;
-        const approved = stats.approvedAssignments ?? 0;
-        const allApproved = totalTasks > 0 && approved === totalTasks;
-        const pendingDisputes = disputes.filter((d) => d.status === "Pending");
-        const noPendingDisputes = pendingDisputes.length === 0;
-
+        setEligibility(
+          computeProjectExportEligibility(statsRes.data, disputesRes.data || []),
+        );
+      } catch {
         setEligibility({
           checking: false,
-          ready: allApproved && noPendingDisputes,
-          allApproved,
-          noPendingDisputes,
-          totalTasks,
-          approved,
-          pendingDisputeCount: pendingDisputes.length,
+          hasDataItems: false,
+          ready: false,
+          allApproved: false,
+          noPendingDisputes: false,
+          totalItems: 0,
+          approvedItems: 0,
+          pendingDisputeCount: 0,
         });
-      } catch {
-        setEligibility({ checking: false, ready: false, allApproved: false, noPendingDisputes: false });
       }
     };
     checkEligibility();
@@ -98,22 +47,36 @@ const ExportTab = ({ projectId, project }) => {
 
   const handleExport = async () => {
     if (!eligibility.ready) {
-      toast.error(t("exportPage.cannotExport"), { autoClose: 5000 });
+      const reasons = [];
+      if (!eligibility.hasDataItems) {
+        reasons.push(t("exportPage.noDataReason"));
+      } else if (!eligibility.allApproved) {
+        reasons.push(
+          t("exportPage.taskNotApprovedReason", {
+            count: (eligibility.totalItems || 0) - (eligibility.approvedItems || 0),
+          }),
+        );
+      }
+      if (!eligibility.noPendingDisputes) {
+        reasons.push(
+          t("exportPage.disputePendingReason", {
+            count: eligibility.pendingDisputeCount || 0,
+          }),
+        );
+      }
+      toast.error(
+        reasons.length > 0
+          ? `${t("exportPage.cannotExport")} ${reasons.join(". ")}.`
+          : t("exportPage.cannotExport"),
+        { autoClose: 5000 },
+      );
       return;
     }
     setExporting(true);
     try {
       const res = await datasetService.exportData(projectId);
       const format = EXPORT_FORMATS.find((f) => f.value === selectedFormat);
-      let rawData = res.data;
-      if (typeof rawData === "string") { try { rawData = JSON.parse(rawData); } catch {} }
-
-      let content;
-      switch (selectedFormat) {
-        case "csv": content = convertToCSV(rawData); break;
-        case "xml": content = convertToXML(rawData, "projectExport"); break;
-        default: content = typeof rawData === "string" ? rawData : JSON.stringify(rawData, null, 2);
-      }
+      const { content } = await buildExportFileContent(res.data, selectedFormat);
 
       const blob = new Blob([content], { type: format.mime });
       const url = window.URL.createObjectURL(blob);
@@ -125,8 +88,8 @@ const ExportTab = ({ projectId, project }) => {
       a.remove();
       window.URL.revokeObjectURL(url);
       toast.success(t("exportPage.exportSuccess", { name: project?.name, format: format.label }));
-    } catch {
-      toast.error(t("exportPage.exportError"));
+    } catch (error) {
+      toast.error(await extractExportErrorMessage(error, t("exportPage.exportError")));
     } finally {
       setExporting(false);
     }
@@ -166,9 +129,11 @@ const ExportTab = ({ projectId, project }) => {
               <div className={`eligibility-item ${eligibility.allApproved ? "passed" : "failed"}`}>
                 <i className={`fs-5 ${eligibility.allApproved ? "ri-checkbox-circle-fill" : "ri-close-circle-fill"}`}></i>
                 <span>
-                  {eligibility.allApproved
+                  {!eligibility.hasDataItems
+                    ? t("exportPage.noDataHint")
+                    : eligibility.allApproved
                     ? t("exportPage.allApproved")
-                    : `${(eligibility.totalTasks || 0) - (eligibility.approved || 0)} ${t("exportPage.taskNotApproved")}`}
+                    : `${(eligibility.totalItems || 0) - (eligibility.approvedItems || 0)} ${t("exportPage.taskNotApproved")}`}
                 </span>
               </div>
               <div className={`eligibility-item ${eligibility.noPendingDisputes ? "passed" : "failed"}`}>
@@ -205,7 +170,7 @@ const ExportTab = ({ projectId, project }) => {
           <button
             className={`btn-export ${eligibility.ready ? "ready" : "locked"}`}
             onClick={handleExport}
-            disabled={exporting || eligibility.checking}
+            disabled={exporting || eligibility.checking || !eligibility.ready}
           >
             {exporting ? (
               <>

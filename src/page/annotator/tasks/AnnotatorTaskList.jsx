@@ -1,47 +1,105 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import taskService from "../../../services/annotator/labeling/taskService";
 import { toast } from "react-toastify";
 import useSignalRRefresh from "../../../hooks/useSignalRRefresh";
 import { useTranslation } from "react-i18next";
+import { useSelector } from "react-redux";
 import { resolveBackendAssetUrl } from "../../../config/runtime";
+import {
+  getProjectStatusLabel,
+  isAwaitingManagerConfirmation,
+} from "../../../utils/projectWorkflowStatus";
+import { sortProjectsByNewestId } from "../../../utils/projectSort";
 
 const TASK_REFRESH_INTERVAL_MS = 30000;
+const TASK_LIST_CACHE_TTL_MS = 15000;
 
-const AnnotatorTaskList = () => {
-  const { t } = useTranslation();
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const location = useLocation();
+let cachedAnnotatorTasks = null;
+let cachedAnnotatorTasksFetchedAt = 0;
+let cachedAnnotatorTasksOwnerId = null;
+let annotatorTasksRequest = null;
+let annotatorTasksRequestOwnerId = null;
 
-  const fetchTasks = useCallback(async ({ showError = true } = {}) => {
-    try {
-      const res = await taskService.getMyProjects();
+const mapProjectsToTasks = (projects = []) =>
+  sortProjectsByNewestId(projects).map((p) => ({
+    assignmentId: p.projectId,
+    projectName: p.projectName,
+    description: p.description,
+    deadline: p.deadline,
+    assignedDate: p.assignedDate,
+    status: p.status,
+    progress: Number(p.progressPercent ?? p.progress ?? 0),
+    totalImages: p.totalImages ?? 0,
+    completedImages: p.completedImages ?? 0,
+    thumbnailUrl: p.thumbnailUrl,
+  }));
 
+const getFreshTaskCache = (ownerId) => {
+  if (
+    cachedAnnotatorTasksOwnerId !== ownerId ||
+    !Array.isArray(cachedAnnotatorTasks) ||
+    Date.now() - cachedAnnotatorTasksFetchedAt > TASK_LIST_CACHE_TTL_MS
+  ) {
+    return null;
+  }
+
+  return cachedAnnotatorTasks;
+};
+
+const updateTaskCache = (ownerId, tasks) => {
+  cachedAnnotatorTasks = tasks;
+  cachedAnnotatorTasksFetchedAt = Date.now();
+  cachedAnnotatorTasksOwnerId = ownerId;
+  return tasks;
+};
+
+const loadAnnotatorTasks = async (ownerId, { force = false } = {}) => {
+  const cachedTasks = !force ? getFreshTaskCache(ownerId) : null;
+  if (cachedTasks) {
+    return cachedTasks;
+  }
+
+  if (annotatorTasksRequest && annotatorTasksRequestOwnerId === ownerId) {
+    return annotatorTasksRequest;
+  }
+
+  annotatorTasksRequestOwnerId = ownerId;
+  annotatorTasksRequest = taskService
+    .getMyProjects()
+    .then((res) => {
       let projects = [];
-      if (Array.isArray(res.data)) {
+      if (Array.isArray(res?.data)) {
         projects = res.data;
       } else if (Array.isArray(res)) {
         projects = res;
       }
-      
-      const mappedProjects = projects.map((p) => ({
-        assignmentId: p.projectId,
-        projectName: p.projectName,
-        description: p.description,
-        deadline: p.deadline,
-        assignedDate: p.assignedDate,
 
-        status: p.status,
-        progress: Number(p.progressPercent ?? p.progress ?? 0),
+      return updateTaskCache(ownerId, mapProjectsToTasks(projects));
+    })
+    .finally(() => {
+      annotatorTasksRequest = null;
+      annotatorTasksRequestOwnerId = null;
+    });
 
-        totalImages: p.totalImages ?? 0,
-        completedImages: p.completedImages ?? 0,
+  return annotatorTasksRequest;
+};
 
-        thumbnailUrl: p.thumbnailUrl,
-      }));
+const AnnotatorTaskList = () => {
+  const { t, i18n } = useTranslation();
+  const userId = useSelector((state) => state.auth.user?.id ?? null);
+  const [tasks, setTasks] = useState(() => getFreshTaskCache(userId) ?? []);
+  const [loading, setLoading] = useState(() => !getFreshTaskCache(userId));
+  const navigate = useNavigate();
+  const localeTag = i18n.language?.startsWith("vi") ? "vi-VN" : "en-US";
 
+  const fetchTasks = useCallback(async ({ showError = true, force = false } = {}) => {
+    try {
+      if (!force && tasks.length === 0 && !getFreshTaskCache(userId)) {
+        setLoading(true);
+      }
+
+      const mappedProjects = await loadAnnotatorTasks(userId, { force });
       setTasks(mappedProjects);
     } catch (err) {
       console.error(err);
@@ -51,11 +109,17 @@ const AnnotatorTaskList = () => {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, tasks.length, userId]);
 
   useEffect(() => {
     fetchTasks();
-  }, [location.key, fetchTasks]);
+  }, [fetchTasks]);
+
+  useEffect(() => {
+    const cachedTasks = getFreshTaskCache(userId);
+    setTasks(cachedTasks ?? []);
+    setLoading(!cachedTasks);
+  }, [userId]);
 
   useEffect(() => {
     const refreshSilently = () => {
@@ -76,10 +140,16 @@ const AnnotatorTaskList = () => {
     };
   }, [fetchTasks]);
 
-  useSignalRRefresh(() => fetchTasks({ showError: false }));
+  useSignalRRefresh(() => fetchTasks({ showError: false, force: true }));
 
   const getRemainingTime = (deadline) => {
-    if (!deadline) return { text: "N/A", color: "text-muted", icon: "ri-time-line" };
+    if (!deadline) {
+      return {
+        text: t("annotatorTasks.notAvailable"),
+        color: "text-muted",
+        icon: "ri-time-line",
+      };
+    }
     const now = new Date();
     const dl = new Date(deadline);
     const diffMs = dl - now;
@@ -98,10 +168,32 @@ const AnnotatorTaskList = () => {
     return { text: t("annotatorTasks.daysLeft", { days: diffDays, defaultValue: `${diffDays}d left` }), color: "text-success", icon: "ri-time-line" };
   };
 
+  const getTaskStatusLabel = (status) => {
+    switch (status) {
+      case "Assigned":
+        return t("annotatorDashboardComp.assigned");
+      case "InProgress":
+        return t("annotatorTasks.inProgress");
+      case "Submitted":
+        return t("annotatorDashboardComp.submitted");
+      case "Approved":
+        return t("workspace.statusApproved");
+      case "Rejected":
+        return t("workspace.statusRejected");
+      case "Completed":
+      case "AwaitingManagerConfirmation":
+        return getProjectStatusLabel(status, t);
+      default:
+        return status;
+    }
+  };
+
   const statusColor = (status) => {
     switch (status) {
       case "Completed":
         return "success";
+      case "AwaitingManagerConfirmation":
+        return "warning";
       case "InProgress":
         return "warning";
       case "Assigned":
@@ -193,6 +285,8 @@ const AnnotatorTaskList = () => {
                     src={resolveBackendAssetUrl(task.thumbnailUrl)}
                     className="card-img-top"
                     alt={task.projectName || "thumbnail"}
+                    loading="lazy"
+                    decoding="async"
                     style={{ height: 160, objectFit: "cover" }}
                   />
                 )}
@@ -203,7 +297,7 @@ const AnnotatorTaskList = () => {
                       ID: {task.assignmentId}
                     </span>
                     <span className={`badge bg-${statusColor(task.status)}`}>
-                      {task.status}
+                      {getTaskStatusLabel(task.status)}
                     </span>
                   </div>
 
@@ -239,21 +333,33 @@ const AnnotatorTaskList = () => {
                         <div className="text-muted" style={{ fontSize: "11px" }}>
                           <i className="ri-calendar-line me-1" />
                           {task.deadline
-                            ? new Date(task.deadline).toLocaleDateString()
-                            : "N/A"}
+                            ? new Date(task.deadline).toLocaleDateString(
+                                localeTag,
+                              )
+                            : t("annotatorTasks.notAvailable")}
                         </div>
                       </div>
                     );
                   })()}
 
                   <button
-                    className="btn btn-primary w-100"
-                    disabled={task.status === "Completed" && task.progress >= 100}
+                    className={`btn w-100 ${
+                      isAwaitingManagerConfirmation(task.status)
+                        ? "btn-outline-warning"
+                        : "btn-primary"
+                    }`}
                     onClick={() =>
                       navigate(`/annotator-project-packs/${task.assignmentId}`)
                     }
+                    title={
+                      isAwaitingManagerConfirmation(task.status)
+                        ? t("annotatorTasks.awaitingManagerConfirmationHint")
+                        : undefined
+                    }
                   >
-                    {task.status === "Completed" && task.progress >= 100
+                    {isAwaitingManagerConfirmation(task.status)
+                      ? t("annotatorTasks.awaitingManagerConfirmationAction")
+                      : task.status === "Completed" && task.progress >= 100
                       ? t("annotatorTasks.done")
                       : task.status === "Completed"
                         ? t("annotatorTasks.review")

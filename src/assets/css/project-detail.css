@@ -164,6 +164,12 @@
 .project-detail-header-meta {
   flex-wrap: wrap;
   justify-content: flex-end;
+  min-width: 0;
+  row-gap: 0.5rem;
+}
+
+.project-detail-header-meta > * {
+  max-width: 100%;
 }
 
 .project-detail-header .badge-status {
@@ -178,6 +184,16 @@
   justify-content: center;
   text-align: center;
   line-height: 1;
+}
+
+.project-detail-status-badge,
+.project-detail-deadline-badge {
+  max-width: 100%;
+  min-height: 40px;
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.25 !important;
 }
 
 .project-detail-header .badge-status-active {
@@ -487,11 +503,43 @@
   font-weight: 500;
   letter-spacing: 0.04em;
   padding: 11px 14px;
+  vertical-align: middle;
 }
 
 .dataset-label-table tbody td {
   padding: 11px 14px;
   font-size: 0.82rem;
+  vertical-align: top;
+}
+
+.dataset-label-col--name {
+  width: 18%;
+  min-width: 140px;
+}
+
+.dataset-label-col--type {
+  width: 12%;
+  min-width: 110px;
+}
+
+.dataset-label-col--color {
+  width: 15%;
+  min-width: 130px;
+}
+
+.dataset-label-col--guideline {
+  width: 23%;
+  min-width: 190px;
+}
+
+.dataset-label-col--checklist {
+  width: 22%;
+  min-width: 190px;
+}
+
+.dataset-label-col--actions {
+  width: 110px;
+  min-width: 110px;
 }
 
 .dataset-label-name {
@@ -500,11 +548,23 @@
   color: var(--pd-text-primary);
 }
 
+.dataset-label-name-text,
+.dataset-label-guideline-text {
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 .dataset-label-chip {
   font-size: 0.7rem !important;
   font-weight: 600;
-  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 100%;
+  white-space: normal;
   border-radius: 999px;
+  line-height: 1.25;
 }
 
 .dataset-color-chip {
@@ -512,7 +572,17 @@
   font-weight: 500 !important;
   border-radius: 999px;
   color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
   min-width: 88px;
+  padding-inline: 0.75rem;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.2;
 }
 
 .dataset-label-guideline {
@@ -520,19 +590,38 @@
   line-height: 1.35;
 }
 
+.dataset-label-guideline-text {
+  color: var(--pd-text-secondary);
+}
+
 .dataset-checklist-list {
   display: grid;
-  gap: 3px;
+  gap: 6px;
 }
 
 .dataset-checklist-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.45rem;
   font-size: 0.78rem;
   line-height: 1.35;
   color: var(--pd-text-primary);
 }
 
+.dataset-checklist-item__icon {
+  margin-top: 0.05rem;
+}
+
+.dataset-checklist-item__text {
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 .dataset-label-actions {
   gap: 6px !important;
+  flex-wrap: nowrap;
 }
 
 .dataset-label-action {
@@ -543,6 +632,36 @@
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.dataset-label-form-grid {
+  align-items: flex-start;
+}
+
+.dataset-label-form-grid > [class*="col-"] {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dataset-label-form-grid .form-label {
+  margin-bottom: 0.45rem;
+}
+
+.dataset-label-type-options {
+  align-items: center;
+}
+
+.dataset-label-type-option {
+  min-width: 0;
+}
+
+.dataset-label-type-option .form-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  line-height: 1.35;
 }
 
 .dataset-member-grid {
@@ -1702,6 +1821,11 @@
     flex: 1 1 140px;
     min-height: 38px;
     justify-content: center;
+  }
+
+  .dataset-label-col--guideline,
+  .dataset-label-col--checklist {
+    min-width: 170px;
   }
 
   .project-detail-tabs {

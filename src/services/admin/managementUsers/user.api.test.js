@@ -7,6 +7,7 @@ import {
   getUserProfile,
   updateStatus,
   resolveGlobalBanRequest,
+  adminResetPassword,
 } from "./user.api";
 
 vi.mock("../../axios.customize", () => ({
@@ -112,6 +113,17 @@ describe("User API Suite", () => {
         approve: true,
         decisionNote: "Approve request",
       },
+    );
+  });
+
+  it("adminResetPassword: nên chỉ gọi endpoint reset để backend tự sinh mật khẩu tạm", async () => {
+    axios.put.mockResolvedValue({ status: 200 });
+
+    await adminResetPassword("user-42");
+
+    expect(axios.put).toHaveBeenCalledWith(
+      "/api/users/user-42/change-password",
+      {},
     );
   });
 

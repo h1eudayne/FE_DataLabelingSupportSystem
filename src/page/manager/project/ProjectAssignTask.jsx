@@ -7,6 +7,7 @@ import { userService } from "../../../services/manager/project/userService";
 import taskService from "../../../services/manager/project/taskService";
 import Swal from "sweetalert2";
 import { buildAssignmentRequest } from "./projectAssignTask.helpers";
+import { sortByNaturalName } from "../../../utils/naturalSort";
 
 const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
   const { t } = useTranslation();
@@ -30,6 +31,11 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
   const [reviewerSearch, setReviewerSearch] = useState("");
   const [lockingUserId, setLockingUserId] = useState(null);
 
+  const getUserSortName = useCallback(
+    (user) => user?.fullName || user?.userName || user?.email || String(user?.id || ""),
+    [],
+  );
+
   const fetchProject = useCallback(() => {
     setLoading(true);
     projectService
@@ -49,18 +55,24 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
       const reviewerList = (Array.isArray(userList) ? userList : []).filter(
         (u) => u.role?.toLowerCase() === "reviewer",
       );
-      setAnnotators(annotatorList);
-      setReviewers(reviewerList);
+      setAnnotators(sortByNaturalName(annotatorList, getUserSortName));
+      setReviewers(sortByNaturalName(reviewerList, getUserSortName));
     });
-  }, [id, fetchProject]);
+  }, [id, fetchProject, getUserSortName]);
 
   
-  const projectAnnotators = projectInfo?.members?.filter(
-    (m) => m.role === "Annotator"
-  ) || [];
-  const projectReviewers = projectInfo?.members?.filter(
-    (m) => m.role === "Reviewer"
-  ) || [];
+  const projectAnnotators = sortByNaturalName(
+    projectInfo?.members?.filter((m) => m.role === "Annotator") || [],
+    getUserSortName,
+  );
+  const projectReviewers = sortByNaturalName(
+    projectInfo?.members?.filter((m) => m.role === "Reviewer") || [],
+    getUserSortName,
+  );
+  const sortedProjectMembers = sortByNaturalName(
+    projectInfo?.members || [],
+    getUserSortName,
+  );
 
   const handleAssign = async () => {
     if (!projectInfo?.labels || projectInfo.labels.length === 0) {
@@ -414,7 +426,7 @@ const ProjectAssignTask = ({ embeddedProjectId } = {}) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {projectInfo.members.map((m) => {
+                        {sortedProjectMembers.map((m) => {
                           const memberProgress = m.tasksAssigned > 0 ? Math.round((m.tasksCompleted / m.tasksAssigned) * 100) : 0;
                           return (
                             <tr key={m.id}>

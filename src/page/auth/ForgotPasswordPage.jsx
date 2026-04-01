@@ -11,11 +11,16 @@ const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [emailDeliveryMode, setEmailDeliveryMode] = useState("");
+  const [emailDeliveryTarget, setEmailDeliveryTarget] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setEmailDeliveryMode("");
+    setEmailDeliveryTarget("");
 
     if (!email.trim()) {
       setError(t("forgotPassword.emailRequired"));
@@ -30,8 +35,24 @@ const ForgotPasswordPage = () => {
     setIsLoading(true);
     try {
       const response = await forgotPasswordApi(email);
+      const message =
+        response?.data?.message || t("forgotPassword.success");
+      const emailDelivered = response?.data?.emailDelivered !== false;
+      const notificationDelivered =
+        response?.data?.notificationDelivered !== false;
+      const emailDeliveryMode = response?.data?.emailDeliveryMode;
+      const emailDeliveryTarget = response?.data?.emailDeliveryTarget;
       setIsSuccess(true);
-      toast.success(t("forgotPassword.success"));
+      setSuccessMessage(message);
+      setEmailDeliveryMode(emailDeliveryMode || "");
+      setEmailDeliveryTarget(emailDeliveryTarget || "");
+      if (emailDeliveryMode === "PickupDirectory") {
+        toast.info(message);
+      } else if (!emailDelivered || !notificationDelivered) {
+        toast.warn(message);
+      } else {
+        toast.success(message);
+      }
     } catch (err) {
       const errorMessage =
         err?.response?.data?.message ||
@@ -47,6 +68,8 @@ const ForgotPasswordPage = () => {
   const handleBackToLogin = () => {
     navigate("/login");
   };
+
+  const isLocalMailDrop = emailDeliveryMode === "PickupDirectory";
 
   return (
     <div
@@ -146,14 +169,37 @@ const ForgotPasswordPage = () => {
                         <div className="text-center py-5">
                           <div className="mb-4">
                             <i
-                              className="ri-mail-send-line text-success"
+                              className={
+                                isLocalMailDrop
+                                  ? "ri-draft-line text-info"
+                                  : "ri-mail-send-line text-success"
+                              }
                               style={{ fontSize: "4rem" }}
                             ></i>
                           </div>
-                          <h3 className="mb-3">{t("forgotPassword.emailSent")}</h3>
+                          <h3 className="mb-3">
+                            {isLocalMailDrop
+                              ? t("forgotPassword.emailRecordedLocally")
+                              : t("forgotPassword.emailSent")}
+                          </h3>
                           <p className="text-muted mb-4">
-                            {t("forgotPassword.emailSentDesc")}
+                            {successMessage || t("forgotPassword.emailSentDesc")}
                           </p>
+                          {isLocalMailDrop && (
+                            <div className="alert alert-info text-start small mb-4">
+                              <div className="fw-semibold mb-1">
+                                {t("forgotPassword.localMailNote")}
+                              </div>
+                              {emailDeliveryTarget && (
+                                <div>
+                                  <span className="fw-semibold">
+                                    {t("forgotPassword.localMailPath")}:
+                                  </span>{" "}
+                                  <code>{emailDeliveryTarget}</code>
+                                </div>
+                              )}
+                            </div>
+                          )}
                           <button
                             onClick={handleBackToLogin}
                             className="btn btn-primary"

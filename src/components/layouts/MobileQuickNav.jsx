@@ -70,12 +70,6 @@ const MobileQuickNav = ({ onOpenMenu, isSidebarOpen = false }) => {
           icon: "ri-task-line",
           label: t("navbar.myTask"),
         },
-        {
-          key: "projects",
-          to: "/annotator-projects",
-          icon: "ri-folders-line",
-          label: t("navbar.projects"),
-        },
       ];
     }
 

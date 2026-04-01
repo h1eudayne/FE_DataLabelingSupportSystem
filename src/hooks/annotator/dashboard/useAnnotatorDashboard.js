@@ -7,6 +7,7 @@ import {
   getProjectProgressDetails,
   getMyAccuracy,
 } from "../../../services/annotator/dashboard/annotator.api";
+import { sortProjectsByNewestId } from "../../../utils/projectSort";
 
 const useAnnotatorDashboard = (projectId) => {
   const profile = useQuery({
@@ -17,6 +18,11 @@ const useAnnotatorDashboard = (projectId) => {
   const projects = useQuery({
     queryKey: ["assigned-projects"],
     queryFn: getAssignedProjects,
+    select: (data) => sortProjectsByNewestId(Array.isArray(data) ? data : []),
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 1000 * 10,
+    refetchInterval: 1000 * 30,
   });
 
   const defaultProjectId = projectId ?? projects.data?.[0]?.projectId ?? null;
@@ -26,27 +32,40 @@ const useAnnotatorDashboard = (projectId) => {
     queryFn: () => getMyTasks(defaultProjectId),
     enabled: !!defaultProjectId,
     retry: false,
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 10,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: 1000 * 30,
   });
 
   const reviewerFeedback = useQuery({
     queryKey: ["reviewer-feedback"],
     queryFn: getAllReviewerFeedback,
     retry: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 1000 * 10,
+    refetchInterval: 1000 * 30,
   });
 
   const projectProgress = useQuery({
     queryKey: ["project-progress-details"],
     queryFn: getProjectProgressDetails,
     retry: false,
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 15,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: 1000 * 30,
   });
 
   const myAccuracy = useQuery({
     queryKey: ["my-accuracy"],
     queryFn: getMyAccuracy,
     retry: false,
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 15,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: 1000 * 30,
   });
 
   return {

@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { loginThunk } from "./auth.thunk";
-import { loginAPI } from "../../services/auth";
+import { loginThunk, logoutThunk } from "./auth.thunk";
+import { loginAPI, logoutAPI } from "../../services/auth";
 
 vi.mock("../../services/auth", () => ({
   loginAPI: vi.fn(),
+  logoutAPI: vi.fn(),
 }));
 
 describe("authThunk - Synced with Backend API Contract", () => {
@@ -224,5 +225,36 @@ describe("authThunk - Synced with Backend API Contract", () => {
 
     expect(localStorage.getItem("unreadNotifications")).toBe("999");
     expect(result.payload.unreadNotifications).toBe(999);
+  });
+
+  it("should call logout API when dispatching logoutThunk", async () => {
+    logoutAPI.mockResolvedValue({
+      data: {
+        message: "Logout successful. All tokens have been invalidated.",
+      },
+    });
+
+    const result = await logoutThunk()(dispatch, getState, undefined);
+
+    expect(logoutAPI).toHaveBeenCalledTimes(1);
+    expect(result.payload).toEqual({
+      message: "Logout successful. All tokens have been invalidated.",
+    });
+  });
+
+  it("should reject logoutThunk when backend logout fails", async () => {
+    logoutAPI.mockRejectedValue({
+      response: {
+        data: {
+          message: "An error occurred during logout.",
+        },
+      },
+    });
+
+    const result = await logoutThunk()(dispatch, getState, undefined);
+
+    expect(result.payload).toEqual({
+      message: "An error occurred during logout.",
+    });
   });
 });

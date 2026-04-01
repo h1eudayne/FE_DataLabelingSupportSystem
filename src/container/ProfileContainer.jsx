@@ -10,6 +10,7 @@ import ProfileModal from "../components/home/ProfileModal";
 import { useDispatch } from "react-redux";
 import { updateUser } from "@/store/auth/auth.slice";
 import { uploadToCloudinary } from "../services/cloudinary/cloudinaryService";
+import { toast } from "react-toastify";
 
 const ProfileContainer = () => {
   const { t } = useTranslation();
@@ -70,7 +71,9 @@ const ProfileContainer = () => {
       await fetchSelf();
     } catch (error) {
       console.error(error);
-      alert(t("profileContainer.oldPasswordError"));
+      toast.error(
+        error?.response?.data?.message || t("profileContainer.oldPasswordError"),
+      );
     }
   };
 

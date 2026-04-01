@@ -30,6 +30,15 @@ const projectService = {
 
   getProjectStats: (id) => axios.get(`/api/projects/${id}/statistics`),
 
+  completeProject: (id) => axios.post(`/api/projects/${id}/complete`),
+
+  getCompletionReview: (id) => axios.get(`/api/projects/${id}/completion-review`),
+
+  returnCompletionReviewItemForRework: (projectId, assignmentId, comment) =>
+    axios.post(`/api/projects/${projectId}/completion-review/items/${assignmentId}/return`, {
+      comment,
+    }),
+
   assignReviewers: (data) => axios.post("/api/projects/assign-reviewers", data),
 
   removeUserFromProject: (projectId, userId) =>

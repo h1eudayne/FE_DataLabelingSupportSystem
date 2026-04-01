@@ -1,6 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import {
+  getProjectStatusBadgeClass,
+  getProjectStatusLabel,
+  isAwaitingManagerConfirmation,
+} from "../../../utils/projectWorkflowStatus";
 
 const ProjectCard = ({ project, onDelete }) => {
   const { t } = useTranslation();
@@ -15,46 +20,16 @@ const ProjectCard = ({ project, onDelete }) => {
     : t("projectCard.noDeadline");
 
   const isExpired = project.status === "Expired";
-  const projectLifecycle = (() => {
-    if (isExpired) {
-      return {
-        label: t("managerProjectCard.expired"),
-        badgeClass: "bg-danger-subtle text-danger",
-      };
-    }
-
-    if (!isAssigned) {
-      return {
-        label: t("managerProjectCard.unassigned"),
-        badgeClass: "bg-warning-subtle text-warning",
-      };
-    }
-
-    if (progress >= 100) {
-      return {
-        label: t("statusCommon.completed"),
-        badgeClass: "bg-success-subtle text-success",
-      };
-    }
-
-    if (progress > 0) {
-      return {
-        label: t("statusCommon.inProgress"),
-        badgeClass: "bg-success-subtle text-success",
-      };
-    }
-
-    return {
-      label: t("statusCommon.pending"),
-      badgeClass: "bg-info-subtle text-info",
-    };
-  })();
+  const projectLifecycle = {
+    label: getProjectStatusLabel(project.status, t),
+    badgeClass: getProjectStatusBadgeClass(project.status),
+  };
 
   return (
     <div className="col-xxl-3 col-sm-6 mb-4">
-      <div className="card h-100 shadow-sm border-0 card-animate">
+      <div className="card h-100 shadow-sm border-0 card-animate manager-project-card">
         <div className="card-body p-3">
-          <div className="d-flex align-items-start mb-3">
+          <div className="d-flex align-items-start justify-content-between gap-2 flex-wrap mb-3 manager-project-card__header">
             <div className="flex-grow-1" style={{ overflow: "hidden" }}>
               <h6
                 className="fs-16 mb-1 text-dark fw-bold text-truncate"
@@ -72,25 +47,31 @@ const ProjectCard = ({ project, onDelete }) => {
                 {totalItems} {t("projectCard.dataItems")}
               </small>
             </div>
-            <div className="flex-shrink-0">
-              {isExpired ? (
-                <span className="badge bg-danger-subtle text-danger small fw-semibold px-2 py-2">
-                  {t("managerProjectCard.expired")}
-                </span>
-              ) : isAssigned ? (
-                <span className="badge bg-success-subtle text-success small fw-semibold px-2 py-2">
-                  {t("managerProjectCard.assigned")}
-                </span>
-              ) : (
-                <span className="badge bg-warning-subtle text-warning small fw-semibold px-2 py-2">
-                  {t("managerProjectCard.unassigned")}
-                </span>
-              )}
+            <div className="flex-shrink-0 manager-project-card__lifecycle">
+              <span
+                className={`badge small fw-semibold px-2 py-2 manager-project-card__lifecycle-badge ${
+                  isAwaitingManagerConfirmation(project.status)
+                    ? "bg-warning-subtle text-warning"
+                    : isExpired
+                      ? "bg-danger-subtle text-danger"
+                      : isAssigned
+                        ? "bg-success-subtle text-success"
+                        : "bg-warning-subtle text-warning"
+                }`}
+              >
+                {isAwaitingManagerConfirmation(project.status)
+                  ? t("managerProjectCard.awaitingManagerConfirmation")
+                  : isExpired
+                    ? t("managerProjectCard.expired")
+                    : isAssigned
+                      ? t("managerProjectCard.assigned")
+                      : t("managerProjectCard.unassigned")}
+              </span>
             </div>
           </div>
 
-          <div className="row gy-3 mb-3">
-            <div className="col-6">
+          <div className="row gy-3 mb-3 manager-project-card__meta">
+            <div className="col-12 col-sm-6">
               <p className="text-muted mb-1 small">
                 {t("managerProjectCard.deadline")}
               </p>
@@ -99,12 +80,14 @@ const ProjectCard = ({ project, onDelete }) => {
                 {deadlineStr}
               </h6>
             </div>
-            <div className="col-6 text-end">
+            <div className="col-12 col-sm-6 text-sm-end manager-project-card__status-col">
               <p className="text-muted mb-1 small">
                 {t("managerProjectCard.status")}
               </p>
               <h6 className="mb-0">
-                <span className={`badge small fw-semibold px-2 py-2 ${projectLifecycle.badgeClass}`}>
+                <span
+                  className={`badge small fw-semibold px-2 py-2 manager-project-card__status-badge ${projectLifecycle.badgeClass}`}
+                >
                   {projectLifecycle.label}
                 </span>
               </h6>

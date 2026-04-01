@@ -3,7 +3,7 @@ import { Container, Badge, Dropdown } from "react-bootstrap";
 import { LogOut, User, Settings, Bell } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../../store/auth/auth.slice";
+import { logoutThunk } from "../../store/auth/auth.thunk";
 import { useTranslation } from "react-i18next";
 import { disconnect as disconnectSignalR } from "../../services/signalrManager";
 
@@ -12,10 +12,13 @@ const UserHeader = ({ user, role }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const handleLogout = () => {
-    disconnectSignalR();
-    dispatch(logout());
-    navigate("/login", { replace: true });
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutThunk());
+    } finally {
+      disconnectSignalR();
+      navigate("/login", { replace: true });
+    }
   };
 
   return (

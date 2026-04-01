@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
@@ -6,7 +6,10 @@ import { configureStore } from "@reduxjs/toolkit";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import WorkplaceLabelingTaskPage from "./WorkplaceLabelingTaskPage";
-import { setAnnotations } from "../../../store/annotator/labelling/labelingSlice";
+import {
+  setAnnotations,
+  setSelectedLabel,
+} from "../../../store/annotator/labelling/labelingSlice";
 import labelingReducer from "../../../store/annotator/labelling/labelingSlice";
 import taskReducer from "../../../store/annotator/labelling/taskSlice";
 import taskService from "../../../services/annotator/labeling/taskService";
@@ -21,18 +24,34 @@ const toast = vi.hoisted(() => ({
   info: vi.fn(),
 }));
 
+const commentSectionMock = vi.hoisted(() => vi.fn());
+const showConfirmDialog = vi.hoisted(() => vi.fn());
+
 vi.mock("react-toastify", () => ({
   toast,
 }));
 
+vi.mock("../../../utils/appDialog", () => ({
+  showConfirmDialog,
+}));
+
 vi.mock("../../../components/annotator/labeling/LabelingWorkspace", () => ({
   default: ({
+    assignmentId,
+    imageUrl,
+    referenceAnnotations = [],
     onRunAiPreview,
     aiPreviewEnabled,
     aiDetecting,
     aiExemplarCount,
   }) => (
     <div data-testid="labeling-workspace">
+      <span data-testid="workspace-assignment-id">{assignmentId}</span>
+      <span data-testid="workspace-image-url">{imageUrl}</span>
+      <span data-testid="workspace-reference-count">{referenceAnnotations.length}</span>
+      <span data-testid="workspace-reference-labels">
+        {referenceAnnotations.map((annotation) => annotation.labelName).join(",")}
+      </span>
       <span data-testid="ai-exemplar-count">{aiExemplarCount}</span>
       <button
         type="button"
@@ -46,11 +65,18 @@ vi.mock("../../../components/annotator/labeling/LabelingWorkspace", () => ({
 }));
 
 vi.mock("../../../components/annotator/labeling/LabelToolbox", () => ({
-  default: () => <div data-testid="label-toolbox" />,
+  default: ({ allowedLabelIds = null }) => (
+    <div data-testid="label-toolbox">
+      {Array.isArray(allowedLabelIds) ? allowedLabelIds.join(",") : "all"}
+    </div>
+  ),
 }));
 
 vi.mock("../../../components/annotator/labeling/tasks/CommentSection", () => ({
-  default: () => <div data-testid="comment-section" />,
+  default: (props) => {
+    commentSectionMock(props);
+    return <div data-testid="comment-section" />;
+  },
 }));
 
 vi.mock("../../../services/annotator/labeling/taskService", () => ({
@@ -89,12 +115,12 @@ const createStore = () =>
     },
   });
 
-const renderPage = () => {
+const renderPage = (initialEntries = ["/annotator-workspace/123"]) => {
   const store = createStore();
 
   const view = render(
     <Provider store={store}>
-      <MemoryRouter initialEntries={["/annotator-workspace/123"]}>
+      <MemoryRouter initialEntries={initialEntries}>
         <Routes>
           <Route
             path="/annotator-workspace/:assignmentId"
@@ -109,8 +135,9 @@ const renderPage = () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  commentSectionMock.mockClear();
   sessionStorage.clear();
-  window.confirm = vi.fn(() => true);
+  showConfirmDialog.mockResolvedValue({ isConfirmed: true });
   window.scrollTo = vi.fn();
 
   projectService.getById.mockResolvedValue({
@@ -168,7 +195,43 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("WorkplaceLabelingTaskPage", () => {
+  it("opens the target image from the query string instead of defaulting to the first image", async () => {
+    taskService.getProjectImages.mockResolvedValue({
+      data: [
+        {
+          id: 1,
+          dataItemId: 101,
+          dataItemUrl: "https://example.com/image-1.jpg",
+          status: "New",
+          rejectionReason: null,
+          annotationData: JSON.stringify({ annotations: [] }),
+        },
+        {
+          id: 2,
+          dataItemId: 202,
+          dataItemUrl: "https://example.com/image-2.jpg",
+          status: "Approved",
+          rejectionReason: null,
+          annotationData: JSON.stringify({ annotations: [] }),
+        },
+      ],
+    });
+
+    renderPage(["/annotator-workspace/123?imageId=2&dataItemId=202"]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("workspace-assignment-id")).toHaveTextContent("2");
+    });
+    expect(screen.getByTestId("workspace-image-url")).toHaveTextContent(
+      "https://example.com/image-2.jpg",
+    );
+  });
+
   it("renders the batch panel without crashing when opening batch submit", async () => {
     const user = userEvent.setup();
     renderPage();
@@ -228,6 +291,52 @@ describe("WorkplaceLabelingTaskPage", () => {
     expect(taskService.saveDraft).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps the selected label while autosaving the same assignment", async () => {
+    const { store } = renderPage();
+
+    await screen.findByTestId("workspace-assignment-id");
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    });
+
+    act(() => {
+      store.dispatch(
+        setSelectedLabel({
+          id: 77,
+          name: "Vehicle",
+          color: "#22c55e",
+        }),
+      );
+      store.dispatch(
+        setAnnotations({
+          assignmentId: 1,
+          annotations: [
+            {
+              id: "ann-autosave",
+              type: "BBOX",
+              x: 12,
+              y: 18,
+              width: 26,
+              height: 30,
+              labelId: 77,
+              labelName: "Vehicle",
+              color: "#22c55e",
+            },
+          ],
+        }),
+      );
+    });
+
+    await waitFor(
+      () => {
+        expect(taskService.saveDraft).toHaveBeenCalled();
+      },
+      { timeout: 4000 },
+    );
+
+    expect(store.getState().labeling.selectedLabel?.id).toBe(77);
+  });
+
   it("handles non-array batch errors without crashing the page", async () => {
     const user = userEvent.setup();
     taskService.submitMultiple.mockResolvedValue({
@@ -265,6 +374,101 @@ describe("WorkplaceLabelingTaskPage", () => {
       "Task ID 1: Missing annotation data.",
       { autoClose: 5000 },
     );
+  });
+
+  it("hides batch submit after all images are submitted", async () => {
+    const user = userEvent.setup();
+
+    taskService.getProjectImages
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 1,
+            dataItemId: 101,
+            dataItemUrl: "https://example.com/image-1.jpg",
+            status: "New",
+            rejectionReason: null,
+            annotationData: JSON.stringify({
+              annotations: [
+                {
+                  id: "ann-1",
+                  type: "BBOX",
+                  x: 10,
+                  y: 20,
+                  width: 10,
+                  height: 10,
+                  labelName: "Object",
+                },
+              ],
+              __checklist: {},
+              __defaultFlags: [],
+            }),
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 1,
+            dataItemId: 101,
+            dataItemUrl: "https://example.com/image-1.jpg",
+            status: "Submitted",
+            rejectionReason: null,
+            annotationData: JSON.stringify({
+              annotations: [
+                {
+                  id: "ann-1",
+                  type: "BBOX",
+                  x: 10,
+                  y: 20,
+                  width: 10,
+                  height: 10,
+                  labelName: "Object",
+                },
+              ],
+              __checklist: {},
+              __defaultFlags: [],
+            }),
+          },
+        ],
+      });
+
+    taskService.submitMultiple.mockResolvedValue({
+      data: {
+        successCount: 1,
+        failureCount: 0,
+        errors: [],
+      },
+    });
+
+    renderPage();
+
+    const batchButton = await screen.findByRole("button", {
+      name: /workspace\.batchSubmit/i,
+    });
+    await user.click(batchButton);
+
+    const checkboxes = await screen.findAllByRole("checkbox");
+    await user.click(checkboxes[1]);
+
+    const submitButton = screen.getByRole("button", {
+      name: /workspace\.submitCount/i,
+    });
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(taskService.submitMultiple).toHaveBeenCalledWith({
+        assignmentIds: [1],
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", {
+          name: /workspace\.batchSubmit/i,
+        }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("shows reject rounds separately from the latest reviewer votes on resolved disputes", async () => {
@@ -313,9 +517,378 @@ describe("WorkplaceLabelingTaskPage", () => {
 
     renderPage();
 
-    expect(await screen.findByText("Reject rounds:")).toBeInTheDocument();
+    expect(await screen.findByText("workspace.rejectRounds")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
-    expect(screen.getByText("Latest reviewer votes:")).toBeInTheDocument();
+    expect(screen.getByText("workspace.latestReviewerVotes")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        commentSectionMock.mock.calls.some(
+          ([props]) =>
+            props.managerComment === "[Guideline v1.0] wrong" &&
+            props.managerStatus === "Rejected",
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("passes manager feedback from rejected assignments to the comment section", async () => {
+    taskService.getProjectImages.mockResolvedValueOnce({
+      data: [
+        {
+          id: 1,
+          dataItemId: 101,
+          dataItemUrl: "https://example.com/image-1.jpg",
+          status: "Rejected",
+          rejectCount: 2,
+          rejectionReason: "Need tighter box",
+          managerDecision: "reject",
+          managerComment: "Penalty kept after manager review",
+          annotationData: JSON.stringify({
+            annotations: [
+              {
+                id: "ann-1",
+                type: "BBOX",
+                x: 10,
+                y: 20,
+                width: 10,
+                height: 10,
+                labelName: "Object",
+              },
+            ],
+            __checklist: {},
+            __defaultFlags: [],
+          }),
+        },
+      ],
+    });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(
+        commentSectionMock.mock.calls.some(
+          ([props]) =>
+            props.rejectionReason === "Need tighter box" &&
+            props.managerComment === "Penalty kept after manager review" &&
+            props.managerStatus === "Rejected",
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("passes all reviewer feedback entries to the comment section when an image has multiple reviewer rejects", async () => {
+    taskService.getProjectImages.mockResolvedValueOnce({
+      data: [
+        {
+          id: 1,
+          dataItemId: 101,
+          dataItemUrl: "https://example.com/image-1.jpg",
+          status: "Rejected",
+          rejectCount: 2,
+          rejectionReason: "Legacy fallback comment",
+          annotationData: JSON.stringify({
+            annotations: [
+              {
+                id: "ann-1",
+                type: "BBOX",
+                x: 10,
+                y: 20,
+                width: 10,
+                height: 10,
+                labelName: "Object",
+              },
+            ],
+            __checklist: {},
+            __defaultFlags: [],
+          }),
+          reviewerFeedbacks: [
+            {
+              reviewLogId: 11,
+              reviewerId: "reviewer-1",
+              reviewerName: "Reviewer One",
+              comment: "Wrong class",
+              errorCategories: "classification",
+              reviewedAt: "2026-04-01T09:00:00.000Z",
+              verdict: "Rejected",
+            },
+            {
+              reviewLogId: 12,
+              reviewerId: "reviewer-2",
+              reviewerName: "Reviewer Two",
+              comment: "Bounding box too loose",
+              errorCategories: "bbox",
+              reviewedAt: "2026-04-01T09:05:00.000Z",
+              verdict: "Rejected",
+            },
+          ],
+        },
+      ],
+    });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(
+        commentSectionMock.mock.calls.some(([props]) => {
+          const reviewerFeedbacks = props.reviewerFeedbacks ?? [];
+          return (
+            reviewerFeedbacks.length === 2 &&
+            reviewerFeedbacks.some(
+              (feedback) =>
+                feedback.sourceName === "Reviewer One" &&
+                feedback.comment === "Wrong class",
+            ) &&
+            reviewerFeedbacks.some(
+              (feedback) =>
+                feedback.sourceName === "Reviewer Two" &&
+                feedback.comment === "Bounding box too loose",
+            )
+          );
+        }),
+      ).toBe(true);
+    });
+  });
+
+  it("hides dispute action when manager already rejected the image for resubmission", async () => {
+    taskService.getProjectImages.mockResolvedValueOnce({
+      data: [
+        {
+          id: 1,
+          dataItemId: 101,
+          dataItemUrl: "https://example.com/image-1.jpg",
+          status: "Rejected",
+          rejectCount: 2,
+          rejectionReason: "Need tighter box",
+          managerDecision: "reject",
+          managerComment: "Please revise and resubmit instead of disputing again",
+          annotationData: JSON.stringify({
+            annotations: [
+              {
+                id: "ann-1",
+                type: "BBOX",
+                x: 10,
+                y: 20,
+                width: 10,
+                height: 10,
+                labelName: "Object",
+              },
+            ],
+            __checklist: {},
+            __defaultFlags: [],
+          }),
+        },
+      ],
+    });
+
+    renderPage();
+
+    await screen.findByText("workspace.rejectedAlert");
+
+    expect(
+      screen.queryByRole("button", { name: /workspace\.disputeBtn/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps old annotations as locked reference and submits only the rebuilt payload for edited labels", async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem("guideline_read_123", "true");
+
+    projectService.getById.mockResolvedValueOnce({
+      data: {
+        id: 123,
+        name: "Demo Project",
+        labels: [
+          { id: 10, name: "Vehicle v2", color: "#8b5cf6", isDefault: false, checklist: [] },
+          { id: 99, name: "KeepMe", color: "#22c55e", isDefault: false, checklist: [] },
+        ],
+      },
+    });
+
+    taskService.getProjectImages.mockResolvedValueOnce({
+      data: [
+        {
+          id: 1,
+          dataItemId: 101,
+          dataItemUrl: "https://example.com/image-1.jpg",
+          status: "Rejected",
+          managerComment: "Manager updated label guidance",
+          annotationData: JSON.stringify({
+            annotations: [
+              {
+                id: "editable-vehicle-legacy",
+                type: "BBOX",
+                x: 14,
+                y: 24,
+                width: 18,
+                height: 22,
+                labelId: 10,
+                labelName: "Vehicle",
+                color: "#ef4444",
+              },
+            ],
+            __checklist: {},
+            __defaultFlags: [],
+            __lockedAnnotations: [
+              {
+                id: "old-vehicle",
+                type: "BBOX",
+                x: 10,
+                y: 20,
+                width: 30,
+                height: 40,
+                labelId: 10,
+                labelName: "Vehicle",
+                color: "#ef4444",
+              },
+              {
+                id: "old-keep",
+                type: "BBOX",
+                x: 60,
+                y: 80,
+                width: 25,
+                height: 25,
+                labelId: 99,
+                labelName: "KeepMe",
+                color: "#22c55e",
+              },
+            ],
+            __relabelLabelIds: [10],
+            __relabelReason: "Only the edited label must be redrawn.",
+          }),
+        },
+      ],
+    });
+
+    const { store } = renderPage();
+
+    expect(await screen.findByText("workspace.relabelRestrictedTitle")).toBeInTheDocument();
+    expect(screen.getByTestId("label-toolbox")).toHaveTextContent("10");
+    expect(screen.getByTestId("workspace-reference-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("workspace-reference-labels")).toHaveTextContent(
+      "KeepMe",
+    );
+    expect(store.getState().labeling.selectedLabel?.name).toBe("Vehicle v2");
+    expect(store.getState().labeling.annotationsByAssignment[1]).toEqual([]);
+
+    act(() => {
+      store.dispatch(
+        setAnnotations({
+          assignmentId: 1,
+          annotations: [
+            {
+              id: "new-vehicle",
+              type: "BBOX",
+              x: 100,
+              y: 120,
+              width: 35,
+              height: 45,
+              labelId: 10,
+              labelName: "Vehicle v2",
+              color: "#8b5cf6",
+            },
+          ],
+        }),
+      );
+    });
+
+    const submitButton = await screen.findByRole("button", {
+      name: /workspace\.resubmit/i,
+    });
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(taskService.submitTask).toHaveBeenCalledTimes(1);
+    });
+
+    const submitPayload = taskService.submitTask.mock.calls[0][0];
+    const parsedPayload = JSON.parse(submitPayload.dataJSON);
+
+    expect(parsedPayload.__lockedAnnotations).toBeUndefined();
+    expect(parsedPayload.__relabelLabelIds).toBeUndefined();
+    expect(parsedPayload.annotations).toHaveLength(2);
+    expect(
+      parsedPayload.annotations.some((annotation) => annotation.labelId === 99),
+    ).toBe(true);
+    expect(
+      parsedPayload.annotations.some((annotation) => annotation.id === "new-vehicle"),
+    ).toBe(true);
+  });
+
+  it("keeps newly redrawn restricted-label annotations after fetching the page again", async () => {
+    sessionStorage.setItem("guideline_read_123", "true");
+
+    projectService.getById.mockResolvedValueOnce({
+      data: {
+        id: 123,
+        name: "Demo Project",
+        labels: [
+          { id: 10, name: "Vehicle v2", color: "#8b5cf6", isDefault: false, checklist: [] },
+          { id: 99, name: "KeepMe", color: "#22c55e", isDefault: false, checklist: [] },
+        ],
+      },
+    });
+
+    taskService.getProjectImages.mockResolvedValueOnce({
+      data: [
+        {
+          id: 1,
+          dataItemId: 101,
+          dataItemUrl: "https://example.com/image-1.jpg",
+          status: "Rejected",
+          managerComment: "Relabel the updated class only",
+          annotationData: JSON.stringify({
+            annotations: [
+              {
+                id: "new-vehicle-after-reload",
+                type: "BBOX",
+                x: 100,
+                y: 120,
+                width: 35,
+                height: 45,
+                labelId: 10,
+                labelName: "Vehicle v2",
+                color: "#8b5cf6",
+              },
+            ],
+            __checklist: {},
+            __defaultFlags: [],
+            __lockedAnnotations: [
+              {
+                id: "old-keep",
+                type: "BBOX",
+                x: 60,
+                y: 80,
+                width: 25,
+                height: 25,
+                labelId: 99,
+                labelName: "KeepMe",
+                color: "#22c55e",
+              },
+            ],
+            __relabelLabelIds: [10],
+            __relabelReason: "Only the edited label must be redrawn.",
+          }),
+        },
+      ],
+    });
+
+    const { store } = renderPage();
+
+    await screen.findByText("workspace.relabelRestrictedTitle");
+
+    expect(screen.getByTestId("workspace-reference-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("workspace-reference-labels")).toHaveTextContent(
+      "KeepMe",
+    );
+    await waitFor(() => {
+      expect(store.getState().labeling.annotationsByAssignment[1]).toEqual([
+        expect.objectContaining({
+          id: "new-vehicle-after-reload",
+          labelId: 10,
+          labelName: "Vehicle v2",
+        }),
+      ]);
+    });
   });
 
   it("disables AI preview when there are no valid exemplar annotations", async () => {

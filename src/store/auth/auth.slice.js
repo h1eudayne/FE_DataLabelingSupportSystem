@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { loginThunk } from "./auth.thunk";
+import { loginThunk, logoutThunk } from "./auth.thunk";
 import { jwtDecode } from "jwt-decode";
 
 const initialState = {
@@ -11,20 +11,26 @@ const initialState = {
   unreadNotifications: parseInt(localStorage.getItem("unreadNotifications") || "0", 10),
 };
 
+const clearAuthState = (state) => {
+  state.user = null;
+  state.token = null;
+  state.loading = false;
+  state.error = null;
+  state.isAuthenticated = false;
+  state.unreadNotifications = 0;
+
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("unreadNotifications");
+};
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
     logout(state) {
-      state.user = null;
-      state.token = null;
-      state.isAuthenticated = false;
-      state.unreadNotifications = 0;
-      
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("unreadNotifications");
+      clearAuthState(state);
     },
     updateUser(state, action) {
       state.user = { ...state.user, ...action.payload };
@@ -75,6 +81,16 @@ const authSlice = createSlice({
         state.loading = false;
         state.error =
           action.payload?.message || action.payload || "Login failed";
+      })
+      .addCase(logoutThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(logoutThunk.fulfilled, (state) => {
+        clearAuthState(state);
+      })
+      .addCase(logoutThunk.rejected, (state) => {
+        clearAuthState(state);
       });
   },
 });

@@ -26,6 +26,15 @@ import projectService from "../../../services/annotator/labeling/projectService"
 import aiService from "../../../services/annotator/labeling/aiService";
 import extractDetectionsFromPreviewImage from "../../../services/annotator/labeling/aiPreviewParser";
 import { resolveBackendAssetUrl } from "../../../config/runtime";
+import { showConfirmDialog } from "../../../utils/appDialog";
+import {
+  buildAnnotationPayload,
+  buildSubmissionAnnotationPayload,
+  getActionableDefaultFlags,
+  isFlagPanelEnabled,
+  parseAnnotationPayload,
+  RELABEL_EDITABLE_MARKER,
+} from "../../../utils/annotationPayload";
 
 const STATUS_CLASSES = {
   New: "stitch-ws-badge stitch-ws-badge-new",
@@ -125,6 +134,158 @@ const normalizeAiDiagnostics = (diagnostics) => {
         : "",
   };
 };
+
+const parseOptionalSearchParamInt = (value) => {
+  if (value == null || value === "") {
+    return null;
+  }
+
+  const parsedValue = Number.parseInt(value, 10);
+  return Number.isNaN(parsedValue) ? null : parsedValue;
+};
+
+const getPreferredImageFromSearchParams = (searchParams) => ({
+  id: parseOptionalSearchParamInt(searchParams.get("imageId")),
+  dataItemId: parseOptionalSearchParamInt(searchParams.get("dataItemId")),
+});
+
+const getPreferredImageIndex = (images, preferredImage, fallbackIndex = 0) => {
+  if (!Array.isArray(images) || images.length === 0) {
+    return 0;
+  }
+
+  if (preferredImage?.dataItemId != null) {
+    const preferredDataItemIndex = images.findIndex(
+      (image) => String(image.dataItemId) === String(preferredImage.dataItemId),
+    );
+    if (preferredDataItemIndex >= 0) {
+      return preferredDataItemIndex;
+    }
+  }
+
+  if (preferredImage?.id != null) {
+    const preferredAssignmentIndex = images.findIndex(
+      (image) => String(image.id) === String(preferredImage.id),
+    );
+    if (preferredAssignmentIndex >= 0) {
+      return preferredAssignmentIndex;
+    }
+  }
+
+  return Math.min(Math.max(fallbackIndex, 0), images.length - 1);
+};
+
+const getAnnotationLabelId = (annotation) => {
+  const rawLabelId =
+    annotation?.labelId ??
+    annotation?.classId ??
+    annotation?.LabelId ??
+    annotation?.ClassId;
+  const parsedLabelId = Number.parseInt(rawLabelId, 10);
+  return Number.isFinite(parsedLabelId) ? parsedLabelId : null;
+};
+
+const hydrateAnnotationWithCurrentLabel = (annotation, labelLookup) => {
+  if (!annotation || typeof annotation !== "object") {
+    return annotation;
+  }
+
+  const labelId = getAnnotationLabelId(annotation);
+  if (labelId == null) {
+    return annotation;
+  }
+
+  const currentLabel = labelLookup.get(String(labelId));
+  if (!currentLabel) {
+    return annotation;
+  }
+
+  return {
+    ...annotation,
+    labelId: annotation.labelId ?? currentLabel.id,
+    labelName: currentLabel.name,
+    color: currentLabel.color,
+  };
+};
+
+const hydrateAnnotationsWithCurrentLabels = (annotations, labelLookup) =>
+  Array.isArray(annotations)
+    ? annotations.map((annotation) =>
+        hydrateAnnotationWithCurrentLabel(annotation, labelLookup),
+      )
+    : [];
+
+const dedupeAnnotationsForUi = (annotations) => {
+  const seen = new Set();
+  return annotations.filter((annotation, index) => {
+    const key =
+      annotation?.id != null
+        ? `id:${annotation.id}`
+        : `json:${JSON.stringify(annotation)}:${index}`;
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+};
+
+const isRelabelEditableDraftAnnotation = (annotation) =>
+  annotation?.[RELABEL_EDITABLE_MARKER] === true ||
+  annotation?.isRelabelEditable === true;
+
+const partitionRestrictedAnnotations = (
+  annotations,
+  lockedAnnotations,
+  restrictedLabelIdSet,
+) => {
+  if (!Array.isArray(annotations) || restrictedLabelIdSet.size === 0) {
+    return {
+      editableAnnotations: Array.isArray(annotations) ? annotations : [],
+      restrictedAnnotations: [],
+    };
+  }
+
+  const restrictedLegacyReferenceLabelIds = new Set(
+    (Array.isArray(lockedAnnotations) ? lockedAnnotations : [])
+      .map((annotation) => getAnnotationLabelId(annotation))
+      .filter(
+        (labelId) =>
+          labelId != null && restrictedLabelIdSet.has(String(labelId)),
+      ),
+  );
+
+  return annotations.reduce(
+    (result, annotation) => {
+      const labelId = getAnnotationLabelId(annotation);
+      const isRestrictedLabel =
+        labelId != null && restrictedLabelIdSet.has(String(labelId));
+      const isLegacyRestrictedReference =
+        isRestrictedLabel &&
+        restrictedLegacyReferenceLabelIds.has(labelId) &&
+        !isRelabelEditableDraftAnnotation(annotation);
+
+      if (isLegacyRestrictedReference) {
+        result.restrictedAnnotations.push(annotation);
+      } else {
+        result.editableAnnotations.push(annotation);
+      }
+
+      return result;
+    },
+    { editableAnnotations: [], restrictedAnnotations: [] },
+  );
+};
+
+const excludeRestrictedReferenceAnnotations = (annotations, restrictedLabelIdSet) =>
+  Array.isArray(annotations)
+    ? annotations.filter((annotation) => {
+        const labelId = getAnnotationLabelId(annotation);
+        return labelId == null || !restrictedLabelIdSet.has(String(labelId));
+      })
+    : [];
 
 const buildAiDiagnosticsNote = (diagnostics, t) => {
   if (!diagnostics?.providerResultReceived) {
@@ -271,7 +432,8 @@ const normalizeBatchErrors = (value) => {
 };
 
 const WorkplaceLabelingTaskPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const localeTag = i18n.language?.startsWith("vi") ? "vi-VN" : "en-US";
   const { assignmentId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -321,6 +483,7 @@ const WorkplaceLabelingTaskPage = () => {
   const [lastSavedTime, setLastSavedTime] = useState(null);
   const isDirtyRef = React.useRef(false);
   const aiPanelRef = React.useRef(null);
+  const lastAutoSelectedRelabelAssignmentRef = React.useRef(null);
 
   const currentImage = images[currentImgIndex];
 
@@ -340,6 +503,7 @@ const WorkplaceLabelingTaskPage = () => {
     (state) =>
       state.labeling.annotationsByAssignment[currentImage?.id] || EMPTY_ARRAY,
   );
+  const selectedLabel = useSelector((state) => state.labeling.selectedLabel);
 
   const checklistState = useSelector(
     (state) =>
@@ -349,6 +513,67 @@ const WorkplaceLabelingTaskPage = () => {
   const currentDefaultFlags = useSelector(
     (state) =>
       state.labeling.defaultFlagsByAssignment[currentImage?.id] || EMPTY_ARRAY,
+  );
+  const labelMetadataById = useMemo(
+    () =>
+      new Map(
+        labels.map((label) => [
+          String(label.id),
+          { id: label.id, name: label.name, color: label.color },
+        ]),
+      ),
+    [labels],
+  );
+  const currentAnnotationPayload = useMemo(
+    () => parseAnnotationPayload(currentImage?.annotationData),
+    [currentImage?.annotationData],
+  );
+  const restrictedRelabelLabelIds = currentAnnotationPayload.restrictedLabelIds;
+  const isRestrictedRelabelMode =
+    currentImage?.status === "Rejected" && restrictedRelabelLabelIds.length > 0;
+  const restrictedRelabelLabelIdSet = useMemo(
+    () => new Set(restrictedRelabelLabelIds.map((id) => String(id))),
+    [restrictedRelabelLabelIds],
+  );
+  const sanitizedRelabelAnnotations = useMemo(
+    () =>
+      partitionRestrictedAnnotations(
+        currentAnnotationPayload.annotations || [],
+        currentAnnotationPayload.lockedAnnotations || [],
+        restrictedRelabelLabelIdSet,
+      ),
+    [
+      currentAnnotationPayload.annotations,
+      currentAnnotationPayload.lockedAnnotations,
+      restrictedRelabelLabelIdSet,
+    ],
+  );
+  const referenceAnnotations = useMemo(
+    () =>
+      dedupeAnnotationsForUi(
+        hydrateAnnotationsWithCurrentLabels(
+          [
+            ...excludeRestrictedReferenceAnnotations(
+              currentAnnotationPayload.lockedAnnotations || [],
+              restrictedRelabelLabelIdSet,
+            ),
+          ],
+          labelMetadataById,
+        ),
+      ).map((annotation, index) => ({
+        ...annotation,
+        __uiId: `reference-${currentImage?.id ?? "assignment"}-${annotation?.id ?? index}-${index}`,
+      })),
+    [
+      currentAnnotationPayload.lockedAnnotations,
+      currentImage?.id,
+      labelMetadataById,
+      restrictedRelabelLabelIdSet,
+    ],
+  );
+  const currentSelectableDefaultFlags = useMemo(
+    () => getActionableDefaultFlags(currentDefaultFlags),
+    [currentDefaultFlags],
   );
 
   const aiExemplars = useMemo(() => {
@@ -390,6 +615,39 @@ const WorkplaceLabelingTaskPage = () => {
     });
     return ids;
   }, [labels, checklistState]);
+  const restrictedRelabelLabels = useMemo(
+    () =>
+      labels.filter((label) => restrictedRelabelLabelIdSet.has(String(label.id))),
+    [labels, restrictedRelabelLabelIdSet],
+  );
+  const editableCustomLabels = useMemo(
+    () =>
+      isRestrictedRelabelMode
+        ? restrictedRelabelLabels.filter((label) => !label.isDefault)
+        : labels.filter((label) => !label.isDefault),
+    [isRestrictedRelabelMode, labels, restrictedRelabelLabels],
+  );
+  const editableDefaultLabels = useMemo(
+    () =>
+      isRestrictedRelabelMode
+        ? restrictedRelabelLabels.filter((label) => label.isDefault)
+        : labels.filter((label) => label.isDefault),
+    [isRestrictedRelabelMode, labels, restrictedRelabelLabels],
+  );
+  const lockedDefaultFlagReferences = useMemo(() => {
+    const lockedFlags = getActionableDefaultFlags(
+      currentAnnotationPayload.lockedDefaultFlags,
+    );
+
+    return lockedFlags
+      .map((flagId) =>
+        labels.find((label) => String(label.id) === String(flagId)),
+      )
+      .filter(Boolean);
+  }, [currentAnnotationPayload.lockedDefaultFlags, labels]);
+  const restrictedRelabelLabelNames = restrictedRelabelLabels
+    .map((label) => label.name)
+    .filter(Boolean);
 
   const getErrorMessage = useCallback((err, fallbackMessage) => {
     const responseData = err?.response?.data;
@@ -431,9 +689,13 @@ const WorkplaceLabelingTaskPage = () => {
         height: Math.max(1, box.ymax - box.ymin),
         aiGenerated: true,
         aiBatchId: batchId,
+        ...(isRestrictedRelabelMode &&
+        restrictedRelabelLabelIdSet.has(String(primaryExemplar.labelId))
+          ? { [RELABEL_EDITABLE_MARKER]: true }
+          : {}),
       }));
     },
-    [aiExemplars, currentImage, t],
+    [aiExemplars, currentImage, isRestrictedRelabelMode, restrictedRelabelLabelIdSet, t],
   );
 
   const replaceAiAnnotationsInCanvas = useCallback(
@@ -490,25 +752,16 @@ const WorkplaceLabelingTaskPage = () => {
 
   const hasValidAnnotations = useCallback((annotationData) => {
     if (!annotationData) return false;
-    try {
-      const parsed = JSON.parse(annotationData);
-      if (parsed && parsed.__defaultFlags && parsed.__defaultFlags.length > 0) {
-        return true;
-      }
-      if (parsed && parsed.annotations) {
-        return parsed.annotations.length > 0;
-      }
-      if (Array.isArray(parsed)) {
-        return parsed.length > 0;
-      }
-    } catch {
-      return false;
-    }
-    return false;
+    const parsed = parseAnnotationPayload(annotationData);
+    return (
+      (Array.isArray(parsed.annotations) && parsed.annotations.length > 0) ||
+      getActionableDefaultFlags(parsed.defaultFlags).length > 0
+    );
   }, []);
 
   const buildDataJSONForAssignment = useCallback(
     (assignmentId, fallbackDataJSON = "") => {
+      const fallbackPayload = parseAnnotationPayload(fallbackDataJSON);
       const assignmentAnnotations = allAnnotations[assignmentId];
       const assignmentChecklist = allChecklistStates[assignmentId];
       const assignmentFlags = allDefaultFlags[assignmentId];
@@ -521,10 +774,14 @@ const WorkplaceLabelingTaskPage = () => {
         return fallbackDataJSON || "";
       }
 
-      return JSON.stringify({
+      return buildAnnotationPayload({
         annotations: assignmentAnnotations || [],
-        __checklist: assignmentChecklist || {},
-        __defaultFlags: assignmentFlags || [],
+        checklist: assignmentChecklist || fallbackPayload.checklist || {},
+        defaultFlags: assignmentFlags || fallbackPayload.defaultFlags || [],
+        lockedAnnotations: fallbackPayload.lockedAnnotations || [],
+        lockedDefaultFlags: fallbackPayload.lockedDefaultFlags || [],
+        restrictedLabelIds: fallbackPayload.restrictedLabelIds || [],
+        relabelReason: fallbackPayload.relabelReason || "",
       });
     },
     [allAnnotations, allChecklistStates, allDefaultFlags],
@@ -580,6 +837,11 @@ const WorkplaceLabelingTaskPage = () => {
   const allSelectableSelected =
     selectableBatchIds.length > 0 &&
     selectedBatchIds.length === selectableBatchIds.length;
+
+  const hasBatchEligibleImages = useMemo(
+    () => batchImageEntries.some((entry) => entry.isEligible),
+    [batchImageEntries],
+  );
 
   const aiStatusBadge = aiStatus.loading
     ? {
@@ -652,6 +914,12 @@ const WorkplaceLabelingTaskPage = () => {
   }, [selectableBatchIdSet]);
 
   useEffect(() => {
+    if (!hasBatchEligibleImages) {
+      setShowBatchPanel(false);
+    }
+  }, [hasBatchEligibleImages]);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -678,6 +946,7 @@ const WorkplaceLabelingTaskPage = () => {
           allImages = [];
         }
 
+        const preferredImage = getPreferredImageFromSearchParams(searchParams);
         const packStart = parseInt(searchParams.get("packStart"), 10);
         const packEnd = parseInt(searchParams.get("packEnd"), 10);
 
@@ -700,6 +969,7 @@ const WorkplaceLabelingTaskPage = () => {
         });
 
         setImages(sortedSlice);
+        setCurrentImgIndex(getPreferredImageIndex(sortedSlice, preferredImage));
 
         const sessionKey = `guideline_read_${assignmentId}`;
         if (sessionStorage.getItem(sessionKey)) {
@@ -714,33 +984,30 @@ const WorkplaceLabelingTaskPage = () => {
     };
 
     fetchData();
-  }, [assignmentId]);
+  }, [assignmentId, searchParams]);
 
   useEffect(() => {
     if (!currentImage) return;
 
     setAiPreview(null);
-
     dispatch(setSelectedLabel(null));
-    dispatch(setCurrentTask(currentImage));
+  }, [currentImage?.id, dispatch]);
 
-    let parsedAnnotations = [];
-    let parsedChecklist = {};
-    let parsedDefaultFlags = [];
-    try {
-      if (currentImage.annotationData) {
-        const parsed = JSON.parse(currentImage.annotationData);
-        if (parsed && parsed.__checklist) {
-          parsedAnnotations = parsed.annotations || [];
-          parsedChecklist = parsed.__checklist || {};
-          parsedDefaultFlags = parsed.__defaultFlags || [];
-        } else if (Array.isArray(parsed)) {
-          parsedAnnotations = parsed;
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
+  useEffect(() => {
+    if (!currentImage) return;
+
+    dispatch(setCurrentTask(currentImage));
+  }, [currentImage, dispatch]);
+
+  useEffect(() => {
+    if (!currentImage) return;
+
+    const parsedAnnotations = hydrateAnnotationsWithCurrentLabels(
+      sanitizedRelabelAnnotations.editableAnnotations || [],
+      labelMetadataById,
+    );
+    const parsedChecklist = currentAnnotationPayload.checklist || {};
+    const parsedDefaultFlags = currentAnnotationPayload.defaultFlags || [];
 
     dispatch(
       setAnnotations({
@@ -766,13 +1033,43 @@ const WorkplaceLabelingTaskPage = () => {
     } else {
       dispatch(resetChecklist({ assignmentId: currentImage.id }));
     }
-  }, [currentImage?.id, dispatch]);
+  }, [
+    currentImage?.id,
+    currentAnnotationPayload,
+    sanitizedRelabelAnnotations.editableAnnotations,
+    labelMetadataById,
+    dispatch,
+  ]);
 
   useEffect(() => {
     return () => {
       dispatch(setSelectedLabel(null));
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!isRestrictedRelabelMode || !selectedLabel) {
+      return;
+    }
+
+    if (!restrictedRelabelLabelIdSet.has(String(selectedLabel.id))) {
+      dispatch(setSelectedLabel(null));
+    }
+  }, [dispatch, isRestrictedRelabelMode, restrictedRelabelLabelIdSet, selectedLabel]);
+
+  useEffect(() => {
+    if (!currentImage || !isRestrictedRelabelMode || restrictedRelabelLabels.length === 0) {
+      lastAutoSelectedRelabelAssignmentRef.current = null;
+      return;
+    }
+
+    if (lastAutoSelectedRelabelAssignmentRef.current === currentImage.id) {
+      return;
+    }
+
+    dispatch(setSelectedLabel(restrictedRelabelLabels[0]));
+    lastAutoSelectedRelabelAssignmentRef.current = currentImage.id;
+  }, [currentImage, dispatch, isRestrictedRelabelMode, restrictedRelabelLabels]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -1084,7 +1381,7 @@ const WorkplaceLabelingTaskPage = () => {
   const handleSubmit = async () => {
     if (!currentImage) return;
 
-    if (annotations.length === 0 && currentDefaultFlags.length === 0) {
+    if (annotations.length === 0 && currentSelectableDefaultFlags.length === 0) {
       toast.warning(t("workspace.noLabelWarning"));
       return;
     }
@@ -1097,16 +1394,17 @@ const WorkplaceLabelingTaskPage = () => {
       }
 
       const dataJSON = buildDataJSON();
+      const submissionDataJSON = buildSubmissionAnnotationPayload(dataJSON);
 
       await taskService.submitTask({
         assignmentId: currentImage.id,
-        dataJSON,
+        dataJSON: submissionDataJSON,
       });
 
       setImages((prev) =>
         prev.map((img) =>
           img.id === currentImage.id
-            ? { ...img, status: "Submitted", annotationData: dataJSON }
+            ? { ...img, status: "Submitted", annotationData: submissionDataJSON }
             : img,
         ),
       );
@@ -1166,6 +1464,11 @@ const WorkplaceLabelingTaskPage = () => {
         allImages = [];
       }
 
+      const preferredSearchImage = getPreferredImageFromSearchParams(searchParams);
+      const normalizedPreferredImage =
+        preferredImage?.id != null || preferredImage?.dataItemId != null
+          ? preferredImage
+          : preferredSearchImage;
       const packStart = parseInt(searchParams.get("packStart"), 10);
       const packEnd = parseInt(searchParams.get("packEnd"), 10);
 
@@ -1189,23 +1492,11 @@ const WorkplaceLabelingTaskPage = () => {
 
       setImages(sortedSlice);
       setCurrentImgIndex((prev) => {
-        if (sortedSlice.length === 0) return 0;
-
-        if (preferredImage?.dataItemId != null) {
-          const nextIndex = sortedSlice.findIndex(
-            (img) => img.dataItemId === preferredImage.dataItemId,
-          );
-          if (nextIndex >= 0) return nextIndex;
-        }
-
-        if (preferredImage?.id != null) {
-          const nextIndex = sortedSlice.findIndex(
-            (img) => img.id === preferredImage.id,
-          );
-          if (nextIndex >= 0) return nextIndex;
-        }
-
-        return Math.min(prev, sortedSlice.length - 1);
+        return getPreferredImageIndex(
+          sortedSlice,
+          normalizedPreferredImage,
+          prev,
+        );
       });
     } catch (err) {
       console.error("Refetch images failed:", err);
@@ -1280,10 +1571,14 @@ const WorkplaceLabelingTaskPage = () => {
       return;
     }
 
-    const confirmed = window.confirm(
-      t("workspace.batchConfirm", { count: assignmentIds.length }),
-    );
-    if (!confirmed) return;
+    const confirmResult = await showConfirmDialog({
+      title: t("workspace.batchSubmit"),
+      text: t("workspace.batchConfirm", { count: assignmentIds.length }),
+      icon: "warning",
+      confirmText: t("common.confirm"),
+      cancelText: t("common.cancel"),
+    });
+    if (!confirmResult.isConfirmed) return;
 
     setBatchSubmitting(true);
     try {
@@ -1385,6 +1680,15 @@ const WorkplaceLabelingTaskPage = () => {
       return;
     }
 
+    if (
+      currentImage.status !== "Rejected" ||
+      currentImage.managerDecision === "reject" ||
+      disputeStatus === "Pending" ||
+      disputeResult
+    ) {
+      return;
+    }
+
     setDisputeSubmitting(true);
     try {
       await taskService.createDispute({
@@ -1451,6 +1755,19 @@ const WorkplaceLabelingTaskPage = () => {
       setShowDisputeForm(false);
     }
   }, [currentImage, assignmentId]);
+
+  useEffect(() => {
+    if (
+      !currentImage ||
+      currentImage.status !== "Rejected" ||
+      currentImage.managerDecision === "reject" ||
+      disputeStatus === "Pending" ||
+      disputeResult
+    ) {
+      setShowDisputeForm(false);
+      setDisputeReason("");
+    }
+  }, [currentImage, disputeStatus, disputeResult]);
 
   if (loading)
     return <div className="text-center mt-5">{t("workspace.loadingData")}</div>;
@@ -1593,8 +1910,16 @@ const WorkplaceLabelingTaskPage = () => {
           });
 
   const isRejected = currentImage.status === "Rejected";
-
-  const needsResubmit = isRejected && disputeResult?.status === "Rejected" && disputeResult?.resolutionType === "annotator_wrong";
+  const hasManagerFinalRejection =
+    currentImage.managerDecision === "reject" ||
+    (disputeResult?.status === "Rejected" &&
+      disputeResult?.resolutionType === "annotator_wrong");
+  const needsResubmit = isRejected && hasManagerFinalRejection;
+  const canCreateDispute =
+    isRejected &&
+    disputeStatus !== "Pending" &&
+    !disputeResult &&
+    !hasManagerFinalRejection;
   const latestApprovedVotes = disputeResult?.reviewerFeedbacks?.filter(
     (feedback) => feedback.verdict === "Approved" || feedback.verdict === "Approve",
   ).length ?? 0;
@@ -1602,6 +1927,89 @@ const WorkplaceLabelingTaskPage = () => {
     (feedback) => feedback.verdict === "Rejected" || feedback.verdict === "Reject",
   ).length ?? 0;
   const rejectRounds = disputeResult?.rejectCount ?? currentImage.rejectCount ?? 0;
+  const sourceFeedbacks =
+    Array.isArray(disputeResult?.reviewerFeedbacks) &&
+    disputeResult.reviewerFeedbacks.length > 0
+      ? disputeResult.reviewerFeedbacks
+      : Array.isArray(currentImage?.reviewerFeedbacks)
+        ? currentImage.reviewerFeedbacks
+        : [];
+  const normalizedReviewerFeedbackEntries = sourceFeedbacks
+    .map((feedback, index) => {
+      const comment =
+        typeof feedback?.comment === "string" ? feedback.comment.trim() : "";
+
+      if (!comment) {
+        return null;
+      }
+
+      const verdict = String(
+        feedback?.verdict ?? feedback?.decision ?? "",
+      ).toLowerCase();
+      const normalizedStatus =
+        verdict === "approved" || verdict === "approve"
+          ? "Approved"
+          : verdict === "rejected" || verdict === "reject"
+            ? "Rejected"
+            : currentImage?.status;
+
+      return {
+        feedbackId:
+          feedback?.reviewLogId ??
+          `reviewer-${currentImage?.id ?? "task"}-${feedback?.reviewerId ?? index}`,
+        reviewLogId: feedback?.reviewLogId ?? null,
+        sourceName:
+          feedback?.reviewerName ??
+          feedback?.reviewerId ??
+          null,
+        errorType:
+          feedback?.errorType ??
+          feedback?.errorCategories ??
+          null,
+        comment,
+        status: normalizedStatus,
+        returnedDate: feedback?.reviewedAt ?? currentImage?.latestReviewAt ?? null,
+      };
+    })
+    .filter(Boolean);
+  const reviewerFeedbackEntries =
+    normalizedReviewerFeedbackEntries.length > 0
+      ? normalizedReviewerFeedbackEntries
+      : (() => {
+          const fallbackReviewerComment =
+            typeof currentImage?.rejectionReason === "string"
+              ? currentImage.rejectionReason.trim()
+              : "";
+
+          if (!fallbackReviewerComment) {
+            return [];
+          }
+
+          return [
+            {
+              feedbackId: `reviewer-${currentImage?.id ?? "task"}-legacy`,
+              reviewLogId: null,
+              sourceName: null,
+              errorType: currentImage?.errorCategory ?? null,
+              comment: fallbackReviewerComment,
+              status: currentImage?.status,
+              returnedDate: currentImage?.latestReviewAt ?? null,
+            },
+          ];
+        })();
+  const managerFeedbackComment =
+    disputeResult?.managerComment || currentImage.managerComment || "";
+  const managerFeedbackStatus = disputeResult
+    ? disputeResult.resolutionType === "annotator_correct"
+      ? "Approved"
+      : disputeResult.resolutionType === "annotator_wrong"
+        ? "Rejected"
+        : null
+    : currentImage.managerDecision === "approve"
+      ? "Approved"
+      : currentImage.managerDecision === "reject"
+        ? "Rejected"
+        : null;
 
   const doneCount = images.filter(
     (img) => img.status === "Submitted" || img.status === "Approved",
@@ -1632,7 +2040,7 @@ const WorkplaceLabelingTaskPage = () => {
 
         <span className="stitch-ws-header-title">
           <i className="ri-image-edit-line me-1"></i>
-          {projectInfo?.name || "Workspace"} — {t("workspace.imageOf")}{" "}
+          {projectInfo?.name || t("workspace.defaultTitle")} — {t("workspace.imageOf")}{" "}
           {currentImgIndex + 1}/{images.length}
         </span>
 
@@ -1646,9 +2054,9 @@ const WorkplaceLabelingTaskPage = () => {
           <span className={`stitch-ws-save-badge ${saveStatus}`}>
             {saveStatus === "saved" && (
               <>
-                <i className="ri-check-line"></i> Saved{" "}
+                <i className="ri-check-line"></i> {t("workspace.saved")}{" "}
                 {lastSavedTime &&
-                  lastSavedTime.toLocaleTimeString("vi-VN", {
+                  lastSavedTime.toLocaleTimeString(localeTag, {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
@@ -1660,13 +2068,13 @@ const WorkplaceLabelingTaskPage = () => {
                   className="spinner-border spinner-border-sm"
                   style={{ width: 10, height: 10 }}
                 ></span>{" "}
-                Saving...
+                {t("workspace.saving")}
               </>
             )}
             {saveStatus === "unsaved" && (
               <>
                 <i className="ri-circle-fill" style={{ fontSize: 6 }}></i>{" "}
-                Unsaved
+                {t("workspace.unsaved")}
               </>
             )}
           </span>
@@ -1687,7 +2095,7 @@ const WorkplaceLabelingTaskPage = () => {
           <div className="stitch-ws-card-body" style={{ padding: "8px 14px" }}>
             <div className="d-flex flex-wrap gap-3">
               <div className="stitch-ws-shortcut">
-                <span>Undo</span>
+                <span>{t("workspace.undoShortcut")}</span>
                 <span className="stitch-ws-kbd">Ctrl+Z</span>
               </div>
               <div className="stitch-ws-shortcut">
@@ -1696,15 +2104,17 @@ const WorkplaceLabelingTaskPage = () => {
               </div>
               <div className="stitch-ws-shortcut">
                 <span>{t("workspace.deleteOneBox")}</span>
-                <span className="stitch-ws-text-muted">Double-click</span>
+                <span className="stitch-ws-text-muted">
+                  {t("workspace.doubleClick")}
+                </span>
               </div>
               <div className="stitch-ws-shortcut">
-                <span>Zoom</span>
+                <span>{t("workspace.zoomShortcut")}</span>
                 <span className="stitch-ws-kbd">Ctrl+Scroll</span>
               </div>
               <div className="stitch-ws-shortcut">
                 <span>{t("workspace.moveShortcut")}</span>
-                <span className="stitch-ws-kbd">Arrow keys</span>
+                <span className="stitch-ws-kbd">{t("workspace.arrowKeys")}</span>
               </div>
               <div className="stitch-ws-shortcut">
                 <span>{t("workspace.prevNextImage")}</span>
@@ -1776,7 +2186,7 @@ const WorkplaceLabelingTaskPage = () => {
                       <i className="ri-time-line me-1"></i>
                       <strong>{t("workspace.disputeSent")}</strong>
                     </div>
-                  ) : !disputeResult && (
+                  ) : canCreateDispute && (
                     <button
                       className="stitch-ws-nav-btn mt-2"
                       style={{ padding: "4px 12px", fontSize: "0.75rem" }}
@@ -1801,13 +2211,15 @@ const WorkplaceLabelingTaskPage = () => {
                 <div className="flex-grow-1">
                   <strong className="d-block mb-1">
                     {disputeResult.status === "Resolved"
-                      ? "Dispute Accepted - Manager ruled in your favor"
-                      : "Dispute Rejected - Manager upheld the rejection"}
+                      ? t("workspace.disputeAcceptedTitle")
+                      : t("workspace.disputeRejectedTitle")}
                   </strong>
 
                   {rejectRounds > 0 && (
                     <div className="mb-2 d-flex gap-2 align-items-center">
-                      <small className="text-muted">Reject rounds:</small>
+                      <small className="text-muted">
+                        {t("workspace.rejectRounds")}
+                      </small>
                       <span className="badge bg-warning text-dark">
                         <i className="ri-arrow-go-back-line me-1"></i>
                         {rejectRounds}
@@ -1817,7 +2229,9 @@ const WorkplaceLabelingTaskPage = () => {
 
                   {disputeResult.reviewerFeedbacks && disputeResult.reviewerFeedbacks.length > 0 && (
                     <div className="mb-2 d-flex gap-2 align-items-center">
-                      <small className="text-muted">Latest reviewer votes:</small>
+                      <small className="text-muted">
+                        {t("workspace.latestReviewerVotes")}
+                      </small>
                       <span className="badge bg-success">
                         <i className="ri-check-line me-1"></i>
                         {latestApprovedVotes}
@@ -1833,15 +2247,16 @@ const WorkplaceLabelingTaskPage = () => {
                     <div className="mt-2 p-2 rounded" style={{ background: "rgba(34, 197, 94, 0.15)" }}>
                       <small className="d-block mb-1">
                         <i className="ri-user-follow-line me-1"></i>
-                        <strong>Manager Decision:</strong> Your labeling was correct.
+                        <strong>{t("workspace.managerDecisionTitle")}:</strong>{" "}
+                        {t("workspace.annotatorCorrect")}
                       </small>
                       <small className="d-block">
                         <i className="ri-notification-3-line me-1"></i>
-                        Rejector(s) have been notified to re-review this task.
+                        {t("workspace.rejectorsNotified")}
                       </small>
                       <small className="d-block mt-1 text-success">
                         <i className="ri-check-double-line me-1"></i>
-                        Task remains APPROVED.
+                        {t("workspace.taskRemainsApproved")}
                       </small>
                     </div>
                   )}
@@ -1850,22 +2265,25 @@ const WorkplaceLabelingTaskPage = () => {
                     <div className="mt-2 p-2 rounded" style={{ background: "rgba(249, 115, 22, 0.15)" }}>
                       <small className="d-block mb-1">
                         <i className="ri-user-follow-line me-1"></i>
-                        <strong>Manager Decision:</strong> Your labeling was incorrect.
+                        <strong>{t("workspace.managerDecisionTitle")}:</strong>{" "}
+                        {t("workspace.annotatorIncorrect")}
                       </small>
                       <small className="d-block text-danger">
                         <i className="ri-edit-line me-1"></i>
-                        Please review the guidelines carefully and resubmit your work.
+                        {t("workspace.reviewGuidelinesAndResubmit")}
                       </small>
                       <small className="d-block text-muted mt-1">
                         <i className="ri-refresh-line me-1"></i>
-                        All reviewers will re-review when you resubmit.
+                        {t("workspace.reviewersWillRereview")}
                       </small>
                     </div>
                   )}
 
                   {disputeResult.managerComment && (
                     <div className="mt-2">
-                      <small className="text-muted">Manager's comment:</small>
+                      <small className="text-muted">
+                        {t("workspace.managerComment")}
+                      </small>
                       <p className="mb-0 small" style={{ fontStyle: "italic" }}>
                         "{disputeResult.managerComment}"
                       </p>
@@ -1890,6 +2308,31 @@ const WorkplaceLabelingTaskPage = () => {
               {t("workspace.readOnly")}
             </div>
           )}
+          {isRestrictedRelabelMode && (
+            <div className="stitch-ws-alert warning mb-2" style={{ padding: "10px 14px" }}>
+              <div className="d-flex align-items-start gap-2">
+                <i
+                  className="ri-edit-box-line"
+                  style={{ fontSize: "1rem", marginTop: 1, flexShrink: 0 }}
+                ></i>
+                <div>
+                  <strong style={{ fontSize: "0.8rem" }}>
+                    {t("workspace.relabelRestrictedTitle")}
+                  </strong>
+                  <p style={{ fontSize: "0.72rem", margin: "2px 0 0", opacity: 0.85 }}>
+                    {t("workspace.relabelRestrictedHint", {
+                      labels: restrictedRelabelLabelNames.join(", "),
+                    })}
+                  </p>
+                  {currentAnnotationPayload.relabelReason && (
+                    <p style={{ fontSize: "0.72rem", margin: "6px 0 0", opacity: 0.78 }}>
+                      {currentAnnotationPayload.relabelReason}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           { }
           {!isReadOnly && annotations.length === 0 && (
             <div className="stitch-ws-alert warning mb-2" style={{ padding: "10px 14px" }}>
@@ -1906,12 +2349,20 @@ const WorkplaceLabelingTaskPage = () => {
           )}
           { }
           {!isReadOnly && (() => {
-            const isFlagEnabled = currentDefaultFlags.includes("__flag_enabled");
+            const isFlagEnabled = isFlagPanelEnabled(currentDefaultFlags);
+            const flagOptions = editableDefaultLabels.length > 0
+              ? editableDefaultLabels.map((label) => ({
+                  id: label.id,
+                  label: label.name,
+                  color: label.color,
+                }))
+              : [];
+            const showFlagCard =
+              flagOptions.length > 0 || lockedDefaultFlagReferences.length > 0;
 
-            const defaultLabels = labels.filter((l) => l.isDefault);
-            const flagOptions = defaultLabels.length > 0
-              ? defaultLabels.map((l) => ({ id: l.id, label: l.name, color: l.color }))
-              : [{ id: "__image_flagged", label: t("workspace.flagImage"), color: "#EF4444" }];
+            if (!showFlagCard) {
+              return null;
+            }
 
             return (
               <div className={`stitch-ws-card ${!isFlagEnabled ? "collapsed" : ""}`}>
@@ -1943,8 +2394,30 @@ const WorkplaceLabelingTaskPage = () => {
                   <i className={`ri-arrow-${isFlagEnabled ? "up" : "down"}-s-line`} style={{ fontSize: 14, opacity: 0.5 }}></i>
                 </div>
                 <div style={{ display: isFlagEnabled ? "block" : "none", maxHeight: 180, overflowY: "auto" }}>
+                  {isRestrictedRelabelMode && lockedDefaultFlagReferences.length > 0 && (
+                    <div
+                      className="px-3 py-2"
+                      style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}
+                    >
+                      <div className="stitch-ws-text-muted mb-2" style={{ fontSize: "0.72rem" }}>
+                        {t("workspace.relabelLockedFlags")}
+                      </div>
+                      <div className="d-flex flex-wrap gap-2">
+                        {lockedDefaultFlagReferences.map((flag) => (
+                          <span
+                            key={`locked-flag-${flag.id}`}
+                            className="stitch-ws-badge stitch-ws-badge-new"
+                            style={{ opacity: 0.7 }}
+                          >
+                            <i className="ri-lock-line me-1"></i>
+                            {flag.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {flagOptions.map((flag) => {
-                    const isSelected = currentDefaultFlags.includes(flag.id);
+                    const isSelected = currentSelectableDefaultFlags.includes(flag.id);
                     return (
                       <div
                         key={flag.id}
@@ -1986,7 +2459,7 @@ const WorkplaceLabelingTaskPage = () => {
             );
           })()}
 
-          {!isReadOnly && (
+          {!isReadOnly && editableCustomLabels.length > 0 && (
             <div className={`stitch-ws-card ${collapsedPanels.has("labels") ? "collapsed" : ""}`}>
               <div
                 className="stitch-ws-card-header"
@@ -1999,7 +2472,7 @@ const WorkplaceLabelingTaskPage = () => {
                 </span>
                 <span className="d-flex align-items-center gap-2">
                   {(() => {
-                    const customLabels = labels.filter((l) => !l.isDefault);
+                    const customLabels = editableCustomLabels;
 
                     let unlocked = 0;
                     customLabels.forEach((label) => {
@@ -2022,6 +2495,11 @@ const WorkplaceLabelingTaskPage = () => {
                   labels={labels}
                   assignmentId={currentImage.id}
                   annotations={annotations}
+                  allowedLabelIds={
+                    isRestrictedRelabelMode
+                      ? editableCustomLabels.map((label) => label.id)
+                      : null
+                  }
                 />
               </div>
             </div>
@@ -2041,11 +2519,17 @@ const WorkplaceLabelingTaskPage = () => {
                 <span className="stitch-ws-badge stitch-ws-badge-inprogress">
                   {annotations.length}
                 </span>
+                {referenceAnnotations.length > 0 && (
+                  <span className="stitch-ws-badge stitch-ws-badge-new">
+                    <i className="ri-lock-line me-1"></i>
+                    {referenceAnnotations.length}
+                  </span>
+                )}
                 <i className={`ri-arrow-${collapsedPanels.has("annotations") ? "down" : "up"}-s-line`} style={{ fontSize: 14, opacity: 0.5 }}></i>
               </span>
             </div>
             <div style={{ maxHeight: "200px", overflowY: "auto", display: collapsedPanels.has("annotations") ? "none" : "block" }}>
-              {annotations.length === 0 ? (
+              {annotations.length === 0 && referenceAnnotations.length === 0 ? (
                 <div
                   className="stitch-ws-card-body text-center"
                   style={{ padding: "20px 14px" }}
@@ -2059,95 +2543,168 @@ const WorkplaceLabelingTaskPage = () => {
                   </span>
                 </div>
               ) : (
-                annotations.map((a, idx) => (
-                  <div
-                    key={a.id}
-                    className={`stitch-ws-ann-item ${highlightedAnnotationId === a.id ? "highlighted" : ""}`}
-                    onMouseEnter={() => setHighlightedAnnotationId(a.id)}
-                    onMouseLeave={() => setHighlightedAnnotationId(null)}
-                    onClick={() => setHighlightedAnnotationId(a.id)}
-                  >
-                    <span
+                <>
+                  {referenceAnnotations.length > 0 && (
+                    <div
+                      className="px-3 py-2 stitch-ws-text-muted"
                       style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 3,
-                        background: a.color || "#6c757d",
-                        flexShrink: 0,
-                        border:
-                          highlightedAnnotationId === a.id
-                            ? "2px solid #3B82F6"
-                            : "none",
+                        fontSize: "0.72rem",
+                        borderBottom: annotations.length > 0
+                          ? "1px solid rgba(51, 65, 85, 0.12)"
+                          : "none",
                       }}
-                      className="me-2"
-                    ></span>
-                    <span
-                      className="flex-grow-1 text-truncate"
-                      style={{ fontWeight: 500 }}
                     >
-                      {a.labelName || `Box ${idx + 1}`}
-                    </span>
-                    <span
-                      className="stitch-ws-text-muted me-2"
-                      style={{ fontSize: "0.65rem" }}
+                      <i className="ri-lock-line me-1"></i>
+                      {t("workspace.referenceAnnotations")}
+                    </div>
+                  )}
+                  {referenceAnnotations.map((annotation, index) => (
+                    <div
+                      key={annotation.__uiId}
+                      className={`stitch-ws-ann-item ${highlightedAnnotationId === annotation.__uiId ? "highlighted" : ""}`}
+                      onMouseEnter={() => setHighlightedAnnotationId(annotation.__uiId)}
+                      onMouseLeave={() => setHighlightedAnnotationId(null)}
+                      onClick={() => setHighlightedAnnotationId(annotation.__uiId)}
+                      style={{ opacity: 0.72 }}
                     >
-                      {a.type === "POLYGON" || a.points
-                        ? `${a.points?.length || 0} pts`
-                        : `${Math.round(a.width)}×${Math.round(a.height)}`}
-                    </span>
-                    {!isReadOnly && (
-                      <button
-                        className="btn btn-link btn-sm p-0"
-                        style={{ color: "#F87171", lineHeight: 1 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          dispatch(
-                            removeAnnotation({
-                              assignmentId: currentImage.id,
-                              id: a.id,
-                            }),
-                          );
+                      <span
+                        style={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: 3,
+                          background: annotation.color || "#6c757d",
+                          flexShrink: 0,
+                          border:
+                            highlightedAnnotationId === annotation.__uiId
+                              ? "2px solid #3B82F6"
+                              : "1px dashed rgba(15, 23, 42, 0.35)",
                         }}
-                        title={t("workspace.deleteAnnotation")}
+                        className="me-2"
+                      ></span>
+                      <span
+                        className="flex-grow-1 text-truncate"
+                        style={{ fontWeight: 500 }}
                       >
-                        <i className="ri-close-line"></i>
-                      </button>
-                    )}
-                  </div>
-                ))
+                        {annotation.labelName || `Ref ${index + 1}`}
+                      </span>
+                      <span
+                        className="stitch-ws-text-muted me-2"
+                        style={{ fontSize: "0.65rem" }}
+                      >
+                        {annotation.type === "POLYGON" || annotation.points
+                          ? `${annotation.points?.length || 0} pts`
+                          : `${Math.round(annotation.width)}×${Math.round(annotation.height)}`}
+                      </span>
+                      <span className="stitch-ws-badge stitch-ws-badge-new">
+                        <i className="ri-lock-line me-1"></i>
+                        {t("workspace.reference")}
+                      </span>
+                    </div>
+                  ))}
+                  {annotations.length > 0 && referenceAnnotations.length > 0 && (
+                    <div
+                      className="px-3 py-2 stitch-ws-text-muted"
+                      style={{
+                        fontSize: "0.72rem",
+                        borderTop: "1px solid rgba(51, 65, 85, 0.12)",
+                      }}
+                    >
+                      <i className="ri-edit-box-line me-1"></i>
+                      {t("workspace.editableAnnotations")}
+                    </div>
+                  )}
+                  {annotations.map((a, idx) => (
+                    <div
+                      key={a.id}
+                      className={`stitch-ws-ann-item ${highlightedAnnotationId === a.id ? "highlighted" : ""}`}
+                      onMouseEnter={() => setHighlightedAnnotationId(a.id)}
+                      onMouseLeave={() => setHighlightedAnnotationId(null)}
+                      onClick={() => setHighlightedAnnotationId(a.id)}
+                    >
+                      <span
+                        style={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: 3,
+                          background: a.color || "#6c757d",
+                          flexShrink: 0,
+                          border:
+                            highlightedAnnotationId === a.id
+                              ? "2px solid #3B82F6"
+                              : "none",
+                        }}
+                        className="me-2"
+                      ></span>
+                      <span
+                        className="flex-grow-1 text-truncate"
+                        style={{ fontWeight: 500 }}
+                      >
+                        {a.labelName || `Box ${idx + 1}`}
+                      </span>
+                      <span
+                        className="stitch-ws-text-muted me-2"
+                        style={{ fontSize: "0.65rem" }}
+                      >
+                        {a.type === "POLYGON" || a.points
+                          ? `${a.points?.length || 0} pts`
+                          : `${Math.round(a.width)}×${Math.round(a.height)}`}
+                      </span>
+                      {!isReadOnly && (
+                        <button
+                          className="btn btn-link btn-sm p-0"
+                          style={{ color: "#F87171", lineHeight: 1 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            dispatch(
+                              removeAnnotation({
+                                assignmentId: currentImage.id,
+                                id: a.id,
+                              }),
+                            );
+                          }}
+                          title={t("workspace.deleteAnnotation")}
+                        >
+                          <i className="ri-close-line"></i>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           </div>
 
           { }
-          <div>
-            <button
-              className={`stitch-ws-nav-btn w-100 ${showBatchPanel ? "" : "primary"}`}
-              style={{ justifyContent: "center" }}
-              onClick={() => {
-                if (
-                  !showBatchPanel &&
-                  isDirtyRef.current &&
-                  currentImage &&
-                  currentImage.status !== "Submitted" &&
-                  currentImage.status !== "Approved"
-                ) {
-                  void saveDraft(true);
-                }
-                setShowBatchPanel((prev) => !prev);
-              }}
-            >
-              <i
-                className={`ri-${showBatchPanel ? "close" : "stack"}-line`}
-              ></i>
-              {showBatchPanel
-                ? t("workspace.hideBatch")
-                : t("workspace.batchSubmit")}
-            </button>
-          </div>
+          {hasBatchEligibleImages && (
+            <div>
+              <button
+                className={`stitch-ws-nav-btn w-100 ${showBatchPanel ? "" : "primary"}`}
+                style={{ justifyContent: "center" }}
+                onClick={() => {
+                  if (
+                    !showBatchPanel &&
+                    isDirtyRef.current &&
+                    currentImage &&
+                    currentImage.status !== "Submitted" &&
+                    currentImage.status !== "Approved"
+                  ) {
+                    void saveDraft(true);
+                  }
+                  setShowBatchPanel((prev) => !prev);
+                }}
+              >
+                <i
+                  className={`ri-${showBatchPanel ? "close" : "stack"}-line`}
+                ></i>
+                {showBatchPanel
+                  ? t("workspace.hideBatch")
+                  : t("workspace.batchSubmit")}
+              </button>
+            </div>
+          )}
 
           { }
-          {showBatchPanel && (
+          {hasBatchEligibleImages && showBatchPanel && (
             <div className="stitch-ws-card">
               <div className="stitch-ws-card-header">
                 <span>
@@ -2250,6 +2807,10 @@ const WorkplaceLabelingTaskPage = () => {
             imageUrl={currentImage.dataItemUrl}
             readOnly={isReadOnly}
             highlightedAnnotationId={highlightedAnnotationId}
+            referenceAnnotations={referenceAnnotations}
+            restrictedEditableLabelIds={
+              isRestrictedRelabelMode ? restrictedRelabelLabelIds : []
+            }
             onAnnotationClick={(id) => setHighlightedAnnotationId(id)}
             projectType={projectInfo?.allowGeometryTypes}
             onRunAiPreview={handleRunAiPreview}
@@ -2368,6 +2929,9 @@ const WorkplaceLabelingTaskPage = () => {
           <CommentSection
             rejectionReason={currentImage.rejectionReason}
             status={currentImage.status}
+            reviewerFeedbacks={reviewerFeedbackEntries}
+            managerComment={managerFeedbackComment}
+            managerStatus={managerFeedbackStatus}
           />
 
           {!isReadOnly && (
@@ -2726,7 +3290,7 @@ const WorkplaceLabelingTaskPage = () => {
           )}
 
           { }
-          {showDisputeForm && isRejected && (
+          {showDisputeForm && canCreateDispute && (
             <div
               className="stitch-ws-card"
               style={{ borderColor: "rgba(239, 68, 68, 0.3)" }}

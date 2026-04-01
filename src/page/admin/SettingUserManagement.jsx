@@ -249,10 +249,16 @@ const SettingUserManagement = () => {
   const handleSubmitResetPassword = async () => {
     setResetPasswordLoading(true);
     try {
-      await adminResetPassword(resetPasswordUser.id, "Password@123");
-      toast.success(
-        t("userMgmt.passwordResetSuccess"),
-      );
+      const response = await adminResetPassword(resetPasswordUser.id);
+      const message =
+        response?.data?.message || t("userMgmt.passwordResetSuccess");
+      if (response?.data?.emailDeliveryMode === "PickupDirectory") {
+        toast.info(message);
+      } else if (response?.data?.emailDelivered === false) {
+        toast.warn(message);
+      } else {
+        toast.success(message);
+      }
       setResetPasswordModalOpen(false);
       setResetPasswordUser(null);
     } catch (error) {
