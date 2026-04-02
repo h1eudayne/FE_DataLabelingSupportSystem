@@ -60,13 +60,9 @@ const saveToStorage = (userId, notifications) => {
   if (!key) return;
   try {
     localStorage.setItem(key, JSON.stringify(mergeNotifications(notifications)));
-  } catch {
+  } catch (err) {
+    console.warn("[Notifications] Failed to save to local storage:", err);
   }
-};
-
-const clearStorage = (userId) => {
-  const key = getStorageKey(userId);
-  if (key) localStorage.removeItem(key);
 };
 
 const parseNotificationMetadata = (metadata) => {
@@ -157,7 +153,9 @@ const useNotifications = (userId, initialUnreadCount) => {
 
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNotifications([]);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUnreadCount(typeof initialUnreadCount === "number" ? initialUnreadCount : 0);
       return;
     }

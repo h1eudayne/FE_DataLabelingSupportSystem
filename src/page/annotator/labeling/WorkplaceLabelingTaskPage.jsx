@@ -599,22 +599,6 @@ const WorkplaceLabelingTaskPage = () => {
       .slice(0, MAX_AI_EXEMPLARS);
   }, [annotations, highlightedAnnotationId]);
 
-  const unlockedLabelIds = useMemo(() => {
-    const ids = new Set();
-    labels.forEach((label) => {
-      const items = label.checklist || [];
-      if (items.length === 0) {
-        ids.add(label.id);
-        return;
-      }
-      const checked = checklistState[label.id] || [];
-      const allChecked = items.every((_, idx) => checked[idx] === true);
-      if (allChecked) {
-        ids.add(label.id);
-      }
-    });
-    return ids;
-  }, [labels, checklistState]);
   const restrictedRelabelLabels = useMemo(
     () =>
       labels.filter((label) => restrictedRelabelLabelIdSet.has(String(label.id))),
@@ -1738,8 +1722,6 @@ const WorkplaceLabelingTaskPage = () => {
 
         if (resolved) {
           setShowDisputeForm(false);
-          if (resolved.status === "Resolved" && currentImage.status !== "Rejected") {
-          }
         }
       } catch {
         setDisputeStatus(null);
@@ -2019,7 +2001,6 @@ const WorkplaceLabelingTaskPage = () => {
 
   return (
     <div>
-      { }
       <div className="stitch-ws-header-bar">
         <button
           className="back-btn"
@@ -2089,7 +2070,6 @@ const WorkplaceLabelingTaskPage = () => {
         </button>
       </div>
 
-      { }
       {showShortcuts && (
         <div className="stitch-ws-card mb-2">
           <div className="stitch-ws-card-body" style={{ padding: "8px 14px" }}>
@@ -2128,11 +2108,8 @@ const WorkplaceLabelingTaskPage = () => {
         </div>
       )}
 
-      { }
       <div className="stitch-ws-layout">
-        { }
         <div className="stitch-ws-left-panel">
-          { }
           <div className={`stitch-ws-card ${collapsedPanels.has("progress") ? "collapsed" : ""}`}>
             <div
               className="stitch-ws-card-header"
@@ -2163,7 +2140,6 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           </div>
 
-          { }
           {isRejected && !disputeResult && (
             <div className="stitch-ws-alert danger">
               <div className="d-flex align-items-start gap-2">
@@ -2294,7 +2270,6 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           )}
 
-          { }
           {currentImage.status === "Rejected" &&
             disputeStatus === "Pending" && (
               <div className="stitch-ws-alert warning">
@@ -2333,7 +2308,6 @@ const WorkplaceLabelingTaskPage = () => {
               </div>
             </div>
           )}
-          { }
           {!isReadOnly && annotations.length === 0 && (
             <div className="stitch-ws-alert warning mb-2" style={{ padding: "10px 14px" }}>
               <div className="d-flex align-items-start gap-2">
@@ -2347,7 +2321,6 @@ const WorkplaceLabelingTaskPage = () => {
               </div>
             </div>
           )}
-          { }
           {!isReadOnly && (() => {
             const isFlagEnabled = isFlagPanelEnabled(currentDefaultFlags);
             const flagOptions = editableDefaultLabels.length > 0
@@ -2505,7 +2478,6 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           )}
 
-          { }
           <div className={`stitch-ws-card ${collapsedPanels.has("annotations") ? "collapsed" : ""}`}>
             <div
               className="stitch-ws-card-header"
@@ -2674,7 +2646,6 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           </div>
 
-          { }
           {hasBatchEligibleImages && (
             <div>
               <button
@@ -2703,7 +2674,6 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           )}
 
-          { }
           {hasBatchEligibleImages && showBatchPanel && (
             <div className="stitch-ws-card">
               <div className="stitch-ws-card-header">
@@ -2800,7 +2770,6 @@ const WorkplaceLabelingTaskPage = () => {
           )}
         </div>
 
-        { }
         <div className="stitch-ws-center-panel">
           <LabelingWorkspace
             assignmentId={currentImage.id}
@@ -2819,7 +2788,6 @@ const WorkplaceLabelingTaskPage = () => {
             aiPreviewEnabled={aiCanRun}
           />
 
-          { }
           <div className="stitch-ws-bottom-bar">
             <button
               className="nav-arrow"
@@ -2830,7 +2798,6 @@ const WorkplaceLabelingTaskPage = () => {
               <i className="ri-arrow-left-s-line"></i>
             </button>
 
-            { }
             <div className="stitch-ws-thumb-strip">
               {images.map((img, idx) => {
                 const isCurrent = idx === currentImgIndex;
@@ -2873,7 +2840,6 @@ const WorkplaceLabelingTaskPage = () => {
               <i className="ri-arrow-right-s-line"></i>
             </button>
 
-            { }
             <div className="action-group">
               {!isReadOnly && (
                 <>
@@ -2923,9 +2889,7 @@ const WorkplaceLabelingTaskPage = () => {
           </div>
         </div>
 
-        { }
         <div className="stitch-ws-right-panel">
-          { }
           <CommentSection
             rejectionReason={currentImage.rejectionReason}
             status={currentImage.status}
@@ -3289,7 +3253,6 @@ const WorkplaceLabelingTaskPage = () => {
             </div>
           )}
 
-          { }
           {showDisputeForm && canCreateDispute && (
             <div
               className="stitch-ws-card"

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
+import { Buffer } from "buffer";
 
 describe("Axios Customize Instance", () => {
   let instance;

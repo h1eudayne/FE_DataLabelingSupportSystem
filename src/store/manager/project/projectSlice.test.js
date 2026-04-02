@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import projectReducer, { fetchProjects } from "./projectSlice";
-import projectService from "../../../services/manager/project/projectService";
 
 vi.mock("../../../services/manager/project/projectService", () => ({
   default: {
