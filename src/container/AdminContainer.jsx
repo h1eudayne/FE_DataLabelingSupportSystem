@@ -38,6 +38,7 @@ const AdminContainer = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [userProjects, setUserProjects] = useState([]);
   const [file, setFile] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lockModalOpen, setLockModalOpen] = useState(false);
   const [lockTargetUser, setLockTargetUser] = useState(null);
@@ -248,6 +249,8 @@ const AdminContainer = () => {
       toast.error(
         error?.response?.data?.message || error?.message || "Import fail",
       );
+    } finally {
+      setIsImporting(false);
     }
   };
 
