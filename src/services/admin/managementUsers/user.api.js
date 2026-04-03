@@ -4,7 +4,7 @@ import {
   getCachedCurrentUser,
 } from "../../auth/currentUser";
 
-export const getUsers = (page = 1, pageSize = 10) => {
+export const getUsers = (page = 1, pageSize = 30) => {
   return axios.get(`/api/users`, {
     params: { page, pageSize },
   });

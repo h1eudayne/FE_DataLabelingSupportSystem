@@ -28,7 +28,7 @@ const AdminContainer = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 30;
   const [systemStats, setSystemStats] = useState({ admins: 0, workers: 0 });
 
   const [selectUser, setSelectUser] = useState(null);
@@ -96,6 +96,11 @@ const AdminContainer = () => {
     },
     [page, pageSize],
   );
+
+  const refreshUsersFromFirstPage = useCallback(async () => {
+    setPage(1);
+    await fetchUsers(1);
+  }, [fetchUsers]);
 
   const fetchProjectsUser = async (userId) => {
     try {
@@ -238,10 +243,25 @@ const AdminContainer = () => {
     setIsImporting(true);
     try {
       const res = await importUser(file);
+      const successCount = res.data?.successCount || 0;
+      const failureCount = res.data?.failureCount || 0;
+      const firstError = res.data?.errors?.[0];
+
       if (res.data) {
-        if (res.data.successCount > 0) {
-          await fetchUsers();
-          toast.success(res.data.message || "Import successfully");
+        if (successCount > 0) {
+          await refreshUsersFromFirstPage();
+        }
+
+        if (successCount > 0 && failureCount > 0) {
+          toast.warning(
+            `Imported ${successCount} users, ${failureCount} rows failed.${firstError ? ` First error: ${firstError}` : ""}`,
+          );
+        } else if (successCount > 0) {
+          toast.success(`Imported ${successCount} users successfully.`);
+        } else if (failureCount > 0) {
+          toast.error(
+            `Import failed for ${failureCount} rows.${firstError ? ` First error: ${firstError}` : ""}`,
+          );
         }
       }
       onCloseCreateModal();

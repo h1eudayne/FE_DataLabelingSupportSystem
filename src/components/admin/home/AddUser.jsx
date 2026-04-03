@@ -104,7 +104,7 @@ const AddUser = ({
             </li>
             <li>
               {t("addUser.maxRowLabel")}{" "}
-              <strong>1000 {t("addUser.rows")}</strong>
+              <strong>{t("addUser.serverConfigured")}</strong>
             </li>
           </ul>
         </div>

@@ -32,7 +32,7 @@ describe("User API Suite", () => {
     const result = await getUsers();
 
     expect(axios.get).toHaveBeenCalledWith("/api/users", {
-      params: { page: 1, pageSize: 10 },
+      params: { page: 1, pageSize: 30 },
     });
     expect(result).toEqual(mockData);
   });

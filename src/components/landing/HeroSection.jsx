@@ -1,5 +1,5 @@
-import { Container, Row, Col, Badge, Button } from "react-bootstrap";
-import { Zap, ArrowRight } from "lucide-react";
+import { Container, Row, Col, Button } from "react-bootstrap";
+import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const HeroSection = ({ onExplore }) => {
@@ -10,12 +10,6 @@ const HeroSection = ({ onExplore }) => {
       padding: "60px 0 100px",
       backgroundColor: "#ffffff",
     },
-    badge: {
-      backgroundColor: "rgba(65, 81, 139, 0.1)",
-      color: "#41518b",
-      padding: "8px 16px",
-      fontSize: "12px",
-    },
   };
 
   return (
@@ -23,14 +17,6 @@ const HeroSection = ({ onExplore }) => {
       <Container>
         <Row className="align-items-center g-5 text-center text-lg-start">
           <Col lg={6}>
-            <Badge
-              pill
-              className="mb-4 text-uppercase fw-bold"
-              style={customStyles.badge}
-            >
-              <Zap size={14} className="me-2" /> {t('landingHero.badge')}
-            </Badge>
-
             <h1
               className="display-5 fw-extrabold mb-4"
               style={{ lineHeight: 1.1 }}
