@@ -26,6 +26,7 @@ import {
 } from "reactstrap";
 import UserFilter from "../../components/admin/managementUser/UserFilter";
 import UserModal from "../../components/admin/managementUser/UserModal";
+import { ADMIN_PAGE_SIZE } from "../../constants/pagination";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 
@@ -56,7 +57,7 @@ const SettingUserManagement = () => {
   const [currentRole, setCurrentRole] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
-    pageSize: 30,
+    pageSize: ADMIN_PAGE_SIZE,
   });
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);

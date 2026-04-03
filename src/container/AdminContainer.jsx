@@ -15,6 +15,7 @@ import LogsView from "../components/admin/home/LogsView";
 import UserModal from "../components/admin/managementUser/UserModal";
 import AddUser from "../components/admin/home/AddUser";
 import projectApi from "../services/admin/managementUsers/project.api";
+import { ADMIN_PAGE_SIZE } from "../constants/pagination";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { getProjectStatusBadgeClass } from "../utils/projectWorkflowStatus";
@@ -28,7 +29,7 @@ const AdminContainer = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 30;
+  const pageSize = ADMIN_PAGE_SIZE;
   const [systemStats, setSystemStats] = useState({ admins: 0, workers: 0 });
 
   const [selectUser, setSelectUser] = useState(null);

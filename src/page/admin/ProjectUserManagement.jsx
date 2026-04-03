@@ -22,16 +22,17 @@ import {
   Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ADMIN_PAGE_SIZE } from "../../constants/pagination";
 
 const ProjectUserManagement = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
   const [isSearching, setIsSearching] = useState(false);
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const itemsPerPage = ADMIN_PAGE_SIZE;
 
   useEffect(() => {
     fetchData();

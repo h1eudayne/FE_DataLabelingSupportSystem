@@ -3,8 +3,9 @@ import {
   buildCachedUserResponse,
   getCachedCurrentUser,
 } from "../../auth/currentUser";
+import { ADMIN_PAGE_SIZE } from "../../../constants/pagination";
 
-export const getUsers = (page = 1, pageSize = 30) => {
+export const getUsers = (page = 1, pageSize = ADMIN_PAGE_SIZE) => {
   return axios.get(`/api/users`, {
     params: { page, pageSize },
   });
