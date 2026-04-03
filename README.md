@@ -46,6 +46,10 @@ Các biến môi trường quan trọng:
 * `VITE_CLOUDINARY_UPLOAD_PRESET`
   Unsigned upload preset cho Cloudinary
 
+Lưu ý:
+Frontend trên Vercel chỉ đọc các biến bắt đầu bằng `VITE_`.
+Các biến SMTP như `EmailSettings__MailServer`, `EmailSettings__Username`, `EmailSettings__Password` phải được set ở backend .NET đang chạy thật, không phải ở project frontend trên Vercel.
+
 ## Production Checklist
 Khi deploy frontend lên Vercel hoặc host khác:
 
@@ -66,6 +70,8 @@ Nếu frontend lên Vercel và backend lên Railway:
 * `VITE_BACKEND_URL=https://your-backend.up.railway.app`
 * `VITE_SIGNALR_URL=https://your-backend.up.railway.app`
 * Backend `Cors__AllowedOrigins=https://data-labeling-support-system.vercel.app`
+
+Không đặt `EmailSettings__*` trên Vercel frontend nếu backend vẫn chạy ở Railway.
 
 File `vercel.json` đã có rewrite cho SPA routing.
 
