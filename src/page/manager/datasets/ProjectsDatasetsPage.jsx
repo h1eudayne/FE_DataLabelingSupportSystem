@@ -107,7 +107,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
       name: label.name || "",
       color: label.color || "#3b82f6",
       guideLine: label.guideLine || "",
-      checklist: label.checklist?.length > 0 ? [...label.checklist] : [""],
+      checklist: label.isDefault
+        ? []
+        : label.checklist?.length > 0
+          ? [...label.checklist]
+          : [""],
       isDefault: label.isDefault || false,
     });
     setShowAddLabel(true);
@@ -639,7 +643,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                     </div>
                                   </td>
                                   <td className="dataset-label-checklist-cell">
-                                    {label.checklist?.length > 0 ? (
+                                    {label.isDefault ? (
+                                      <span className="text-muted small">
+                                        {t("datasets.defaultLabelNoChecklist")}
+                                      </span>
+                                    ) : label.checklist?.length > 0 ? (
                                       <ul className="list-unstyled mb-0 dataset-checklist-list">
                                         {label.checklist.map((item, idx) => (
                                           <li
@@ -776,6 +784,10 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                     setNewLabel({
                                       ...newLabel,
                                       isDefault: false,
+                                      checklist:
+                                        newLabel.checklist.length > 0
+                                          ? newLabel.checklist
+                                          : [""],
                                     })
                                   }
                                 />
@@ -799,6 +811,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                     setNewLabel({
                                       ...newLabel,
                                       isDefault: true,
+                                      checklist: [],
                                     })
                                   }
                                 />
@@ -884,54 +897,64 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                             <label className="form-label small fw-semibold">
                               {t("datasets.checklist")}
                             </label>
-                            {newLabel.checklist.map((item, idx) => (
-                              <div key={idx} className="d-flex gap-2 mb-1">
-                                <input
-                                  type="text"
-                                  className="form-control form-control-sm"
-                                  placeholder={`${t("datasets.checklistItem")} ${idx + 1}`}
-                                  value={item}
-                                  onChange={(e) => {
-                                    const updated = [...newLabel.checklist];
-                                    updated[idx] = e.target.value;
+                            {newLabel.isDefault ? (
+                              <div className="alert alert-light border small mb-0">
+                                <i className="ri-information-line me-1 text-warning" />
+                                {t("datasets.defaultLabelNoChecklistHint")}
+                              </div>
+                            ) : (
+                              <>
+                                {newLabel.checklist.map((item, idx) => (
+                                  <div key={idx} className="d-flex gap-2 mb-1">
+                                    <input
+                                      type="text"
+                                      className="form-control form-control-sm"
+                                      placeholder={`${t("datasets.checklistItem")} ${idx + 1}`}
+                                      value={item}
+                                      onChange={(e) => {
+                                        const updated = [...newLabel.checklist];
+                                        updated[idx] = e.target.value;
+                                        setNewLabel({
+                                          ...newLabel,
+                                          checklist: updated,
+                                        });
+                                      }}
+                                    />
+                                    {newLabel.checklist.length > 1 && (
+                                      <button
+                                        type="button"
+                                        className="btn btn-sm btn-soft-danger"
+                                        onClick={() => {
+                                          const updated =
+                                            newLabel.checklist.filter(
+                                              (_, i) => i !== idx,
+                                            );
+                                          setNewLabel({
+                                            ...newLabel,
+                                            checklist: updated,
+                                          });
+                                        }}
+                                      >
+                                        <i className="ri-close-line" />
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-secondary mt-1"
+                                  onClick={() =>
                                     setNewLabel({
                                       ...newLabel,
-                                      checklist: updated,
-                                    });
-                                  }}
-                                />
-                                {newLabel.checklist.length > 1 && (
-                                  <button
-                                    type="button"
-                                    className="btn btn-sm btn-soft-danger"
-                                    onClick={() => {
-                                      const updated = newLabel.checklist.filter(
-                                        (_, i) => i !== idx,
-                                      );
-                                      setNewLabel({
-                                        ...newLabel,
-                                        checklist: updated,
-                                      });
-                                    }}
-                                  >
-                                    <i className="ri-close-line" />
-                                  </button>
-                                )}
-                              </div>
-                            ))}
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-outline-secondary mt-1"
-                              onClick={() =>
-                                setNewLabel({
-                                  ...newLabel,
-                                  checklist: [...newLabel.checklist, ""],
-                                })
-                              }
-                            >
-                              <i className="ri-add-line me-1" />
-                              {t("datasets.addChecklistItem")}
-                            </button>
+                                      checklist: [...newLabel.checklist, ""],
+                                    })
+                                  }
+                                >
+                                  <i className="ri-add-line me-1" />
+                                  {t("datasets.addChecklistItem")}
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                         <div className="d-flex gap-2 mt-3">
@@ -950,6 +973,11 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                 const filteredChecklist = newLabel.checklist
                                   .map((c) => c.trim())
                                   .filter((c) => c);
+                                const checklistPayload = newLabel.isDefault
+                                  ? null
+                                  : filteredChecklist.length > 0
+                                    ? filteredChecklist
+                                    : null;
                                 if (editingLabel) {
                                   await labelService.updateLabel(
                                     editingLabel.id,
@@ -958,10 +986,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                       color: newLabel.color,
                                       guideLine:
                                         newLabel.guideLine.trim() || null,
-                                      checklist:
-                                        filteredChecklist.length > 0
-                                          ? filteredChecklist
-                                          : null,
+                                      checklist: checklistPayload,
                                       isDefault: newLabel.isDefault,
                                     },
                                   );
@@ -973,10 +998,7 @@ const ProjectsDatasetsPage = ({ embeddedProjectId, readOnly = false } = {}) => {
                                       color: newLabel.color,
                                       guideLine:
                                         newLabel.guideLine.trim() || null,
-                                      checklist:
-                                        filteredChecklist.length > 0
-                                          ? filteredChecklist
-                                          : null,
+                                      checklist: checklistPayload,
                                       isDefault: newLabel.isDefault,
                                     },
                                   );
