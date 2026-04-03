@@ -46,10 +46,6 @@ const dedupeByJson = (items) => {
   });
 };
 
-const isRelabelEditableAnnotation = (annotation) =>
-  annotation?.[RELABEL_EDITABLE_MARKER] === true ||
-  annotation?.isRelabelEditable === true;
-
 const stripDraftOnlyAnnotationFields = (annotation) => {
   if (!isPlainObject(annotation)) {
     return annotation;

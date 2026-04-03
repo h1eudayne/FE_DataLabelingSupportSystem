@@ -333,15 +333,16 @@ const DashboardAnalytics = () => {
             const projectWorkflowStatus =
               s.projectStatus || project.status || PROJECT_WORKFLOW_STATUS.NEW;
 
-            if (totalAsgn === 0) {
-            } else if (projectWorkflowStatus === PROJECT_WORKFLOW_STATUS.COMPLETED) {
-              completed++;
-            } else if (isAwaitingManagerConfirmation(projectWorkflowStatus)) {
-              inProgress++;
-            } else if (approvedAsgn === 0 && subAsgn === 0 && rejAsgn > 0) {
-              rejected++;
-            } else {
-              inProgress++;
+            if (totalAsgn !== 0) {
+              if (projectWorkflowStatus === PROJECT_WORKFLOW_STATUS.COMPLETED) {
+                completed++;
+              } else if (isAwaitingManagerConfirmation(projectWorkflowStatus)) {
+                inProgress++;
+              } else if (approvedAsgn === 0 && subAsgn === 0 && rejAsgn > 0) {
+                rejected++;
+              } else {
+                inProgress++;
+              }
             }
 
             if (s.rejectionRate != null) {
@@ -547,7 +548,9 @@ const DashboardAnalytics = () => {
               reviewerAggregate.disputeCount++;
               reviewerAggregate.projectDetails[project.id].disputes++;
             });
-          } catch { }
+          } catch {
+            // ignore
+          }
         }
 
         projectProgressArr.forEach((pp) => {
@@ -1681,12 +1684,6 @@ const DashboardAnalytics = () => {
                     </thead>
                     <tbody>
                       {annotatorPerformances.map((a) => {
-                        const completionRate =
-                          a.totalImages > 0
-                            ? Math.round(
-                              (a.completedImages / a.totalImages) * 100,
-                            )
-                            : 0;
                         const hasQualityScore = a.averageQualityScore != null;
                         const isExpanded = expandedAnnotators[a.annotatorId];
                         return (
@@ -1791,13 +1788,6 @@ const DashboardAnalytics = () => {
                             { }
                             {isExpanded &&
                               a.projectDetails?.map((pd) => {
-                                const pdRate =
-                                  pd.totalImages > 0
-                                    ? Math.round(
-                                      (pd.completedImages / pd.totalImages) *
-                                      100,
-                                    )
-                                    : 0;
                                 return (
                                   <tr
                                     key={pd.projectId}
