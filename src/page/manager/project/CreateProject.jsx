@@ -27,16 +27,18 @@ import taskService from "../../../services/manager/project/taskService";
 import { sortByNaturalName } from "../../../utils/naturalSort";
 
 const DEFAULT_LABEL_PRESETS = [
-  { translationKey: "defaultLabel1", color: "#EF4444" },
-  { translationKey: "defaultLabel2", color: "#F59E0B" },
+  { name: "Ảnh bị lỗi", color: "#EF4444" },
+  { name: "Ảnh không đúng chủ đề", color: "#F59E0B" },
 ];
 
-const createTranslatedDefaultLabel = (t, translationKey, color) => ({
-  translationKey,
+const createDefaultLabelPreset = (t, preset) => ({
+  translationKey: preset.translationKey ?? null,
   isNameCustomized: false,
   isChecklistCustomized: false,
-  name: t(`createProject.${translationKey}`),
-  color,
+  name: preset.translationKey
+    ? t(`createProject.${preset.translationKey}`)
+    : preset.name || "",
+  color: preset.color,
   guideLine: "",
   checklist: [t("createProject.defaultChecklistPlaceholder")],
   exampleImage: null,
@@ -44,18 +46,12 @@ const createTranslatedDefaultLabel = (t, translationKey, color) => ({
 });
 
 const createInitialDefaultLabels = (t) =>
-  DEFAULT_LABEL_PRESETS.map((label) =>
-    createTranslatedDefaultLabel(t, label.translationKey, label.color),
-  );
+  DEFAULT_LABEL_PRESETS.map((label) => createDefaultLabelPreset(t, label));
 
 const getCreatedProjectId = (response) => {
   const payload = response?.data ?? response ?? {};
   return (
-    payload.id ??
-    payload.projectId ??
-    payload.Id ??
-    payload.ProjectId ??
-    null
+    payload.id ?? payload.projectId ?? payload.Id ?? payload.ProjectId ?? null
   );
 };
 
@@ -147,7 +143,8 @@ const CreateProject = () => {
   const removeDefaultLabel = (index) => {
     if (defaultLabels.length === 0) return;
     const clone = [...defaultLabels];
-    if (clone[index].exampleImagePreview) URL.revokeObjectURL(clone[index].exampleImagePreview);
+    if (clone[index].exampleImagePreview)
+      URL.revokeObjectURL(clone[index].exampleImagePreview);
     setDefaultLabels(clone.filter((_, i) => i !== index));
   };
 
@@ -169,7 +166,9 @@ const CreateProject = () => {
 
   const removeDefaultChecklistItem = (labelIndex, itemIndex) => {
     const clone = [...defaultLabels];
-    clone[labelIndex].checklist = clone[labelIndex].checklist.filter((_, i) => i !== itemIndex);
+    clone[labelIndex].checklist = clone[labelIndex].checklist.filter(
+      (_, i) => i !== itemIndex,
+    );
     clone[labelIndex].isChecklistCustomized = true;
     setDefaultLabels(clone);
   };
@@ -191,7 +190,8 @@ const CreateProject = () => {
 
   const removeDefaultLabelImage = (index) => {
     const clone = [...defaultLabels];
-    if (clone[index].exampleImagePreview) URL.revokeObjectURL(clone[index].exampleImagePreview);
+    if (clone[index].exampleImagePreview)
+      URL.revokeObjectURL(clone[index].exampleImagePreview);
     clone[index].exampleImage = null;
     clone[index].exampleImagePreview = null;
     setDefaultLabels(clone);
@@ -234,7 +234,7 @@ const CreateProject = () => {
         if (annotators.length === 0 && reviewers.length === 0) {
           toast.warning(
             t("createProject.noManagedUsers") ||
-              "No annotators or reviewers are assigned to you. Please contact Admin to assign team members."
+              "No annotators or reviewers are assigned to you. Please contact Admin to assign team members.",
           );
         }
       } catch (err) {
@@ -372,23 +372,23 @@ const CreateProject = () => {
     isSubmittingRef.current = true;
     setLoading(true);
 
-      try {
-        const hasLocalImageUpload =
-          selectedFiles.length > 0 ||
-          defaultLabels.some((label) => label.exampleImage instanceof File) ||
-          labels.some((label) => label.exampleImage instanceof File);
+    try {
+      const hasLocalImageUpload =
+        selectedFiles.length > 0 ||
+        defaultLabels.some((label) => label.exampleImage instanceof File) ||
+        labels.some((label) => label.exampleImage instanceof File);
 
-        if (hasLocalImageUpload && !shouldUseCloudinaryForDataset) {
-          throw new Error(
-            "Cloudinary configuration is missing. Set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET.",
-          );
-        }
-
-        let projectId = null;
-        const deadlineISO = new Date(projectInfo.deadline).toISOString();
-        const translatedDefaultChecklistPlaceholder = t(
-          "createProject.defaultChecklistPlaceholder",
+      if (hasLocalImageUpload && !shouldUseCloudinaryForDataset) {
+        throw new Error(
+          "Cloudinary configuration is missing. Set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET.",
         );
+      }
+
+      let projectId = null;
+      const deadlineISO = new Date(projectInfo.deadline).toISOString();
+      const translatedDefaultChecklistPlaceholder = t(
+        "createProject.defaultChecklistPlaceholder",
+      );
 
       const validDefaultLabels = defaultLabels.filter((l) => l.name.trim());
       const defaultLabelClassesPayload = [];
@@ -441,7 +441,10 @@ const CreateProject = () => {
         });
       }
 
-      const labelClassesPayload = [...defaultLabelClassesPayload, ...customLabelClassesPayload];
+      const labelClassesPayload = [
+        ...defaultLabelClassesPayload,
+        ...customLabelClassesPayload,
+      ];
 
       const createPayload = {
         name: projectInfo.name?.trim() || "",
@@ -527,7 +530,9 @@ const CreateProject = () => {
     } catch (err) {
       console.error("=== CREATE PROJECT ERROR ===", err);
       toast.error(
-        err.response?.data?.message || err.message || t("createProject.createError"),
+        err.response?.data?.message ||
+          err.message ||
+          t("createProject.createError"),
       );
     } finally {
       isSubmittingRef.current = false;
@@ -746,7 +751,10 @@ const CreateProject = () => {
                   </h6>
                   {!showDefaultLabels && defaultLabels.length > 0 && (
                     <small className="text-muted">
-                      {defaultLabels.map((dl) => dl.name).filter(Boolean).join(", ") || "(unnamed)"}
+                      {defaultLabels
+                        .map((dl) => dl.name)
+                        .filter(Boolean)
+                        .join(", ") || "(unnamed)"}
                     </small>
                   )}
                 </div>
@@ -755,7 +763,9 @@ const CreateProject = () => {
                   className="btn btn-sm btn-outline-warning"
                   style={{ padding: "2px 8px", fontSize: "0.75rem" }}
                 >
-                  <i className={`ri-${showDefaultLabels ? "arrow-up-s" : "pencil"}-line me-1`}></i>
+                  <i
+                    className={`ri-${showDefaultLabels ? "arrow-up-s" : "pencil"}-line me-1`}
+                  ></i>
                   {showDefaultLabels
                     ? t("createProject.collapseDefaultLabels")
                     : t("createProject.editDefaultLabels")}
@@ -848,7 +858,10 @@ const CreateProject = () => {
                               accept="image/*"
                               className="d-none"
                               onChange={(e) =>
-                                handleDefaultLabelImageSelect(index, e.target.files[0])
+                                handleDefaultLabelImageSelect(
+                                  index,
+                                  e.target.files[0],
+                                )
                               }
                             />
                           </label>
@@ -871,14 +884,20 @@ const CreateProject = () => {
                               placeholder={`${t("createProject.conditionPlaceholder")} ${itemIdx + 1}...`}
                               value={item}
                               onChange={(e) =>
-                                updateDefaultChecklistItem(index, itemIdx, e.target.value)
+                                updateDefaultChecklistItem(
+                                  index,
+                                  itemIdx,
+                                  e.target.value,
+                                )
                               }
                             />
                             {dl.checklist.length > 1 && (
                               <i
                                 className="ri-close-line text-danger"
                                 style={{ cursor: "pointer", fontSize: "16px" }}
-                                onClick={() => removeDefaultChecklistItem(index, itemIdx)}
+                                onClick={() =>
+                                  removeDefaultChecklistItem(index, itemIdx)
+                                }
                               ></i>
                             )}
                           </div>
