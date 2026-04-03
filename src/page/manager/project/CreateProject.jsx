@@ -29,24 +29,36 @@ import { sortByNaturalName } from "../../../utils/naturalSort";
 const DEFAULT_LABEL_PRESETS = [
   { name: "Ảnh bị lỗi", color: "#EF4444" },
   { name: "Ảnh không đúng chủ đề", color: "#F59E0B" },
+  { name: "Ảnh mờ / mất nét", color: "#F97316" },
+  { name: "Ảnh quá tối / quá sáng", color: "#EAB308" },
+  { name: "Ảnh trùng lặp", color: "#8B5CF6" },
+  { name: "Ảnh bị che khuất", color: "#06B6D4" },
+  { name: "Không có đối tượng cần gán nhãn", color: "#10B981" },
+  { name: "Ảnh bị cắt / không đầy đủ", color: "#64748B" },
 ];
 
 const createDefaultLabelPreset = (t, preset) => ({
   translationKey: preset.translationKey ?? null,
   isNameCustomized: false,
-  isChecklistCustomized: false,
   name: preset.translationKey
     ? t(`createProject.${preset.translationKey}`)
     : preset.name || "",
   color: preset.color,
   guideLine: "",
-  checklist: [t("createProject.defaultChecklistPlaceholder")],
+  checklist: [],
   exampleImage: null,
   exampleImagePreview: null,
 });
 
 const createInitialDefaultLabels = (t) =>
   DEFAULT_LABEL_PRESETS.map((label) => createDefaultLabelPreset(t, label));
+
+const getDefaultLabelsSummary = (labels) => {
+  const names = labels.map((label) => label.name).filter(Boolean);
+  if (names.length === 0) return "(unnamed)";
+  if (names.length <= 3) return names.join(", ");
+  return `${names.slice(0, 3).join(", ")} +${names.length - 3}`;
+};
 
 const getCreatedProjectId = (response) => {
   const payload = response?.data ?? response ?? {};
@@ -130,11 +142,10 @@ const CreateProject = () => {
       {
         translationKey: null,
         isNameCustomized: false,
-        isChecklistCustomized: false,
         name: "",
         color: "#6B7280",
         guideLine: "",
-        checklist: [t("createProject.defaultChecklistPlaceholder")],
+        checklist: [],
         exampleImage: null,
         exampleImagePreview: null,
       },
@@ -154,29 +165,6 @@ const CreateProject = () => {
     if (field === "name") {
       clone[index].isNameCustomized = true;
     }
-    setDefaultLabels(clone);
-  };
-
-  const addDefaultChecklistItem = (labelIndex) => {
-    const clone = [...defaultLabels];
-    clone[labelIndex].checklist.push("");
-    clone[labelIndex].isChecklistCustomized = true;
-    setDefaultLabels(clone);
-  };
-
-  const removeDefaultChecklistItem = (labelIndex, itemIndex) => {
-    const clone = [...defaultLabels];
-    clone[labelIndex].checklist = clone[labelIndex].checklist.filter(
-      (_, i) => i !== itemIndex,
-    );
-    clone[labelIndex].isChecklistCustomized = true;
-    setDefaultLabels(clone);
-  };
-
-  const updateDefaultChecklistItem = (labelIndex, itemIndex, value) => {
-    const clone = [...defaultLabels];
-    clone[labelIndex].checklist[itemIndex] = value;
-    clone[labelIndex].isChecklistCustomized = true;
     setDefaultLabels(clone);
   };
 
@@ -205,9 +193,6 @@ const CreateProject = () => {
           label.translationKey && !label.isNameCustomized
             ? t(`createProject.${label.translationKey}`)
             : label.name,
-        checklist: label.isChecklistCustomized
-          ? label.checklist
-          : [t("createProject.defaultChecklistPlaceholder")],
       })),
     );
   }, [i18n.resolvedLanguage, t]);
@@ -334,14 +319,6 @@ const CreateProject = () => {
       toast.warning(t("createProject.warnLabel"));
       return false;
     }
-    for (const lbl of validDefaultLabels) {
-      const filledChecklist = (lbl.checklist || []).filter((c) => c.trim());
-      if (filledChecklist.length === 0) {
-        setShowDefaultLabels(true);
-        toast.warning(t("createProject.warnChecklist", { name: lbl.name }));
-        return false;
-      }
-    }
     for (const lbl of validCustomLabels) {
       const filledChecklist = (lbl.checklist || []).filter((c) => c.trim());
       if (filledChecklist.length === 0) {
@@ -386,9 +363,6 @@ const CreateProject = () => {
 
       let projectId = null;
       const deadlineISO = new Date(projectInfo.deadline).toISOString();
-      const translatedDefaultChecklistPlaceholder = t(
-        "createProject.defaultChecklistPlaceholder",
-      );
 
       const validDefaultLabels = defaultLabels.filter((l) => l.name.trim());
       const defaultLabelClassesPayload = [];
@@ -405,16 +379,12 @@ const CreateProject = () => {
           l.translationKey && !l.isNameCustomized
             ? t(`createProject.${l.translationKey}`)
             : l.name;
-        const resolvedDefaultChecklist =
-          l.translationKey && !l.isChecklistCustomized
-            ? [translatedDefaultChecklistPlaceholder]
-            : l.checklist || [];
 
         defaultLabelClassesPayload.push({
           name: resolvedDefaultName?.trim() || "",
           color: l.color || "#EF4444",
           guideLine: l.guideLine?.trim() || "",
-          checklist: resolvedDefaultChecklist.filter((c) => c.trim()),
+          checklist: [],
           exampleImageUrl,
           isDefault: true,
         });
@@ -751,10 +721,7 @@ const CreateProject = () => {
                   </h6>
                   {!showDefaultLabels && defaultLabels.length > 0 && (
                     <small className="text-muted">
-                      {defaultLabels
-                        .map((dl) => dl.name)
-                        .filter(Boolean)
-                        .join(", ") || "(unnamed)"}
+                      {getDefaultLabelsSummary(defaultLabels)}
                     </small>
                   )}
                 </div>
@@ -814,8 +781,11 @@ const CreateProject = () => {
                         }
                         className="mb-2"
                       />
+                      <small className="text-muted d-block mb-2">
+                        <i className="ri-information-line me-1"></i>
+                        {t("createProject.defaultLabelNoChecklist")}
+                      </small>
 
-                      {}
                       <div className="mb-2">
                         <small className="text-muted fw-semibold d-block mb-1">
                           <i className="ri-image-add-line me-1"></i>
@@ -866,49 +836,6 @@ const CreateProject = () => {
                             />
                           </label>
                         )}
-                      </div>
-
-                      {}
-                      <div className="mt-2 ps-2 border-start border-2 border-warning">
-                        <small className="text-muted fw-semibold d-block mb-1">
-                          <i className="ri-checkbox-multiple-line me-1"></i>
-                          {t("createProject.checklistSection")}
-                        </small>
-                        {dl.checklist.map((item, itemIdx) => (
-                          <div
-                            key={itemIdx}
-                            className="d-flex gap-1 mb-1 align-items-center"
-                          >
-                            <Input
-                              bsSize="sm"
-                              placeholder={`${t("createProject.conditionPlaceholder")} ${itemIdx + 1}...`}
-                              value={item}
-                              onChange={(e) =>
-                                updateDefaultChecklistItem(
-                                  index,
-                                  itemIdx,
-                                  e.target.value,
-                                )
-                              }
-                            />
-                            {dl.checklist.length > 1 && (
-                              <i
-                                className="ri-close-line text-danger"
-                                style={{ cursor: "pointer", fontSize: "16px" }}
-                                onClick={() =>
-                                  removeDefaultChecklistItem(index, itemIdx)
-                                }
-                              ></i>
-                            )}
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          className="btn btn-link btn-sm p-0 text-warning"
-                          onClick={() => addDefaultChecklistItem(index)}
-                        >
-                          {t("createProject.addCondition")}
-                        </button>
                       </div>
                     </div>
                   ))}
