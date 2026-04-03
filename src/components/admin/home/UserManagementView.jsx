@@ -75,7 +75,7 @@ const UserManagementView = ({
         <StatCard
           icon={<Users size={28} />}
           title={t("userMgmt.totalStaff")}
-          value={totalCount}
+          value={(stats?.admins || 0) + (stats?.workers || 0)}
           colorClass="text-primary"
         />
         <StatCard

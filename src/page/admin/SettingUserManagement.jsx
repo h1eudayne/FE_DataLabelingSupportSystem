@@ -56,7 +56,7 @@ const SettingUserManagement = () => {
   const [currentRole, setCurrentRole] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
-    pageSize: 10,
+    pageSize: 30,
   });
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -109,7 +109,7 @@ const SettingUserManagement = () => {
     try {
       const res = await importUser(importFile);
       setImportResult(res.data);
-      await fetchUsers();
+      await refreshUsersFromFirstPage();
     } catch (error) {
       const msg =
         error?.response?.data?.message || error.message || "Import failed";
@@ -149,7 +149,7 @@ const SettingUserManagement = () => {
       setManagers(managerUsers);
       setUsers(userList);
       setFilteredUsers(userList);
-      setTotalCount(data.stats.totalWorkers || 0);
+      setTotalCount(data.totalCount || data.stats?.totalWorkers || 0);
     } catch (error) {
       console.error(error);
     } finally {
@@ -158,6 +158,13 @@ const SettingUserManagement = () => {
       }, 300);
     }
   }, [pagination.page, pagination.pageSize]);
+
+  const refreshUsersFromFirstPage = useCallback(async () => {
+    setPagination((prev) =>
+      prev.page === 1 ? prev : { ...prev, page: 1 },
+    );
+    await fetchUsers(1);
+  }, [fetchUsers]);
 
   useEffect(() => {
     fetchSelf();

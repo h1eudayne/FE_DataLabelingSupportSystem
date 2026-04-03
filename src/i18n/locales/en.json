@@ -1557,7 +1557,7 @@
     "importInvalidType": "Only .xlsx and .xls files are allowed",
     "importFileTooLarge": "File must be less than 5MB",
     "selectFile": "Select Excel file",
-    "importHint": "Max 5MB, .xlsx or .xls only. Only Annotators and Reviewers can be imported. Every new account receives a unique system-generated temporary password by email.",
+    "importHint": "Max 5MB, .xlsx or .xls only. Only Annotators and Reviewers can be imported. Every new account uses the default password Password@123 and receives it by email. The import row limit is configured on the server.",
     "importing": "Importing...",
     "importReport": "Import Report",
     "success": "Success",
@@ -1579,6 +1579,7 @@
     "errorType": "Unsupported file format. Only .xlsx or .xls are accepted",
     "maxSizeLabel": "Maximum size:",
     "maxRowLabel": "Row limit:",
+    "serverConfigured": "Server configured",
     "rows": "rows"
   },
   "annotatorContainerComp": {

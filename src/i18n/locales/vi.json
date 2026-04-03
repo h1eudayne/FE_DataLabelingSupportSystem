@@ -1681,7 +1681,7 @@
     "importInvalidType": "Chỉ chấp nhận file .xlsx và .xls",
     "importFileTooLarge": "File phải nhỏ hơn 5MB",
     "selectFile": "Chọn file Excel",
-    "importHint": "Tối đa 5MB, chỉ .xlsx hoặc .xls. Chỉ có thể import Annotator và Reviewer. Mỗi tài khoản mới sẽ được hệ thống sinh mật khẩu tạm ngẫu nhiên và gửi qua email.",
+    "importHint": "Tối đa 5MB, chỉ .xlsx hoặc .xls. Chỉ có thể import Annotator và Reviewer. Mỗi tài khoản mới sẽ dùng mật khẩu mặc định Password@123 và được gửi qua email. Giới hạn số dòng import phụ thuộc cấu hình server.",
     "importing": "Đang import...",
     "importReport": "Báo cáo Import",
     "success": "Thành công",
@@ -1703,6 +1703,7 @@
     "errorType": "Định dạng file không hỗ trợ. Chỉ chấp nhận .xlsx hoặc .xls",
     "maxSizeLabel": "Dung lượng tối đa:",
     "maxRowLabel": "Giới hạn dòng:",
+    "serverConfigured": "Theo cấu hình server",
     "rows": "dòng"
   },
   "annotatorContainerComp": {
