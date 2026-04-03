@@ -9,7 +9,8 @@ const ReviewerHeader = () => {
     <Row className="mb-4 align-items-end">
       <Col md={8}>
         <div className="text-muted small mb-1">
-          Dashboard / <span className="text-primary fw-bold">Reviewer</span>
+          {t("navbar.dashboard")} /{" "}
+          <span className="text-primary fw-bold">Reviewer</span>
         </div>
         <h3 className="fw-bold">{t('reviewerHeaderComp.title')}</h3>
         <p className="text-muted mb-0">

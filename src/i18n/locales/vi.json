@@ -64,7 +64,7 @@
     }
   },
   "navbar": {
-    "dashboard": "Dashboard",
+    "dashboard": "Điều khiển",
     "projects": "Dự án",
     "datasets": "Bộ dữ liệu",
     "exportData": "Xuất dữ liệu",
@@ -1054,7 +1054,7 @@
     "title1": "Số hóa dữ liệu",
     "title2": "Thông minh & Hiệu quả",
     "desc": "Kết nối đội ngũ chuyên gia gán nhãn, kiểm duyệt và quản lý dự án trên một không gian làm việc tập trung.",
-    "exploreDashboard": "Khám phá Dashboard",
+    "exploreDashboard": "Khám phá bảng điều khiển",
     "getStartedNow": "Bắt đầu ngay"
   },
   "landingFeatures": {
@@ -1254,7 +1254,7 @@
     "originalImage": "Ảnh gốc: {{width}} × {{height}}px"
   },
   "annotatorDash": {
-    "title": "Dashboard",
+    "title": "Điều khiển",
     "welcome": "Xin chào",
     "selectProject": "Chọn dự án",
     "noProjects": "Chưa có dự án nào được gán.",
@@ -1565,9 +1565,9 @@
     "allProjects": "Tất cả dự án",
     "refresh": "Làm mới",
     "refreshing": "Đang làm mới...",
-    "refreshSuccess": "Đã làm mới dữ liệu dashboard.",
+    "refreshSuccess": "Đã làm mới dữ liệu bảng điều khiển.",
     "loadError": "Không thể tải dữ liệu analytics của manager lúc này.",
-    "loadErrorTitle": "Dashboard manager chưa tải xong dữ liệu.",
+    "loadErrorTitle": "Bảng điều khiển của manager chưa tải xong dữ liệu.",
     "retry": "Thử lại",
     "openTopIssue": "Mở ca ưu tiên"
   },

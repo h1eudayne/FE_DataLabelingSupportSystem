@@ -15,7 +15,7 @@ describe("HeroSection Component", () => {
     const onExploreMock = vi.fn();
     render(<HeroSection onExplore={onExploreMock} />);
 
-    const exploreBtn = screen.getByText(/Khám phá Dashboard/i);
+    const exploreBtn = screen.getByText(/Khám phá bảng điều khiển/i);
     const startBtn = screen.getByText(/Bắt đầu ngay/i);
 
     fireEvent.click(exploreBtn);
