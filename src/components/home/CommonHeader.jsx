@@ -9,7 +9,7 @@ const CommonHeader = ({ title, subtitle, role, email }) => {
     <div className="mb-4 d-flex justify-content-between align-items-end">
       <div>
         <div className="text-muted small mb-1">
-          Dashboard /{" "}
+          {t("navbar.dashboard")} /{" "}
           <span className="text-primary fw-bold text-capitalize">{role}</span>
         </div>
         <h3 className="fw-bold mb-1">
